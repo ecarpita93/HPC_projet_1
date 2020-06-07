@@ -1,0 +1,872 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/DenseBase.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2007-2010 Benoit Jacob <jacob.benoit.1@gmail.com>
+        -:    5:// Copyright (C) 2008-2010 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    6://
+        -:    7:// This Source Code Form is subject to the terms of the Mozilla
+        -:    8:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    9:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   10:
+        -:   11:#ifndef EIGEN_DENSEBASE_H
+        -:   12:#define EIGEN_DENSEBASE_H
+        -:   13:
+        -:   14:namespace Eigen {
+        -:   15:
+        -:   16:namespace internal {
+        -:   17:  
+        -:   18:// The index type defined by EIGEN_DEFAULT_DENSE_INDEX_TYPE must be a signed type.
+        -:   19:// This dummy function simply aims at checking that at compile time.
+        -:   20:static inline void check_DenseIndex_is_signed() {
+        -:   21:  EIGEN_STATIC_ASSERT(NumTraits<DenseIndex>::IsSigned,THE_INDEX_TYPE_MUST_BE_A_SIGNED_TYPE); 
+        -:   22:}
+        -:   23:
+        -:   24:} // end namespace internal
+        -:   25:  
+        -:   26:/** \class DenseBase
+        -:   27:  * \ingroup Core_Module
+        -:   28:  *
+        -:   29:  * \brief Base class for all dense matrices, vectors, and arrays
+        -:   30:  *
+        -:   31:  * This class is the base that is inherited by all dense objects (matrix, vector, arrays,
+        -:   32:  * and related expression types). The common Eigen API for dense objects is contained in this class.
+        -:   33:  *
+        -:   34:  * \tparam Derived is the derived type, e.g., a matrix type or an expression.
+        -:   35:  *
+        -:   36:  * This class can be extended with the help of the plugin mechanism described on the page
+        -:   37:  * \ref TopicCustomizing_Plugins by defining the preprocessor symbol \c EIGEN_DENSEBASE_PLUGIN.
+        -:   38:  *
+        -:   39:  * \sa \blank \ref TopicClassHierarchy
+        -:   40:  */
+        -:   41:template<typename Derived> class DenseBase
+        -:   42:#ifndef EIGEN_PARSED_BY_DOXYGEN
+        -:   43:  : public DenseCoeffsBase<Derived>
+        -:   44:#else
+        -:   45:  : public DenseCoeffsBase<Derived,DirectWriteAccessors>
+        -:   46:#endif // not EIGEN_PARSED_BY_DOXYGEN
+        -:   47:{
+        -:   48:  public:
+        -:   49:
+        -:   50:    /** Inner iterator type to iterate over the coefficients of a row or column.
+        -:   51:      * \sa class InnerIterator
+        -:   52:      */
+        -:   53:    typedef Eigen::InnerIterator<Derived> InnerIterator;
+        -:   54:
+        -:   55:    typedef typename internal::traits<Derived>::StorageKind StorageKind;
+        -:   56:
+        -:   57:    /**
+        -:   58:      * \brief The type used to store indices
+        -:   59:      * \details This typedef is relevant for types that store multiple indices such as
+        -:   60:      *          PermutationMatrix or Transpositions, otherwise it defaults to Eigen::Index
+        -:   61:      * \sa \blank \ref TopicPreprocessorDirectives, Eigen::Index, SparseMatrixBase.
+        -:   62:     */
+        -:   63:    typedef typename internal::traits<Derived>::StorageIndex StorageIndex;
+        -:   64:
+        -:   65:    /** The numeric type of the expression' coefficients, e.g. float, double, int or std::complex<float>, etc. */
+        -:   66:    typedef typename internal::traits<Derived>::Scalar Scalar;
+        -:   67:    
+        -:   68:    /** The numeric type of the expression' coefficients, e.g. float, double, int or std::complex<float>, etc.
+        -:   69:      *
+        -:   70:      * It is an alias for the Scalar type */
+        -:   71:    typedef Scalar value_type;
+        -:   72:    
+        -:   73:    typedef typename NumTraits<Scalar>::Real RealScalar;
+        -:   74:    typedef DenseCoeffsBase<Derived> Base;
+        -:   75:
+        -:   76:    using Base::derived;
+        -:   77:    using Base::const_cast_derived;
+        -:   78:    using Base::rows;
+        -:   79:    using Base::cols;
+        -:   80:    using Base::size;
+        -:   81:    using Base::rowIndexByOuterInner;
+        -:   82:    using Base::colIndexByOuterInner;
+        -:   83:    using Base::coeff;
+        -:   84:    using Base::coeffByOuterInner;
+        -:   85:    using Base::operator();
+        -:   86:    using Base::operator[];
+        -:   87:    using Base::x;
+        -:   88:    using Base::y;
+        -:   89:    using Base::z;
+        -:   90:    using Base::w;
+        -:   91:    using Base::stride;
+        -:   92:    using Base::innerStride;
+        -:   93:    using Base::outerStride;
+        -:   94:    using Base::rowStride;
+        -:   95:    using Base::colStride;
+        -:   96:    typedef typename Base::CoeffReturnType CoeffReturnType;
+        -:   97:
+        -:   98:    enum {
+        -:   99:
+        -:  100:      RowsAtCompileTime = internal::traits<Derived>::RowsAtCompileTime,
+        -:  101:        /**< The number of rows at compile-time. This is just a copy of the value provided
+        -:  102:          * by the \a Derived type. If a value is not known at compile-time,
+        -:  103:          * it is set to the \a Dynamic constant.
+        -:  104:          * \sa MatrixBase::rows(), MatrixBase::cols(), ColsAtCompileTime, SizeAtCompileTime */
+        -:  105:
+        -:  106:      ColsAtCompileTime = internal::traits<Derived>::ColsAtCompileTime,
+        -:  107:        /**< The number of columns at compile-time. This is just a copy of the value provided
+        -:  108:          * by the \a Derived type. If a value is not known at compile-time,
+        -:  109:          * it is set to the \a Dynamic constant.
+        -:  110:          * \sa MatrixBase::rows(), MatrixBase::cols(), RowsAtCompileTime, SizeAtCompileTime */
+        -:  111:
+        -:  112:
+        -:  113:      SizeAtCompileTime = (internal::size_at_compile_time<internal::traits<Derived>::RowsAtCompileTime,
+        -:  114:                                                   internal::traits<Derived>::ColsAtCompileTime>::ret),
+        -:  115:        /**< This is equal to the number of coefficients, i.e. the number of
+        -:  116:          * rows times the number of columns, or to \a Dynamic if this is not
+        -:  117:          * known at compile-time. \sa RowsAtCompileTime, ColsAtCompileTime */
+        -:  118:
+        -:  119:      MaxRowsAtCompileTime = internal::traits<Derived>::MaxRowsAtCompileTime,
+        -:  120:        /**< This value is equal to the maximum possible number of rows that this expression
+        -:  121:          * might have. If this expression might have an arbitrarily high number of rows,
+        -:  122:          * this value is set to \a Dynamic.
+        -:  123:          *
+        -:  124:          * This value is useful to know when evaluating an expression, in order to determine
+        -:  125:          * whether it is possible to avoid doing a dynamic memory allocation.
+        -:  126:          *
+        -:  127:          * \sa RowsAtCompileTime, MaxColsAtCompileTime, MaxSizeAtCompileTime
+        -:  128:          */
+        -:  129:
+        -:  130:      MaxColsAtCompileTime = internal::traits<Derived>::MaxColsAtCompileTime,
+        -:  131:        /**< This value is equal to the maximum possible number of columns that this expression
+        -:  132:          * might have. If this expression might have an arbitrarily high number of columns,
+        -:  133:          * this value is set to \a Dynamic.
+        -:  134:          *
+        -:  135:          * This value is useful to know when evaluating an expression, in order to determine
+        -:  136:          * whether it is possible to avoid doing a dynamic memory allocation.
+        -:  137:          *
+        -:  138:          * \sa ColsAtCompileTime, MaxRowsAtCompileTime, MaxSizeAtCompileTime
+        -:  139:          */
+        -:  140:
+        -:  141:      MaxSizeAtCompileTime = (internal::size_at_compile_time<internal::traits<Derived>::MaxRowsAtCompileTime,
+        -:  142:                                                      internal::traits<Derived>::MaxColsAtCompileTime>::ret),
+        -:  143:        /**< This value is equal to the maximum possible number of coefficients that this expression
+        -:  144:          * might have. If this expression might have an arbitrarily high number of coefficients,
+        -:  145:          * this value is set to \a Dynamic.
+        -:  146:          *
+        -:  147:          * This value is useful to know when evaluating an expression, in order to determine
+        -:  148:          * whether it is possible to avoid doing a dynamic memory allocation.
+        -:  149:          *
+        -:  150:          * \sa SizeAtCompileTime, MaxRowsAtCompileTime, MaxColsAtCompileTime
+        -:  151:          */
+        -:  152:
+        -:  153:      IsVectorAtCompileTime = internal::traits<Derived>::MaxRowsAtCompileTime == 1
+        -:  154:                           || internal::traits<Derived>::MaxColsAtCompileTime == 1,
+        -:  155:        /**< This is set to true if either the number of rows or the number of
+        -:  156:          * columns is known at compile-time to be equal to 1. Indeed, in that case,
+        -:  157:          * we are dealing with a column-vector (if there is only one column) or with
+        -:  158:          * a row-vector (if there is only one row). */
+        -:  159:
+        -:  160:      Flags = internal::traits<Derived>::Flags,
+        -:  161:        /**< This stores expression \ref flags flags which may or may not be inherited by new expressions
+        -:  162:          * constructed from this one. See the \ref flags "list of flags".
+        -:  163:          */
+        -:  164:
+        -:  165:      IsRowMajor = int(Flags) & RowMajorBit, /**< True if this expression has row-major storage order. */
+        -:  166:
+        -:  167:      InnerSizeAtCompileTime = int(IsVectorAtCompileTime) ? int(SizeAtCompileTime)
+        -:  168:                             : int(IsRowMajor) ? int(ColsAtCompileTime) : int(RowsAtCompileTime),
+        -:  169:
+        -:  170:      InnerStrideAtCompileTime = internal::inner_stride_at_compile_time<Derived>::ret,
+        -:  171:      OuterStrideAtCompileTime = internal::outer_stride_at_compile_time<Derived>::ret
+        -:  172:    };
+        -:  173:    
+        -:  174:    typedef typename internal::find_best_packet<Scalar,SizeAtCompileTime>::type PacketScalar;
+        -:  175:
+        -:  176:    enum { IsPlainObjectBase = 0 };
+        -:  177:    
+        -:  178:    /** The plain matrix type corresponding to this expression.
+        -:  179:      * \sa PlainObject */
+        -:  180:    typedef Matrix<typename internal::traits<Derived>::Scalar,
+        -:  181:                internal::traits<Derived>::RowsAtCompileTime,
+        -:  182:                internal::traits<Derived>::ColsAtCompileTime,
+        -:  183:                AutoAlign | (internal::traits<Derived>::Flags&RowMajorBit ? RowMajor : ColMajor),
+        -:  184:                internal::traits<Derived>::MaxRowsAtCompileTime,
+        -:  185:                internal::traits<Derived>::MaxColsAtCompileTime
+        -:  186:          > PlainMatrix;
+        -:  187:    
+        -:  188:    /** The plain array type corresponding to this expression.
+        -:  189:      * \sa PlainObject */
+        -:  190:    typedef Array<typename internal::traits<Derived>::Scalar,
+        -:  191:                internal::traits<Derived>::RowsAtCompileTime,
+        -:  192:                internal::traits<Derived>::ColsAtCompileTime,
+        -:  193:                AutoAlign | (internal::traits<Derived>::Flags&RowMajorBit ? RowMajor : ColMajor),
+        -:  194:                internal::traits<Derived>::MaxRowsAtCompileTime,
+        -:  195:                internal::traits<Derived>::MaxColsAtCompileTime
+        -:  196:          > PlainArray;
+        -:  197:
+        -:  198:    /** \brief The plain matrix or array type corresponding to this expression.
+        -:  199:      *
+        -:  200:      * This is not necessarily exactly the return type of eval(). In the case of plain matrices,
+        -:  201:      * the return type of eval() is a const reference to a matrix, not a matrix! It is however guaranteed
+        -:  202:      * that the return type of eval() is either PlainObject or const PlainObject&.
+        -:  203:      */
+        -:  204:    typedef typename internal::conditional<internal::is_same<typename internal::traits<Derived>::XprKind,MatrixXpr >::value,
+        -:  205:                                 PlainMatrix, PlainArray>::type PlainObject;
+        -:  206:
+        -:  207:    /** \returns the number of nonzero coefficients which is in practice the number
+        -:  208:      * of stored coefficients. */
+        -:  209:    EIGEN_DEVICE_FUNC
+        -:  210:    inline Index nonZeros() const { return size(); }
+        -:  211:
+        -:  212:    /** \returns the outer size.
+        -:  213:      *
+        -:  214:      * \note For a vector, this returns just 1. For a matrix (non-vector), this is the major dimension
+        -:  215:      * with respect to the \ref TopicStorageOrders "storage order", i.e., the number of columns for a
+        -:  216:      * column-major matrix, and the number of rows for a row-major matrix. */
+        -:  217:    EIGEN_DEVICE_FUNC
+    1539*:  218:    Index outerSize() const
+     1539:  218-block  0
+    %%%%%:  218-block  1
+    %%%%%:  218-block  2
+    %%%%%:  218-block  3
+    %%%%%:  218-block  4
+        -:  219:    {
+    1638*:  220:      return IsVectorAtCompileTime ? 1
+       66:  220-block  0
+       33:  220-block  1
+     1539:  220-block  2
+    %%%%%:  220-block  3
+    %%%%%:  220-block  4
+    %%%%%:  220-block  5
+    %%%%%:  220-block  6
+        -:  221:           : int(IsRowMajor) ? this->rows() : this->cols();
+        -:  222:    }
+        -:  223:
+        -:  224:    /** \returns the inner size.
+        -:  225:      *
+        -:  226:      * \note For a vector, this is just the size. For a matrix (non-vector), this is the minor dimension
+        -:  227:      * with respect to the \ref TopicStorageOrders "storage order", i.e., the number of rows for a 
+        -:  228:      * column-major matrix, and the number of columns for a row-major matrix. */
+        -:  229:    EIGEN_DEVICE_FUNC
+14734090*:  230:    Index innerSize() const
+        3:  230-block  0
+    %%%%%:  230-block  1
+    %%%%%:  230-block  2
+  3148800:  230-block  3
+    %%%%%:  230-block  4
+        3:  230-block  5
+     1536:  230-block  6
+    %%%%%:  230-block  7
+    %%%%%:  230-block  8
+    %%%%%:  230-block  9
+    %%%%%:  230-block 10
+     4509:  230-block 11
+    %%%%%:  230-block 12
+    %%%%%:  230-block 13
+       36:  230-block 14
+        3:  230-block 15
+     1536:  230-block 16
+        6:  230-block 17
+     1503:  230-block 18
+     1533:  230-block 19
+    %%%%%:  230-block 20
+  9920368:  230-block 21
+     1536:  230-block 22
+     1602:  230-block 23
+       36:  230-block 24
+  1650897:  230-block 25
+        3:  230-block 26
+        3:  230-block 27
+    %%%%%:  230-block 28
+    %%%%%:  230-block 29
+        3:  230-block 30
+        -:  231:    {
+18036073*:  232:      return IsVectorAtCompileTime ? this->size()
+    %%%%%:  232-block  0
+    %%%%%:  232-block  1
+       63:  232-block  2
+    %%%%%:  232-block  3
+        3:  232-block  4
+    %%%%%:  232-block  5
+       63:  232-block  6
+    %%%%%:  232-block  7
+  3148800:  232-block  8
+       63:  232-block  9
+    %%%%%:  232-block 10
+        3:  232-block 11
+     1536:  232-block 12
+    %%%%%:  232-block 13
+    %%%%%:  232-block 14
+    %%%%%:  232-block 15
+    %%%%%:  232-block 16
+     4509:  232-block 17
+    %%%%%:  232-block 18
+    %%%%%:  232-block 19
+    %%%%%:  232-block 20
+       36:  232-block 21
+        3:  232-block 22
+     1536:  232-block 23
+        6:  232-block 24
+     1503:  232-block 25
+     1533:  232-block 26
+    %%%%%:  232-block 27
+  9920368:  232-block 28
+     1536:  232-block 29
+     1602:  232-block 30
+       36:  232-block 31
+  1650897:  232-block 32
+  1650897:  232-block 33
+        3:  232-block 34
+        3:  232-block 35
+    %%%%%:  232-block 36
+    %%%%%:  232-block 37
+        3:  232-block 38
+        -:  233:           : int(IsRowMajor) ? this->cols() : this->rows();
+        -:  234:    }
+        -:  235:
+        -:  236:    /** Only plain matrices/arrays, not expressions, may be resized; therefore the only useful resize methods are
+        -:  237:      * Matrix::resize() and Array::resize(). The present method only asserts that the new size equals the old size, and does
+        -:  238:      * nothing else.
+        -:  239:      */
+        -:  240:    EIGEN_DEVICE_FUNC
+        -:  241:    void resize(Index newSize)
+        -:  242:    {
+        -:  243:      EIGEN_ONLY_USED_FOR_DEBUG(newSize);
+        -:  244:      eigen_assert(newSize == this->size()
+        -:  245:                && "DenseBase::resize() does not actually allow to resize.");
+        -:  246:    }
+        -:  247:    /** Only plain matrices/arrays, not expressions, may be resized; therefore the only useful resize methods are
+        -:  248:      * Matrix::resize() and Array::resize(). The present method only asserts that the new size equals the old size, and does
+        -:  249:      * nothing else.
+        -:  250:      */
+        -:  251:    EIGEN_DEVICE_FUNC
+    #####:  252:    void resize(Index rows, Index cols)
+    %%%%%:  252-block  0
+    %%%%%:  252-block  1
+    %%%%%:  252-block  2
+    %%%%%:  252-block  3
+    %%%%%:  252-block  4
+    %%%%%:  252-block  5
+    %%%%%:  252-block  6
+        -:  253:    {
+        -:  254:      EIGEN_ONLY_USED_FOR_DEBUG(rows);
+        -:  255:      EIGEN_ONLY_USED_FOR_DEBUG(cols);
+    #####:  256:      eigen_assert(rows == this->rows() && cols == this->cols()
+    %%%%%:  256-block  0
+    %%%%%:  256-block  1
+    %%%%%:  256-block  2
+    %%%%%:  256-block  3
+    %%%%%:  256-block  4
+    %%%%%:  256-block  5
+    %%%%%:  256-block  6
+    %%%%%:  256-block  7
+    %%%%%:  256-block  8
+    %%%%%:  256-block  9
+    %%%%%:  256-block 10
+    %%%%%:  256-block 11
+        -:  257:                && "DenseBase::resize() does not actually allow to resize.");
+    #####:  258:    }
+        -:  259:
+        -:  260:#ifndef EIGEN_PARSED_BY_DOXYGEN
+        -:  261:    /** \internal Represents a matrix with all coefficients equal to one another*/
+        -:  262:    typedef CwiseNullaryOp<internal::scalar_constant_op<Scalar>,PlainObject> ConstantReturnType;
+        -:  263:    /** \internal \deprecated Represents a vector with linearly spaced coefficients that allows sequential access only. */
+        -:  264:    typedef CwiseNullaryOp<internal::linspaced_op<Scalar,PacketScalar>,PlainObject> SequentialLinSpacedReturnType;
+        -:  265:    /** \internal Represents a vector with linearly spaced coefficients that allows random access. */
+        -:  266:    typedef CwiseNullaryOp<internal::linspaced_op<Scalar,PacketScalar>,PlainObject> RandomAccessLinSpacedReturnType;
+        -:  267:    /** \internal the return type of MatrixBase::eigenvalues() */
+        -:  268:    typedef Matrix<typename NumTraits<typename internal::traits<Derived>::Scalar>::Real, internal::traits<Derived>::ColsAtCompileTime, 1> EigenvaluesReturnType;
+        -:  269:
+        -:  270:#endif // not EIGEN_PARSED_BY_DOXYGEN
+        -:  271:
+        -:  272:    /** Copies \a other into *this. \returns a reference to *this. */
+        -:  273:    template<typename OtherDerived>
+        -:  274:    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+        -:  275:    Derived& operator=(const DenseBase<OtherDerived>& other);
+        -:  276:
+        -:  277:    /** Special case of the template operator=, in order to prevent the compiler
+        -:  278:      * from generating a default operator= (issue hit with g++ 4.1)
+        -:  279:      */
+        -:  280:    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+        -:  281:    Derived& operator=(const DenseBase& other);
+        -:  282:
+        -:  283:    template<typename OtherDerived>
+        -:  284:    EIGEN_DEVICE_FUNC
+        -:  285:    Derived& operator=(const EigenBase<OtherDerived> &other);
+        -:  286:
+        -:  287:    template<typename OtherDerived>
+        -:  288:    EIGEN_DEVICE_FUNC
+        -:  289:    Derived& operator+=(const EigenBase<OtherDerived> &other);
+        -:  290:
+        -:  291:    template<typename OtherDerived>
+        -:  292:    EIGEN_DEVICE_FUNC
+        -:  293:    Derived& operator-=(const EigenBase<OtherDerived> &other);
+        -:  294:
+        -:  295:    template<typename OtherDerived>
+        -:  296:    EIGEN_DEVICE_FUNC
+        -:  297:    Derived& operator=(const ReturnByValue<OtherDerived>& func);
+        -:  298:
+        -:  299:    /** \internal
+        -:  300:      * Copies \a other into *this without evaluating other. \returns a reference to *this.
+        -:  301:      * \deprecated */
+        -:  302:    template<typename OtherDerived>
+        -:  303:    EIGEN_DEVICE_FUNC
+        -:  304:    Derived& lazyAssign(const DenseBase<OtherDerived>& other);
+        -:  305:
+        -:  306:    EIGEN_DEVICE_FUNC
+        -:  307:    CommaInitializer<Derived> operator<< (const Scalar& s);
+        -:  308:
+        -:  309:    /** \deprecated it now returns \c *this */
+        -:  310:    template<unsigned int Added,unsigned int Removed>
+        -:  311:    EIGEN_DEPRECATED
+        -:  312:    const Derived& flagged() const
+        -:  313:    { return derived(); }
+        -:  314:
+        -:  315:    template<typename OtherDerived>
+        -:  316:    EIGEN_DEVICE_FUNC
+        -:  317:    CommaInitializer<Derived> operator<< (const DenseBase<OtherDerived>& other);
+        -:  318:
+        -:  319:    typedef Transpose<Derived> TransposeReturnType;
+        -:  320:    EIGEN_DEVICE_FUNC
+        -:  321:    TransposeReturnType transpose();
+        -:  322:    typedef typename internal::add_const<Transpose<const Derived> >::type ConstTransposeReturnType;
+        -:  323:    EIGEN_DEVICE_FUNC
+        -:  324:    ConstTransposeReturnType transpose() const;
+        -:  325:    EIGEN_DEVICE_FUNC
+        -:  326:    void transposeInPlace();
+        -:  327:
+        -:  328:    EIGEN_DEVICE_FUNC static const ConstantReturnType
+        -:  329:    Constant(Index rows, Index cols, const Scalar& value);
+        -:  330:    EIGEN_DEVICE_FUNC static const ConstantReturnType
+        -:  331:    Constant(Index size, const Scalar& value);
+        -:  332:    EIGEN_DEVICE_FUNC static const ConstantReturnType
+        -:  333:    Constant(const Scalar& value);
+        -:  334:
+        -:  335:    EIGEN_DEVICE_FUNC static const SequentialLinSpacedReturnType
+        -:  336:    LinSpaced(Sequential_t, Index size, const Scalar& low, const Scalar& high);
+        -:  337:    EIGEN_DEVICE_FUNC static const RandomAccessLinSpacedReturnType
+        -:  338:    LinSpaced(Index size, const Scalar& low, const Scalar& high);
+        -:  339:    EIGEN_DEVICE_FUNC static const SequentialLinSpacedReturnType
+        -:  340:    LinSpaced(Sequential_t, const Scalar& low, const Scalar& high);
+        -:  341:    EIGEN_DEVICE_FUNC static const RandomAccessLinSpacedReturnType
+        -:  342:    LinSpaced(const Scalar& low, const Scalar& high);
+        -:  343:
+        -:  344:    template<typename CustomNullaryOp> EIGEN_DEVICE_FUNC
+        -:  345:    static const CwiseNullaryOp<CustomNullaryOp, PlainObject>
+        -:  346:    NullaryExpr(Index rows, Index cols, const CustomNullaryOp& func);
+        -:  347:    template<typename CustomNullaryOp> EIGEN_DEVICE_FUNC
+        -:  348:    static const CwiseNullaryOp<CustomNullaryOp, PlainObject>
+        -:  349:    NullaryExpr(Index size, const CustomNullaryOp& func);
+        -:  350:    template<typename CustomNullaryOp> EIGEN_DEVICE_FUNC
+        -:  351:    static const CwiseNullaryOp<CustomNullaryOp, PlainObject>
+        -:  352:    NullaryExpr(const CustomNullaryOp& func);
+        -:  353:
+        -:  354:    EIGEN_DEVICE_FUNC static const ConstantReturnType Zero(Index rows, Index cols);
+        -:  355:    EIGEN_DEVICE_FUNC static const ConstantReturnType Zero(Index size);
+        -:  356:    EIGEN_DEVICE_FUNC static const ConstantReturnType Zero();
+        -:  357:    EIGEN_DEVICE_FUNC static const ConstantReturnType Ones(Index rows, Index cols);
+        -:  358:    EIGEN_DEVICE_FUNC static const ConstantReturnType Ones(Index size);
+        -:  359:    EIGEN_DEVICE_FUNC static const ConstantReturnType Ones();
+        -:  360:
+        -:  361:    EIGEN_DEVICE_FUNC void fill(const Scalar& value);
+        -:  362:    EIGEN_DEVICE_FUNC Derived& setConstant(const Scalar& value);
+        -:  363:    EIGEN_DEVICE_FUNC Derived& setLinSpaced(Index size, const Scalar& low, const Scalar& high);
+        -:  364:    EIGEN_DEVICE_FUNC Derived& setLinSpaced(const Scalar& low, const Scalar& high);
+        -:  365:    EIGEN_DEVICE_FUNC Derived& setZero();
+        -:  366:    EIGEN_DEVICE_FUNC Derived& setOnes();
+        -:  367:    EIGEN_DEVICE_FUNC Derived& setRandom();
+        -:  368:
+        -:  369:    template<typename OtherDerived> EIGEN_DEVICE_FUNC
+        -:  370:    bool isApprox(const DenseBase<OtherDerived>& other,
+        -:  371:                  const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+        -:  372:    EIGEN_DEVICE_FUNC 
+        -:  373:    bool isMuchSmallerThan(const RealScalar& other,
+        -:  374:                           const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+        -:  375:    template<typename OtherDerived> EIGEN_DEVICE_FUNC
+        -:  376:    bool isMuchSmallerThan(const DenseBase<OtherDerived>& other,
+        -:  377:                           const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+        -:  378:
+        -:  379:    EIGEN_DEVICE_FUNC bool isApproxToConstant(const Scalar& value, const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+        -:  380:    EIGEN_DEVICE_FUNC bool isConstant(const Scalar& value, const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+        -:  381:    EIGEN_DEVICE_FUNC bool isZero(const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+        -:  382:    EIGEN_DEVICE_FUNC bool isOnes(const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+        -:  383:    
+        -:  384:    inline bool hasNaN() const;
+        -:  385:    inline bool allFinite() const;
+        -:  386:
+        -:  387:    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+        -:  388:    Derived& operator*=(const Scalar& other);
+        -:  389:    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+        -:  390:    Derived& operator/=(const Scalar& other);
+        -:  391:
+        -:  392:    typedef typename internal::add_const_on_value_type<typename internal::eval<Derived>::type>::type EvalReturnType;
+        -:  393:    /** \returns the matrix or vector obtained by evaluating this expression.
+        -:  394:      *
+        -:  395:      * Notice that in the case of a plain matrix or vector (not an expression) this function just returns
+        -:  396:      * a const reference, in order to avoid a useless copy.
+        -:  397:      * 
+        -:  398:      * \warning Be carefull with eval() and the auto C++ keyword, as detailed in this \link TopicPitfalls_auto_keyword page \endlink.
+        -:  399:      */
+        -:  400:    EIGEN_DEVICE_FUNC
+    #####:  401:    EIGEN_STRONG_INLINE EvalReturnType eval() const
+    %%%%%:  401-block  0
+        -:  402:    {
+        -:  403:      // Even though MSVC does not honor strong inlining when the return type
+        -:  404:      // is a dynamic matrix, we desperately need strong inlining for fixed
+        -:  405:      // size types on MSVC.
+    #####:  406:      return typename internal::eval<Derived>::type(derived());
+    %%%%%:  406-block  0
+        -:  407:    }
+        -:  408:    
+        -:  409:    /** swaps *this with the expression \a other.
+        -:  410:      *
+        -:  411:      */
+        -:  412:    template<typename OtherDerived>
+        -:  413:    EIGEN_DEVICE_FUNC
+    4428*:  414:    void swap(const DenseBase<OtherDerived>& other)
+     4428:  414-block  0
+        -:  415:    {
+        -:  416:      EIGEN_STATIC_ASSERT(!OtherDerived::IsPlainObjectBase,THIS_EXPRESSION_IS_NOT_A_LVALUE__IT_IS_READ_ONLY);
+    4428*:  417:      eigen_assert(rows()==other.rows() && cols()==other.cols());
+     4428:  417-block  0
+    %%%%%:  417-block  1
+     4428:  417-block  2
+    4428*:  418:      call_assignment(derived(), other.const_cast_derived(), internal::swap_assign_op<Scalar>());
+     4428:  418-block  0
+     4428:  419:    }
+        -:  420:
+        -:  421:    /** swaps *this with the matrix or array \a other.
+        -:  422:      *
+        -:  423:      */
+        -:  424:    template<typename OtherDerived>
+        -:  425:    EIGEN_DEVICE_FUNC
+        -:  426:    void swap(PlainObjectBase<OtherDerived>& other)
+        -:  427:    {
+        -:  428:      eigen_assert(rows()==other.rows() && cols()==other.cols());
+        -:  429:      call_assignment(derived(), other.derived(), internal::swap_assign_op<Scalar>());
+        -:  430:    }
+        -:  431:
+        -:  432:    EIGEN_DEVICE_FUNC inline const NestByValue<Derived> nestByValue() const;
+        -:  433:    EIGEN_DEVICE_FUNC inline const ForceAlignedAccess<Derived> forceAlignedAccess() const;
+        -:  434:    EIGEN_DEVICE_FUNC inline ForceAlignedAccess<Derived> forceAlignedAccess();
+        -:  435:    template<bool Enable> EIGEN_DEVICE_FUNC
+        -:  436:    inline const typename internal::conditional<Enable,ForceAlignedAccess<Derived>,Derived&>::type forceAlignedAccessIf() const;
+        -:  437:    template<bool Enable> EIGEN_DEVICE_FUNC
+        -:  438:    inline typename internal::conditional<Enable,ForceAlignedAccess<Derived>,Derived&>::type forceAlignedAccessIf();
+        -:  439:
+        -:  440:    EIGEN_DEVICE_FUNC Scalar sum() const;
+        -:  441:    EIGEN_DEVICE_FUNC Scalar mean() const;
+        -:  442:    EIGEN_DEVICE_FUNC Scalar trace() const;
+        -:  443:
+        -:  444:    EIGEN_DEVICE_FUNC Scalar prod() const;
+        -:  445:
+        -:  446:    EIGEN_DEVICE_FUNC typename internal::traits<Derived>::Scalar minCoeff() const;
+        -:  447:    EIGEN_DEVICE_FUNC typename internal::traits<Derived>::Scalar maxCoeff() const;
+        -:  448:
+        -:  449:    template<typename IndexType> EIGEN_DEVICE_FUNC
+        -:  450:    typename internal::traits<Derived>::Scalar minCoeff(IndexType* row, IndexType* col) const;
+        -:  451:    template<typename IndexType> EIGEN_DEVICE_FUNC
+        -:  452:    typename internal::traits<Derived>::Scalar maxCoeff(IndexType* row, IndexType* col) const;
+        -:  453:    template<typename IndexType> EIGEN_DEVICE_FUNC
+        -:  454:    typename internal::traits<Derived>::Scalar minCoeff(IndexType* index) const;
+        -:  455:    template<typename IndexType> EIGEN_DEVICE_FUNC
+        -:  456:    typename internal::traits<Derived>::Scalar maxCoeff(IndexType* index) const;
+        -:  457:
+        -:  458:    template<typename BinaryOp>
+        -:  459:    EIGEN_DEVICE_FUNC
+        -:  460:    Scalar redux(const BinaryOp& func) const;
+        -:  461:
+        -:  462:    template<typename Visitor>
+        -:  463:    EIGEN_DEVICE_FUNC
+        -:  464:    void visit(Visitor& func) const;
+        -:  465:
+        -:  466:    /** \returns a WithFormat proxy object allowing to print a matrix the with given
+        -:  467:      * format \a fmt.
+        -:  468:      *
+        -:  469:      * See class IOFormat for some examples.
+        -:  470:      *
+        -:  471:      * \sa class IOFormat, class WithFormat
+        -:  472:      */
+        -:  473:    inline const WithFormat<Derived> format(const IOFormat& fmt) const
+        -:  474:    {
+        -:  475:      return WithFormat<Derived>(derived(), fmt);
+        -:  476:    }
+        -:  477:
+        -:  478:    /** \returns the unique coefficient of a 1x1 expression */
+        -:  479:    EIGEN_DEVICE_FUNC
+        -:  480:    CoeffReturnType value() const
+        -:  481:    {
+        -:  482:      EIGEN_STATIC_ASSERT_SIZE_1x1(Derived)
+        -:  483:      eigen_assert(this->rows() == 1 && this->cols() == 1);
+        -:  484:      return derived().coeff(0,0);
+        -:  485:    }
+        -:  486:
+        -:  487:    EIGEN_DEVICE_FUNC bool all() const;
+        -:  488:    EIGEN_DEVICE_FUNC bool any() const;
+        -:  489:    EIGEN_DEVICE_FUNC Index count() const;
+        -:  490:
+        -:  491:    typedef VectorwiseOp<Derived, Horizontal> RowwiseReturnType;
+        -:  492:    typedef const VectorwiseOp<const Derived, Horizontal> ConstRowwiseReturnType;
+        -:  493:    typedef VectorwiseOp<Derived, Vertical> ColwiseReturnType;
+        -:  494:    typedef const VectorwiseOp<const Derived, Vertical> ConstColwiseReturnType;
+        -:  495:
+        -:  496:    /** \returns a VectorwiseOp wrapper of *this providing additional partial reduction operations
+        -:  497:    *
+        -:  498:    * Example: \include MatrixBase_rowwise.cpp
+        -:  499:    * Output: \verbinclude MatrixBase_rowwise.out
+        -:  500:    *
+        -:  501:    * \sa colwise(), class VectorwiseOp, \ref TutorialReductionsVisitorsBroadcasting
+        -:  502:    */
+        -:  503:    //Code moved here due to a CUDA compiler bug
+        -:  504:    EIGEN_DEVICE_FUNC inline ConstRowwiseReturnType rowwise() const {
+        -:  505:      return ConstRowwiseReturnType(derived());
+        -:  506:    }
+        -:  507:    EIGEN_DEVICE_FUNC RowwiseReturnType rowwise();
+        -:  508:
+        -:  509:    /** \returns a VectorwiseOp wrapper of *this providing additional partial reduction operations
+        -:  510:    *
+        -:  511:    * Example: \include MatrixBase_colwise.cpp
+        -:  512:    * Output: \verbinclude MatrixBase_colwise.out
+        -:  513:    *
+        -:  514:    * \sa rowwise(), class VectorwiseOp, \ref TutorialReductionsVisitorsBroadcasting
+        -:  515:    */
+        -:  516:    EIGEN_DEVICE_FUNC inline ConstColwiseReturnType colwise() const {
+        -:  517:      return ConstColwiseReturnType(derived());
+        -:  518:    }
+        -:  519:    EIGEN_DEVICE_FUNC ColwiseReturnType colwise();
+        -:  520:
+        -:  521:    typedef CwiseNullaryOp<internal::scalar_random_op<Scalar>,PlainObject> RandomReturnType;
+        -:  522:    static const RandomReturnType Random(Index rows, Index cols);
+        -:  523:    static const RandomReturnType Random(Index size);
+        -:  524:    static const RandomReturnType Random();
+        -:  525:
+        -:  526:    template<typename ThenDerived,typename ElseDerived>
+        -:  527:    const Select<Derived,ThenDerived,ElseDerived>
+        -:  528:    select(const DenseBase<ThenDerived>& thenMatrix,
+        -:  529:           const DenseBase<ElseDerived>& elseMatrix) const;
+        -:  530:
+        -:  531:    template<typename ThenDerived>
+        -:  532:    inline const Select<Derived,ThenDerived, typename ThenDerived::ConstantReturnType>
+        -:  533:    select(const DenseBase<ThenDerived>& thenMatrix, const typename ThenDerived::Scalar& elseScalar) const;
+        -:  534:
+        -:  535:    template<typename ElseDerived>
+        -:  536:    inline const Select<Derived, typename ElseDerived::ConstantReturnType, ElseDerived >
+        -:  537:    select(const typename ElseDerived::Scalar& thenScalar, const DenseBase<ElseDerived>& elseMatrix) const;
+        -:  538:
+        -:  539:    template<int p> RealScalar lpNorm() const;
+        -:  540:
+        -:  541:    template<int RowFactor, int ColFactor>
+        -:  542:    EIGEN_DEVICE_FUNC
+        -:  543:    const Replicate<Derived,RowFactor,ColFactor> replicate() const;
+        -:  544:    /**
+        -:  545:    * \return an expression of the replication of \c *this
+        -:  546:    *
+        -:  547:    * Example: \include MatrixBase_replicate_int_int.cpp
+        -:  548:    * Output: \verbinclude MatrixBase_replicate_int_int.out
+        -:  549:    *
+        -:  550:    * \sa VectorwiseOp::replicate(), DenseBase::replicate<int,int>(), class Replicate
+        -:  551:    */
+        -:  552:    //Code moved here due to a CUDA compiler bug
+        -:  553:    EIGEN_DEVICE_FUNC
+        -:  554:    const Replicate<Derived, Dynamic, Dynamic> replicate(Index rowFactor, Index colFactor) const
+        -:  555:    {
+        -:  556:      return Replicate<Derived, Dynamic, Dynamic>(derived(), rowFactor, colFactor);
+        -:  557:    }
+        -:  558:
+        -:  559:    typedef Reverse<Derived, BothDirections> ReverseReturnType;
+        -:  560:    typedef const Reverse<const Derived, BothDirections> ConstReverseReturnType;
+        -:  561:    EIGEN_DEVICE_FUNC ReverseReturnType reverse();
+        -:  562:    /** This is the const version of reverse(). */
+        -:  563:    //Code moved here due to a CUDA compiler bug
+        -:  564:    EIGEN_DEVICE_FUNC ConstReverseReturnType reverse() const
+        -:  565:    {
+        -:  566:      return ConstReverseReturnType(derived());
+        -:  567:    }
+        -:  568:    EIGEN_DEVICE_FUNC void reverseInPlace();
+        -:  569:
+        -:  570:#define EIGEN_CURRENT_STORAGE_BASE_CLASS Eigen::DenseBase
+        -:  571:#define EIGEN_DOC_BLOCK_ADDONS_NOT_INNER_PANEL
+        -:  572:#define EIGEN_DOC_BLOCK_ADDONS_INNER_PANEL_IF(COND)
+        -:  573:#   include "../plugins/BlockMethods.h"
+        -:  574:#   ifdef EIGEN_DENSEBASE_PLUGIN
+        -:  575:#     include EIGEN_DENSEBASE_PLUGIN
+        -:  576:#   endif
+        -:  577:#undef EIGEN_CURRENT_STORAGE_BASE_CLASS
+        -:  578:#undef EIGEN_DOC_BLOCK_ADDONS_NOT_INNER_PANEL
+        -:  579:#undef EIGEN_DOC_BLOCK_ADDONS_INNER_PANEL_IF
+        -:  580:
+        -:  581:    // disable the use of evalTo for dense objects with a nice compilation error
+        -:  582:    template<typename Dest>
+        -:  583:    EIGEN_DEVICE_FUNC
+        -:  584:    inline void evalTo(Dest& ) const
+        -:  585:    {
+        -:  586:      EIGEN_STATIC_ASSERT((internal::is_same<Dest,void>::value),THE_EVAL_EVALTO_FUNCTION_SHOULD_NEVER_BE_CALLED_FOR_DENSE_OBJECTS);
+        -:  587:    }
+        -:  588:
+        -:  589:  protected:
+        -:  590:    /** Default constructor. Do nothing. */
+19369521*:  591:    EIGEN_DEVICE_FUNC DenseBase()
+    35328:  591-block  0
+    %%%%%:  591-block  1
+    %%%%%:  591-block  2
+    30240:  591-block  3
+    30240:  591-block  4
+       66:  591-block  5
+     1503:  591-block  6
+    30240:  591-block  7
+    %%%%%:  591-block  8
+    %%%%%:  591-block  9
+        3:  591-block 10
+    %%%%%:  591-block 11
+       33:  591-block 12
+     1503:  591-block 13
+     1530:  591-block 14
+    %%%%%:  591-block 15
+       99:  591-block 16
+       33:  591-block 17
+    %%%%%:  591-block 18
+     1503:  591-block 19
+    30240:  591-block 20
+     1503:  591-block 21
+    %%%%%:  591-block 22
+    35328:  591-block 23
+    %%%%%:  591-block 24
+    %%%%%:  591-block 25
+   392445:  591-block 26
+    %%%%%:  591-block 27
+    %%%%%:  591-block 28
+       33:  591-block 29
+    35328:  591-block 30
+    %%%%%:  591-block 31
+       33:  591-block 32
+     1503:  591-block 33
+    %%%%%:  591-block 34
+    %%%%%:  591-block 35
+     4536:  591-block 36
+        3:  591-block 37
+       33:  591-block 38
+     1503:  591-block 39
+     4509:  591-block 40
+    %%%%%:  591-block 41
+    %%%%%:  591-block 42
+     1530:  591-block 43
+     1503:  591-block 44
+     1503:  591-block 45
+     4509:  591-block 46
+    %%%%%:  591-block 47
+    %%%%%:  591-block 48
+    35328:  591-block 49
+     1503:  591-block 50
+    %%%%%:  591-block 51
+    %%%%%:  591-block 52
+     1530:  591-block 53
+        3:  591-block 54
+        6:  591-block 55
+     1503:  591-block 56
+     1503:  591-block 57
+    %%%%%:  591-block 58
+    %%%%%:  591-block 59
+    %%%%%:  591-block 60
+    %%%%%:  591-block 61
+    %%%%%:  591-block 62
+     1530:  591-block 63
+     3060:  591-block 64
+     1536:  591-block 65
+     1536:  591-block 66
+     3072:  591-block 67
+     1536:  591-block 68
+    %%%%%:  591-block 69
+    %%%%%:  591-block 70
+       33:  591-block 71
+     1503:  591-block 72
+       36:  591-block 73
+    %%%%%:  591-block 74
+     1530:  591-block 75
+  3301794:  591-block 76
+     1533:  591-block 77
+  3301794:  591-block 78
+     1602:  591-block 79
+        3:  591-block 80
+        3:  591-block 81
+        3:  591-block 82
+  9920368:  591-block 83
+     1503:  591-block 84
+     1503:  591-block 85
+     1503:  591-block 86
+     1530:  591-block 87
+    %%%%%:  591-block 88
+    %%%%%:  591-block 89
+    %%%%%:  591-block 90
+    %%%%%:  591-block 91
+        3:  591-block 92
+       33:  591-block 93
+       33:  591-block 94
+       33:  591-block 95
+    %%%%%:  591-block 96
+    %%%%%:  591-block 97
+    %%%%%:  591-block 98
+     1530:  591-block 99
+   430833:  591-block 100
+     3033:  591-block 101
+     1530:  591-block 102
+     1536:  591-block 103
+    %%%%%:  591-block 104
+        3:  591-block 105
+    %%%%%:  591-block 106
+       33:  591-block 107
+       33:  591-block 108
+    %%%%%:  591-block 109
+    %%%%%:  591-block 110
+     1536:  591-block 111
+        3:  591-block 112
+       33:  591-block 113
+    %%%%%:  591-block 114
+    %%%%%:  591-block 115
+    %%%%%:  591-block 116
+     1530:  591-block 117
+    %%%%%:  591-block 118
+    %%%%%:  591-block 119
+    %%%%%:  591-block 120
+    %%%%%:  591-block 121
+        3:  591-block 122
+       18:  591-block 123
+    %%%%%:  591-block 124
+        3:  591-block 125
+  1650897:  591-block 126
+    %%%%%:  591-block 127
+        9:  591-block 128
+        3:  591-block 129
+        3:  591-block 130
+        3:  591-block 131
+        3:  591-block 132
+        3:  591-block 133
+        3:  591-block 134
+        3:  591-block 135
+    %%%%%:  591-block 136
+    %%%%%:  591-block 137
+    %%%%%:  591-block 138
+        3:  591-block 139
+    %%%%%:  591-block 140
+    %%%%%:  591-block 141
+    %%%%%:  591-block 142
+    %%%%%:  591-block 143
+    %%%%%:  591-block 144
+    %%%%%:  591-block 145
+    %%%%%:  591-block 146
+    %%%%%:  591-block 147
+        3:  591-block 148
+        -:  592:    {
+        -:  593:      /* Just checks for self-consistency of the flags.
+        -:  594:       * Only do it when debugging Eigen, as this borders on paranoiac and could slow compilation down
+        -:  595:       */
+        -:  596:#ifdef EIGEN_INTERNAL_DEBUGGING
+        -:  597:      EIGEN_STATIC_ASSERT((EIGEN_IMPLIES(MaxRowsAtCompileTime==1 && MaxColsAtCompileTime!=1, int(IsRowMajor))
+        -:  598:                        && EIGEN_IMPLIES(MaxColsAtCompileTime==1 && MaxRowsAtCompileTime!=1, int(!IsRowMajor))),
+        -:  599:                          INVALID_STORAGE_ORDER_FOR_THIS_VECTOR_EXPRESSION)
+        -:  600:#endif
+        -:  601:    }
+        -:  602:
+        -:  603:  private:
+        -:  604:    EIGEN_DEVICE_FUNC explicit DenseBase(int);
+        -:  605:    EIGEN_DEVICE_FUNC DenseBase(int,int);
+        -:  606:    template<typename OtherDerived> EIGEN_DEVICE_FUNC explicit DenseBase(const DenseBase<OtherDerived>&);
+        -:  607:};
+        -:  608:
+        -:  609:} // end namespace Eigen
+        -:  610:
+        -:  611:#endif // EIGEN_DENSEBASE_H

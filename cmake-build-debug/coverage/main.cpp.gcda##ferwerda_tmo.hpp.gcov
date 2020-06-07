@@ -1,0 +1,230 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/ferwerda_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_FERWERDA_TMO_HPP
+        -:   19:#define PIC_TONE_MAPPING_FERWERDA_TMO_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:#include "../util/array.hpp"
+        -:   24:
+        -:   25:#include "../filtering/filter.hpp"
+        -:   26:#include "../filtering/filter_luminance.hpp"
+        -:   27:#include "../tone_mapping/tone_mapping_operator.hpp"
+        -:   28:
+        -:   29:namespace pic {
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief The FerwerdaTMO class
+        -:   33: */
+        -:   34:class FerwerdaTMO: public ToneMappingOperator
+        -:   35:{
+        -:   36:protected:
+        -:   37:    float Ld_Max, Ld_a, Lw_a;
+        -:   38:    FilterLuminance flt_lum;
+        -:   39:
+        -:   40:    /**
+        -:   41:     * @brief ProcessAux
+        -:   42:     * @param imgIn
+        -:   43:     * @param imgOut
+        -:   44:     * @return
+        -:   45:     */    
+    #####:   46:    Image *ProcessAux(ImageVec imgIn, Image *imgOut)
+        -:   47:    {
+    #####:   48:        updateImage(imgIn[0]);
+    %%%%%:   48-block  0
+        -:   49:
+        -:   50:        //compute luminance and its statistics
+    #####:   51:        images[0] = flt_lum.Process(imgIn, images[0]);
+    %%%%%:   51-block  0
+        -:   52:
+    #####:   53:        if(Lw_a < 0.0f) {
+    %%%%%:   53-block  0
+    #####:   54:            float maxVal;
+    #####:   55:            images[0]->getMaxVal(NULL, &maxVal);
+    %%%%%:   55-block  0
+    #####:   56:            Lw_a = maxVal / 2.0f;
+        -:   57:        }
+        -:   58:
+    #####:   59:        float mC = Tp(Ld_a) / Tp(Lw_a);
+    #####:   60:        float mR = Ts(Ld_a) / Ts(Lw_a);
+    #####:   61:        float k = WalravenValetonK(Lw_a);
+        -:   62:
+    #####:   63:        int channels = imgIn[0]->channels;
+    #####:   64:        float *scale = new float[channels];
+    %%%%%:   64-block  0
+    %%%%%:   64-block  1
+    %%%%%:   64-block  2
+        -:   65:
+    #####:   66:        if(channels == 3) {
+    #####:   67:            scale[0] = 1.05f;
+    #####:   68:            scale[1] = 0.97f;
+    #####:   69:            scale[2] = 1.27f;
+    %%%%%:   69-block  0
+        -:   70:        } else {
+    #####:   71:           Arrayf::assign(1.0f, scale, channels);
+    %%%%%:   71-block  0
+        -:   72:        }
+        -:   73:
+    #####:   74:        for(int i = 0; i < channels; i++) {
+    %%%%%:   74-block  0
+    #####:   75:            scale[i] *= (mR * k);
+    %%%%%:   75-block  0
+        -:   76:        }
+        -:   77:
+    #####:   78:        #pragma omp parallel for
+        -:   79:        for(int i = 0; i < imgIn[0]->size(); i += channels) {
+        -:   80:
+        -:   81:            int indexL = i / channels;
+        -:   82:
+        -:   83:            for(int j = 0; j < channels; j++) {
+        -:   84:                int index = i + j;
+        -:   85:                imgOut->data[index] = imgIn[0]->data[index] * mC +
+        -:   86:                                      images[0]->data[indexL] * scale[j];
+        -:   87:            }
+        -:   88:        }
+        -:   89:
+        -:   90:        //NOTE: this is done to have values in [0,1] and not in cd/m^2!
+    #####:   91:        *imgOut /= Ld_Max;
+    %%%%%:   91-block  0
+        -:   92:
+    #####:   93:        return imgOut;
+        -:   94:    }
+        -:   95:
+        -:   96:public:
+        -:   97:
+        -:   98:    /**
+        -:   99:     * @brief FerwerdaTMO
+        -:  100:     * @param Ld_Max
+        -:  101:     * @param Ld_a
+        -:  102:     * @param Lw_a
+        -:  103:     */
+        -:  104:    FerwerdaTMO(float Ld_Max = 100.0f, float Ld_a = 50.0f, float Lw_a = 50.0f) : ToneMappingOperator()
+        -:  105:    {
+        -:  106:        images.push_back(NULL);
+        -:  107:        update(Ld_Max, Ld_a, Lw_a);
+        -:  108:    }
+        -:  109:
+        -:  110:    ~FerwerdaTMO()
+        -:  111:    {
+        -:  112:        release();
+        -:  113:    }
+        -:  114:
+        -:  115:    /**
+        -:  116:     * @brief update
+        -:  117:     * @param Ld_Max
+        -:  118:     * @param Ld_a
+        -:  119:     * @param Lw_a
+        -:  120:     */
+        -:  121:    void update(float Ld_Max = 100.0f, float Ld_a = 50.0f, float Lw_a = 50.0f)
+        -:  122:    {
+        -:  123:        this->Ld_Max = Ld_Max > 0.0f ? Ld_Max : 100.0f;
+        -:  124:        this->Ld_a = Ld_a > 0.0f ? Ld_a : (this->Ld_Max / 2.0f);
+        -:  125:        this->Lw_a = Lw_a;
+        -:  126:    }
+        -:  127:
+        -:  128:    /**
+        -:  129:     * @brief Ts computes the gamma function used in Ferwerda TMO for Scotopic levels (rods' cells).
+        -:  130:     * @param x
+        -:  131:     * @return
+        -:  132:     */
+    #####:  133:    static float Ts(float x)
+        -:  134:    {
+    #####:  135:        float t = log10f(x);
+    #####:  136:        float y;
+        -:  137:
+    #####:  138:        if(t <= -3.94f) {
+    %%%%%:  138-block  0
+        -:  139:            y = -2.86f;
+        -:  140:        } else {
+    #####:  141:            if(t >= -1.44) {
+    %%%%%:  141-block  0
+    #####:  142:                y = t - 0.395f;
+    %%%%%:  142-block  0
+        -:  143:            } else {
+    #####:  144:                y = powf(0.405f * t + 1.6f, 2.18f) - 2.86f;
+    %%%%%:  144-block  0
+        -:  145:            }
+        -:  146:        }
+        -:  147:
+    #####:  148:        y = powf(10.0f, y);
+        -:  149:
+    #####:  150:        return y;
+        -:  151:    }
+        -:  152:
+        -:  153:    /**
+        -:  154:     * @brief Tp computes the gamma function used in Ferwerda TMO for Photopic levels (cones' cells).
+        -:  155:     * @param x
+        -:  156:     * @return
+        -:  157:     */
+    #####:  158:    static float Tp(float x)
+        -:  159:    {
+    #####:  160:        float t = log10f(x);
+    #####:  161:        float y;
+        -:  162:
+    #####:  163:        if(t <= -2.6f) {
+    %%%%%:  163-block  0
+        -:  164:            y = -0.72f;
+        -:  165:        } else {
+    #####:  166:            if(t >= 1.9f) {
+    %%%%%:  166-block  0
+    #####:  167:                y = t - 1.255f;
+    %%%%%:  167-block  0
+        -:  168:            } else {
+    #####:  169:                y = powf(0.249f * t + 0.65f, 2.7f) - 0.72f;
+    %%%%%:  169-block  0
+        -:  170:            }
+        -:  171:        }
+        -:  172:
+    #####:  173:        y = powf(10.0f, y);
+        -:  174:
+    #####:  175:        return y;
+        -:  176:    }
+        -:  177:
+        -:  178:    /**
+        -:  179:     * @brief WalravenValetonK
+        -:  180:     * @param Lw_a is the world adaptation luminance in cd/m^2
+        -:  181:     * @param sigma
+        -:  182:     * @return
+        -:  183:     */
+    #####:  184:    static float WalravenValetonK(float Lw_a, float sigma = 100.0f)
+        -:  185:    {
+    #####:  186:        float k = (sigma - Lw_a / 4.0f) / (sigma + Lw_a);
+    #####:  187:        return (k > 0.0f) ?  k : 0.0f;
+    %%%%%:  187-block  0
+        -:  188:    }
+        -:  189:
+        -:  190:    /**
+        -:  191:     * @brief execute
+        -:  192:     * @param imgIn
+        -:  193:     * @param imgOut
+        -:  194:     * @return
+        -:  195:     */
+        -:  196:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  197:    {
+        -:  198:        FerwerdaTMO ftmo(200.0f, -1.0f, -1.0f);
+        -:  199:        return ftmo.Process(Single(imgIn), imgOut);
+        -:  200:    }
+        -:  201:};
+        -:  202:} // end namespace pic
+        -:  203:
+        -:  204:#endif /* PIC_TONE_MAPPING_FERWERDA_TMO_HPP */
+        -:  205:

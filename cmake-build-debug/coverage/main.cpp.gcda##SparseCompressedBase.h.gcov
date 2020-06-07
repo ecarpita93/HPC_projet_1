@@ -1,0 +1,613 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/SparseCore/SparseCompressedBase.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2015 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5://
+        -:    6:// This Source Code Form is subject to the terms of the Mozilla
+        -:    7:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    8:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:    9:
+        -:   10:#ifndef EIGEN_SPARSE_COMPRESSED_BASE_H
+        -:   11:#define EIGEN_SPARSE_COMPRESSED_BASE_H
+        -:   12:
+        -:   13:namespace Eigen { 
+        -:   14:
+        -:   15:template<typename Derived> class SparseCompressedBase;
+        -:   16:  
+        -:   17:namespace internal {
+        -:   18:
+        -:   19:template<typename Derived>
+        -:   20:struct traits<SparseCompressedBase<Derived> > : traits<Derived>
+        -:   21:{};
+        -:   22:
+        -:   23:} // end namespace internal
+        -:   24:
+        -:   25:/** \ingroup SparseCore_Module
+        -:   26:  * \class SparseCompressedBase
+        -:   27:  * \brief Common base class for sparse [compressed]-{row|column}-storage format.
+        -:   28:  *
+        -:   29:  * This class defines the common interface for all derived classes implementing the compressed sparse storage format, such as:
+        -:   30:  *  - SparseMatrix
+        -:   31:  *  - Ref<SparseMatrixType,Options>
+        -:   32:  *  - Map<SparseMatrixType>
+        -:   33:  *
+        -:   34:  */
+        -:   35:template<typename Derived>
+        -:   36:class SparseCompressedBase
+        -:   37:  : public SparseMatrixBase<Derived>
+        -:   38:{
+        -:   39:  public:
+        -:   40:    typedef SparseMatrixBase<Derived> Base;
+        -:   41:    EIGEN_SPARSE_PUBLIC_INTERFACE(SparseCompressedBase)
+        -:   42:    using Base::operator=;
+        -:   43:    using Base::IsRowMajor;
+        -:   44:    
+        -:   45:    class InnerIterator;
+        -:   46:    class ReverseInnerIterator;
+        -:   47:    
+        -:   48:  protected:
+        -:   49:    typedef typename Base::IndexVector IndexVector;
+        -:   50:    Eigen::Map<IndexVector> innerNonZeros() { return Eigen::Map<IndexVector>(innerNonZeroPtr(), isCompressed()?0:derived().outerSize()); }
+    #####:   51:    const  Eigen::Map<const IndexVector> innerNonZeros() const { return Eigen::Map<const IndexVector>(innerNonZeroPtr(), isCompressed()?0:derived().outerSize()); }
+    %%%%%:   51-block  0
+        -:   52:        
+        -:   53:  public:
+        -:   54:    
+        -:   55:    /** \returns the number of non zero coefficients */
+    #####:   56:    inline Index nonZeros() const
+        -:   57:    {
+        -:   58:      if(Derived::IsVectorAtCompileTime && outerIndexPtr()==0)
+        -:   59:        return derived().nonZeros();
+    #####:   60:      else if(isCompressed())
+    %%%%%:   60-block  0
+    #####:   61:        return outerIndexPtr()[derived().outerSize()]-outerIndexPtr()[0];
+    %%%%%:   61-block  0
+    #####:   62:      else if(derived().outerSize()==0)
+    %%%%%:   62-block  0
+        -:   63:        return 0;
+        -:   64:      else
+    #####:   65:        return innerNonZeros().sum();
+    %%%%%:   65-block  0
+        -:   66:    }
+        -:   67:    
+        -:   68:    /** \returns a const pointer to the array of values.
+        -:   69:      * This function is aimed at interoperability with other libraries.
+        -:   70:      * \sa innerIndexPtr(), outerIndexPtr() */
+    #####:   71:    inline const Scalar* valuePtr() const { return derived().valuePtr(); }
+        -:   72:    /** \returns a non-const pointer to the array of values.
+        -:   73:      * This function is aimed at interoperability with other libraries.
+        -:   74:      * \sa innerIndexPtr(), outerIndexPtr() */
+        -:   75:    inline Scalar* valuePtr() { return derived().valuePtr(); }
+        -:   76:
+        -:   77:    /** \returns a const pointer to the array of inner indices.
+        -:   78:      * This function is aimed at interoperability with other libraries.
+        -:   79:      * \sa valuePtr(), outerIndexPtr() */
+    #####:   80:    inline const StorageIndex* innerIndexPtr() const { return derived().innerIndexPtr(); }
+        -:   81:    /** \returns a non-const pointer to the array of inner indices.
+        -:   82:      * This function is aimed at interoperability with other libraries.
+        -:   83:      * \sa valuePtr(), outerIndexPtr() */
+        -:   84:    inline StorageIndex* innerIndexPtr() { return derived().innerIndexPtr(); }
+        -:   85:
+        -:   86:    /** \returns a const pointer to the array of the starting positions of the inner vectors.
+        -:   87:      * This function is aimed at interoperability with other libraries.
+        -:   88:      * \warning it returns the null pointer 0 for SparseVector
+        -:   89:      * \sa valuePtr(), innerIndexPtr() */
+    #####:   90:    inline const StorageIndex* outerIndexPtr() const { return derived().outerIndexPtr(); }
+    %%%%%:   90-block  0
+    %%%%%:   90-block  1
+    %%%%%:   90-block  2
+    %%%%%:   90-block  3
+    %%%%%:   90-block  4
+    %%%%%:   90-block  5
+    %%%%%:   90-block  6
+    %%%%%:   90-block  7
+    %%%%%:   90-block  8
+    %%%%%:   90-block  9
+    %%%%%:   90-block 10
+    %%%%%:   90-block 11
+    %%%%%:   90-block 12
+    %%%%%:   90-block 13
+    %%%%%:   90-block 14
+    %%%%%:   90-block 15
+    %%%%%:   90-block 16
+    %%%%%:   90-block 17
+    %%%%%:   90-block 18
+    %%%%%:   90-block 19
+    %%%%%:   90-block 20
+    %%%%%:   90-block 21
+    %%%%%:   90-block 22
+    %%%%%:   90-block 23
+    %%%%%:   90-block 24
+    %%%%%:   90-block 25
+    %%%%%:   90-block 26
+    %%%%%:   90-block 27
+    %%%%%:   90-block 28
+    %%%%%:   90-block 29
+        -:   91:    /** \returns a non-const pointer to the array of the starting positions of the inner vectors.
+        -:   92:      * This function is aimed at interoperability with other libraries.
+        -:   93:      * \warning it returns the null pointer 0 for SparseVector
+        -:   94:      * \sa valuePtr(), innerIndexPtr() */
+        -:   95:    inline StorageIndex* outerIndexPtr() { return derived().outerIndexPtr(); }
+        -:   96:
+        -:   97:    /** \returns a const pointer to the array of the number of non zeros of the inner vectors.
+        -:   98:      * This function is aimed at interoperability with other libraries.
+        -:   99:      * \warning it returns the null pointer 0 in compressed mode */
+    #####:  100:    inline const StorageIndex* innerNonZeroPtr() const { return derived().innerNonZeroPtr(); }
+        -:  101:    /** \returns a non-const pointer to the array of the number of non zeros of the inner vectors.
+        -:  102:      * This function is aimed at interoperability with other libraries.
+        -:  103:      * \warning it returns the null pointer 0 in compressed mode */
+        -:  104:    inline StorageIndex* innerNonZeroPtr() { return derived().innerNonZeroPtr(); }
+        -:  105:    
+        -:  106:    /** \returns whether \c *this is in compressed form. */
+    #####:  107:    inline bool isCompressed() const { return innerNonZeroPtr()==0; }
+    %%%%%:  107-block  0
+    %%%%%:  107-block  1
+    %%%%%:  107-block  2
+    %%%%%:  107-block  3
+    %%%%%:  107-block  4
+    %%%%%:  107-block  5
+    %%%%%:  107-block  6
+        -:  108:
+        -:  109:    /** \returns a read-only view of the stored coefficients as a 1D array expression.
+        -:  110:      *
+        -:  111:      * \warning this method is for \b compressed \b storage \b only, and it will trigger an assertion otherwise.
+        -:  112:      *
+        -:  113:      * \sa valuePtr(), isCompressed() */
+        -:  114:    const Map<const Array<Scalar,Dynamic,1> > coeffs() const { eigen_assert(isCompressed()); return Array<Scalar,Dynamic,1>::Map(valuePtr(),nonZeros()); }
+        -:  115:
+        -:  116:    /** \returns a read-write view of the stored coefficients as a 1D array expression
+        -:  117:      *
+        -:  118:      * \warning this method is for \b compressed \b storage \b only, and it will trigger an assertion otherwise.
+        -:  119:      *
+        -:  120:      * Here is an example:
+        -:  121:      * \include SparseMatrix_coeffs.cpp
+        -:  122:      * and the output is:
+        -:  123:      * \include SparseMatrix_coeffs.out
+        -:  124:      *
+        -:  125:      * \sa valuePtr(), isCompressed() */
+        -:  126:    Map<Array<Scalar,Dynamic,1> > coeffs() { eigen_assert(isCompressed()); return Array<Scalar,Dynamic,1>::Map(valuePtr(),nonZeros()); }
+        -:  127:
+        -:  128:  protected:
+        -:  129:    /** Default constructor. Do nothing. */
+    #####:  130:    SparseCompressedBase() {}
+    %%%%%:  130-block  0
+    %%%%%:  130-block  1
+    %%%%%:  130-block  2
+    %%%%%:  130-block  3
+    %%%%%:  130-block  4
+        -:  131:  private:
+        -:  132:    template<typename OtherDerived> explicit SparseCompressedBase(const SparseCompressedBase<OtherDerived>&);
+        -:  133:};
+        -:  134:
+        -:  135:template<typename Derived>
+        -:  136:class SparseCompressedBase<Derived>::InnerIterator
+        -:  137:{
+        -:  138:  public:
+        -:  139:    InnerIterator()
+        -:  140:      : m_values(0), m_indices(0), m_outer(0), m_id(0), m_end(0)
+        -:  141:    {}
+        -:  142:
+        -:  143:    InnerIterator(const InnerIterator& other)
+        -:  144:      : m_values(other.m_values), m_indices(other.m_indices), m_outer(other.m_outer), m_id(other.m_id), m_end(other.m_end)
+        -:  145:    {}
+        -:  146:
+        -:  147:    InnerIterator& operator=(const InnerIterator& other)
+        -:  148:    {
+        -:  149:      m_values = other.m_values;
+        -:  150:      m_indices = other.m_indices;
+        -:  151:      const_cast<OuterType&>(m_outer).setValue(other.m_outer.value());
+        -:  152:      m_id = other.m_id;
+        -:  153:      m_end = other.m_end;
+        -:  154:      return *this;
+        -:  155:    }
+        -:  156:
+    #####:  157:    InnerIterator(const SparseCompressedBase& mat, Index outer)
+    %%%%%:  157-block  0
+    %%%%%:  157-block  1
+    %%%%%:  157-block  2
+    %%%%%:  157-block  3
+    %%%%%:  157-block  4
+    %%%%%:  157-block  5
+    %%%%%:  157-block  6
+    %%%%%:  157-block  7
+    %%%%%:  157-block  8
+    #####:  158:      : m_values(mat.valuePtr()), m_indices(mat.innerIndexPtr()), m_outer(outer)
+    %%%%%:  158-block  0
+    %%%%%:  158-block  1
+    %%%%%:  158-block  2
+    %%%%%:  158-block  3
+    %%%%%:  158-block  4
+    %%%%%:  158-block  5
+    %%%%%:  158-block  6
+    %%%%%:  158-block  7
+    %%%%%:  158-block  8
+    %%%%%:  158-block  9
+    %%%%%:  158-block 10
+    %%%%%:  158-block 11
+        -:  159:    {
+        -:  160:      if(Derived::IsVectorAtCompileTime && mat.outerIndexPtr()==0)
+        -:  161:      {
+        -:  162:        m_id = 0;
+        -:  163:        m_end = mat.nonZeros();
+        -:  164:      }
+        -:  165:      else
+        -:  166:      {
+    #####:  167:        m_id = mat.outerIndexPtr()[outer];
+    %%%%%:  167-block  0
+    %%%%%:  167-block  1
+    %%%%%:  167-block  2
+    %%%%%:  167-block  3
+    %%%%%:  167-block  4
+    %%%%%:  167-block  5
+    %%%%%:  167-block  6
+    %%%%%:  167-block  7
+    %%%%%:  167-block  8
+    %%%%%:  167-block  9
+    %%%%%:  167-block 10
+    %%%%%:  167-block 11
+    #####:  168:        if(mat.isCompressed())
+    %%%%%:  168-block  0
+    %%%%%:  168-block  1
+    %%%%%:  168-block  2
+    %%%%%:  168-block  3
+    %%%%%:  168-block  4
+    %%%%%:  168-block  5
+    %%%%%:  168-block  6
+    %%%%%:  168-block  7
+    %%%%%:  168-block  8
+    %%%%%:  168-block  9
+    %%%%%:  168-block 10
+    %%%%%:  168-block 11
+    #####:  169:          m_end = mat.outerIndexPtr()[outer+1];
+    %%%%%:  169-block  0
+    %%%%%:  169-block  1
+    %%%%%:  169-block  2
+    %%%%%:  169-block  3
+    %%%%%:  169-block  4
+    %%%%%:  169-block  5
+    %%%%%:  169-block  6
+    %%%%%:  169-block  7
+    %%%%%:  169-block  8
+    %%%%%:  169-block  9
+    %%%%%:  169-block 10
+    %%%%%:  169-block 11
+    %%%%%:  169-block 12
+    %%%%%:  169-block 13
+    %%%%%:  169-block 14
+    %%%%%:  169-block 15
+    %%%%%:  169-block 16
+        -:  170:        else
+    #####:  171:          m_end = m_id + mat.innerNonZeroPtr()[outer];
+    %%%%%:  171-block  0
+    %%%%%:  171-block  1
+    %%%%%:  171-block  2
+    %%%%%:  171-block  3
+    %%%%%:  171-block  4
+    %%%%%:  171-block  5
+    %%%%%:  171-block  6
+    %%%%%:  171-block  7
+    %%%%%:  171-block  8
+    %%%%%:  171-block  9
+    %%%%%:  171-block 10
+    %%%%%:  171-block 11
+    %%%%%:  171-block 12
+    %%%%%:  171-block 13
+    %%%%%:  171-block 14
+    %%%%%:  171-block 15
+    %%%%%:  171-block 16
+        -:  172:      }
+    #####:  173:    }
+    %%%%%:  173-block  0
+    %%%%%:  173-block  1
+    %%%%%:  173-block  2
+    %%%%%:  173-block  3
+    %%%%%:  173-block  4
+    %%%%%:  173-block  5
+    %%%%%:  173-block  6
+    %%%%%:  173-block  7
+    %%%%%:  173-block  8
+    %%%%%:  173-block  9
+    %%%%%:  173-block 10
+    %%%%%:  173-block 11
+    %%%%%:  173-block 12
+    %%%%%:  173-block 13
+        -:  174:
+        -:  175:    explicit InnerIterator(const SparseCompressedBase& mat)
+        -:  176:      : m_values(mat.valuePtr()), m_indices(mat.innerIndexPtr()), m_outer(0), m_id(0), m_end(mat.nonZeros())
+        -:  177:    {
+        -:  178:      EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived);
+        -:  179:    }
+        -:  180:
+        -:  181:    explicit InnerIterator(const internal::CompressedStorage<Scalar,StorageIndex>& data)
+        -:  182:      : m_values(data.valuePtr()), m_indices(data.indexPtr()), m_outer(0), m_id(0), m_end(data.size())
+        -:  183:    {
+        -:  184:      EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived);
+        -:  185:    }
+        -:  186:
+    #####:  187:    inline InnerIterator& operator++() { m_id++; return *this; }
+    %%%%%:  187-block  0
+    %%%%%:  187-block  1
+    %%%%%:  187-block  2
+    %%%%%:  187-block  3
+    %%%%%:  187-block  4
+    %%%%%:  187-block  5
+    %%%%%:  187-block  6
+    %%%%%:  187-block  7
+    %%%%%:  187-block  8
+    %%%%%:  187-block  9
+    %%%%%:  187-block 10
+    %%%%%:  187-block 11
+    %%%%%:  187-block 12
+    %%%%%:  187-block 13
+    %%%%%:  187-block 14
+    %%%%%:  187-block 15
+    %%%%%:  187-block 16
+    %%%%%:  187-block 17
+    %%%%%:  187-block 18
+    %%%%%:  187-block 19
+    %%%%%:  187-block 20
+    %%%%%:  187-block 21
+    %%%%%:  187-block 22
+    %%%%%:  187-block 23
+        -:  188:
+    #####:  189:    inline const Scalar& value() const { return m_values[m_id]; }
+    %%%%%:  189-block  0
+    %%%%%:  189-block  1
+    %%%%%:  189-block  2
+    %%%%%:  189-block  3
+    %%%%%:  189-block  4
+    %%%%%:  189-block  5
+    %%%%%:  189-block  6
+    %%%%%:  189-block  7
+    %%%%%:  189-block  8
+    %%%%%:  189-block  9
+    %%%%%:  189-block 10
+    #####:  190:    inline Scalar& valueRef() { return const_cast<Scalar&>(m_values[m_id]); }
+    %%%%%:  190-block  0
+        -:  191:
+    #####:  192:    inline StorageIndex index() const { return m_indices[m_id]; }
+    %%%%%:  192-block  0
+    %%%%%:  192-block  1
+    %%%%%:  192-block  2
+    %%%%%:  192-block  3
+    %%%%%:  192-block  4
+    %%%%%:  192-block  5
+    %%%%%:  192-block  6
+    %%%%%:  192-block  7
+    %%%%%:  192-block  8
+    %%%%%:  192-block  9
+    %%%%%:  192-block 10
+    %%%%%:  192-block 11
+    %%%%%:  192-block 12
+    %%%%%:  192-block 13
+    %%%%%:  192-block 14
+    %%%%%:  192-block 15
+    %%%%%:  192-block 16
+    %%%%%:  192-block 17
+    %%%%%:  192-block 18
+    %%%%%:  192-block 19
+    %%%%%:  192-block 20
+    %%%%%:  192-block 21
+    %%%%%:  192-block 22
+    %%%%%:  192-block 23
+    %%%%%:  192-block 24
+    %%%%%:  192-block 25
+    %%%%%:  192-block 26
+    %%%%%:  192-block 27
+    %%%%%:  192-block 28
+    %%%%%:  192-block 29
+        -:  193:    inline Index outer() const { return m_outer.value(); }
+    #####:  194:    inline Index row() const { return IsRowMajor ? m_outer.value() : index(); }
+    %%%%%:  194-block  0
+    %%%%%:  194-block  1
+    #####:  195:    inline Index col() const { return IsRowMajor ? index() : m_outer.value(); }
+    %%%%%:  195-block  0
+    %%%%%:  195-block  1
+        -:  196:
+    #####:  197:    inline operator bool() const { return (m_id < m_end); }
+    %%%%%:  197-block  0
+    %%%%%:  197-block  1
+    %%%%%:  197-block  2
+    %%%%%:  197-block  3
+    %%%%%:  197-block  4
+    %%%%%:  197-block  5
+    %%%%%:  197-block  6
+    %%%%%:  197-block  7
+    %%%%%:  197-block  8
+    %%%%%:  197-block  9
+    %%%%%:  197-block 10
+    %%%%%:  197-block 11
+    %%%%%:  197-block 12
+    %%%%%:  197-block 13
+    %%%%%:  197-block 14
+    %%%%%:  197-block 15
+    %%%%%:  197-block 16
+    %%%%%:  197-block 17
+    %%%%%:  197-block 18
+    %%%%%:  197-block 19
+    %%%%%:  197-block 20
+    %%%%%:  197-block 21
+    %%%%%:  197-block 22
+    %%%%%:  197-block 23
+    %%%%%:  197-block 24
+    %%%%%:  197-block 25
+    %%%%%:  197-block 26
+    %%%%%:  197-block 27
+    %%%%%:  197-block 28
+    %%%%%:  197-block 29
+    %%%%%:  197-block 30
+    %%%%%:  197-block 31
+    %%%%%:  197-block 32
+        -:  198:
+        -:  199:  protected:
+        -:  200:    const Scalar* m_values;
+        -:  201:    const StorageIndex* m_indices;
+        -:  202:    typedef internal::variable_if_dynamic<Index,Derived::IsVectorAtCompileTime?0:Dynamic> OuterType;
+        -:  203:    const OuterType m_outer;
+        -:  204:    Index m_id;
+        -:  205:    Index m_end;
+        -:  206:  private:
+        -:  207:    // If you get here, then you're not using the right InnerIterator type, e.g.:
+        -:  208:    //   SparseMatrix<double,RowMajor> A;
+        -:  209:    //   SparseMatrix<double>::InnerIterator it(A,0);
+        -:  210:    template<typename T> InnerIterator(const SparseMatrixBase<T>&, Index outer);
+        -:  211:};
+        -:  212:
+        -:  213:template<typename Derived>
+        -:  214:class SparseCompressedBase<Derived>::ReverseInnerIterator
+        -:  215:{
+        -:  216:  public:
+        -:  217:    ReverseInnerIterator(const SparseCompressedBase& mat, Index outer)
+        -:  218:      : m_values(mat.valuePtr()), m_indices(mat.innerIndexPtr()), m_outer(outer)
+        -:  219:    {
+        -:  220:      if(Derived::IsVectorAtCompileTime && mat.outerIndexPtr()==0)
+        -:  221:      {
+        -:  222:        m_start = 0;
+        -:  223:        m_id = mat.nonZeros();
+        -:  224:      }
+        -:  225:      else
+        -:  226:      {
+        -:  227:        m_start = mat.outerIndexPtr()[outer];
+        -:  228:        if(mat.isCompressed())
+        -:  229:          m_id = mat.outerIndexPtr()[outer+1];
+        -:  230:        else
+        -:  231:          m_id = m_start + mat.innerNonZeroPtr()[outer];
+        -:  232:      }
+        -:  233:    }
+        -:  234:
+        -:  235:    explicit ReverseInnerIterator(const SparseCompressedBase& mat)
+        -:  236:      : m_values(mat.valuePtr()), m_indices(mat.innerIndexPtr()), m_outer(0), m_start(0), m_id(mat.nonZeros())
+        -:  237:    {
+        -:  238:      EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived);
+        -:  239:    }
+        -:  240:
+        -:  241:    explicit ReverseInnerIterator(const internal::CompressedStorage<Scalar,StorageIndex>& data)
+        -:  242:      : m_values(data.valuePtr()), m_indices(data.indexPtr()), m_outer(0), m_start(0), m_id(data.size())
+        -:  243:    {
+        -:  244:      EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived);
+        -:  245:    }
+        -:  246:
+        -:  247:    inline ReverseInnerIterator& operator--() { --m_id; return *this; }
+        -:  248:
+        -:  249:    inline const Scalar& value() const { return m_values[m_id-1]; }
+        -:  250:    inline Scalar& valueRef() { return const_cast<Scalar&>(m_values[m_id-1]); }
+        -:  251:
+        -:  252:    inline StorageIndex index() const { return m_indices[m_id-1]; }
+        -:  253:    inline Index outer() const { return m_outer.value(); }
+        -:  254:    inline Index row() const { return IsRowMajor ? m_outer.value() : index(); }
+        -:  255:    inline Index col() const { return IsRowMajor ? index() : m_outer.value(); }
+        -:  256:
+        -:  257:    inline operator bool() const { return (m_id > m_start); }
+        -:  258:
+        -:  259:  protected:
+        -:  260:    const Scalar* m_values;
+        -:  261:    const StorageIndex* m_indices;
+        -:  262:    typedef internal::variable_if_dynamic<Index,Derived::IsVectorAtCompileTime?0:Dynamic> OuterType;
+        -:  263:    const OuterType m_outer;
+        -:  264:    Index m_start;
+        -:  265:    Index m_id;
+        -:  266:};
+        -:  267:
+        -:  268:namespace internal {
+        -:  269:
+        -:  270:template<typename Derived>
+    #####:  271:struct evaluator<SparseCompressedBase<Derived> >
+    %%%%%:  271-block  0
+    %%%%%:  271-block  1
+    %%%%%:  271-block  2
+    %%%%%:  271-block  3
+        -:  272:  : evaluator_base<Derived>
+        -:  273:{
+        -:  274:  typedef typename Derived::Scalar Scalar;
+        -:  275:  typedef typename Derived::InnerIterator InnerIterator;
+        -:  276:  
+        -:  277:  enum {
+        -:  278:    CoeffReadCost = NumTraits<Scalar>::ReadCost,
+        -:  279:    Flags = Derived::Flags
+        -:  280:  };
+        -:  281:  
+        -:  282:  evaluator() : m_matrix(0), m_zero(0)
+        -:  283:  {
+        -:  284:    EIGEN_INTERNAL_CHECK_COST_VALUE(CoeffReadCost);
+        -:  285:  }
+    #####:  286:  explicit evaluator(const Derived &mat) : m_matrix(&mat), m_zero(0)
+    %%%%%:  286-block  0
+    %%%%%:  286-block  1
+    %%%%%:  286-block  2
+    %%%%%:  286-block  3
+    %%%%%:  286-block  4
+    %%%%%:  286-block  5
+    %%%%%:  286-block  6
+    %%%%%:  286-block  7
+    %%%%%:  286-block  8
+    %%%%%:  286-block  9
+        -:  287:  {
+        -:  288:    EIGEN_INTERNAL_CHECK_COST_VALUE(CoeffReadCost);
+        -:  289:  }
+        -:  290:  
+        -:  291:  inline Index nonZerosEstimate() const {
+        -:  292:    return m_matrix->nonZeros();
+        -:  293:  }
+        -:  294:  
+    #####:  295:  operator Derived&() { return m_matrix->const_cast_derived(); }
+    %%%%%:  295-block  0
+    %%%%%:  295-block  1
+    %%%%%:  295-block  2
+    %%%%%:  295-block  3
+    %%%%%:  295-block  4
+    %%%%%:  295-block  5
+    %%%%%:  295-block  6
+    %%%%%:  295-block  7
+    #####:  296:  operator const Derived&() const { return *m_matrix; }
+    %%%%%:  296-block  0
+    %%%%%:  296-block  1
+    %%%%%:  296-block  2
+        -:  297:  
+        -:  298:  typedef typename DenseCoeffsBase<Derived,ReadOnlyAccessors>::CoeffReturnType CoeffReturnType;
+        -:  299:  const Scalar& coeff(Index row, Index col) const
+        -:  300:  {
+        -:  301:    Index p = find(row,col);
+        -:  302:
+        -:  303:    if(p==Dynamic)
+        -:  304:      return m_zero;
+        -:  305:    else
+        -:  306:      return m_matrix->const_cast_derived().valuePtr()[p];
+        -:  307:  }
+        -:  308:
+        -:  309:  Scalar& coeffRef(Index row, Index col)
+        -:  310:  {
+        -:  311:    Index p = find(row,col);
+        -:  312:    eigen_assert(p!=Dynamic && "written coefficient does not exist");
+        -:  313:    return m_matrix->const_cast_derived().valuePtr()[p];
+        -:  314:  }
+        -:  315:
+        -:  316:protected:
+        -:  317:
+        -:  318:  Index find(Index row, Index col) const
+        -:  319:  {
+        -:  320:    eigen_internal_assert(row>=0 && row<m_matrix->rows() && col>=0 && col<m_matrix->cols());
+        -:  321:
+        -:  322:    const Index outer = Derived::IsRowMajor ? row : col;
+        -:  323:    const Index inner = Derived::IsRowMajor ? col : row;
+        -:  324:
+        -:  325:    Index start = m_matrix->outerIndexPtr()[outer];
+        -:  326:    Index end = m_matrix->isCompressed() ? m_matrix->outerIndexPtr()[outer+1] : m_matrix->outerIndexPtr()[outer] + m_matrix->innerNonZeroPtr()[outer];
+        -:  327:    eigen_assert(end>=start && "you are using a non finalized sparse matrix or written coefficient does not exist");
+        -:  328:    const Index p = std::lower_bound(m_matrix->innerIndexPtr()+start, m_matrix->innerIndexPtr()+end,inner) - m_matrix->innerIndexPtr();
+        -:  329:
+        -:  330:    return ((p<end) && (m_matrix->innerIndexPtr()[p]==inner)) ? p : Dynamic;
+        -:  331:  }
+        -:  332:
+        -:  333:  const Derived *m_matrix;
+        -:  334:  const Scalar m_zero;
+        -:  335:};
+        -:  336:
+        -:  337:}
+        -:  338:
+        -:  339:} // end namespace Eigen
+        -:  340:
+        -:  341:#endif // EIGEN_SPARSE_COMPRESSED_BASE_H

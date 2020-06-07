@@ -1,0 +1,885 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/algorithms/camera_response_function.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014-2016
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_ALGORITHMS_CAMERA_RESPONSE_FUNCTION_HPP
+        -:   19:#define PIC_ALGORITHMS_CAMERA_RESPONSE_FUNCTION_HPP
+        -:   20:
+        -:   21:#include <algorithm>
+        -:   22:
+        -:   23:#include "../image.hpp"
+        -:   24:#include "../point_samplers/sampler_random.hpp"
+        -:   25:#include "../histogram.hpp"
+        -:   26:#include "../filtering/filter_mean.hpp"
+        -:   27:#include "../util/polynomial.hpp"
+        -:   28:
+        -:   29:#include "../algorithms/sub_sample_stack.hpp"
+        -:   30:#include "../algorithms/weight_function.hpp"
+        -:   31:#include "../algorithms/mitsunaga_nayar_crf.hpp"
+        -:   32:
+        -:   33:#ifndef PIC_DISABLE_EIGEN
+        -:   34:    #ifndef PIC_EIGEN_NOT_BUNDLED
+        -:   35:        #include "../externals/Eigen/SVD"
+        -:   36:    #else
+        -:   37:        #include <Eigen/SVD>
+        -:   38:    #endif
+        -:   39:#endif
+        -:   40:
+        -:   41:namespace pic {
+        -:   42:
+        -:   43:enum IMG_LIN {IL_LIN, IL_2_2, IL_LUT_8_BIT, IL_POLYNOMIAL};
+        -:   44:
+        -:   45:/**
+        -:   46: * @brief The CameraResponseFunction class
+        -:   47: */
+        -:   48:class CameraResponseFunction
+        -:   49:{
+        -:   50:protected:
+        -:   51:
+        -:   52:    /**
+        -:   53:    * \brief gsolve computes the inverse CRF of a camera.
+        -:   54:    */
+        3:   55:    float *gsolve(int *samples, std::vector< float > &log_exposure, float lambda, int nSamples)
+        -:   56:    {
+        -:   57:        #ifndef PIC_DISABLE_EIGEN
+        -:   58:
+        3:   59:        int nExposure = int(log_exposure.size());
+        3:   59-block  0
+        -:   60:
+        3:   61:        int n = 256;
+        3:   62:        int rows = nSamples * nExposure + n + 1;
+        3:   63:        int cols = n + nSamples;
+        -:   64:
+        -:   65:        #ifdef PIC_DEBUG
+        -:   66:            printf("Matrix size: (%d, %d)\n", rows, cols);
+        -:   67:        #endif
+        -:   68:
+        3:   69:        Eigen::MatrixXf A = Eigen::MatrixXf::Zero(rows, cols);
+        3:   69-block  0
+        3:   69-block  1
+        6:   70:        Eigen::VectorXf b = Eigen::VectorXf::Zero(rows);
+        3:   70-block  0
+    $$$$$:   70-block  1
+    $$$$$:   70-block  2
+        -:   71:
+        3:   72:        int k = 0;
+        -:   73:
+      771:   74:        for(int i = 0; i < nSamples; i++) {
+        3:   74-block  0
+      771:   74-block  1
+      768:   74-block  2
+     6144:   75:            for(int j = 0; j < nExposure; j++) {
+     6144:   75-block  0
+     5376:   76:                int tmp = samples[i * nExposure + j];
+        -:   77:
+     5376:   78:                float w_ij = w[tmp];
+        -:   79:
+     5376:   80:                A.coeffRef(k, tmp) =  w_ij;
+     5376:   80-block  0
+     5376:   81:                A.coeffRef(k, n + i) = -w_ij;
+        -:   82:                
+     5376:   83:                b[k] =  w_ij * log_exposure[j];
+     5376:   83-block  0
+        -:   84:
+     5376:   85:                k++;
+        -:   86:            }
+        -:   87:        }
+        -:   88:
+        3:   89:        A.coeffRef(k, 128) = 1.0f;
+        3:   89-block  0
+        3:   90:        k++;
+        -:   91:
+        -:   92:        //smoothness term
+      765:   93:        for(int i = 0; i < (n - 2); i++) {
+        3:   93-block  0
+      765:   93-block  1
+      762:   94:            float w_l = lambda * w[i + 1];
+      762:   95:            A.coeffRef(k, i)     =         w_l;
+      762:   95-block  0
+      762:   96:            A.coeffRef(k, i + 1) = -2.0f * w_l;
+      762:   97:            A.coeffRef(k, i + 2) =         w_l;
+      762:   98:            k++;
+      762:   98-block  0
+        -:   99:        }
+        -:  100:
+        -:  101:        //solve the linear system
+        6:  102:        Eigen::JacobiSVD< Eigen::MatrixXf > svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
+        3:  102-block  0
+        -:  103:
+        6:  104:        Eigen::VectorXf x = svd.solve(b);
+        3:  104-block  0
+        3:  104-block  1
+    $$$$$:  104-block  2
+    $$$$$:  104-block  3
+        -:  105:
+        3:  106:        float *ret = new float[n];
+        3:  106-block  0
+        -:  107:
+      771:  108:        for(int i = 0; i < n; i++) {
+      771:  108-block  0
+      768:  109:            ret[i] = expf(x[i]);
+      768:  109-block  0
+        -:  110:        }
+        -:  111:
+        -:  112:        #else
+        -:  113:            float *ret = NULL;
+        -:  114:        #endif
+        -:  115:
+        6:  116:        return ret;
+        3:  116-block  0
+        3:  116-block  1
+        -:  117:    }
+        -:  118:
+        -:  119:    /**
+        -:  120:     * @brief release frees memory.
+        -:  121:     */
+        1:  122:    void release()
+        -:  123:    {
+        1:  124:        stackOut.release();
+        1:  124-block  0
+        -:  125:
+       1*:  126:        for(unsigned int i = 0; i < icrf.size(); i++) {
+        1:  126-block  0
+        1:  126-block  1
+    %%%%%:  126-block  2
+    #####:  127:            if(icrf[i] != NULL) {
+    %%%%%:  127-block  0
+    #####:  128:                delete[] icrf[i];
+    %%%%%:  128-block  0
+    #####:  129:                icrf[i] = NULL;
+        -:  130:            }
+        -:  131:        }
+        -:  132:
+       1*:  133:        for(unsigned int i = 0; i < crf.size(); i++) {
+        1:  133-block  0
+    %%%%%:  133-block  1
+    #####:  134:            if(crf[i] != NULL) {
+    %%%%%:  134-block  0
+    #####:  135:                delete[] crf[i];
+    %%%%%:  135-block  0
+    #####:  136:                crf[i] = NULL;
+        -:  137:            }
+        -:  138:        }
+        -:  139:
+        1:  140:        icrf.clear();
+        1:  140-block  0
+        1:  141:        crf.clear();
+        1:  141-block  0
+        1:  142:        poly.clear();
+        1:  142-block  0
+        1:  143:    }
+        -:  144:
+        -:  145:    /**
+        -:  146:     * @brief createTabledICRF
+        -:  147:     */
+        -:  148:    void createTabledICRF()
+        -:  149:    {
+        -:  150:        if(type_linearization != IL_POLYNOMIAL) {
+        -:  151:            return;
+        -:  152:        }
+        -:  153:
+        -:  154:        for(unsigned int i = 0; i < icrf.size(); i++) {
+        -:  155:            if(icrf[i] != NULL) {
+        -:  156:                delete[] icrf[i];
+        -:  157:            }
+        -:  158:        }
+        -:  159:
+        -:  160:        icrf.clear();
+        -:  161:
+        -:  162:        for(unsigned int i = 0; i < poly.size(); i++) {
+        -:  163:            float *tmp = new float[256];
+        -:  164:
+        -:  165:            for(int j = 0; j < 256; j++) {
+        -:  166:                float x = float(j) / 255.0f;
+        -:  167:
+        -:  168:                tmp[j] = poly[i].eval(x);
+        -:  169:            }
+        -:  170:
+        -:  171:            crf.push_back(tmp);
+        -:  172:        }
+        -:  173:    }
+        -:  174:
+        -:  175:    SubSampleStack stackOut;
+        -:  176:    IMG_LIN type_linearization;
+        -:  177:    float w[256];
+        -:  178:
+        -:  179:public:
+        -:  180:
+        -:  181:    std::vector<float *> icrf;
+        -:  182:    std::vector<float *> crf;
+        -:  183:
+        -:  184:    std::vector< Polynomial > poly;
+        -:  185:    
+        -:  186:    /**
+        -:  187:     * @brief CameraResponseFunction
+        -:  188:     */
+        1:  189:    CameraResponseFunction()
+        1:  190:    {
+        1:  190-block  0
+        1:  191:        type_linearization = IL_LIN;
+        1:  191-block  0
+        -:  192:    }
+        -:  193:
+        -:  194:    ~CameraResponseFunction()
+        -:  195:    {
+        -:  196:        release();
+        -:  197:    }
+        -:  198:
+        -:  199:    /**
+        -:  200:     * @brief remove linearizes a camera value using the inverse CRF.
+        -:  201:     * @param x is an intensity value in [0,1].
+        -:  202:     * @param channel
+        -:  203:     * @return It returns x in the linear domain.
+        -:  204:     */
+  5738880:  205:    inline float remove(float x, int channel)
+        -:  206:    {
+  5738880:  207:        switch(type_linearization) {
+  5738880:  207-block  0
+        -:  208:            case IL_LIN: {
+        -:  209:                return x;
+        -:  210:            }
+  5738880:  211:            break;
+        -:  212:
+  5738880:  213:            case IL_LUT_8_BIT: {
+  5738880:  214:                int index =  CLAMP(int(round(x * 255.0f)), 256);
+  5738880:  214-block  0
+  5738880:  215:                return icrf.at(channel)[index];
+  5738880:  215-block  0
+  5738880:  215-block  1
+        -:  216:            }
+    #####:  217:            break;
+        -:  218:
+    #####:  219:            case IL_2_2: {
+    #####:  220:                return powf(x, 2.2f);
+    %%%%%:  220-block  0
+        -:  221:            }
+    #####:  222:            break;
+        -:  223:
+    #####:  224:            case IL_POLYNOMIAL: {
+    #####:  225:                return poly[channel].eval(x);
+    %%%%%:  225-block  0
+        -:  226:            }
+        -:  227:            break;
+        -:  228:
+        -:  229:            default:
+        -:  230:                break;
+        -:  231:        }
+        -:  232:
+        -:  233:        return x;
+        -:  234:    }
+        -:  235:
+        -:  236:    /**
+        -:  237:     * @brief apply
+        -:  238:     * @param x a value in [0, 1]
+        -:  239:     * @param channel
+        -:  240:     * @return
+        -:  241:     */
+        -:  242:    inline float apply(float x, int channel)
+        -:  243:    {
+        -:  244:        switch(type_linearization) {
+        -:  245:            case IL_LIN: {
+        -:  246:                return x;
+        -:  247:            }
+        -:  248:            break;
+        -:  249:
+        -:  250:            case IL_LUT_8_BIT: {
+        -:  251:                float *ptr = std::lower_bound(&icrf[channel][0], &icrf[channel][255], x);
+        -:  252:                int offset = CLAMPi((int)(ptr - icrf[channel]), 0, 255);
+        -:  253:
+        -:  254:                return float(offset) / 255.0f;
+        -:  255:            }
+        -:  256:            break;
+        -:  257:
+        -:  258:            case IL_2_2: {
+        -:  259:               #ifdef PIC_WIN32
+        -:  260:                  float inv_gamma = 1.0f / 2.2f;
+        -:  261:               #else
+        -:  262:                  constexpr float inv_gamma = 1.0f / 2.2f;
+        -:  263:               #endif
+        -:  264:
+        -:  265:               return powf(x, inv_gamma);
+        -:  266:            }
+        -:  267:            break;
+        -:  268:
+        -:  269:            case IL_POLYNOMIAL: {
+        -:  270:                float *ptr = std::lower_bound(&icrf[channel][0], &icrf[channel][255], x);
+        -:  271:                int offset = CLAMPi((int)(ptr - icrf[channel]), 0, 255);
+        -:  272:
+        -:  273:                return float(offset) / 255.0f;
+        -:  274:            }
+        -:  275:            break;
+        -:  276:
+        -:  277:            default:
+        -:  278:                break;
+        -:  279:        }
+        -:  280:
+        -:  281:        return x;
+        -:  282:    }
+        -:  283:
+        -:  284:    /**
+        -:  285:     * @brief setCRFtoGamma2_2
+        -:  286:     */
+        -:  287:    void setCRFtoGamma2_2()
+        -:  288:    {
+        -:  289:        type_linearization = IL_2_2;
+        -:  290:    }
+        -:  291:
+        -:  292:    /**
+        -:  293:     * @brief setCRFtoLinear
+        -:  294:     */
+        -:  295:    void setCRFtoLinear()
+        -:  296:    {
+        -:  297:        type_linearization = IL_LIN;
+        -:  298:    }
+        -:  299:
+        -:  300:    /**
+        -:  301:     * @brief FromRAWJPEG computes the CRF by exploiting the couple RAW/JPEG from cameras.
+        -:  302:     * @param img_raw is a RAW image.
+        -:  303:     * @param img_jpg is a JPEG compressed image.
+        -:  304:     * @param filteringSize
+        -:  305:     */
+        -:  306:    void fromRAWJPEG(Image *img_raw, Image *img_jpg, int filteringSize = 11)
+        -:  307:    {
+        -:  308:        if((img_raw == NULL) || (img_jpg == NULL))
+        -:  309:            return;
+        -:  310:
+        -:  311:        if(!img_raw->isSimilarType(img_jpg))
+        -:  312:            return;
+        -:  313:        
+        -:  314:        icrf.clear();
+        -:  315:
+        -:  316:        int width    = img_raw->width;
+        -:  317:        int height   = img_raw->height;
+        -:  318:        int channels = img_raw->channels;
+        -:  319:
+        -:  320:        int crf_size = 256 * 256 * channels;
+        -:  321:        unsigned int *crf = new unsigned int[crf_size];
+        -:  322:
+        -:  323:        for(int i=0;i<crf_size;i++) {
+        -:  324:            crf[i] = 0;
+        -:  325:        }
+        -:  326:               
+        -:  327:        for(int i=0; i<height; i++) {
+        -:  328:            for(int j=0; j<width; j++) {
+        -:  329:
+        -:  330:                float *data_raw = (*img_raw)(j, i);
+        -:  331:                float *data_jpg = (*img_jpg)(j, i);               
+        -:  332:
+        -:  333:                for(int k=0;k<channels;k++) {
+        -:  334:                    int i_raw = CLAMPi(int(255.0f * data_raw[k]), 0, 255);
+        -:  335:                    int i_jpg = CLAMPi(int(255.0f * data_jpg[k]), 0, 255);
+        -:  336:
+        -:  337:                    int addr = (i_raw * 256 + i_jpg ) * channels;
+        -:  338:
+        -:  339:                    crf[addr + k ]++;
+        -:  340:                }
+        -:  341:            }
+        -:  342:        }
+        -:  343:       
+        -:  344:        //compute the result
+        -:  345:        std::vector< int > coords;
+        -:  346:
+        -:  347:        for(int k=0;k<channels;k++) {
+        -:  348:
+        -:  349:            float *ret_c = new float[256];
+        -:  350:
+        -:  351:            for(int j=0;j<256;j++) {
+        -:  352:                coords.clear();
+        -:  353:
+        -:  354:                for(int i=0;i<256;i++) {
+        -:  355:
+        -:  356:                    int addr = (i * 256 + j ) * channels + k;
+        -:  357:
+        -:  358:                    if(crf[addr] > 0) {
+        -:  359:                        coords.push_back(i);                        
+        -:  360:                    }
+        -:  361:
+        -:  362:                }
+        -:  363:
+        -:  364:                if(!coords.empty()) {//get the median value
+        -:  365:                    std::sort (coords.begin(), coords.end());  
+        -:  366:                    ret_c[j] = float(coords[coords.size() >> 1]) / 255.0f;
+        -:  367:                }
+        -:  368:            }
+        -:  369:            
+        -:  370:            if(filteringSize > 0) {
+        -:  371:                Image toBeFiltered(1, 256, 1, 1, ret_c);
+        -:  372:
+        -:  373:                Image *filtered = FilterMean::execute(&toBeFiltered, NULL, filteringSize);
+        -:  374:                
+        -:  375:                icrf.push_back(filtered->data);
+        -:  376:
+        -:  377:            } else {
+        -:  378:                icrf.push_back(ret_c);
+        -:  379:            }
+        -:  380:        }
+        -:  381:    }
+        -:  382:
+        -:  383:    /**
+        -:  384:     * @brief DebevecMalik computes the CRF of a camera using multiple exposures value following Debevec and Malik
+        -:  385:    1997's method.
+        -:  386:     * @param stack
+        -:  387:     * @param exposure
+        -:  388:     * @param type
+        -:  389:     * @param nSamples
+        -:  390:     * @param lambda
+        -:  391:     */
+        1:  392:    void DebevecMalik(ImageVec stack, CRF_WEIGHT type = CW_DEB97, int nSamples = 256, float lambda = 20.0f)
+        -:  393:    {
+        1:  394:        release();
+        1:  394-block  0
+        -:  395:
+        1:  396:        if(!ImageVecCheckSimilarType(stack)) {
+    #####:  397:            return;
+    %%%%%:  397-block  0
+        -:  398:        }
+        -:  399:
+        1:  400:        if(nSamples < 1) {
+        1:  400-block  0
+    #####:  401:            nSamples = 256;
+    %%%%%:  401-block  0
+        -:  402:        }
+        -:  403:
+        1:  404:        this->type_linearization = IL_LUT_8_BIT;
+        -:  405:
+        -:  406:        //subsample the image stack
+        1:  407:        stackOut.execute(stack, nSamples);
+        1:  407-block  0
+        -:  408:
+        1:  409:        int *samples = stackOut.get();
+        1:  410:        nSamples = stackOut.getNSamples();
+        -:  411:        
+        -:  412:        //compute CRF using Debevec and Malik
+        1:  413:        int channels = stack[0]->channels;
+        -:  414:
+        -:  415:        //pre-compute the weight function
+      257:  416:        for(int i = 0; i < 256; i++) {
+      257:  416-block  0
+      256:  417:            w[i] = weightFunction(float(i) / 255.0f, type);
+      256:  417-block  0
+        -:  418:        }
+        -:  419:
+        1:  420:        int nExposure = int(stack.size());
+        1:  420-block  0
+        -:  421:
+        -:  422:        //log domain exposure time        
+        2:  423:        std::vector< float > log_exposures;
+        1:  423-block  0
+        1:  423-block  1
+        1:  424:        ImaveVecGetExposureTimesAsArray(stack, log_exposures, true);
+        1:  424-block  0
+        -:  425:
+        -:  426:        #ifdef PIC_DEBUG
+        -:  427:            printf("nSamples: %d\n", nSamples);
+        -:  428:        #endif
+        -:  429:
+        1:  430:        int stride = nSamples * nExposure;
+        4:  431:        for(int i = 0; i < channels; i++) {
+        1:  431-block  0
+        4:  431-block  1
+        3:  431-block  2
+        3:  432:            float *icrf_channel = gsolve(&samples[i * stride], log_exposures, lambda, nSamples);
+        3:  432-block  0
+        -:  433:
+        3:  434:            icrf.push_back(icrf_channel);
+        3:  434-block  0
+        -:  435:        }
+        -:  436:    }
+        -:  437:
+        -:  438:    /**
+        -:  439:     * @brief MitsunagaNayar computes the inverse CRF of a camera as a polynomial function.
+        -:  440:     * @param stack             Array of images with associated exposure. Note that this array will be sorted with increasing exposure.
+        -:  441:     * @param polynomial_degree Degree of the polynomial. If negative, the best degree will be selected in [1, -polynomial_degree] for each channel.
+        -:  442:     * @param nSamples          Number of samples to extract from each image.
+        -:  443:     * @param full              true for computing all exposure ratios (as in book "High Dynamic Range Imaging", second edition, Reinhard et al.),
+        -:  444:     *                          false as in the original paper (only among successive exposures).
+        -:  445:     * @param alpha             Threshold for removing samples with values not in [alpha, 1-alpha].
+        -:  446:     * @param computeRatios     false if exact exposures are passed, true to approximate exposure ratios as in the paper.
+        -:  447:     * @param eps               Threshold on the difference among successive approximations for stopping the computation.
+        -:  448:     * @param max_iterations    Stop the computation after this number of iterations.
+        -:  449:     * @return true if successfully computed, false otherwise.
+        -:  450:     */
+        -:  451:    bool MitsunagaNayar(ImageVec &stack, int polynomial_degree = -3, int nSamples = 256, const bool full = false,
+        -:  452:                        const float alpha = 0.04f, const bool computeRatios = false, const float eps = 0.0001f,
+        -:  453:                        const std::size_t max_iterations = 100)
+        -:  454:    {
+        -:  455:        release();
+        -:  456:
+        -:  457:        if(!ImageVecCheckSimilarType(stack)) {
+        -:  458:            return false;
+        -:  459:        }
+        -:  460:
+        -:  461:        if(nSamples < 1) {
+        -:  462:            nSamples = 256;
+        -:  463:        }
+        -:  464:
+        -:  465:        type_linearization = IL_POLYNOMIAL;
+        -:  466:
+        -:  467:        //sort the array by exposure
+        -:  468:        ImaveVecSortByExposureTime(stack);
+        -:  469:
+        -:  470:        //subsample the image stack
+        -:  471:        stackOut.execute(stack, nSamples, alpha);
+        -:  472:        int *samples = stackOut.get();
+        -:  473:        nSamples = stackOut.getNSamples();
+        -:  474:
+        -:  475:        if (nSamples < 1) {
+        -:  476:            return false;
+        -:  477:        }
+        -:  478:
+        -:  479:        //compute the CRF using Mitsunaga and Nayar
+        -:  480:        int channels = stack[0]->channels;
+        -:  481:
+        -:  482:        std::size_t nExposures = stack.size();
+        -:  483:
+        -:  484:        std::vector< float > exposures;
+        -:  485:        ImaveVecGetExposureTimesAsArray(stack, exposures, false);
+        -:  486:
+        -:  487:        int stride = nSamples * int(nExposures);
+        -:  488:
+        -:  489:        float error = std::numeric_limits<float>::infinity();
+        -:  490:        std::vector<float> R(nExposures - 1);
+        -:  491:        std::vector<std::vector<float>> RR(nExposures - 1, std::vector<float>(nExposures - 1));
+        -:  492:
+        -:  493:        poly.resize(channels);
+        -:  494:
+        -:  495:        if (polynomial_degree > 0) {
+        -:  496:            error = 0.f;
+        -:  497:            for (int i = 0; i < channels; ++i) {
+        -:  498:                poly[i].coeff.assign(polynomial_degree + 1, 0.f);
+        -:  499:                if (full) {
+        -:  500:                    error += MitsunagaNayarFull(&samples[i * stride], nSamples, exposures, poly[i].coeff, computeRatios, RR, eps, max_iterations);
+        -:  501:                } else {
+        -:  502:                    error += MitsunagaNayarClassic(&samples[i * stride], nSamples, exposures, poly[i].coeff, computeRatios, R, eps, max_iterations);
+        -:  503:                }
+        -:  504:            }
+        -:  505:        } else if (polynomial_degree < 0) {
+        -:  506:            error = std::numeric_limits<float>::infinity();
+        -:  507:            std::vector<Polynomial> tmpCoefficients(channels);
+        -:  508:            for (int degree = 1; degree <= -polynomial_degree; ++degree) {
+        -:  509:                float tmpError = 0.f;
+        -:  510:                for (int i = 0; i < channels; ++i) {
+        -:  511:                    tmpCoefficients[i].coeff.resize(degree + 1);
+        -:  512:                    if (full) {
+        -:  513:                        tmpError += MitsunagaNayarFull(&samples[i * stride], nSamples, exposures, tmpCoefficients[i].coeff, computeRatios, RR, eps, max_iterations);
+        -:  514:                    } else {
+        -:  515:                        tmpError += MitsunagaNayarClassic(&samples[i * stride], nSamples, exposures, tmpCoefficients[i].coeff, computeRatios, R, eps, max_iterations);
+        -:  516:                    }
+        -:  517:                }
+        -:  518:
+        -:  519:                if (tmpError < error) {
+        -:  520:                    error = tmpError;
+        -:  521:                    poly = std::move(tmpCoefficients);
+        -:  522:                    tmpCoefficients.resize(channels);
+        -:  523:                }
+        -:  524:            }
+        -:  525:        }
+        -:  526:
+        -:  527:        bool bOk = error < std::numeric_limits<float>::infinity();
+        -:  528:
+        -:  529:        if(bOk) {
+        -:  530:            createTabledICRF();
+        -:  531:        }
+        -:  532:
+        -:  533:        return bOk;
+        -:  534:    }
+        -:  535:
+        -:  536:    /**
+        -:  537:     * @brief Robertson computes the CRF of a camera using all multiple exposures value Robertson et al
+        -:  538:       1999's method (Dynamic range improvement through multiple exposures).
+        -:  539:     * @param stack
+        -:  540:     * @param maxIterations
+        -:  541:     */
+        -:  542:    void Robertson(ImageVec &stack, const size_t maxIterations = 50)
+        -:  543:    {
+        -:  544:        release();
+        -:  545:
+        -:  546:        if(!ImageVecCheckSimilarType(stack)) {
+        -:  547:            return;
+        -:  548:        }
+        -:  549:
+        -:  550:        this->type_linearization = IL_LUT_8_BIT;
+        -:  551:
+        -:  552:        const int channels   = stack[0]->channels;
+        -:  553:        const int pixelcount = stack[0]->nPixels();
+        -:  554:
+        -:  555:        // precompute robertson weighting function
+        -:  556:        for (size_t i=0; i<256; i++) {
+        -:  557:            this->w[i] = weightFunction(float(i) / 255.0f, CW_ROBERTSON);
+        -:  558:        }
+        -:  559:
+        -:  560:        // avoid saturation
+        -:  561:        int minM = 0;
+        -:  562:        int maxM = 255;
+        -:  563:        for (int m = 0; m < 256; m++) {
+        -:  564:            if (this->w[m] > 0) {
+        -:  565:                minM = m;
+        -:  566:                break;
+        -:  567:            }
+        -:  568:        }
+        -:  569:
+        -:  570:        for (int m=255; m>=0; m--) {
+        -:  571:            if (this->w[m] > 0) {
+        -:  572:                maxM = m;
+        -:  573:                break;
+        -:  574:            }
+        -:  575:        }
+        -:  576:
+        -:  577:        // avoid ghosting (for each exposure get the index for the immediately higher and lower exposure)
+        -:  578:        int *lower = new int [stack.size()];
+        -:  579:        int *higher = new int[stack.size()];
+        -:  580:
+        -:  581:        for (size_t i=0; i<stack.size(); i++) {
+        -:  582:            lower[i]  = -1;
+        -:  583:            higher[i] = -1;
+        -:  584:            float t = stack[i]->exposure;
+        -:  585:            float tHigh = stack[0]->exposure;
+        -:  586:            float tLow  = tHigh;
+        -:  587:
+        -:  588:            for (size_t j=0; j<stack.size(); j++) {
+        -:  589:                if (i != j) {
+        -:  590:                    float tj = stack[j]->exposure;
+        -:  591:
+        -:  592:                    if (tj > t && tj < tHigh) {
+        -:  593:                        tHigh = tj;
+        -:  594:                        higher[i] = int(j);
+        -:  595:                    }
+        -:  596:                    if (tj < t && tj > tLow) {
+        -:  597:                        tLow = tj;
+        -:  598:                        lower[i] = int(j);
+        -:  599:                    }
+        -:  600:                }
+        -:  601:            }
+        -:  602:
+        -:  603:            if (lower[i]  == -1) {
+        -:  604:                lower[i]  = int(i);
+        -:  605:            }
+        -:  606:
+        -:  607:            if (higher[i] == -1) {
+        -:  608:                higher[i] = int(i);
+        -:  609:            }
+        -:  610:        }
+        -:  611:
+        -:  612:        // create initial inv response function
+        -:  613:        {
+        -:  614:            float * lin = new float[256];
+        -:  615:            for (int i=0; i<256; i++) {
+        -:  616:                lin[i] = float(2.0 * i / 255.0);
+        -:  617:            }
+        -:  618:            this->icrf.push_back(lin);
+        -:  619:
+        -:  620:            for (int i=1; i<channels; i++) {
+        -:  621:                float * col = new float[256];
+        -:  622:                Buffer<float>::assign(col, lin, 256);
+        -:  623:                this->icrf.push_back(col);
+        -:  624:            }
+        -:  625:        }
+        -:  626:
+        -:  627:        // create quantized stack
+        -:  628:        std::vector<unsigned char *> qstack;
+        -:  629:        for (Image * slice : stack) {
+        -:  630:            assert(slice->frames == 1);
+        -:  631:            unsigned char * q = convertHDR2LDR(slice->data, NULL, slice->size(), LT_NOR);
+        -:  632:            qstack.push_back(q);
+        -:  633:        }
+        -:  634:
+        -:  635:        // iterative gauss-seidel
+        -:  636:        for (int ch=0; ch<channels; ch++) {
+        -:  637:            float * fun = this->icrf[ch];
+        -:  638:            float funPrev[256];
+        -:  639:            Buffer<float>::assign(funPrev, fun, 256);
+        -:  640:
+        -:  641:            std::vector<float> x(pixelcount);
+        -:  642:
+        -:  643:            float prevDelta = 0.0f;
+        -:  644:            for (size_t iter=0; iter<maxIterations; iter++) {
+        -:  645:                // Normalize inv crf to midpoint
+        -:  646:                {
+        -:  647:                    // find min max
+        -:  648:                    size_t minIdx, maxIdx;
+        -:  649:                    for (minIdx = 0   ; minIdx < 255 && fun[minIdx]==0 ; minIdx++);
+        -:  650:                    for (maxIdx = 255 ; maxIdx > 0   && fun[maxIdx]==0 ; maxIdx--);
+        -:  651:
+        -:  652:                    size_t midIdx = minIdx+(maxIdx-minIdx)/2;
+        -:  653:                    float  mid = fun[midIdx];
+        -:  654:
+        -:  655:                    if (mid == 0.0f) {
+        -:  656:                        // find first non-zero middle response
+        -:  657:                        while (midIdx < maxIdx && fun[midIdx] == 0.0f) {
+        -:  658:                            midIdx++;
+        -:  659:                        }
+        -:  660:                        mid = fun[midIdx];
+        -:  661:                    }
+        -:  662:
+        -:  663:                    if (mid != 0.0f) {
+        -:  664:                        Buffer<float>::div(fun, 256, mid);
+        -:  665:                    }
+        -:  666:                }
+        -:  667:
+        -:  668:                // Update x
+        -:  669:                for (int i=0; i<pixelcount; i++) {
+        -:  670:                    float sum     = 0.0f;
+        -:  671:                    float divisor = 0.0f;
+        -:  672:
+        -:  673:                    float maxt = -1.0f;
+        -:  674:                    float mint = FLT_MAX;
+        -:  675:
+        -:  676:                    int ind = i * channels + ch;
+        -:  677:
+        -:  678:                    for (size_t s=0; s<qstack.size(); s++) {
+        -:  679:                        unsigned char * qslice = qstack[s];
+        -:  680:                        const float     t      = stack[s]->exposure;
+        -:  681:
+        -:  682:                        int m = qslice[ind];
+        -:  683:
+        -:  684:                        // compute max/min time for under/over exposed pixels
+        -:  685:                        if (m > maxM) {
+        -:  686:                            mint = std::min(mint, t);
+        -:  687:                        }
+        -:  688:
+        -:  689:                        if (m < minM) {
+        -:  690:                            maxt = std::max(maxt, t);
+        -:  691:                        }
+        -:  692:
+        -:  693:                        // to avoid ghosting
+        -:  694:                        int mLow  = qstack[lower [s]][ind];
+        -:  695:                        int mHigh = qstack[higher[s]][ind];
+        -:  696:                        if (mLow > m || mHigh < m) {
+        -:  697:                            continue;
+        -:  698:                        }
+        -:  699:
+        -:  700:                        const float wm = this->w[m];
+        -:  701:
+        -:  702:                        sum     += wm * t * fun[m];
+        -:  703:                        divisor += wm * t * t;
+        -:  704:                    }
+        -:  705:
+        -:  706:                    if (divisor == 0.0f) {
+        -:  707:                        // avoid saturation
+        -:  708:                        if (maxt > -1.0f) {
+        -:  709:                            x[i] = fun[minM] / maxt;
+        -:  710:                        }
+        -:  711:
+        -:  712:                        if (mint < FLT_MAX) {
+        -:  713:                            x[i] = fun[maxM] / mint;
+        -:  714:                        }
+        -:  715:                    } else if (divisor < 1e-4f) {
+        -:  716:                        x[i] = -1.0f;
+        -:  717:                    } else {
+        -:  718:                        x[i] = sum / divisor;
+        -:  719:                    }
+        -:  720:                }
+        -:  721:
+        -:  722:                // Update inv crf
+        -:  723:                {
+        -:  724:                    size_t cardEm[256] = { 0 };
+        -:  725:                    float  sum[256]    = { 0.0f };
+        -:  726:                    float minSatTime = FLT_MAX;
+        -:  727:                    for (size_t s=0; s<qstack.size(); s++) {
+        -:  728:                        unsigned char * qslice = qstack[s];
+        -:  729:                        const float     t      = stack[s]->exposure;
+        -:  730:
+        -:  731:                        for (int i=0; i<pixelcount; i++) {
+        -:  732:                            if (x[i] < 0.0f) {
+        -:  733:                                continue;
+        -:  734:                            }
+        -:  735:
+        -:  736:                            const int m = int(qslice[i*channels+ch]);
+        -:  737:
+        -:  738:                            if (m == 255) {
+        -:  739:                                if (t < minSatTime) {
+        -:  740:                                    minSatTime = t;
+        -:  741:                                    sum[m] = t * x[i];
+        -:  742:                                    cardEm[m] = 1;
+        -:  743:                                }
+        -:  744:                                else if (t == minSatTime)
+        -:  745:                                {
+        -:  746:                                    sum[m] = std::min(sum[m], t * x[i]);
+        -:  747:                                }
+        -:  748:                            } else {
+        -:  749:                                sum[m] += t * x[i];
+        -:  750:                                cardEm[m]++;
+        -:  751:                            }
+        -:  752:                        }
+        -:  753:                    }
+        -:  754:
+        -:  755:                    // compute average and fill undefined values with previous one
+        -:  756:                    float prev = 0.0f;
+        -:  757:                    for (int m=0; m<256; m++) {
+        -:  758:                        if (cardEm[m] != 0) {
+        -:  759:                            fun[m] = prev = sum[m] / cardEm[m];
+        -:  760:                        } else {
+        -:  761:                            fun[m] = prev;
+        -:  762:                        }
+        -:  763:                    }
+        -:  764:                }
+        -:  765:
+        -:  766:                // check residuals
+        -:  767:                {
+        -:  768:                    static const float MaxDelta = 1e-7f;
+        -:  769:
+        -:  770:                    float delta = 0.0f;
+        -:  771:                    int count   = 0;
+        -:  772:                    for (int m=0; m<256; m++) {
+        -:  773:                        if( fun[m] != 0.0f ) {
+        -:  774:                            float diff = fun[m] - funPrev[m];
+        -:  775:                            delta += diff * diff;
+        -:  776:                            funPrev[m] = fun[m];
+        -:  777:                            count++;
+        -:  778:                        }
+        -:  779:                    }
+        -:  780:                    delta /= count;
+        -:  781:
+        -:  782:                    if (delta < MaxDelta) {
+        -:  783:                        break;
+        -:  784:                    }
+        -:  785:
+        -:  786:                    prevDelta = delta;
+        -:  787:                }
+        -:  788:            }
+        -:  789:        }
+        -:  790:        // estimation complete!
+        -:  791:
+        -:  792:        // normalize response function keeping relative scale between colors
+        -:  793:        float maxV = -1.0f;
+        -:  794:        for (int ch=0; ch<channels; ch++) {
+        -:  795:            int ind;
+        -:  796:            maxV = std::max(Arrayf::getMax(this->icrf[ch], 256, ind), maxV);
+        -:  797:        }
+        -:  798:
+        -:  799:        for (int ch=0; ch<channels; ch++) {
+        -:  800:            Buffer<float>::div(this->icrf[ch], 256, maxV);
+        -:  801:            this->icrf[ch][255] = 1.0f;
+        -:  802:        }
+        -:  803:
+        -:  804:        // clean quantized stack
+        -:  805:        for (unsigned char * qslice : qstack) {
+        -:  806:            delete qslice;
+        -:  807:        }
+        -:  808:
+        -:  809:        delete[] lower;
+        -:  810:        delete[] higher;
+        -:  811:    }
+        -:  812:};
+        -:  813:
+        -:  814:} // end namespace pic
+        -:  815:
+        -:  816:#endif /* PIC_ALGORITHMS_CAMERA_RESPONSE_FUNCTION_HPP */
+        -:  817:

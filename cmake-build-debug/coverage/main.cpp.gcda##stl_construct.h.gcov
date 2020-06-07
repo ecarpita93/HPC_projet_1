@@ -1,0 +1,601 @@
+        -:    0:Source:/usr/include/c++/9/bits/stl_construct.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// nonstandard construct and destroy functions -*- C++ -*-
+        -:    2:
+        -:    3:// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+        -:    4://
+        -:    5:// This file is part of the GNU ISO C++ Library.  This library is free
+        -:    6:// software; you can redistribute it and/or modify it under the
+        -:    7:// terms of the GNU General Public License as published by the
+        -:    8:// Free Software Foundation; either version 3, or (at your option)
+        -:    9:// any later version.
+        -:   10:
+        -:   11:// This library is distributed in the hope that it will be useful,
+        -:   12:// but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   13:// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        -:   14:// GNU General Public License for more details.
+        -:   15:
+        -:   16:// Under Section 7 of GPL version 3, you are granted additional
+        -:   17:// permissions described in the GCC Runtime Library Exception, version
+        -:   18:// 3.1, as published by the Free Software Foundation.
+        -:   19:
+        -:   20:// You should have received a copy of the GNU General Public License and
+        -:   21:// a copy of the GCC Runtime Library Exception along with this program;
+        -:   22:// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+        -:   23:// <http://www.gnu.org/licenses/>.
+        -:   24:
+        -:   25:/*
+        -:   26: *
+        -:   27: * Copyright (c) 1994
+        -:   28: * Hewlett-Packard Company
+        -:   29: *
+        -:   30: * Permission to use, copy, modify, distribute and sell this software
+        -:   31: * and its documentation for any purpose is hereby granted without fee,
+        -:   32: * provided that the above copyright notice appear in all copies and
+        -:   33: * that both that copyright notice and this permission notice appear
+        -:   34: * in supporting documentation.  Hewlett-Packard Company makes no
+        -:   35: * representations about the suitability of this software for any
+        -:   36: * purpose.  It is provided "as is" without express or implied warranty.
+        -:   37: *
+        -:   38: *
+        -:   39: * Copyright (c) 1996,1997
+        -:   40: * Silicon Graphics Computer Systems, Inc.
+        -:   41: *
+        -:   42: * Permission to use, copy, modify, distribute and sell this software
+        -:   43: * and its documentation for any purpose is hereby granted without fee,
+        -:   44: * provided that the above copyright notice appear in all copies and
+        -:   45: * that both that copyright notice and this permission notice appear
+        -:   46: * in supporting documentation.  Silicon Graphics makes no
+        -:   47: * representations about the suitability of this software for any
+        -:   48: * purpose.  It is provided "as is" without express or implied warranty.
+        -:   49: */
+        -:   50:
+        -:   51:/** @file bits/stl_construct.h
+        -:   52: *  This is an internal header file, included by other library headers.
+        -:   53: *  Do not attempt to use it directly. @headername{memory}
+        -:   54: */
+        -:   55:
+        -:   56:#ifndef _STL_CONSTRUCT_H
+        -:   57:#define _STL_CONSTRUCT_H 1
+        -:   58:
+        -:   59:#include <new>
+        -:   60:#include <bits/move.h>
+        -:   61:#include <ext/alloc_traits.h>
+        -:   62:
+        -:   63:namespace std _GLIBCXX_VISIBILITY(default)
+        -:   64:{
+        -:   65:_GLIBCXX_BEGIN_NAMESPACE_VERSION
+        -:   66:
+        -:   67:  /**
+        -:   68:   * Constructs an object in existing memory by invoking an allocated
+        -:   69:   * object's constructor with an initializer.
+        -:   70:   */
+        -:   71:#if __cplusplus >= 201103L
+        -:   72:  template<typename _T1, typename... _Args>
+        -:   73:    inline void
+     762*:   74:    _Construct(_T1* __p, _Args&&... __args)
+      381:   74-block  0
+      381:   74-block  1
+     381*:   75:    { ::new(static_cast<void*>(__p)) _T1(std::forward<_Args>(__args)...); }
+      381:   75-block  0
+    %%%%%:   75-block  1
+        -:   76:#else
+        -:   77:  template<typename _T1, typename _T2>
+        -:   78:    inline void
+        -:   79:    _Construct(_T1* __p, const _T2& __value)
+        -:   80:    {
+        -:   81:      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        -:   82:      // 402. wrong new expression in [some_]allocator::construct
+        -:   83:      ::new(static_cast<void*>(__p)) _T1(__value);
+        -:   84:    }
+        -:   85:#endif
+        -:   86:
+        -:   87:  template<typename _T1>
+        -:   88:    inline void
+        -:   89:    _Construct_novalue(_T1* __p)
+        -:   90:    { ::new(static_cast<void*>(__p)) _T1; }
+        -:   91:
+        -:   92:  /**
+        -:   93:   * Destroy the object pointed to by a pointer type.
+        -:   94:   */
+        -:   95:  template<typename _Tp>
+        -:   96:    inline void
+     598*:   97:    _Destroy(_Tp* __pointer)
+     598*:   98:    { __pointer->~_Tp(); }
+        -:   99:
+        -:  100:  template<bool>
+        -:  101:    struct _Destroy_aux
+        -:  102:    {
+        -:  103:      template<typename _ForwardIterator>
+        -:  104:        static void
+    =====:  105:        __destroy(_ForwardIterator __first, _ForwardIterator __last)
+        -:  106:	{
+     629*:  107:	  for (; __first != __last; ++__first)
+    $$$$$:  107-block  0
+      405:  107-block  1
+    $$$$$:  107-block  2
+    %%%%%:  107-block  3
+        8:  107-block  4
+        3:  107-block  5
+    %%%%%:  107-block  6
+    %%%%%:  107-block  7
+    %%%%%:  107-block  8
+      213:  107-block  9
+     605*:  108:	    std::_Destroy(std::__addressof(*__first));
+    $$$$$:  108-block  0
+      381:  108-block  1
+    $$$$$:  108-block  2
+    %%%%%:  108-block  3
+        7:  108-block  4
+        7:  108-block  5
+    %%%%%:  108-block  6
+    %%%%%:  108-block  7
+    %%%%%:  108-block  8
+    %%%%%:  108-block  9
+    %%%%%:  108-block 10
+    %%%%%:  108-block 11
+      210:  108-block 12
+        -:  109:	}
+        -:  110:    };
+        -:  111:
+        -:  112:  template<>
+        -:  113:    struct _Destroy_aux<true>
+        -:  114:    {
+        -:  115:      template<typename _ForwardIterator>
+        -:  116:        static void
+     317*:  117:        __destroy(_ForwardIterator, _ForwardIterator) { }
+        -:  118:    };
+        -:  119:
+        -:  120:  /**
+        -:  121:   * Destroy a range of objects.  If the value_type of the object has
+        -:  122:   * a trivial destructor, the compiler should optimize all of this
+        -:  123:   * away, otherwise the objects' destructors must be invoked.
+        -:  124:   */
+        -:  125:  template<typename _ForwardIterator>
+        -:  126:    inline void
+    #####:  127:    _Destroy(_ForwardIterator __first, _ForwardIterator __last)
+    $$$$$:  127-block  0
+        -:  128:    {
+        -:  129:      typedef typename iterator_traits<_ForwardIterator>::value_type
+        -:  130:                       _Value_type;
+        -:  131:#if __cplusplus >= 201103L
+        -:  132:      // A deleted destructor is trivial, this ensures we reject such types:
+        -:  133:      static_assert(is_destructible<_Value_type>::value,
+        -:  134:		    "value type is destructible");
+        -:  135:#endif
+        -:  136:      std::_Destroy_aux<__has_trivial_destructor(_Value_type)>::
+    #####:  137:	__destroy(__first, __last);
+    $$$$$:  137-block  0
+        -:  138:    }
+        -:  139:
+        -:  140:  template<bool>
+        -:  141:    struct _Destroy_n_aux
+        -:  142:    {
+        -:  143:      template<typename _ForwardIterator, typename _Size>
+        -:  144:        static _ForwardIterator
+        -:  145:        __destroy_n(_ForwardIterator __first, _Size __count)
+        -:  146:	{
+        -:  147:	  for (; __count > 0; (void)++__first, --__count)
+        -:  148:	    std::_Destroy(std::__addressof(*__first));
+        -:  149:	  return __first;
+        -:  150:	}
+        -:  151:    };
+        -:  152:
+        -:  153:  template<>
+        -:  154:    struct _Destroy_n_aux<true>
+        -:  155:    {
+        -:  156:      template<typename _ForwardIterator, typename _Size>
+        -:  157:        static _ForwardIterator
+        -:  158:        __destroy_n(_ForwardIterator __first, _Size __count)
+        -:  159:	{
+        -:  160:	  std::advance(__first, __count);
+        -:  161:	  return __first;
+        -:  162:	}
+        -:  163:    };
+        -:  164:
+        -:  165:  /**
+        -:  166:   * Destroy a range of objects.  If the value_type of the object has
+        -:  167:   * a trivial destructor, the compiler should optimize all of this
+        -:  168:   * away, otherwise the objects' destructors must be invoked.
+        -:  169:   */
+        -:  170:  template<typename _ForwardIterator, typename _Size>
+        -:  171:    inline _ForwardIterator
+        -:  172:    _Destroy_n(_ForwardIterator __first, _Size __count)
+        -:  173:    {
+        -:  174:      typedef typename iterator_traits<_ForwardIterator>::value_type
+        -:  175:                       _Value_type;
+        -:  176:#if __cplusplus >= 201103L
+        -:  177:      // A deleted destructor is trivial, this ensures we reject such types:
+        -:  178:      static_assert(is_destructible<_Value_type>::value,
+        -:  179:		    "value type is destructible");
+        -:  180:#endif
+        -:  181:      return std::_Destroy_n_aux<__has_trivial_destructor(_Value_type)>::
+        -:  182:	__destroy_n(__first, __count);
+        -:  183:    }
+        -:  184:
+        -:  185:  /**
+        -:  186:   * Destroy a range of objects using the supplied allocator.  For
+        -:  187:   * nondefault allocators we do not optimize away invocation of 
+        -:  188:   * destroy() even if _Tp has a trivial destructor.
+        -:  189:   */
+        -:  190:
+        -:  191:  template<typename _ForwardIterator, typename _Allocator>
+        -:  192:    void
+        -:  193:    _Destroy(_ForwardIterator __first, _ForwardIterator __last,
+        -:  194:	     _Allocator& __alloc)
+        -:  195:    {
+        -:  196:      typedef __gnu_cxx::__alloc_traits<_Allocator> __traits;
+        -:  197:      for (; __first != __last; ++__first)
+        -:  198:	__traits::destroy(__alloc, std::__addressof(*__first));
+        -:  199:    }
+        -:  200:
+        -:  201:  template<typename _ForwardIterator, typename _Tp>
+        -:  202:    inline void
+       4*:  203:    _Destroy(_ForwardIterator __first, _ForwardIterator __last,
+    %%%%%:  203-block  0
+    %%%%%:  203-block  1
+        1:  203-block  2
+    %%%%%:  203-block  3
+        3:  203-block  4
+    %%%%%:  203-block  5
+    %%%%%:  203-block  6
+        -:  204:	     allocator<_Tp>&)
+        -:  205:    {
+     343*:  206:      _Destroy(__first, __last);
+       24:  206-block  0
+    $$$$$:  206-block  1
+    %%%%%:  206-block  2
+    $$$$$:  206-block  3
+    %%%%%:  206-block  4
+    %%%%%:  206-block  5
+    %%%%%:  206-block  6
+    %%%%%:  206-block  7
+    $$$$$:  206-block  8
+    $$$$$:  206-block  9
+    %%%%%:  206-block 10
+    %%%%%:  206-block 11
+    %%%%%:  206-block 12
+    %%%%%:  206-block 13
+    %%%%%:  206-block 14
+    %%%%%:  206-block 15
+    %%%%%:  206-block 16
+    %%%%%:  206-block 17
+       24:  206-block 18
+    $$$$$:  206-block 19
+    $$$$$:  206-block 20
+    $$$$$:  206-block 21
+    %%%%%:  206-block 22
+    %%%%%:  206-block 23
+        1:  206-block 24
+    $$$$$:  206-block 25
+    $$$$$:  206-block 26
+    $$$$$:  206-block 27
+    $$$$$:  206-block 28
+        2:  206-block 29
+       24:  206-block 30
+    $$$$$:  206-block 31
+        3:  206-block 32
+    %%%%%:  206-block 33
+    %%%%%:  206-block 34
+    %%%%%:  206-block 35
+    %%%%%:  206-block 36
+    %%%%%:  206-block 37
+    $$$$$:  206-block 38
+    %%%%%:  206-block 39
+    $$$$$:  206-block 40
+    $$$$$:  206-block 41
+    %%%%%:  206-block 42
+    $$$$$:  206-block 43
+    $$$$$:  206-block 44
+    %%%%%:  206-block 45
+    %%%%%:  206-block 46
+    %%%%%:  206-block 47
+    $$$$$:  206-block 48
+    $$$$$:  206-block 49
+    $$$$$:  206-block 50
+    $$$$$:  206-block 51
+    %%%%%:  206-block 52
+    %%%%%:  206-block 53
+    $$$$$:  206-block 54
+    $$$$$:  206-block 55
+    %%%%%:  206-block 56
+    $$$$$:  206-block 57
+    %%%%%:  206-block 58
+    $$$$$:  206-block 59
+    %%%%%:  206-block 60
+    %%%%%:  206-block 61
+    $$$$$:  206-block 62
+    $$$$$:  206-block 63
+    %%%%%:  206-block 64
+    %%%%%:  206-block 65
+    $$$$$:  206-block 66
+    $$$$$:  206-block 67
+    %%%%%:  206-block 68
+    %%%%%:  206-block 69
+    $$$$$:  206-block 70
+        1:  206-block 71
+    $$$$$:  206-block 72
+    $$$$$:  206-block 73
+        1:  206-block 74
+    %%%%%:  206-block 75
+    %%%%%:  206-block 76
+    %%%%%:  206-block 77
+        1:  206-block 78
+    $$$$$:  206-block 79
+    $$$$$:  206-block 80
+    $$$$$:  206-block 81
+    $$$$$:  206-block 82
+    $$$$$:  206-block 83
+    %%%%%:  206-block 84
+    %%%%%:  206-block 85
+    $$$$$:  206-block 86
+    $$$$$:  206-block 87
+    %%%%%:  206-block 88
+    $$$$$:  206-block 89
+    %%%%%:  206-block 90
+    $$$$$:  206-block 91
+    %%%%%:  206-block 92
+    %%%%%:  206-block 93
+    %%%%%:  206-block 94
+    %%%%%:  206-block 95
+    %%%%%:  206-block 96
+    %%%%%:  206-block 97
+    %%%%%:  206-block 98
+    %%%%%:  206-block 99
+    $$$$$:  206-block 100
+    $$$$$:  206-block 101
+    $$$$$:  206-block 102
+    $$$$$:  206-block 103
+    $$$$$:  206-block 104
+    $$$$$:  206-block 105
+    $$$$$:  206-block 106
+    $$$$$:  206-block 107
+    %%%%%:  206-block 108
+    %%%%%:  206-block 109
+    %%%%%:  206-block 110
+    $$$$$:  206-block 111
+    $$$$$:  206-block 112
+    $$$$$:  206-block 113
+    $$$$$:  206-block 114
+    $$$$$:  206-block 115
+    %%%%%:  206-block 116
+    $$$$$:  206-block 117
+    %%%%%:  206-block 118
+    %%%%%:  206-block 119
+    %%%%%:  206-block 120
+    $$$$$:  206-block 121
+    $$$$$:  206-block 122
+    $$$$$:  206-block 123
+    %%%%%:  206-block 124
+    %%%%%:  206-block 125
+    $$$$$:  206-block 126
+    $$$$$:  206-block 127
+    %%%%%:  206-block 128
+    %%%%%:  206-block 129
+    $$$$$:  206-block 130
+    $$$$$:  206-block 131
+    %%%%%:  206-block 132
+    $$$$$:  206-block 133
+    %%%%%:  206-block 134
+    %%%%%:  206-block 135
+    $$$$$:  206-block 136
+    $$$$$:  206-block 137
+    %%%%%:  206-block 138
+    $$$$$:  206-block 139
+        1:  206-block 140
+    $$$$$:  206-block 141
+    %%%%%:  206-block 142
+    $$$$$:  206-block 143
+    $$$$$:  206-block 144
+    %%%%%:  206-block 145
+    %%%%%:  206-block 146
+    $$$$$:  206-block 147
+    $$$$$:  206-block 148
+    %%%%%:  206-block 149
+    %%%%%:  206-block 150
+    %%%%%:  206-block 151
+    %%%%%:  206-block 152
+    $$$$$:  206-block 153
+    $$$$$:  206-block 154
+    $$$$$:  206-block 155
+    $$$$$:  206-block 156
+    %%%%%:  206-block 157
+    %%%%%:  206-block 158
+    $$$$$:  206-block 159
+    $$$$$:  206-block 160
+    $$$$$:  206-block 161
+        1:  206-block 162
+    $$$$$:  206-block 163
+    %%%%%:  206-block 164
+    $$$$$:  206-block 165
+    %%%%%:  206-block 166
+    %%%%%:  206-block 167
+    $$$$$:  206-block 168
+    $$$$$:  206-block 169
+    $$$$$:  206-block 170
+    %%%%%:  206-block 171
+    %%%%%:  206-block 172
+    $$$$$:  206-block 173
+    $$$$$:  206-block 174
+    %%%%%:  206-block 175
+    $$$$$:  206-block 176
+    %%%%%:  206-block 177
+    $$$$$:  206-block 178
+    $$$$$:  206-block 179
+    $$$$$:  206-block 180
+    %%%%%:  206-block 181
+    %%%%%:  206-block 182
+    %%%%%:  206-block 183
+    $$$$$:  206-block 184
+    $$$$$:  206-block 185
+    $$$$$:  206-block 186
+    %%%%%:  206-block 187
+    %%%%%:  206-block 188
+    %%%%%:  206-block 189
+    %%%%%:  206-block 190
+    $$$$$:  206-block 191
+    $$$$$:  206-block 192
+    $$$$$:  206-block 193
+    $$$$$:  206-block 194
+    %%%%%:  206-block 195
+    %%%%%:  206-block 196
+    %%%%%:  206-block 197
+    $$$$$:  206-block 198
+    $$$$$:  206-block 199
+    $$$$$:  206-block 200
+    %%%%%:  206-block 201
+    %%%%%:  206-block 202
+    %%%%%:  206-block 203
+    $$$$$:  206-block 204
+    $$$$$:  206-block 205
+    $$$$$:  206-block 206
+    $$$$$:  206-block 207
+    $$$$$:  206-block 208
+    %%%%%:  206-block 209
+        1:  206-block 210
+    %%%%%:  206-block 211
+        1:  206-block 212
+        1:  206-block 213
+        1:  206-block 214
+    $$$$$:  206-block 215
+    $$$$$:  206-block 216
+    $$$$$:  206-block 217
+    $$$$$:  206-block 218
+    $$$$$:  206-block 219
+    $$$$$:  206-block 220
+    $$$$$:  206-block 221
+        1:  206-block 222
+    %%%%%:  206-block 223
+    %%%%%:  206-block 224
+    %%%%%:  206-block 225
+    %%%%%:  206-block 226
+    %%%%%:  206-block 227
+    %%%%%:  206-block 228
+    %%%%%:  206-block 229
+    %%%%%:  206-block 230
+    $$$$$:  206-block 231
+    %%%%%:  206-block 232
+    $$$$$:  206-block 233
+        1:  206-block 234
+    $$$$$:  206-block 235
+    %%%%%:  206-block 236
+    %%%%%:  206-block 237
+    %%%%%:  206-block 238
+    %%%%%:  206-block 239
+    %%%%%:  206-block 240
+    %%%%%:  206-block 241
+    $$$$$:  206-block 242
+    $$$$$:  206-block 243
+    $$$$$:  206-block 244
+    $$$$$:  206-block 245
+    %%%%%:  206-block 246
+    %%%%%:  206-block 247
+    %%%%%:  206-block 248
+    $$$$$:  206-block 249
+    $$$$$:  206-block 250
+    $$$$$:  206-block 251
+    %%%%%:  206-block 252
+    %%%%%:  206-block 253
+    %%%%%:  206-block 254
+    $$$$$:  206-block 255
+    $$$$$:  206-block 256
+    $$$$$:  206-block 257
+    %%%%%:  206-block 258
+    %%%%%:  206-block 259
+    $$$$$:  206-block 260
+    $$$$$:  206-block 261
+    %%%%%:  206-block 262
+    $$$$$:  206-block 263
+        3:  206-block 264
+        3:  206-block 265
+    $$$$$:  206-block 266
+    $$$$$:  206-block 267
+    %%%%%:  206-block 268
+       24:  206-block 269
+    $$$$$:  206-block 270
+    $$$$$:  206-block 271
+      210:  206-block 272
+    $$$$$:  206-block 273
+        3:  206-block 274
+    $$$$$:  206-block 275
+        3:  206-block 276
+    $$$$$:  206-block 277
+        4:  206-block 278
+        4:  206-block 279
+    %%%%%:  206-block 280
+    $$$$$:  206-block 281
+    %%%%%:  206-block 282
+        3:  206-block 283
+    $$$$$:  206-block 284
+    %%%%%:  206-block 285
+    $$$$$:  206-block 286
+    $$$$$:  206-block 287
+    %%%%%:  206-block 288
+    %%%%%:  206-block 289
+    $$$$$:  206-block 290
+    %%%%%:  206-block 291
+    %%%%%:  206-block 292
+    %%%%%:  206-block 293
+    %%%%%:  206-block 294
+    $$$$$:  206-block 295
+    $$$$$:  206-block 296
+    %%%%%:  206-block 297
+    $$$$$:  206-block 298
+    %%%%%:  206-block 299
+    %%%%%:  206-block 300
+    %%%%%:  206-block 301
+    $$$$$:  206-block 302
+    $$$$$:  206-block 303
+    $$$$$:  206-block 304
+    $$$$$:  206-block 305
+    $$$$$:  206-block 306
+    %%%%%:  206-block 307
+    %%%%%:  206-block 308
+    %%%%%:  206-block 309
+    %%%%%:  206-block 310
+    %%%%%:  206-block 311
+    $$$$$:  206-block 312
+    $$$$$:  206-block 313
+    %%%%%:  206-block 314
+    $$$$$:  206-block 315
+    %%%%%:  206-block 316
+    %%%%%:  206-block 317
+    %%%%%:  206-block 318
+    $$$$$:  206-block 319
+    $$$$$:  206-block 320
+    %%%%%:  206-block 321
+    $$$$$:  206-block 322
+    %%%%%:  206-block 323
+    $$$$$:  206-block 324
+        -:  207:    }
+        -:  208:
+        -:  209:#if __cplusplus > 201402L
+        -:  210:  template <typename _Tp>
+        -:  211:    inline void
+        -:  212:    destroy_at(_Tp* __location)
+        -:  213:    {
+        -:  214:      std::_Destroy(__location);
+        -:  215:    }
+        -:  216:
+        -:  217:  template <typename _ForwardIterator>
+        -:  218:    inline void
+        -:  219:    destroy(_ForwardIterator __first, _ForwardIterator __last)
+        -:  220:    {
+        -:  221:      std::_Destroy(__first, __last);
+        -:  222:    }
+        -:  223:
+        -:  224:  template <typename _ForwardIterator, typename _Size>
+        -:  225:    inline _ForwardIterator
+        -:  226:    destroy_n(_ForwardIterator __first, _Size __count)
+        -:  227:    {
+        -:  228:      return std::_Destroy_n(__first, __count);
+        -:  229:    }
+        -:  230:#endif
+        -:  231:
+        -:  232:_GLIBCXX_END_NAMESPACE_VERSION
+        -:  233:} // namespace std
+        -:  234:
+        -:  235:#endif /* _STL_CONSTRUCT_H */
+        -:  236:

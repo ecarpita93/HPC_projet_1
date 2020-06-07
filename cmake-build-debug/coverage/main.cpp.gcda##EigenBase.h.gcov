@@ -1,0 +1,861 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/EigenBase.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2009 Benoit Jacob <jacob.benoit.1@gmail.com>
+        -:    5:// Copyright (C) 2009 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    6://
+        -:    7:// This Source Code Form is subject to the terms of the Mozilla
+        -:    8:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    9:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   10:
+        -:   11:#ifndef EIGEN_EIGENBASE_H
+        -:   12:#define EIGEN_EIGENBASE_H
+        -:   13:
+        -:   14:namespace Eigen {
+        -:   15:
+        -:   16:/** \class EigenBase
+        -:   17:  * \ingroup Core_Module
+        -:   18:  * 
+        -:   19:  * Common base class for all classes T such that MatrixBase has an operator=(T) and a constructor MatrixBase(T).
+        -:   20:  *
+        -:   21:  * In other words, an EigenBase object is an object that can be copied into a MatrixBase.
+        -:   22:  *
+        -:   23:  * Besides MatrixBase-derived classes, this also includes special matrix classes such as diagonal matrices, etc.
+        -:   24:  *
+        -:   25:  * Notice that this class is trivial, it is only used to disambiguate overloaded functions.
+        -:   26:  *
+        -:   27:  * \sa \blank \ref TopicClassHierarchy
+        -:   28:  */
+        -:   29:template<typename Derived> struct EigenBase
+        -:   30:{
+        -:   31://   typedef typename internal::plain_matrix_type<Derived>::type PlainObject;
+        -:   32:  
+        -:   33:  /** \brief The interface type of indices
+        -:   34:    * \details To change this, \c \#define the preprocessor symbol \c EIGEN_DEFAULT_DENSE_INDEX_TYPE.
+        -:   35:    * \deprecated Since Eigen 3.3, its usage is deprecated. Use Eigen::Index instead.
+        -:   36:    * \sa StorageIndex, \ref TopicPreprocessorDirectives.
+        -:   37:    */
+        -:   38:  typedef Eigen::Index Index;
+        -:   39:
+        -:   40:  // FIXME is it needed?
+        -:   41:  typedef typename internal::traits<Derived>::StorageKind StorageKind;
+        -:   42:
+        -:   43:  /** \returns a reference to the derived object */
+        -:   44:  EIGEN_DEVICE_FUNC
+17402021*:   45:  Derived& derived() { return *static_cast<Derived*>(this); }
+     1503:   45-block  0
+     1503:   45-block  1
+     1530:   45-block  2
+    %%%%%:   45-block  3
+     1503:   45-block  4
+        3:   45-block  5
+    %%%%%:   45-block  6
+     1530:   45-block  7
+        3:   45-block  8
+    $$$$$:   45-block  9
+     1536:   45-block 10
+    %%%%%:   45-block 11
+    %%%%%:   45-block 12
+    %%%%%:   45-block 13
+     1530:   45-block 14
+    %%%%%:   45-block 15
+    $$$$$:   45-block 16
+       33:   45-block 17
+    $$$$$:   45-block 18
+     1503:   45-block 19
+    $$$$$:   45-block 20
+    %%%%%:   45-block 21
+    %%%%%:   45-block 22
+    %%%%%:   45-block 23
+    %%%%%:   45-block 24
+    %%%%%:   45-block 25
+    %%%%%:   45-block 26
+    %%%%%:   45-block 27
+    %%%%%:   45-block 28
+    %%%%%:   45-block 29
+       33:   45-block 30
+    %%%%%:   45-block 31
+        3:   45-block 32
+        3:   45-block 33
+    %%%%%:   45-block 34
+    %%%%%:   45-block 35
+        3:   45-block 36
+       33:   45-block 37
+       33:   45-block 38
+    %%%%%:   45-block 39
+    %%%%%:   45-block 40
+    %%%%%:   45-block 41
+    %%%%%:   45-block 42
+     1530:   45-block 43
+     1536:   45-block 44
+  1650897:   45-block 45
+    %%%%%:   45-block 46
+    %%%%%:   45-block 47
+  4952691:   45-block 48
+  1650897:   45-block 49
+    %%%%%:   45-block 50
+    %%%%%:   45-block 51
+    %%%%%:   45-block 52
+    %%%%%:   45-block 53
+    %%%%%:   45-block 54
+    %%%%%:   45-block 55
+    %%%%%:   45-block 56
+    %%%%%:   45-block 57
+    %%%%%:   45-block 58
+    %%%%%:   45-block 59
+    %%%%%:   45-block 60
+    %%%%%:   45-block 61
+    %%%%%:   45-block 62
+    %%%%%:   45-block 63
+    %%%%%:   45-block 64
+    %%%%%:   45-block 65
+     1536:   45-block 66
+     1536:   45-block 67
+     1496:   45-block 68
+     1536:   45-block 69
+     1536:   45-block 70
+    %%%%%:   45-block 71
+        3:   45-block 72
+     1536:   45-block 73
+  1650897:   45-block 74
+  4952691:   45-block 75
+  1650897:   45-block 76
+        3:   45-block 77
+        3:   45-block 78
+    %%%%%:   45-block 79
+    %%%%%:   45-block 80
+        3:   45-block 81
+    %%%%%:   45-block 82
+    %%%%%:   45-block 83
+    %%%%%:   45-block 84
+    %%%%%:   45-block 85
+      761:   45-block 86
+     1533:   45-block 87
+     1466:   45-block 88
+     1466:   45-block 89
+        3:   45-block 90
+        3:   45-block 91
+    %%%%%:   45-block 92
+    %%%%%:   45-block 93
+    %%%%%:   45-block 94
+    %%%%%:   45-block 95
+    %%%%%:   45-block 96
+    %%%%%:   45-block 97
+    %%%%%:   45-block 98
+    %%%%%:   45-block 99
+    %%%%%:   45-block 100
+    %%%%%:   45-block 101
+    %%%%%:   45-block 102
+    %%%%%:   45-block 103
+    %%%%%:   45-block 104
+    %%%%%:   45-block 105
+    %%%%%:   45-block 106
+    %%%%%:   45-block 107
+    %%%%%:   45-block 108
+    %%%%%:   45-block 109
+    %%%%%:   45-block 110
+    %%%%%:   45-block 111
+    %%%%%:   45-block 112
+    %%%%%:   45-block 113
+    %%%%%:   45-block 114
+        -:   46:  /** \returns a const reference to the derived object */
+        -:   47:  EIGEN_DEVICE_FUNC
+ 2294066*:   48:  const Derived& derived() const { return *static_cast<const Derived*>(this); }
+    %%%%%:   48-block  0
+    35328:   48-block  1
+     3585:   48-block  2
+     1503:   48-block  3
+     1503:   48-block  4
+    30240:   48-block  5
+     1530:   48-block  6
+    30240:   48-block  7
+    30240:   48-block  8
+    30240:   48-block  9
+    35328:   48-block 10
+     5088:   48-block 11
+    %%%%%:   48-block 12
+    %%%%%:   48-block 13
+    %%%%%:   48-block 14
+    %%%%%:   48-block 15
+    %%%%%:   48-block 16
+     1503:   48-block 17
+     1503:   48-block 18
+    %%%%%:   48-block 19
+    %%%%%:   48-block 20
+    %%%%%:   48-block 21
+     1503:   48-block 22
+    %%%%%:   48-block 23
+     1530:   48-block 24
+    %%%%%:   48-block 25
+     1530:   48-block 26
+        3:   48-block 27
+        3:   48-block 28
+     1539:   48-block 29
+     1536:   48-block 30
+    %%%%%:   48-block 31
+    %%%%%:   48-block 32
+    %%%%%:   48-block 33
+     1530:   48-block 34
+    %%%%%:   48-block 35
+    %%%%%:   48-block 36
+       33:   48-block 37
+     1503:   48-block 38
+    %%%%%:   48-block 39
+    %%%%%:   48-block 40
+    %%%%%:   48-block 41
+    %%%%%:   48-block 42
+    %%%%%:   48-block 43
+    %%%%%:   48-block 44
+        3:   48-block 45
+       33:   48-block 46
+    %%%%%:   48-block 47
+    %%%%%:   48-block 48
+    %%%%%:   48-block 49
+    %%%%%:   48-block 50
+    %%%%%:   48-block 51
+    %%%%%:   48-block 52
+    %%%%%:   48-block 53
+    %%%%%:   48-block 54
+    %%%%%:   48-block 55
+        3:   48-block 56
+        3:   48-block 57
+        3:   48-block 58
+       33:   48-block 59
+    %%%%%:   48-block 60
+     1536:   48-block 61
+     1536:   48-block 62
+        3:   48-block 63
+    %%%%%:   48-block 64
+       33:   48-block 65
+    %%%%%:   48-block 66
+    %%%%%:   48-block 67
+    %%%%%:   48-block 68
+     1536:   48-block 69
+        3:   48-block 70
+     1536:   48-block 71
+     1536:   48-block 72
+    %%%%%:   48-block 73
+    %%%%%:   48-block 74
+        3:   48-block 75
+    %%%%%:   48-block 76
+       33:   48-block 77
+    %%%%%:   48-block 78
+       33:   48-block 79
+       36:   48-block 80
+     1536:   48-block 81
+     1536:   48-block 82
+    %%%%%:   48-block 83
+    %%%%%:   48-block 84
+        3:   48-block 85
+        3:   48-block 86
+        3:   48-block 87
+        3:   48-block 88
+        3:   48-block 89
+    %%%%%:   48-block 90
+    %%%%%:   48-block 91
+        3:   48-block 92
+        3:   48-block 93
+        3:   48-block 94
+    %%%%%:   48-block 95
+        3:   48-block 96
+        3:   48-block 97
+        3:   48-block 98
+        3:   48-block 99
+    %%%%%:   48-block 100
+    %%%%%:   48-block 101
+    %%%%%:   48-block 102
+    %%%%%:   48-block 103
+    %%%%%:   48-block 104
+    %%%%%:   48-block 105
+    %%%%%:   48-block 106
+        3:   48-block 107
+        -:   49:
+        -:   50:  EIGEN_DEVICE_FUNC
+  842168*:   51:  inline Derived& const_cast_derived() const
+    35328:   51-block  0
+     1503:   51-block  1
+    %%%%%:   51-block  2
+    %%%%%:   51-block  3
+     1530:   51-block  4
+   392445:   51-block  5
+    %%%%%:   51-block  6
+    %%%%%:   51-block  7
+        6:   51-block  8
+     1503:   51-block  9
+    %%%%%:   51-block 10
+     1530:   51-block 11
+    %%%%%:   51-block 12
+        3:   51-block 13
+    %%%%%:   51-block 14
+    %%%%%:   51-block 15
+    %%%%%:   51-block 16
+    %%%%%:   51-block 17
+     1530:   51-block 18
+     1530:   51-block 19
+    %%%%%:   51-block 20
+      761:   51-block 21
+    %%%%%:   51-block 22
+     4428:   51-block 23
+        3:   51-block 24
+       33:   51-block 25
+    %%%%%:   51-block 26
+     4428:   51-block 27
+    %%%%%:   51-block 28
+        -:   52:  { return *static_cast<Derived*>(const_cast<EigenBase*>(this)); }
+        -:   53:  EIGEN_DEVICE_FUNC
+        -:   54:  inline const Derived& const_derived() const
+        -:   55:  { return *static_cast<const Derived*>(this); }
+        -:   56:
+        -:   57:  /** \returns the number of rows. \sa cols(), RowsAtCompileTime */
+        -:   58:  EIGEN_DEVICE_FUNC
+14770462*:   59:  inline Index rows() const { return derived().rows(); }
+       66:   59-block  0
+    %%%%%:   59-block  1
+    %%%%%:   59-block  2
+    %%%%%:   59-block  3
+    30240:   59-block  4
+    %%%%%:   59-block  5
+    %%%%%:   59-block  6
+    %%%%%:   59-block  7
+    %%%%%:   59-block  8
+    %%%%%:   59-block  9
+  3148800:   59-block 10
+       63:   59-block 11
+    %%%%%:   59-block 12
+    %%%%%:   59-block 13
+    %%%%%:   59-block 14
+    %%%%%:   59-block 15
+    %%%%%:   59-block 16
+    %%%%%:   59-block 17
+        3:   59-block 18
+     1536:   59-block 19
+    %%%%%:   59-block 20
+    %%%%%:   59-block 21
+    %%%%%:   59-block 22
+    %%%%%:   59-block 23
+    %%%%%:   59-block 24
+    %%%%%:   59-block 25
+    %%%%%:   59-block 26
+    %%%%%:   59-block 27
+        3:   59-block 28
+    %%%%%:   59-block 29
+     1536:   59-block 30
+    %%%%%:   59-block 31
+    %%%%%:   59-block 32
+    %%%%%:   59-block 33
+    %%%%%:   59-block 34
+        6:   59-block 35
+    %%%%%:   59-block 36
+    %%%%%:   59-block 37
+     1536:   59-block 38
+    %%%%%:   59-block 39
+    %%%%%:   59-block 40
+     1536:   59-block 41
+    %%%%%:   59-block 42
+        3:   59-block 43
+  9920368:   59-block 44
+    %%%%%:   59-block 45
+     1503:   59-block 46
+        3:   59-block 47
+     1602:   59-block 48
+    %%%%%:   59-block 49
+    %%%%%:   59-block 50
+    %%%%%:   59-block 51
+    %%%%%:   59-block 52
+       36:   59-block 53
+     1536:   59-block 54
+     1530:   59-block 55
+        3:   59-block 56
+        3:   59-block 57
+        3:   59-block 58
+        3:   59-block 59
+    %%%%%:   59-block 60
+    %%%%%:   59-block 61
+    %%%%%:   59-block 62
+    %%%%%:   59-block 63
+    %%%%%:   59-block 64
+    %%%%%:   59-block 65
+    %%%%%:   59-block 66
+    %%%%%:   59-block 67
+    %%%%%:   59-block 68
+    %%%%%:   59-block 69
+    %%%%%:   59-block 70
+    %%%%%:   59-block 71
+        3:   59-block 72
+        3:   59-block 73
+        3:   59-block 74
+     1536:   59-block 75
+     4428:   59-block 76
+    %%%%%:   59-block 77
+    %%%%%:   59-block 78
+    %%%%%:   59-block 79
+        -:   60:  /** \returns the number of columns. \sa rows(), ColsAtCompileTime*/
+        -:   61:  EIGEN_DEVICE_FUNC
+ 8933143*:   62:  inline Index cols() const { return derived().cols(); }
+    35328:   62-block  0
+    35328:   62-block  1
+     1503:   62-block  2
+       33:   62-block  3
+    30240:   62-block  4
+       63:   62-block  5
+     1503:   62-block  6
+    %%%%%:   62-block  7
+    %%%%%:   62-block  8
+    %%%%%:   62-block  9
+     1503:   62-block 10
+     1503:   62-block 11
+    30240:   62-block 12
+    %%%%%:   62-block 13
+    %%%%%:   62-block 14
+    %%%%%:   62-block 15
+     1530:   62-block 16
+    30240:   62-block 17
+    %%%%%:   62-block 18
+    %%%%%:   62-block 19
+    %%%%%:   62-block 20
+    %%%%%:   62-block 21
+    %%%%%:   62-block 22
+   392445:   62-block 23
+     1530:   62-block 24
+     1530:   62-block 25
+    %%%%%:   62-block 26
+    %%%%%:   62-block 27
+    %%%%%:   62-block 28
+    %%%%%:   62-block 29
+    %%%%%:   62-block 30
+    %%%%%:   62-block 31
+       63:   62-block 32
+    %%%%%:   62-block 33
+        6:   62-block 34
+    %%%%%:   62-block 35
+    %%%%%:   62-block 36
+    %%%%%:   62-block 37
+    %%%%%:   62-block 38
+    %%%%%:   62-block 39
+    %%%%%:   62-block 40
+    %%%%%:   62-block 41
+    %%%%%:   62-block 42
+        3:   62-block 43
+    %%%%%:   62-block 44
+    %%%%%:   62-block 45
+    %%%%%:   62-block 46
+     1503:   62-block 47
+    %%%%%:   62-block 48
+        6:   62-block 49
+    %%%%%:   62-block 50
+    %%%%%:   62-block 51
+        3:   62-block 52
+    %%%%%:   62-block 53
+    %%%%%:   62-block 54
+    %%%%%:   62-block 55
+        3:   62-block 56
+     1539:   62-block 57
+     1503:   62-block 58
+    %%%%%:   62-block 59
+    %%%%%:   62-block 60
+    %%%%%:   62-block 61
+    %%%%%:   62-block 62
+    %%%%%:   62-block 63
+    %%%%%:   62-block 64
+    %%%%%:   62-block 65
+    %%%%%:   62-block 66
+    %%%%%:   62-block 67
+     1530:   62-block 68
+     1530:   62-block 69
+    %%%%%:   62-block 70
+    %%%%%:   62-block 71
+    %%%%%:   62-block 72
+    %%%%%:   62-block 73
+    %%%%%:   62-block 74
+    %%%%%:   62-block 75
+     1530:   62-block 76
+    %%%%%:   62-block 77
+     1539:   62-block 78
+    %%%%%:   62-block 79
+    %%%%%:   62-block 80
+    %%%%%:   62-block 81
+     1530:   62-block 82
+     1530:   62-block 83
+    %%%%%:   62-block 84
+    %%%%%:   62-block 85
+    %%%%%:   62-block 86
+     4509:   62-block 87
+    %%%%%:   62-block 88
+    %%%%%:   62-block 89
+    %%%%%:   62-block 90
+        3:   62-block 91
+    %%%%%:   62-block 92
+     1530:   62-block 93
+     1530:   62-block 94
+     1530:   62-block 95
+     1536:   62-block 96
+      761:   62-block 97
+       36:   62-block 98
+    %%%%%:   62-block 99
+    %%%%%:   62-block 100
+    %%%%%:   62-block 101
+    %%%%%:   62-block 102
+    %%%%%:   62-block 103
+    %%%%%:   62-block 104
+    %%%%%:   62-block 105
+     1536:   62-block 106
+     1536:   62-block 107
+     1536:   62-block 108
+    %%%%%:   62-block 109
+    %%%%%:   62-block 110
+        3:   62-block 111
+     4428:   62-block 112
+        3:   62-block 113
+      761:   62-block 114
+     1503:   62-block 115
+    %%%%%:   62-block 116
+     1536:   62-block 117
+    %%%%%:   62-block 118
+    %%%%%:   62-block 119
+    %%%%%:   62-block 120
+    %%%%%:   62-block 121
+    %%%%%:   62-block 122
+    %%%%%:   62-block 123
+    %%%%%:   62-block 124
+        3:   62-block 125
+     1533:   62-block 126
+        3:   62-block 127
+        3:   62-block 128
+     1536:   62-block 129
+     3039:   62-block 130
+       72:   62-block 131
+        9:   62-block 132
+     1536:   62-block 133
+        3:   62-block 134
+    %%%%%:   62-block 135
+    %%%%%:   62-block 136
+     1503:   62-block 137
+       36:   62-block 138
+        3:   62-block 139
+    %%%%%:   62-block 140
+     1536:   62-block 141
+        3:   62-block 142
+     1536:   62-block 143
+    %%%%%:   62-block 144
+    %%%%%:   62-block 145
+    %%%%%:   62-block 146
+    %%%%%:   62-block 147
+    %%%%%:   62-block 148
+    %%%%%:   62-block 149
+        3:   62-block 150
+     1536:   62-block 151
+     1536:   62-block 152
+     1530:   62-block 153
+     1530:   62-block 154
+     1536:   62-block 155
+  1650897:   62-block 156
+    %%%%%:   62-block 157
+    %%%%%:   62-block 158
+    %%%%%:   62-block 159
+    %%%%%:   62-block 160
+    %%%%%:   62-block 161
+  4952691:   62-block 162
+  4952691:   62-block 163
+  1650897:   62-block 164
+  1650897:   62-block 165
+        3:   62-block 166
+    %%%%%:   62-block 167
+    %%%%%:   62-block 168
+    %%%%%:   62-block 169
+    %%%%%:   62-block 170
+    %%%%%:   62-block 171
+    %%%%%:   62-block 172
+    %%%%%:   62-block 173
+    %%%%%:   62-block 174
+    %%%%%:   62-block 175
+    %%%%%:   62-block 176
+        3:   62-block 177
+        3:   62-block 178
+        3:   62-block 179
+     1536:   62-block 180
+     1536:   62-block 181
+    %%%%%:   62-block 182
+     4428:   62-block 183
+     1533:   62-block 184
+    %%%%%:   62-block 185
+    %%%%%:   62-block 186
+    %%%%%:   62-block 187
+    %%%%%:   62-block 188
+    %%%%%:   62-block 189
+    %%%%%:   62-block 190
+    %%%%%:   62-block 191
+    %%%%%:   62-block 192
+     6144:   62-block 193
+    %%%%%:   62-block 194
+    %%%%%:   62-block 195
+    %%%%%:   62-block 196
+    %%%%%:   62-block 197
+    %%%%%:   62-block 198
+    %%%%%:   62-block 199
+    %%%%%:   62-block 200
+    %%%%%:   62-block 201
+    %%%%%:   62-block 202
+    %%%%%:   62-block 203
+    %%%%%:   62-block 204
+    %%%%%:   62-block 205
+    %%%%%:   62-block 206
+    %%%%%:   62-block 207
+    %%%%%:   62-block 208
+        -:   63:  /** \returns the number of coefficients, which is rows()*cols().
+        -:   64:    * \sa rows(), cols(), SizeAtCompileTime. */
+        -:   65:  EIGEN_DEVICE_FUNC
+ 8880809*:   66:  inline Index size() const { return rows() * cols(); }
+    35328:   66-block  0
+    35328:   66-block  1
+     1503:   66-block  2
+    30240:   66-block  3
+     1503:   66-block  4
+    %%%%%:   66-block  5
+    %%%%%:   66-block  6
+    %%%%%:   66-block  7
+     1503:   66-block  8
+     1503:   66-block  9
+    %%%%%:   66-block 10
+    30240:   66-block 11
+    %%%%%:   66-block 12
+    %%%%%:   66-block 13
+     1530:   66-block 14
+        3:   66-block 15
+    %%%%%:   66-block 16
+    %%%%%:   66-block 17
+    %%%%%:   66-block 18
+    %%%%%:   66-block 19
+    %%%%%:   66-block 20
+   392445:   66-block 21
+     1530:   66-block 22
+     1530:   66-block 23
+     1530:   66-block 24
+    %%%%%:   66-block 25
+    %%%%%:   66-block 26
+    %%%%%:   66-block 27
+    %%%%%:   66-block 28
+    %%%%%:   66-block 29
+        6:   66-block 30
+    %%%%%:   66-block 31
+    %%%%%:   66-block 32
+    %%%%%:   66-block 33
+    %%%%%:   66-block 34
+    %%%%%:   66-block 35
+    %%%%%:   66-block 36
+    %%%%%:   66-block 37
+    %%%%%:   66-block 38
+        3:   66-block 39
+    %%%%%:   66-block 40
+    %%%%%:   66-block 41
+    %%%%%:   66-block 42
+     1503:   66-block 43
+    %%%%%:   66-block 44
+    %%%%%:   66-block 45
+        3:   66-block 46
+    %%%%%:   66-block 47
+    %%%%%:   66-block 48
+    %%%%%:   66-block 49
+        3:   66-block 50
+     1503:   66-block 51
+    %%%%%:   66-block 52
+    %%%%%:   66-block 53
+    %%%%%:   66-block 54
+    %%%%%:   66-block 55
+    %%%%%:   66-block 56
+    %%%%%:   66-block 57
+    %%%%%:   66-block 58
+    %%%%%:   66-block 59
+    %%%%%:   66-block 60
+    %%%%%:   66-block 61
+    %%%%%:   66-block 62
+     1530:   66-block 63
+     1530:   66-block 64
+    %%%%%:   66-block 65
+    %%%%%:   66-block 66
+    %%%%%:   66-block 67
+     1539:   66-block 68
+    %%%%%:   66-block 69
+    %%%%%:   66-block 70
+     1530:   66-block 71
+     1530:   66-block 72
+    %%%%%:   66-block 73
+    %%%%%:   66-block 74
+    %%%%%:   66-block 75
+    %%%%%:   66-block 76
+        3:   66-block 77
+     1530:   66-block 78
+     1530:   66-block 79
+     1530:   66-block 80
+     1536:   66-block 81
+      761:   66-block 82
+       36:   66-block 83
+    %%%%%:   66-block 84
+    %%%%%:   66-block 85
+    %%%%%:   66-block 86
+    %%%%%:   66-block 87
+    %%%%%:   66-block 88
+    %%%%%:   66-block 89
+     1536:   66-block 90
+     1536:   66-block 91
+    %%%%%:   66-block 92
+    %%%%%:   66-block 93
+        3:   66-block 94
+     4428:   66-block 95
+        3:   66-block 96
+    %%%%%:   66-block 97
+    %%%%%:   66-block 98
+    %%%%%:   66-block 99
+    %%%%%:   66-block 100
+    %%%%%:   66-block 101
+    %%%%%:   66-block 102
+    %%%%%:   66-block 103
+        3:   66-block 104
+     1533:   66-block 105
+        3:   66-block 106
+        3:   66-block 107
+     3039:   66-block 108
+       72:   66-block 109
+        9:   66-block 110
+     1536:   66-block 111
+        3:   66-block 112
+    %%%%%:   66-block 113
+       36:   66-block 114
+        3:   66-block 115
+    %%%%%:   66-block 116
+     1536:   66-block 117
+     1536:   66-block 118
+    %%%%%:   66-block 119
+    %%%%%:   66-block 120
+     1536:   66-block 121
+     1536:   66-block 122
+        3:   66-block 123
+     1536:   66-block 124
+     1536:   66-block 125
+     1536:   66-block 126
+  1650897:   66-block 127
+    %%%%%:   66-block 128
+    %%%%%:   66-block 129
+    %%%%%:   66-block 130
+    %%%%%:   66-block 131
+    %%%%%:   66-block 132
+  4952691:   66-block 133
+  4952691:   66-block 134
+  1650897:   66-block 135
+  1650897:   66-block 136
+     1536:   66-block 137
+    %%%%%:   66-block 138
+     1533:   66-block 139
+    %%%%%:   66-block 140
+    %%%%%:   66-block 141
+     6144:   66-block 142
+    %%%%%:   66-block 143
+    %%%%%:   66-block 144
+    %%%%%:   66-block 145
+    %%%%%:   66-block 146
+    %%%%%:   66-block 147
+    %%%%%:   66-block 148
+    %%%%%:   66-block 149
+    %%%%%:   66-block 150
+    %%%%%:   66-block 151
+    %%%%%:   66-block 152
+    %%%%%:   66-block 153
+    %%%%%:   66-block 154
+    %%%%%:   66-block 155
+    %%%%%:   66-block 156
+        -:   67:
+        -:   68:  /** \internal Don't use it, but do the equivalent: \code dst = *this; \endcode */
+        -:   69:  template<typename Dest>
+        -:   70:  EIGEN_DEVICE_FUNC
+        -:   71:  inline void evalTo(Dest& dst) const
+        -:   72:  { derived().evalTo(dst); }
+        -:   73:
+        -:   74:  /** \internal Don't use it, but do the equivalent: \code dst += *this; \endcode */
+        -:   75:  template<typename Dest>
+        -:   76:  EIGEN_DEVICE_FUNC
+        -:   77:  inline void addTo(Dest& dst) const
+        -:   78:  {
+        -:   79:    // This is the default implementation,
+        -:   80:    // derived class can reimplement it in a more optimized way.
+        -:   81:    typename Dest::PlainObject res(rows(),cols());
+        -:   82:    evalTo(res);
+        -:   83:    dst += res;
+        -:   84:  }
+        -:   85:
+        -:   86:  /** \internal Don't use it, but do the equivalent: \code dst -= *this; \endcode */
+        -:   87:  template<typename Dest>
+        -:   88:  EIGEN_DEVICE_FUNC
+        -:   89:  inline void subTo(Dest& dst) const
+        -:   90:  {
+        -:   91:    // This is the default implementation,
+        -:   92:    // derived class can reimplement it in a more optimized way.
+        -:   93:    typename Dest::PlainObject res(rows(),cols());
+        -:   94:    evalTo(res);
+        -:   95:    dst -= res;
+        -:   96:  }
+        -:   97:
+        -:   98:  /** \internal Don't use it, but do the equivalent: \code dst.applyOnTheRight(*this); \endcode */
+        -:   99:  template<typename Dest>
+        -:  100:  EIGEN_DEVICE_FUNC inline void applyThisOnTheRight(Dest& dst) const
+        -:  101:  {
+        -:  102:    // This is the default implementation,
+        -:  103:    // derived class can reimplement it in a more optimized way.
+        -:  104:    dst = dst * this->derived();
+        -:  105:  }
+        -:  106:
+        -:  107:  /** \internal Don't use it, but do the equivalent: \code dst.applyOnTheLeft(*this); \endcode */
+        -:  108:  template<typename Dest>
+        -:  109:  EIGEN_DEVICE_FUNC inline void applyThisOnTheLeft(Dest& dst) const
+        -:  110:  {
+        -:  111:    // This is the default implementation,
+        -:  112:    // derived class can reimplement it in a more optimized way.
+        -:  113:    dst = this->derived() * dst;
+        -:  114:  }
+        -:  115:
+        -:  116:};
+        -:  117:
+        -:  118:/***************************************************************************
+        -:  119:* Implementation of matrix base methods
+        -:  120:***************************************************************************/
+        -:  121:
+        -:  122:/** \brief Copies the generic expression \a other into *this.
+        -:  123:  *
+        -:  124:  * \details The expression must provide a (templated) evalTo(Derived& dst) const
+        -:  125:  * function which does the actual job. In practice, this allows any user to write
+        -:  126:  * its own special matrix without having to modify MatrixBase
+        -:  127:  *
+        -:  128:  * \returns a reference to *this.
+        -:  129:  */
+        -:  130:template<typename Derived>
+        -:  131:template<typename OtherDerived>
+        -:  132:EIGEN_DEVICE_FUNC
+        -:  133:Derived& DenseBase<Derived>::operator=(const EigenBase<OtherDerived> &other)
+        -:  134:{
+        -:  135:  call_assignment(derived(), other.derived());
+        -:  136:  return derived();
+        -:  137:}
+        -:  138:
+        -:  139:template<typename Derived>
+        -:  140:template<typename OtherDerived>
+        -:  141:EIGEN_DEVICE_FUNC
+        -:  142:Derived& DenseBase<Derived>::operator+=(const EigenBase<OtherDerived> &other)
+        -:  143:{
+        -:  144:  call_assignment(derived(), other.derived(), internal::add_assign_op<Scalar,typename OtherDerived::Scalar>());
+        -:  145:  return derived();
+        -:  146:}
+        -:  147:
+        -:  148:template<typename Derived>
+        -:  149:template<typename OtherDerived>
+        -:  150:EIGEN_DEVICE_FUNC
+        -:  151:Derived& DenseBase<Derived>::operator-=(const EigenBase<OtherDerived> &other)
+        -:  152:{
+        -:  153:  call_assignment(derived(), other.derived(), internal::sub_assign_op<Scalar,typename OtherDerived::Scalar>());
+        -:  154:  return derived();
+        -:  155:}
+        -:  156:
+        -:  157:} // end namespace Eigen
+        -:  158:
+        -:  159:#endif // EIGEN_EIGENBASE_H

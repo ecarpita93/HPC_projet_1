@@ -1,0 +1,255 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/io/tga.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IO_TGA_HPP
+        -:   19:#define PIC_IO_TGA_HPP
+        -:   20:
+        -:   21:#include <stdio.h>
+        -:   22:#include <string>
+        -:   23:#include <iostream>
+        -:   24:
+        -:   25:#include "../base.hpp"
+        -:   26:#include "../util/buffer.hpp"
+        -:   27:
+        -:   28:namespace pic {
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief The TGA_HEADER struct
+        -:   32: */
+        -:   33:struct TGA_HEADER{
+        -:   34:    unsigned char id_length;
+        -:   35:    unsigned char colormap_type;
+        -:   36:    unsigned char image_type;
+        -:   37:
+        -:   38:    //colormap information
+        -:   39:    short int     colormap_first_entry;
+        -:   40:    short int     colormap_length;
+        -:   41:    unsigned char colormap_entry_size;
+        -:   42:
+        -:   43:    //image information
+        -:   44:    short int     x_origin;
+        -:   45:    short int     y_origin;
+        -:   46:    short int     width;
+        -:   47:    short int     height;
+        -:   48:    unsigned char depth;
+        -:   49:
+        -:   50:    unsigned char descriptor;
+        -:   51:};
+        -:   52:
+        -:   53:/**
+        -:   54: * @brief ReadTGA reads an image in the .tga format.
+        -:   55: * @param nameFile
+        -:   56: * @param data
+        -:   57: * @param width
+        -:   58: * @param height
+        -:   59: * @param channels
+        -:   60: * @return
+        -:   61: */
+    #####:   62:PIC_INLINE unsigned char *ReadTGA(std::string nameFile, unsigned char *data,
+        -:   63:                                  int &width, int &height, int &channels)
+        -:   64:{
+    #####:   65:    std::ifstream tga_in(nameFile.c_str(), std::ios::binary);
+    %%%%%:   65-block  0
+    %%%%%:   65-block  1
+    $$$$$:   65-block  2
+        -:   66:
+    #####:   67:    if(!tga_in.is_open()) {
+        -:   68:        return data;
+        -:   69:    }
+        -:   70:
+        -:   71:    //reading the header
+    #####:   72:    TGA_HEADER header;
+    #####:   73:    tga_in.read((char*)(&header.id_length), 1);
+    %%%%%:   73-block  0
+    #####:   74:    tga_in.read((char*)(&header.colormap_type), 1);
+    %%%%%:   74-block  0
+    #####:   75:    tga_in.read((char*)(&header.image_type), 1);
+    %%%%%:   75-block  0
+        -:   76:
+    #####:   77:    tga_in.read((char*)(&header.colormap_first_entry), 2);
+    %%%%%:   77-block  0
+    #####:   78:    tga_in.read((char*)(&header.colormap_length), 2);
+    %%%%%:   78-block  0
+    #####:   79:    tga_in.read((char*)(&header.colormap_entry_size), 1);
+    %%%%%:   79-block  0
+        -:   80:
+    #####:   81:    tga_in.read((char*)(&header.x_origin), 2);
+    %%%%%:   81-block  0
+    #####:   82:    tga_in.read((char*)(&header.y_origin), 2);
+    %%%%%:   82-block  0
+    #####:   83:    tga_in.read((char*)(&header.width), 2);
+    %%%%%:   83-block  0
+    #####:   84:    tga_in.read((char*)(&header.height), 2);
+    %%%%%:   84-block  0
+    #####:   85:    tga_in.read((char*)(&header.depth), 1);
+    %%%%%:   85-block  0
+    #####:   86:    tga_in.read((char*)(&header.descriptor), 1);
+    %%%%%:   86-block  0
+        -:   87:
+        -:   88:
+    #####:   89:    width  = (int)(header.width);
+    #####:   90:    height = (int)(header.height);
+        -:   91:
+        -:   92:    //extra information from the developer
+    #####:   93:    for(int i=0; i<header.id_length; i++) {
+    %%%%%:   93-block  0
+    %%%%%:   93-block  1
+    %%%%%:   93-block  2
+    #####:   94:        char tmp;
+    #####:   95:        tga_in.read(&tmp, 1);
+    %%%%%:   95-block  0
+        -:   96:    }
+        -:   97:
+        -:   98:    //supporting only 8-bit RGB or RGBA
+    #####:   99:    if(!((header.depth==32) || (header.depth==24))) {
+    %%%%%:   99-block  0
+    #####:  100:        tga_in.close();
+    %%%%%:  100-block  0
+        -:  101:        return data;
+        -:  102:    }
+        -:  103:
+    #####:  104:    channels = header.depth / 8;
+        -:  105:
+    #####:  106:    int size = width * height * channels;
+    #####:  107:    if(data == NULL) {
+    %%%%%:  107-block  0
+    #####:  108:        data = new unsigned char[size];
+    %%%%%:  108-block  0
+        -:  109:    }
+        -:  110:
+        -:  111:    //reading uncompressed data
+    #####:  112:    if((header.image_type > 0) && (header.image_type < 4)) {
+    %%%%%:  112-block  0
+    #####:  113:        tga_in.read((char*)(data), size);
+    %%%%%:  113-block  0
+        -:  114:
+        -:  115:        //values are stored as BGR
+    #####:  116:        Buffer<unsigned char>::BGRtoRGB(data, width, height, channels, 1);
+    %%%%%:  116-block  0
+        -:  117:
+        -:  118:        //values are stored with a vertical flip
+    #####:  119:        Buffer<unsigned char>::flipV(data, width, height, channels, 1);
+    %%%%%:  119-block  0
+        -:  120:
+        -:  121:    } else {
+        -:  122:        //reading RLE compressed data
+        -:  123:
+        -:  124:    }
+        -:  125:
+    #####:  126:    tga_in.close();
+    %%%%%:  126-block  0
+        -:  127:    return data;
+        -:  128:}
+        -:  129:
+        -:  130:/**
+        -:  131: * @brief WriteTGA writes an image in the .tga format.
+        -:  132: * @param nameFile
+        -:  133: * @param data
+        -:  134: * @param width
+        -:  135: * @param height
+        -:  136: * @param channels
+        -:  137: * @return
+        -:  138: */
+    #####:  139:PIC_INLINE bool WriteTGA(std::string nameFile, const unsigned char *data,
+        -:  140:                         int width, int height, int channels)
+        -:  141:{
+    #####:  142:    std::ofstream tga_out(nameFile.c_str(), std::ios::binary);
+    %%%%%:  142-block  0
+    %%%%%:  142-block  1
+    $$$$$:  142-block  2
+        -:  143:
+    #####:  144:    if(!tga_out.is_open()) {
+        -:  145:        return false;
+        -:  146:    }
+        -:  147:
+        -:  148:    //setting the header
+    #####:  149:    TGA_HEADER header;
+    #####:  150:    header.id_length = 0;
+    #####:  151:    header.colormap_type = 0; //no color map included
+        -:  152:
+    #####:  153:    header.colormap_first_entry = 0;
+    #####:  154:    header.colormap_length = 0;
+    #####:  155:    header.colormap_entry_size = 0;
+        -:  156:
+    #####:  157:    header.x_origin = 0;
+    #####:  158:    header.y_origin = 0;
+    #####:  159:    header.width = width;
+    #####:  160:    header.height = height;
+    #####:  161:    header.depth = 8 * channels;
+        -:  162:
+    #####:  163:    if(channels == 4) {
+    %%%%%:  163-block  0
+    #####:  164:        header.descriptor = 3;
+    %%%%%:  164-block  0
+        -:  165:    } else {
+    #####:  166:        header.descriptor = 0;
+    %%%%%:  166-block  0
+        -:  167:    }
+        -:  168:
+    #####:  169:    if(channels == 1) {
+    %%%%%:  169-block  0
+    #####:  170:        header.image_type = 3; //uncompressed gray scale
+    %%%%%:  170-block  0
+        -:  171:    } else {
+    #####:  172:        header.image_type = 2; //uncompressed RGB
+    %%%%%:  172-block  0
+        -:  173:    }
+        -:  174:
+    #####:  175:    tga_out.write((char*)(&header.id_length), 1);
+    %%%%%:  175-block  0
+    #####:  176:    tga_out.write((char*)(&header.colormap_type), 1);
+    %%%%%:  176-block  0
+    #####:  177:    tga_out.write((char*)(&header.image_type), 1);
+    %%%%%:  177-block  0
+        -:  178:
+    #####:  179:    tga_out.write((char*)(&header.colormap_first_entry), 2);
+    %%%%%:  179-block  0
+    #####:  180:    tga_out.write((char*)(&header.colormap_length), 2);
+    %%%%%:  180-block  0
+    #####:  181:    tga_out.write((char*)(&header.colormap_entry_size), 1);
+    %%%%%:  181-block  0
+        -:  182:
+    #####:  183:    tga_out.write((char*)(&header.x_origin), 2);
+    %%%%%:  183-block  0
+    #####:  184:    tga_out.write((char*)(&header.y_origin), 2);
+    %%%%%:  184-block  0
+    #####:  185:    tga_out.write((char*)(&header.width), 2);
+    %%%%%:  185-block  0
+    #####:  186:    tga_out.write((char*)(&header.height), 2);
+    %%%%%:  186-block  0
+    #####:  187:    tga_out.write((char*)(&header.depth), 1);
+    %%%%%:  187-block  0
+    #####:  188:    tga_out.write((char*)(&header.descriptor), 1);
+    %%%%%:  188-block  0
+        -:  189:
+        -:  190://    tga_out.write((char*)(&header.components), 4);
+        -:  191://    tga_out.write((char*)(&header.bytes), 4);
+        -:  192:
+    #####:  193:    tga_out.write((char*)(data), width * height * channels);
+    %%%%%:  193-block  0
+        -:  194:
+        -:  195:    return true;
+        -:  196:}
+        -:  197:
+        -:  198:} // end namespace pic
+        -:  199:
+        -:  200:#endif /* PIC_IO_TMP_HPP */
+        -:  201:

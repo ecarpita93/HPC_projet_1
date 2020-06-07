@@ -1,0 +1,439 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/features_matching/ward_alignment.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FEATURES_MATCHING_WARD_ALIGNMENT_HPP
+        -:   19:#define PIC_FEATURES_MATCHING_WARD_ALIGNMENT_HPP
+        -:   20:
+        -:   21:#include <vector>
+        -:   22:
+        -:   23:#include "../image.hpp"
+        -:   24:#include "../util/vec.hpp"
+        -:   25:#include "../util/string.hpp"
+        -:   26:#include "../image_samplers/image_sampler_bilinear.hpp"
+        -:   27:#include "../filtering/filter_downsampler_2d.hpp"
+        -:   28:#include "../filtering/filter_luminance.hpp"
+        -:   29:
+        -:   30:namespace pic {
+        -:   31:
+        -:   32:/**
+        -:   33: * @brief The WardAlignment class
+        -:   34: */
+        -:   35:class WardAlignment
+        -:   36:{
+        -:   37:protected:
+        -:   38:    float tolerance, percentile;
+        -:   39:
+        -:   40:public:
+        -:   41:    ImageVec img1_v, img2_v, luminance;
+        -:   42:    std::vector< bool* > tb1_v, tb2_v, eb2_shifted_v, tb2_shifted_v;
+        -:   43:
+        -:   44:    /**
+        -:   45:     * @brief WardAlignment
+        -:   46:     */
+    #####:   47:    WardAlignment()
+    #####:   48:    {
+    #####:   49:        update(0.5f, 0.015625f);
+        -:   50:    }
+        -:   51:
+    #####:   52:    ~WardAlignment()
+    #####:   53:    {
+    %%%%%:   53-block  0
+    %%%%%:   53-block  1
+    %%%%%:   53-block  2
+    %%%%%:   53-block  3
+    %%%%%:   53-block  4
+    %%%%%:   53-block  5
+    %%%%%:   53-block  6
+    #####:   54:        for(unsigned int i=0; i< luminance.size(); i++) {
+    %%%%%:   54-block  0
+    %%%%%:   54-block  1
+    %%%%%:   54-block  2
+    #####:   55:            delete luminance[i];
+    %%%%%:   55-block  0
+    %%%%%:   55-block  1
+        -:   56:        }
+        -:   57:
+    #####:   58:        for(unsigned int i=0; i< img1_v.size(); i++) {
+    %%%%%:   58-block  0
+    %%%%%:   58-block  1
+    #####:   59:            delete img1_v[i];
+    %%%%%:   59-block  0
+    %%%%%:   59-block  1
+        -:   60:        }
+        -:   61:
+    #####:   62:        for(unsigned int i=0; i< img2_v.size(); i++) {
+    %%%%%:   62-block  0
+    %%%%%:   62-block  1
+    #####:   63:            delete img2_v[i];
+    %%%%%:   63-block  0
+    %%%%%:   63-block  1
+        -:   64:        }
+        -:   65:
+    #####:   66:        for(unsigned int i=0; i< tb1_v.size(); i++) {
+    %%%%%:   66-block  0
+    %%%%%:   66-block  1
+    #####:   67:            delete[] tb1_v[i];
+    %%%%%:   67-block  0
+    %%%%%:   67-block  1
+        -:   68:        }
+        -:   69:
+    #####:   70:        for(unsigned int i=0; i< tb2_v.size(); i++) {
+    %%%%%:   70-block  0
+    %%%%%:   70-block  1
+    #####:   71:            delete[] tb2_v[i];
+    %%%%%:   71-block  0
+    %%%%%:   71-block  1
+        -:   72:        }
+        -:   73:
+    #####:   74:        for(unsigned int i=0; i< eb2_shifted_v.size(); i++) {
+    %%%%%:   74-block  0
+    %%%%%:   74-block  1
+    #####:   75:            delete[] eb2_shifted_v[i];
+    %%%%%:   75-block  0
+    %%%%%:   75-block  1
+        -:   76:        }
+        -:   77:
+    #####:   78:        for(unsigned int i=0; i<tb2_shifted_v.size(); i++) {
+    %%%%%:   78-block  0
+    %%%%%:   78-block  1
+    #####:   79:            delete[] tb2_shifted_v[i];
+    %%%%%:   79-block  0
+    %%%%%:   79-block  1
+        -:   80:        }
+    #####:   81:    }
+        -:   82:
+        -:   83:    /**
+        -:   84:     * @brief update sets parameters up for MTB
+        -:   85:     * @param percentile
+        -:   86:     * @param tolerance
+        -:   87:     */
+    #####:   88:    void update(float percentile, float tolerance)
+        -:   89:    {
+    #####:   90:        if(percentile < 0.0f && percentile > 1.0f) {
+        -:   91:            percentile = 0.5f;
+        -:   92:        }
+        -:   93:
+    #####:   94:        if(tolerance > 0.0625f) {
+        -:   95:            tolerance = 0.015625f;
+        -:   96:        }
+        -:   97:
+    #####:   98:        this->percentile = percentile;
+    #####:   99:        this->tolerance = tolerance;
+        -:  100:    }
+        -:  101:
+        -:  102:    /**
+        -:  103:     * @brief MTB computes the median threshold mask
+        -:  104:     * @param img
+        -:  105:     * @param L
+        -:  106:     * @return
+        -:  107:     */
+    #####:  108:    bool *MTB(Image *img, Image *L)
+        -:  109:    {
+    #####:  110:        bool bDelete = (L == NULL);
+        -:  111:
+    #####:  112:        if(img->channels == 1)
+    %%%%%:  112-block  0
+        -:  113:        {
+        -:  114:            bDelete = false;
+        -:  115:            L = img;
+        -:  116:        } else {
+    #####:  117:            L = FilterLuminance::execute(img, L, LT_WARD_LUMINANCE);
+    %%%%%:  117-block  0
+        -:  118:        }
+        -:  119:
+    #####:  120:        int n = L->nPixels();
+    %%%%%:  120-block  0
+    #####:  121:        bool *maskThr = new bool[n * 2];
+    %%%%%:  121-block  0
+    #####:  122:        bool *maskEb = &maskThr[n];
+        -:  123:
+    #####:  124:        float *ret = L->getPercentileVal(percentile, NULL, NULL);
+    #####:  125:        float medVal = ret[0];
+        -:  126:
+    #####:  127:        float A = medVal - tolerance;
+    #####:  128:        float B = medVal + tolerance;
+        -:  129:
+    #####:  130:        for(int i = 0; i < n; i++) {
+    %%%%%:  130-block  0
+    #####:  131:            maskThr[i] = L->data[i] > medVal;
+    #####:  132:            maskEb[i]  = !((L->data[i] >= A) && (L->data[i] <= B));
+    %%%%%:  132-block  0
+    %%%%%:  132-block  1
+    %%%%%:  132-block  2
+        -:  133:        }
+        -:  134:
+    #####:  135:        if(bDelete) {
+    %%%%%:  135-block  0
+    #####:  136:            delete L;
+    %%%%%:  136-block  0
+        -:  137:        }
+        -:  138:
+    #####:  139:        return maskThr;
+        -:  140:    }
+        -:  141:
+        -:  142:    /**
+        -:  143:     * @brief getExpShift computes the shift vector for moving an img1 onto img2
+        -:  144:     * @param img1
+        -:  145:     * @param img2
+        -:  146:     * @param shift_bits
+        -:  147:     * @return
+        -:  148:     */
+    #####:  149:    Vec2i getExpShift(Image *img1, Image *img2,
+        -:  150:                                   int shift_bits = 6)
+        -:  151:    {
+    #####:  152:        if(img1 == NULL || img2 == NULL) {
+    %%%%%:  152-block  0
+    #####:  153:            return Vec2i(0, 0);
+    %%%%%:  153-block  0
+        -:  154:        }
+        -:  155:
+    #####:  156:        if(!img1->isSimilarType(img2)) {
+    %%%%%:  156-block  0
+    #####:  157:            return Vec2i(0, 0);
+    %%%%%:  157-block  0
+        -:  158:        }
+        -:  159:
+    #####:  160:        Image *L1, *L2;
+        -:  161:
+    #####:  162:        if(img1->channels == 1) {
+    %%%%%:  162-block  0
+    #####:  163:            L1 = img1;
+    %%%%%:  163-block  0
+        -:  164:        } else {
+    #####:  165:            L1 = FilterLuminance::execute(img1, NULL, LT_WARD_LUMINANCE);
+    %%%%%:  165-block  0
+    #####:  166:            luminance.push_back(L1);
+        -:  167:        }
+        -:  168:
+    #####:  169:        if(img2->channels == 1) {
+    %%%%%:  169-block  0
+    #####:  170:            L2 = img2;
+    %%%%%:  170-block  0
+        -:  171:        } else {
+    #####:  172:            L2 = FilterLuminance::execute(img2, NULL, LT_WARD_LUMINANCE);
+    %%%%%:  172-block  0
+    #####:  173:            luminance.push_back(L2);
+        -:  174:        }
+        -:  175:
+    #####:  176:        int min_coord = MIN(L1->width, L1->height);
+    #####:  177:         if(min_coord < (1 << shift_bits)) {
+    %%%%%:  177-block  0
+    #####:  178:             shift_bits = MAX(log2(min_coord) - 1, 1);
+    %%%%%:  178-block  0
+    %%%%%:  178-block  1
+    %%%%%:  178-block  2
+        -:  179:         }
+        -:  180:
+    #####:  181:        Vec2i cur_shift, ret_shift;
+    %%%%%:  181-block  0
+    %%%%%:  181-block  1
+        -:  182:
+    #####:  183:        cur_shift = Vec2i(0, 0);
+    %%%%%:  183-block  0
+    %%%%%:  183-block  1
+    #####:  184:        ret_shift = Vec2i(0, 0);
+    %%%%%:  184-block  0
+    %%%%%:  184-block  1
+        -:  185:
+        -:  186:        //downsample
+    #####:  187:        Image *tmp_1 = L1;
+    #####:  188:        Image *tmp_2 = L2;
+    #####:  189:        for(int i = 0; i < shift_bits; i++) {
+    %%%%%:  189-block  0
+    %%%%%:  189-block  1
+    #####:  190:            Image* sml_img1 = FilterDownSampler2D::execute(tmp_1, NULL, 0.5f);
+    %%%%%:  190-block  0
+    #####:  191:            Image* sml_img2 = FilterDownSampler2D::execute(tmp_2, NULL, 0.5f);
+        -:  192:
+    #####:  193:            img1_v.push_back(sml_img1);
+    #####:  194:            img2_v.push_back(sml_img2);
+        -:  195:
+    #####:  196:            tmp_1 = sml_img1;
+    #####:  197:            tmp_2 = sml_img2;
+        -:  198:        }
+        -:  199:
+        -:  200:        //compute the shift
+    #####:  201:        while(shift_bits > 0) {
+    %%%%%:  201-block  0
+    #####:  202:            Image* sml_img1 = img1_v[shift_bits - 1];
+    %%%%%:  202-block  0
+    #####:  203:            Image* sml_img2 = img2_v[shift_bits - 1];
+        -:  204:
+    #####:  205:            int width  = sml_img1->width;
+    #####:  206:            int height = sml_img1->height;
+    #####:  207:            int n = width * height;
+        -:  208:
+        -:  209:             //compute the median threshold mask
+    #####:  210:            bool *tb1 = MTB(sml_img1, NULL);
+    %%%%%:  210-block  0
+    #####:  211:            bool *eb1  = &tb1[n];
+        -:  212:
+    #####:  213:            bool *tb2 = MTB(sml_img2, NULL);
+    #####:  214:            bool *eb2  = &tb2[n];
+        -:  215:
+        -:  216:            //track memory
+    #####:  217:            tb1_v.push_back(tb1);
+    #####:  218:            tb2_v.push_back(tb2);
+        -:  219:            
+    #####:  220:            int min_err = n;
+        -:  221:
+    #####:  222:            bool *tb2_shifted = new bool[n];
+    #####:  223:            bool *eb2_shifted = new bool[n];
+        -:  224:
+    #####:  225:            tb2_shifted_v.push_back(tb2_shifted);
+    #####:  226:            eb2_shifted_v.push_back(eb2_shifted);
+        -:  227:
+    #####:  228:            for(int i = -1; i <= 1; i++) {
+    %%%%%:  228-block  0
+    %%%%%:  228-block  1
+        -:  229:
+    #####:  230:                for(int j = -1; j <= 1; j++) {
+    %%%%%:  230-block  0
+    %%%%%:  230-block  1
+        -:  231:
+    #####:  232:                    int xs = cur_shift[0] + i;
+    %%%%%:  232-block  0
+    #####:  233:                    int ys = cur_shift[1] + j;
+        -:  234:
+    #####:  235:                    Buffer<bool>::shift(tb2_shifted, tb2, xs, ys, width, height, 1, 1);
+    %%%%%:  235-block  0
+    #####:  236:                    Buffer<bool>::shift(eb2_shifted, eb2, xs, ys, width, height, 1, 1);
+        -:  237:
+        -:  238:                    int err = 0;
+    #####:  239:                    for(int k=0; k<n; k++) {
+    %%%%%:  239-block  0
+    %%%%%:  239-block  1
+    #####:  240:                        bool diff_b = tb1[k] ^ tb2_shifted[k];
+    #####:  241:                        diff_b = diff_b & eb1[k];
+    #####:  242:                        diff_b = diff_b & eb2_shifted[k];
+        -:  243:
+    #####:  244:                        if(diff_b) {
+    %%%%%:  244-block  0
+    #####:  245:                            err++;
+    %%%%%:  245-block  0
+        -:  246:                        }
+        -:  247:                    }
+        -:  248:
+    #####:  249:                    if(err < min_err) {
+    %%%%%:  249-block  0
+    #####:  250:                        ret_shift[0] = xs;
+    %%%%%:  250-block  0
+    #####:  251:                        ret_shift[1] = ys;
+    #####:  252:                        min_err = err;
+    %%%%%:  252-block  0
+        -:  253:                    }
+        -:  254:                }
+        -:  255:            }
+        -:  256:
+    #####:  257:            shift_bits--;
+        -:  258:
+    #####:  259:            cur_shift[0] = ret_shift[0] * 2;
+    %%%%%:  259-block  0
+    #####:  260:            cur_shift[1] = ret_shift[1] * 2;
+    %%%%%:  260-block  0
+        -:  261:        }
+        -:  262:
+    #####:  263:        return cur_shift;
+    %%%%%:  263-block  0
+        -:  264:    }
+        -:  265:
+    #####:  266:    static Vec2i execute(Image *imgTarget, Image *imgSource)
+        -:  267:    {
+    #####:  268:        Vec2i shift;
+    %%%%%:  268-block  0
+    #####:  269:        WardAlignment wa;
+    %%%%%:  269-block  0
+    %%%%%:  269-block  1
+    $$$$$:  269-block  2
+        -:  270:
+    #####:  271:        if(imgTarget == NULL || imgSource == NULL) {
+    %%%%%:  271-block  0
+    #####:  272:            return shift;
+    %%%%%:  272-block  0
+        -:  273:        }
+        -:  274:
+    #####:  275:        if(!imgTarget->isSimilarType(imgSource)) {
+    %%%%%:  275-block  0
+    #####:  276:            return shift;
+    %%%%%:  276-block  0
+        -:  277:        }
+        -:  278:
+    #####:  279:        shift = wa.getExpShift(imgTarget, imgSource);
+    %%%%%:  279-block  0
+        -:  280:
+    #####:  281:        return shift;
+    %%%%%:  281-block  0
+        -:  282:    }
+        -:  283:
+    #####:  284:    static Image *shiftImage(Image *img, Vec2i shift, Image *ret = NULL)
+        -:  285:    {
+    #####:  286:        if(img == NULL) {
+    %%%%%:  286-block  0
+        -:  287:            return ret;
+        -:  288:        }
+        -:  289:
+    #####:  290:        if(ret == NULL) {
+    %%%%%:  290-block  0
+    #####:  291:            ret = img->allocateSimilarOne();
+    %%%%%:  291-block  0
+        -:  292:        } else {
+    #####:  293:            if(!ret->isSimilarType(img)) {
+    %%%%%:  293-block  0
+    #####:  294:                ret = img->allocateSimilarOne();
+    %%%%%:  294-block  0
+        -:  295:            }
+        -:  296:        }
+        -:  297:
+    #####:  298:        ret->setZero();
+    %%%%%:  298-block  0
+    #####:  299:        Buffer<float>::shift(ret->data, img->data,
+    #####:  300:                             shift[0], shift[1],
+        -:  301:                            img->width, img->height,
+        -:  302:                            img->channels, img->frames);
+        -:  303:
+    #####:  304:        return ret;
+        -:  305:    }
+        -:  306:
+        -:  307:
+        -:  308:    /**
+        -:  309:     * @brief execute aligns imgSource to imgTarget
+        -:  310:     * @param imgTarget
+        -:  311:     * @param imgSource
+        -:  312:     * @param shift
+        -:  313:     * @return
+        -:  314:     */
+        -:  315:    static Image *execute(Image *imgTarget, Image *imgSource, Vec2i &shift)
+        -:  316:    {
+        -:  317:        shift = execute(imgTarget, imgSource);
+        -:  318:
+        -:  319:        if(shift[0] != 0 && shift[1] != 0) {
+        -:  320:            Image *ret = shiftImage(imgSource, shift, NULL);
+        -:  321:            return ret;
+        -:  322:        } else {
+        -:  323:            return imgSource;
+        -:  324:        }
+        -:  325:    }
+        -:  326:};
+        -:  327:
+        -:  328:} // end namespace pic
+        -:  329:
+        -:  330:#endif /* PIC_FEATURES_MATCHING_WARD_ALIGNMENT_HPP */
+        -:  331:

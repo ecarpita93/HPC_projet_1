@@ -1,0 +1,340 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_bilateral_2das.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_BILATERAL_2DAS_HPP
+        -:   19:#define PIC_FILTERING_FILTER_BILATERAL_2DAS_HPP
+        -:   20:
+        -:   21:#include <random>
+        -:   22:
+        -:   23:#include "../base.hpp"
+        -:   24:#include "../util/std_util.hpp"
+        -:   25:#include "../util/precomputed_gaussian.hpp"
+        -:   26:#include "../filtering/filter_sampling_map.hpp"
+        -:   27:#include "../point_samplers/sampler_random_m.hpp"
+        -:   28:
+        -:   29:namespace pic {
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief The FilterBilateral2DAS class
+        -:   33: */
+        -:   34:class FilterBilateral2DAS: public Filter
+        -:   35:{
+        -:   36:protected:
+        -:   37:    float sigma_s, sigma_r, sigma_r_sq_2;
+        -:   38:    PrecomputedGaussian *pg;
+        -:   39:    ImageSamplerBilinear isb;
+        -:   40:    int seed;
+        -:   41:    Image *samplingMap;
+        -:   42:
+        -:   43:    MRSamplers<2> *ms;
+        -:   44:
+        -:   45:    /**
+        -:   46:     * @brief ProcessBBox
+        -:   47:     * @param dst
+        -:   48:     * @param src
+        -:   49:     * @param box
+        -:   50:     */
+        -:   51:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   52:
+        -:   53:public:
+        -:   54:    /**
+        -:   55:     * @brief FilterBilateral2DAS
+        -:   56:     */
+        -:   57:    FilterBilateral2DAS();
+        -:   58:
+        -:   59:    /**
+        -:   60:     * @brief FilterBilateral2DAS
+        -:   61:     * @param type
+        -:   62:     * @param sigma_s
+        -:   63:     * @param sigma_r
+        -:   64:     * @param mult
+        -:   65:     */
+        -:   66:    FilterBilateral2DAS(float sigma_s, float sigma_r, int mult, SAMPLER_TYPE type);
+        -:   67:
+        -:   68:    ~FilterBilateral2DAS();
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief update
+        -:   72:     * @param sigma_s
+        -:   73:     * @param sigma_r
+        -:   74:     * @param mult
+        -:   75:     * @param type
+        -:   76:     */
+        -:   77:    void update(float sigma_s, float sigma_r, int mult, SAMPLER_TYPE type);
+        -:   78:
+        -:   79:    /**
+        -:   80:     * @brief setupAux
+        -:   81:     * @param imgIn
+        -:   82:     * @param imgOut
+        -:   83:     * @return
+        -:   84:     */
+    #####:   85:    Image *setupAux(ImageVec imgIn, Image *imgOut)
+        -:   86:    {
+    #####:   87:        FilterSamplingMap fsm(sigma_s);
+    %%%%%:   87-block  0
+        -:   88:
+    #####:   89:        samplingMap = fsm.Process(imgIn, samplingMap);
+    %%%%%:   89-block  0
+    %%%%%:   89-block  1
+    $$$$$:   89-block  2
+    #####:   90:        float maxVal;
+    #####:   91:        samplingMap->getMaxVal(NULL, &maxVal);
+    %%%%%:   91-block  0
+    #####:   92:        *samplingMap /= maxVal;
+    %%%%%:   92-block  0
+        -:   93:
+    #####:   94:        return allocateOutputMemory(imgIn, imgOut, bDelete);
+    %%%%%:   94-block  0
+    %%%%%:   94-block  1
+    %%%%%:   94-block  2
+    $$$$$:   94-block  3
+    $$$$$:   94-block  4
+        -:   95:    }
+        -:   96:
+        -:   97:    /**
+        -:   98:     * @brief Signature
+        -:   99:     * @return
+        -:  100:     */
+    #####:  101:    std::string signature()
+        -:  102:    {
+    #####:  103:        return genBilString("AS", sigma_s, sigma_r);
+    %%%%%:  103-block  0
+    %%%%%:  103-block  1
+    %%%%%:  103-block  2
+    $$$$$:  103-block  3
+        -:  104:    }
+        -:  105:
+        -:  106:    /**
+        -:  107:     * @brief execute
+        -:  108:     * @param imgIn
+        -:  109:     * @param imgOut
+        -:  110:     * @param sigma_s
+        -:  111:     * @param sigma_r
+        -:  112:     * @return
+        -:  113:     */
+        -:  114:    static Image *execute(Image *imgIn, Image *imgOut, float sigma_s, float sigma_r)
+        -:  115:    {
+        -:  116:        FilterBilateral2DAS flt(sigma_s, sigma_r, 1, ST_DARTTHROWING);
+        -:  117:        imgOut = flt.Process(Single(imgIn), imgOut);
+        -:  118:        return imgOut;
+        -:  119:    }
+        -:  120:};
+        -:  121:
+        -:  122:PIC_INLINE FilterBilateral2DAS::FilterBilateral2DAS() : Filter()
+        -:  123:{
+        -:  124:    seed = 1;
+        -:  125:    pg = NULL;
+        -:  126:    ms = NULL;
+        -:  127:    samplingMap = NULL;
+        -:  128:}
+        -:  129:
+        -:  130:PIC_INLINE FilterBilateral2DAS::FilterBilateral2DAS(float sigma_s,
+        -:  131:        float sigma_r, int mult = 1, SAMPLER_TYPE type = ST_BRIDSON) : Filter()
+        -:  132:{
+        -:  133:    seed = 1;
+        -:  134:    pg = NULL;
+        -:  135:    ms = NULL;
+        -:  136:    samplingMap = NULL;
+        -:  137:
+        -:  138:    update(sigma_s, sigma_r, mult, type);
+        -:  139:}
+        -:  140:
+        -:  141:PIC_INLINE FilterBilateral2DAS::~FilterBilateral2DAS()
+        -:  142:{
+        -:  143:    pg = delete_s(pg);
+        -:  144:    ms = delete_s(ms);
+        -:  145:    samplingMap = delete_s(samplingMap);
+        -:  146:}
+        -:  147:
+        -:  148:PIC_INLINE void FilterBilateral2DAS::update(float sigma_s,
+        -:  149:        float sigma_r, int mult = 1, SAMPLER_TYPE type = ST_BRIDSON)
+        -:  150:{
+        -:  151:    //protected values are assigned/computed
+        -:  152:    this->sigma_s = sigma_s > 0.0f ? sigma_s : 1.0f;
+        -:  153:    this->sigma_r = sigma_r > 0.0f ? sigma_r : 0.01f;
+        -:  154:    this->sigma_r_sq_2 = this->sigma_r * this->sigma_r * 2.0f;
+        -:  155:
+        -:  156:    //precompute the Gaussian Kernel
+        -:  157:    pg = delete_s(pg);
+        -:  158:    pg = new PrecomputedGaussian(sigma_s);
+        -:  159:
+        -:  160:    //Poisson samples
+        -:  161:    Vec2i window = Vec2i(pg->halfKernelSize, pg->halfKernelSize);
+        -:  162:
+        -:  163:    ms = delete_s(ms);
+        -:  164:    if(mult > 0) {
+        -:  165:        ms = new MRSamplers<2>(type, window, pg->halfKernelSize * mult, 3, 64);
+        -:  166:    } else if(mult < 0) {
+        -:  167:        mult = -mult;
+        -:  168:        ms = new MRSamplers<2>(type, window, pg->halfKernelSize / mult, 3, 64);
+        -:  169:    }
+        -:  170:
+        -:  171:    seed = 1;
+        -:  172:}
+        -:  173:
+    #####:  174:PIC_INLINE void FilterBilateral2DAS::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:  175:{
+    #####:  176:    int channels = dst->channels;
+        -:  177:
+        -:  178:    //filter
+    #####:  179:    Image *edge, *base;
+        -:  180:
+    #####:  181:    switch(src.size()) {
+    %%%%%:  181-block  0
+    #####:  182:        case 1: {
+    #####:  183:            base = src[0];
+    %%%%%:  183-block  0
+    #####:  184:            edge = src[0];
+    #####:  185:        } break;
+    %%%%%:  185-block  0
+        -:  186:
+    #####:  187:        default: {
+    #####:  188:            base = src[0];
+    %%%%%:  188-block  0
+    #####:  189:            edge = src[1];
+    #####:  190:        } break;
+    %%%%%:  190-block  0
+        -:  191:
+        -:  192:    }
+        -:  193:
+    #####:  194:    RandomSampler<2> *ps;
+    #####:  195:    float valOut;
+        -:  196:
+        -:  197:    //Mersenne Twister
+    #####:  198:    std::mt19937 m(seed);
+    %%%%%:  198-block  0
+        -:  199:
+    #####:  200:    for(int i = box->y0; i < box->y1; i++) {
+    %%%%%:  200-block  0
+    %%%%%:  200-block  1
+    %%%%%:  200-block  2
+    #####:  201:        float x = float(i) / dst->heightf;
+        -:  202:
+    #####:  203:        for(int j = box->x0; j < box->x1; j++) {
+    %%%%%:  203-block  0
+    %%%%%:  203-block  1
+        -:  204:
+        -:  205:            //convolve with the kernel
+    #####:  206:            float *dst_data = (*dst)(j, i);
+    %%%%%:  206-block  0
+    #####:  207:            float *edge_data = (*edge)(j, i);
+    %%%%%:  207-block  0
+        -:  208:
+    #####:  209:            Arrayf::assign(0.0f, dst_data, channels);
+    %%%%%:  209-block  0
+        -:  210:
+    #####:  211:            ps = ms->getSampler(&m);
+    %%%%%:  211-block  0
+        -:  212:
+        -:  213:            //calculate the number of samples
+    #####:  214:            float y = float(j) / dst->widthf;
+    #####:  215:            isb.SampleImage(samplingMap, x, y, &valOut);
+        -:  216:
+    #####:  217:            float tmpValOut = 1.0f - valOut; //+valOut[1]+valOut[2])/3.0f;
+    #####:  218:            float levelVal = CLAMPi(tmpValOut, 0.0f, 0.9f) * float(ps->levelsR.size());
+    %%%%%:  218-block  0
+    %%%%%:  218-block  1
+        -:  219:
+    #####:  220:            int levelInt = int(floorf(levelVal));
+    #####:  221:            int nSamples = ps->levelsR[levelInt];
+    %%%%%:  221-block  0
+        -:  222:
+    #####:  223:            int levelsRsize = int(ps->levelsR.size()) - 1;
+    #####:  224:            if(levelInt < levelsRsize) {
+    %%%%%:  224-block  0
+    #####:  225:                if((levelVal - float(levelInt)) > 0.0f) {
+    %%%%%:  225-block  0
+    #####:  226:                    nSamples += int(float(ps->levelsR[levelInt + 1] - ps->levelsR[levelInt]) *
+    %%%%%:  226-block  0
+        -:  227:                                (levelVal - float(levelInt)));
+        -:  228:                }
+        -:  229:            }
+        -:  230:
+    #####:  231:            if((nSamples % 2) == 1) {
+    %%%%%:  231-block  0
+    #####:  232:                nSamples++;
+    %%%%%:  232-block  0
+        -:  233:            }
+        -:  234:
+    #####:  235:            nSamples = MIN(nSamples, pg->halfKernelSize * pg->halfKernelSize * 2);
+        -:  236:
+    #####:  237:            float sum = 0.0f;
+    #####:  238:            for(int k = 0; k < nSamples; k += 2) {
+    %%%%%:  238-block  0
+    %%%%%:  238-block  1
+    %%%%%:  238-block  2
+        -:  239:                //fetch addresses
+    #####:  240:                int cj = j + ps->samplesR[k    ];
+    %%%%%:  240-block  0
+    #####:  241:                int ci = i + ps->samplesR[k + 1];
+        -:  242:
+        -:  243:                //
+        -:  244:                //Spatial Gaussian kernel
+        -:  245:                //
+    #####:  246:                float G1 = pg->coeff[ps->samplesR[k    ] + pg->halfKernelSize] *
+    #####:  247:                           pg->coeff[ps->samplesR[k + 1] + pg->halfKernelSize];
+        -:  248:
+        -:  249:
+    #####:  250:                float *cur_edge = (*edge)(cj, ci);
+    %%%%%:  250-block  0
+        -:  251:
+        -:  252:                //
+        -:  253:                //Range Gaussian Kernel
+        -:  254:                //
+    #####:  255:                float tmp = Arrayf::distanceSq(cur_edge, edge_data, channels);
+    %%%%%:  255-block  0
+    #####:  256:                float G2 = expf(-tmp / sigma_r_sq_2);
+        -:  257:
+        -:  258:                //Weight
+    #####:  259:                float weight = G1 * G2;
+    #####:  260:                sum += weight;
+        -:  261:
+        -:  262:                //filter
+    #####:  263:                float *base_data_ci_cj = (*base)(cj, ci);
+    %%%%%:  263-block  0
+        -:  264:
+    #####:  265:                for(int l = 0; l < channels; l++) {
+    %%%%%:  265-block  0
+    %%%%%:  265-block  1
+    #####:  266:                    dst_data[l] += base_data_ci_cj[l] * weight;
+    %%%%%:  266-block  0
+        -:  267:                }
+        -:  268:            }
+        -:  269:
+        -:  270:            //normalization
+    #####:  271:            if(sum > 0.0f) {
+    %%%%%:  271-block  0
+    #####:  272:                Arrayf::div(dst_data, channels, sum);
+    %%%%%:  272-block  0
+        -:  273:            } else {
+    #####:  274:                float *base_data = (*base)(j, i);
+    %%%%%:  274-block  0
+    #####:  275:                Arrayf::assign(base_data, channels, dst_data);
+    %%%%%:  275-block  0
+    %%%%%:  275-block  1
+        -:  276:            }
+        -:  277:        }
+        -:  278:    }
+    #####:  279:}
+        -:  280:
+        -:  281:} // end namespace pic
+        -:  282:
+        -:  283:#endif /* PIC_FILTERING_FILTER_BILATERAL_2DAS_HPP */

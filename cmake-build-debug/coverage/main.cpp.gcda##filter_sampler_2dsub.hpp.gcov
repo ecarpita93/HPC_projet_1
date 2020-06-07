@@ -1,0 +1,134 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_sampler_2dsub.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_SAMPLER_2DSUB_HPP
+        -:   19:#define PIC_FILTERING_FILTER_SAMPLER_2DSUB_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:#include "../image_samplers/image_sampler_bilinear.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The FilterSampler2DSub class
+        -:   28: */
+        -:   29:class FilterSampler2DSub: public Filter
+        -:   30:{
+        -:   31:protected:
+        -:   32:    ImageSamplerBilinear isb_default;
+        -:   33:    ImageSampler *isb;
+        -:   34:
+        -:   35:    /**
+        -:   36:     * @brief ProcessBBox
+        -:   37:     * @param dst
+        -:   38:     * @param src
+        -:   39:     * @param box
+        -:   40:     */
+    #####:   41:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   42:    {
+    #####:   43:        float *vSrc1 = new float[dst->channels];
+    %%%%%:   43-block  0
+    %%%%%:   43-block  1
+    %%%%%:   43-block  2
+        -:   44:
+    #####:   45:        float height1f = float(box->height - 1);
+    #####:   46:        float width1f = float(box->width - 1);
+        -:   47:
+    #####:   48:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   48-block  0
+    %%%%%:   48-block  1
+    #####:   49:            float y = float(j) / height1f;
+        -:   50:
+    #####:   51:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   51-block  0
+    %%%%%:   51-block  1
+    %%%%%:   51-block  2
+    #####:   52:                float x = float(i) / width1f;
+        -:   53:
+    #####:   54:                float *out = (*dst )(i, j);
+    %%%%%:   54-block  0
+        -:   55:
+    #####:   56:                isb->SampleImage(src[0], x, y, out);
+    %%%%%:   56-block  0
+    #####:   57:                isb->SampleImage(src[1], x, y, vSrc1);
+        -:   58:
+    #####:   59:                for(int k = 0; k < dst->channels; k++) {
+    %%%%%:   59-block  0
+    #####:   60:                    out[k] -= vSrc1[k];
+    %%%%%:   60-block  0
+        -:   61:                }
+        -:   62:            }
+        -:   63:        }
+        -:   64:
+    #####:   65:        delete[] vSrc1;
+    %%%%%:   65-block  0
+    #####:   66:    }
+        -:   67:
+        -:   68:public:
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief FilterSampler2DSub
+        -:   72:     * @param isb
+        -:   73:     */
+    #####:   74:    FilterSampler2DSub(ImageSampler *isb) : Filter()
+        -:   75:    {
+    #####:   76:        this->minInputImages = 2;
+        -:   77:
+    #####:   78:        if(isb != NULL) {
+        -:   79:            this->isb = isb;
+        -:   80:        } else {
+    #####:   81:            this->isb = &isb_default;
+        -:   82:        }
+        -:   83:    }
+        -:   84:
+        -:   85:    ~FilterSampler2DSub()
+        -:   86:    {
+        -:   87:    }
+        -:   88:
+        -:   89:    /**
+        -:   90:     * @brief update
+        -:   91:     * @param isb
+        -:   92:     */
+        -:   93:    void update(ImageSampler *isb)
+        -:   94:    {
+        -:   95:        if(isb != NULL) {
+        -:   96:            this->isb = isb;
+        -:   97:        }
+        -:   98:    }
+        -:   99:
+        -:  100:    /**
+        -:  101:     * @brief execute
+        -:  102:     * @param imgIn
+        -:  103:     * @param imgOut
+        -:  104:     * @param isb
+        -:  105:     * @return
+        -:  106:     */
+        -:  107:    static Image *execute(Image *imgIn, Image *imgOut, ImageSampler *isb)
+        -:  108:    {
+        -:  109:        FilterSampler2DSub filter(isb);
+        -:  110:        return filter.Process(Single(imgIn), imgOut);
+        -:  111:    }
+        -:  112:};
+        -:  113:
+        -:  114:} // end namespace pic
+        -:  115:
+        -:  116:#endif /* PIC_FILTERING_FILTER_SAMPLER_2DSUB_HPP */
+        -:  117:

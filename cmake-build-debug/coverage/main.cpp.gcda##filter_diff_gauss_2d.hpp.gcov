@@ -1,0 +1,108 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_diff_gauss_2d.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_DIFF_GAUSS_2D_HPP
+        -:   19:#define PIC_FILTERING_FILTER_DIFF_GAUSS_2D_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:#include "../filtering/filter_gaussian_2d.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The FilterDiffGauss class
+        -:   28: */
+        -:   29:class FilterDiffGauss: public Filter
+        -:   30:{
+        -:   31:protected:
+        -:   32:    FilterGaussian2D *filter_1, *filter_2;
+        -:   33:    Image *tmp;
+        -:   34:
+        -:   35:public:
+        -:   36:    /**
+        -:   37:     * @brief FilterDiffGauss
+        -:   38:     * @param sigma_1
+        -:   39:     * @param sigma_2
+        -:   40:     */
+        -:   41:    FilterDiffGauss(float sigma_1, float sigma_2)
+        -:   42:    {
+        -:   43:        filter_1 = new FilterGaussian2D(sigma_1);
+        -:   44:        filter_2 = new FilterGaussian2D(sigma_2);
+        -:   45:        tmp = NULL;
+        -:   46:    }
+        -:   47:
+        -:   48:    ~FilterDiffGauss()
+        -:   49:    {
+        -:   50:        if(filter_1 != NULL) {
+        -:   51:            delete filter_1;
+        -:   52:        }
+        -:   53:
+        -:   54:        if(filter_2 != NULL) {
+        -:   55:            delete filter_2;
+        -:   56:        }
+        -:   57:
+        -:   58:        if(tmp != NULL) {
+        -:   59:            delete tmp;
+        -:   60:        }
+        -:   61:    }
+        -:   62:
+        -:   63:    /**
+        -:   64:     * @brief Process
+        -:   65:     * @param imgIn
+        -:   66:     * @param imgOut
+        -:   67:     * @return
+        -:   68:     */
+    #####:   69:    Image *Process(ImageVec imgIn, Image *imgOut)
+        -:   70:    {
+    #####:   71:        imgOut = filter_1->Process(imgIn, imgOut);
+    %%%%%:   71-block  0
+    %%%%%:   71-block  1
+    $$$$$:   71-block  2
+        -:   72:
+        -:   73:        //MEMORY-LEAK: to check
+    #####:   74:        tmp = filter_2->Process(imgIn, tmp);
+    %%%%%:   74-block  0
+    %%%%%:   74-block  1
+    #####:   75:        *imgOut -= *tmp;
+    %%%%%:   75-block  0
+    #####:   76:        return imgOut;
+        -:   77:    }
+        -:   78:
+        -:   79:    /**
+        -:   80:     * @brief execute
+        -:   81:     * @param imgIn
+        -:   82:     * @param imgOut
+        -:   83:     * @param sigma_1
+        -:   84:     * @param sigma_2
+        -:   85:     * @return
+        -:   86:     */
+        -:   87:    static Image *execute(Image *imgIn, Image *imgOut, float sigma_1,
+        -:   88:                             float sigma_2)
+        -:   89:    {
+        -:   90:        FilterDiffGauss filter(sigma_1, sigma_2);
+        -:   91:        return filter.Process(Single(imgIn), imgOut);
+        -:   92:    }
+        -:   93:};
+        -:   94:
+        -:   95:} // end namespace pic
+        -:   96:
+        -:   97:#endif /* PIC_FILTERING_FILTER_DIFF_GAUSS_2D_HPP */
+        -:   98:

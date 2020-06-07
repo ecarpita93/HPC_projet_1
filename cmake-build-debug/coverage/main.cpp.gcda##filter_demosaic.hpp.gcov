@@ -1,0 +1,398 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_demosaic.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_DEMOSAIC_HPP
+        -:   19:#define PIC_FILTERING_FILTER_DEMOSAIC_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterDemosaic class
+        -:   27: */
+        -:   28:class FilterDemosaic: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:
+        -:   32:    /**
+        -:   33:     * @brief LinearUpSamplingGCGreen this upsamples the green channel with gradient correction
+        -:   34:     * @param imgIn
+        -:   35:     * @param imgOut
+        -:   36:     */
+    #####:   37:    void LinearUpSamplingGCGreen(Image *imgIn, Image *imgOut)
+        -:   38:    {
+    #####:   39:        int height = imgIn->height;
+    #####:   40:        int width = imgIn->width;
+        -:   41:
+    #####:   42:        float *dataIn = imgIn->data;
+    #####:   43:        float *dataOut = imgOut->data;
+        -:   44:
+        -:   45:        //copy the original Green pixels into the U16RGB buffer
+    #####:   46:        for(int j = 0; j < height; j++) {
+    %%%%%:   46-block  0
+    %%%%%:   46-block  1
+    #####:   47:            int tmp = j * width;
+    #####:   48:            for(int i = ((j + 1) % 2); i < width; i += 2) {
+    %%%%%:   48-block  0
+    %%%%%:   48-block  1
+    #####:   49:                int current = tmp + i;
+    #####:   50:                dataOut[current * 3 + 1] = dataIn[current];
+    %%%%%:   50-block  0
+        -:   51:            }
+        -:   52:        }
+        -:   53:
+        -:   54:        //edge-aware interpolation for the missing Green pixels
+        -:   55:        //#pragma omp parallel for
+    #####:   56:        for(int k = 0; k < 2; k++) {
+    %%%%%:   56-block  0
+    %%%%%:   56-block  1
+    #####:   57:            for(int j = k; j < (height); j += 2) {
+    %%%%%:   57-block  0
+    %%%%%:   57-block  1
+    #####:   58:                float tmpG, sum, Grad, final;
+        -:   59:
+    #####:   60:                int tmp = j * width;
+        -:   61:
+    #####:   62:                for(int i = k; i < (width); i += 2) {
+    %%%%%:   62-block  0
+    %%%%%:   62-block  1
+        -:   63:                    //    -1
+        -:   64:                    //     2
+        -:   65:                    //-1 2 4 2 -1
+        -:   66:                    //     2
+        -:   67:                    //    -1
+        -:   68:
+    #####:   69:                    int current = tmp + i;
+        -:   70:
+    #####:   71:                    tmpG  = (dataIn[imgIn->getAddress(i + 1, j)] +
+    %%%%%:   71-block  0
+    #####:   72:                             dataIn[imgIn->getAddress(i - 1, j)] +
+    %%%%%:   72-block  0
+    #####:   73:                             dataIn[imgIn->getAddress(i, j + 1)] +
+    %%%%%:   73-block  0
+    #####:   74:                             dataIn[imgIn->getAddress(i, j - 1)]) * 0.25f;
+    %%%%%:   74-block  0
+        -:   75:
+    #####:   76:                    sum  = (dataIn[imgIn->getAddress(i + 2, j)] +
+    %%%%%:   76-block  0
+    #####:   77:                            dataIn[imgIn->getAddress(i - 2, j)] +
+    %%%%%:   77-block  0
+    #####:   78:                            dataIn[imgIn->getAddress(i, j + 2)] +
+    %%%%%:   78-block  0
+    #####:   79:                            dataIn[imgIn->getAddress(i, j - 2)]);
+    %%%%%:   79-block  0
+        -:   80:
+    #####:   81:                    Grad = dataIn[current] - sum * 0.25f;
+        -:   82:
+    #####:   83:                    final = tmpG + Grad * 0.5f;
+        -:   84:
+    #####:   85:                    dataOut[current * 3 + 1] = CLAMPi(final, 0.0f, 1.0f);
+    %%%%%:   85-block  0
+        -:   86:                }
+        -:   87:            }
+        -:   88:        }
+    #####:   89:    }
+        -:   90:
+        -:   91:    /**
+        -:   92:     * @brief LinearUpSamplingGCRB this linearly upsamples Red and Blue channels
+        -:   93:     * @param imgIn
+        -:   94:     * @param imgOut
+        -:   95:     * @param sx
+        -:   96:     * @param sy
+        -:   97:     */
+    #####:   98:    void LinearUpSamplingGCRB(Image *imgIn, Image *imgOut, int sx,
+        -:   99:                                         int sy)
+        -:  100:    {
+    #####:  101:        int i, j;
+    #####:  102:        int shifter = sx + sy;
+        -:  103:
+    #####:  104:        int height = imgIn->height;
+    #####:  105:        int width = imgIn->width;
+    #####:  106:        float *dataIn = imgIn->data;
+    #####:  107:        float *data = imgOut->data;
+        -:  108:
+        -:  109:        //copy the original pixels!
+        -:  110:        //#pragma omp parallel for
+    #####:  111:        for(j = sy; j < height; j += 2) {
+    %%%%%:  111-block  0
+    %%%%%:  111-block  1
+    %%%%%:  111-block  2
+    #####:  112:            for(i = sx; i < width; i += 2) {
+    %%%%%:  112-block  0
+    #####:  113:                int current = j * width + i;
+    #####:  114:                data[current * 3 + shifter] = dataIn[current];
+    %%%%%:  114-block  0
+        -:  115:            }
+        -:  116:        }
+        -:  117:
+        -:  118:        //Edge-aware interpolation for the missing Green pixels
+    #####:  119:        int ssx = 0;
+    #####:  120:        int ssy = 0;
+        -:  121:
+    #####:  122:        if(shifter == 0) {
+    %%%%%:  122-block  0
+    #####:  123:            ssx = 1;
+    #####:  124:            ssy = 0;
+    %%%%%:  124-block  0
+        -:  125:        }
+        -:  126:
+    #####:  127:        if(shifter == 2) {
+    %%%%%:  127-block  0
+    #####:  128:            ssx = 0;
+    #####:  129:            ssy = 1;
+    %%%%%:  129-block  0
+        -:  130:        }
+        -:  131:
+        -:  132:        //First Mask
+        -:  133:        //#pragma omp parallel for
+    #####:  134:        for(j = ssy; j < (height); j += 2) {
+    %%%%%:  134-block  0
+    %%%%%:  134-block  1
+    %%%%%:  134-block  2
+        -:  135:            float tmp;
+        -:  136:
+    #####:  137:            for(i = ssx; i < (width); i += 2) {
+    %%%%%:  137-block  0
+        -:  138:                //
+        -:  139:                //          0.5
+        -:  140:                //      -1   0  -1
+        -:  141:                //  -1   4   5   4   -1
+        -:  142:                //      -1   0  -1
+        -:  143:                //          0.5
+        -:  144:                //
+    #####:  145:                int current = j * width + i;
+        -:  146:
+    #####:  147:                tmp =	5.0f *	dataIn[current] +
+    #####:  148:                        4.0f * (dataIn[imgIn->getAddress(i + 1, j)] +	dataIn[imgIn->getAddress(i - 1,
+    %%%%%:  148-block  0
+    %%%%%:  148-block  1
+    #####:  149:                                j)]) +
+    #####:  150:                        0.5f * (dataIn[imgIn->getAddress(i, j + 2)] +	dataIn[imgIn->getAddress(i,
+    %%%%%:  150-block  0
+    %%%%%:  150-block  1
+    #####:  151:                                j - 2)]) -
+    #####:  152:                        (dataIn[imgIn->getAddress(i + 1, j + 1)] +	dataIn[imgIn->getAddress(i + 1,
+    %%%%%:  152-block  0
+    %%%%%:  152-block  1
+    #####:  153:                                j - 1)] +
+    #####:  154:                         dataIn[imgIn->getAddress(i - 1, j + 1)] +	dataIn[imgIn->getAddress(i - 1,
+    %%%%%:  154-block  0
+    #####:  155:                                 j - 1)] +
+    #####:  156:                         dataIn[imgIn->getAddress(i - 2, j)] +	dataIn[imgIn->getAddress(i + 2, j)]);
+    %%%%%:  156-block  0
+    %%%%%:  156-block  1
+    #####:  157:                tmp /= 8.0f;
+    #####:  158:                data[current * 3 + shifter] = CLAMPi(tmp, 0.0f, 1.0f);
+    %%%%%:  158-block  0
+        -:  159:            }
+        -:  160:        }
+        -:  161:
+        -:  162:        //Second Mask
+    #####:  163:        if(shifter == 0) {
+    %%%%%:  163-block  0
+    #####:  164:            ssx = 0;
+    #####:  165:            ssy = 1;
+    %%%%%:  165-block  0
+        -:  166:        }
+        -:  167:
+    #####:  168:        if(shifter == 2) {
+    %%%%%:  168-block  0
+    #####:  169:            ssx = 1;
+    #####:  170:            ssy = 0;
+    %%%%%:  170-block  0
+        -:  171:        }
+        -:  172:
+        -:  173:        //#pragma omp parallel for
+    #####:  174:        for(j = ssy; j < (height); j += 2) {
+    %%%%%:  174-block  0
+    %%%%%:  174-block  1
+    %%%%%:  174-block  2
+        -:  175:            float tmp;
+        -:  176:
+    #####:  177:            for(i = ssx; i < (width); i += 2) {
+    %%%%%:  177-block  0
+        -:  178:                //
+        -:  179:                //           -1
+        -:  180:                //       -1   4  -1
+        -:  181:                //  0.5   0   5   0   0.5
+        -:  182:                //       -1   4  -1
+        -:  183:                //           -1
+        -:  184:                //
+    #####:  185:                int current = j * width + i;
+        -:  186:
+    #####:  187:                tmp =	5.0f * dataIn[current] +
+    #####:  188:                        4.0f * (dataIn[imgIn->getAddress(i, j + 1)] +	dataIn[imgIn->getAddress(i,
+    %%%%%:  188-block  0
+    %%%%%:  188-block  1
+    #####:  189:                                j - 1)]) +
+    #####:  190:                        +0.5f * (dataIn[imgIn->getAddress(i - 2, j)] +	dataIn[imgIn->getAddress(i + 2,
+    %%%%%:  190-block  0
+    %%%%%:  190-block  1
+    #####:  191:                                 j)]) -
+    #####:  192:                        (dataIn[imgIn->getAddress(i + 1, j + 1)] +	dataIn[imgIn->getAddress(i + 1,
+    %%%%%:  192-block  0
+    %%%%%:  192-block  1
+    #####:  193:                                j - 1)] +
+    #####:  194:                         dataIn[imgIn->getAddress(i - 1, j + 1)] +	dataIn[imgIn->getAddress(i - 1,
+    %%%%%:  194-block  0
+    %%%%%:  194-block  1
+    #####:  195:                                 j - 1)] +
+    #####:  196:                         dataIn[imgIn->getAddress(i, j + 2)] +	dataIn[imgIn->getAddress(i, j - 2)]);
+    %%%%%:  196-block  0
+    %%%%%:  196-block  1
+        -:  197:
+    #####:  198:                tmp /= 8.0f;
+    #####:  199:                data[current * 3 + shifter] = CLAMPi(tmp, 0.0f, 1.0f);
+    %%%%%:  199-block  0
+        -:  200:            }
+        -:  201:        }
+        -:  202:
+        -:  203:        //Third Mask
+    #####:  204:        if(shifter == 0) {
+    %%%%%:  204-block  0
+    #####:  205:            ssx = 1;
+    #####:  206:            ssy = 1;
+    %%%%%:  206-block  0
+        -:  207:        }
+        -:  208:
+    #####:  209:        if(shifter == 2) {
+    %%%%%:  209-block  0
+    #####:  210:            ssx = 0;
+    #####:  211:            ssy = 0;
+    %%%%%:  211-block  0
+        -:  212:        }
+        -:  213:
+        -:  214:        //#pragma omp parallel for
+    #####:  215:        for(j = ssy; j < (height); j += 2) {
+    %%%%%:  215-block  0
+    %%%%%:  215-block  1
+    %%%%%:  215-block  2
+        -:  216:            float tmp;
+        -:  217:
+    #####:  218:            for(i = ssx; i < (width); i += 2) {
+    %%%%%:  218-block  0
+        -:  219:                //
+        -:  220:                //           -3/2
+        -:  221:                //         2   0   2
+        -:  222:                //  -3/2   0   6   0   -3/2
+        -:  223:                //         2   0   2
+        -:  224:                //           -3/2
+        -:  225:                //
+    #####:  226:                int current = j * width + i;
+    #####:  227:                tmp =	6.0f *	dataIn[current] +
+    #####:  228:                        2.0f * (dataIn[imgIn->getAddress(i + 1, j + 1)] +	dataIn[imgIn->getAddress(i + 1,
+    %%%%%:  228-block  0
+    %%%%%:  228-block  1
+    #####:  229:                                j - 1)] +
+    #####:  230:                                dataIn[imgIn->getAddress(i - 1, j + 1)] +	dataIn[imgIn->getAddress(i - 1,
+    %%%%%:  230-block  0
+    %%%%%:  230-block  1
+    #####:  231:                                        j - 1)]) -
+    #####:  232:                        1.5f * (dataIn[imgIn->getAddress(i + 2, j)] +	dataIn[imgIn->getAddress(i - 2,
+    %%%%%:  232-block  0
+    %%%%%:  232-block  1
+    #####:  233:                                j)] +
+    #####:  234:                                dataIn[imgIn->getAddress(i, j + 2)] +	dataIn[imgIn->getAddress(i, j - 2)]);
+    %%%%%:  234-block  0
+    %%%%%:  234-block  1
+        -:  235:
+    #####:  236:                tmp /= 8.0f;
+    #####:  237:                data[current * 3 + shifter] = CLAMPi(tmp, 0.0f, 1.0f);
+    %%%%%:  237-block  0
+        -:  238:            }
+        -:  239:        }
+    #####:  240:    }
+        -:  241:
+        -:  242:public:
+        -:  243:
+        -:  244:    /**
+        -:  245:     * @brief FilterDemosaic
+        -:  246:     * @param type
+        -:  247:     */
+        -:  248:    FilterDemosaic() : Filter()
+        -:  249:    {
+        -:  250:    }
+        -:  251:
+        -:  252:    /**
+        -:  253:     * @brief OutputSize
+        -:  254:     * @param imgIn
+        -:  255:     * @param width
+        -:  256:     * @param height
+        -:  257:     * @param channels
+        -:  258:     * @param frames
+        -:  259:     */
+    #####:  260:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  261:    {
+    #####:  262:        width       = imgIn[0]->width;
+    #####:  263:        height      = imgIn[0]->height;
+    #####:  264:        channels    = 3;
+    #####:  265:        frames      = imgIn[0]->frames;
+    #####:  266:    }
+        -:  267:
+        -:  268:    /**
+        -:  269:      * @brief Filter::Process
+        -:  270:      * @param imgIn
+        -:  271:      * @param imgOut
+        -:  272:      * @return
+        -:  273:      */
+    #####:  274:    Image *Process(ImageVec imgIn, Image *imgOut)
+        -:  275:    {
+    #####:  276:        if(imgIn[0] == NULL) {
+    %%%%%:  276-block  0
+        -:  277:            return NULL;
+        -:  278:        }
+        -:  279:
+    #####:  280:        if((!imgIn[0]->isValid()) && (imgIn[0]->channels != 1)) {
+    %%%%%:  280-block  0
+    %%%%%:  280-block  1
+        -:  281:            return imgOut;
+        -:  282:        }
+        -:  283:
+    #####:  284:        imgOut = setupAux(imgIn, imgOut);
+    %%%%%:  284-block  0
+    %%%%%:  284-block  1
+        -:  285:
+    #####:  286:        LinearUpSamplingGCGreen(imgIn[0], imgOut);
+    %%%%%:  286-block  0
+    #####:  287:        LinearUpSamplingGCRB(imgIn[0], imgOut, 0, 0);
+    #####:  288:        LinearUpSamplingGCRB(imgIn[0], imgOut, 1, 1);
+        -:  289:
+    #####:  290:        return imgOut;
+        -:  291:    }
+        -:  292:
+        -:  293:    /**
+        -:  294:     * @brief execute
+        -:  295:     * @param imgIn
+        -:  296:     * @param imgOut
+        -:  297:     * @return
+        -:  298:     */
+        -:  299:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  300:    {
+        -:  301:        FilterDemosaic flt;
+        -:  302:        return flt.Process(Single(imgIn), imgOut);
+        -:  303:    }
+        -:  304:};
+        -:  305:
+        -:  306:} // end namespace pic
+        -:  307:
+        -:  308:#endif /* PIC_FILTERING_FILTER_DEMOSAIC_HPP */
+        -:  309:

@@ -1,0 +1,175 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/schlick_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_SCHLICK_TMO_HPP
+        -:   19:#define PIC_TONE_MAPPING_SCHLICK_TMO_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:#include "../util/array.hpp"
+        -:   24:#include "../util/indexed_array.hpp"
+        -:   25:
+        -:   26:#include "../image.hpp"
+        -:   27:#include "../filtering/filter.hpp"
+        -:   28:#include "../filtering/filter_luminance.hpp"
+        -:   29:#include "../tone_mapping/tone_mapping_operator.hpp"
+        -:   30:
+        -:   31:namespace pic {
+        -:   32:
+        -:   33:/**
+        -:   34: * @brief The SchlickTMO class
+        -:   35: */
+        -:   36:class SchlickTMO: public ToneMappingOperator
+        -:   37:{
+        -:   38:protected:
+        -:   39:    std::string mode;
+        -:   40:    int nBit;
+        -:   41:    float k, p, L0;
+        -:   42:    FilterLuminance flt_lum;
+        -:   43:
+        -:   44:    /**
+        -:   45:     * @brief ProcessAux
+        -:   46:     * @param imgIn
+        -:   47:     * @param imgOut
+        -:   48:     * @return
+        -:   49:     */    
+    #####:   50:    Image *ProcessAux(ImageVec imgIn, Image *imgOut)
+        -:   51:    {
+    #####:   52:        updateImage(imgIn[0]);
+    %%%%%:   52-block  0
+        -:   53:
+        -:   54:        //compute luminance and its statistics
+    #####:   55:        float LMin, LMax;
+        -:   56:
+    #####:   57:        images[0] = flt_lum.Process(imgIn, images[0]);
+    %%%%%:   57-block  0
+    $$$$$:   57-block  1
+        -:   58:
+    #####:   59:        IntCoord ret;
+    %%%%%:   59-block  0
+    #####:   60:        IndexedArray<float>::findSimple(images[0]->data, images[0]->size(), IndexedArray<float>::bFuncNotNeg, ret, 1);
+    %%%%%:   60-block  0
+    #####:   61:        LMin = IndexedArray<float>::percentile(images[0]->data, ret, 0.01f);
+    %%%%%:   61-block  0
+        -:   62:
+    #####:   63:        images[0]->getMaxVal(NULL, &LMax);
+    %%%%%:   63-block  0
+        -:   64:
+    #####:   65:        int channels = imgIn[0]->channels;
+    %%%%%:   65-block  0
+        -:   66:
+    #####:   67:        bool bNonUniform = (mode.compare("nonuniform") == 0);
+    %%%%%:   67-block  0
+        -:   68:
+    #####:   69:        float p_prime;
+    #####:   70:        if((mode.compare("automatic") == 0) || bNonUniform) {
+    %%%%%:   70-block  0
+    #####:   71:            int nValues = 1 << nBit;
+    #####:   72:            p_prime = L0 * LMax / (float(nValues) * LMin);
+    %%%%%:   72-block  0
+        -:   73:        } else {
+    #####:   74:            p_prime = p;
+    %%%%%:   74-block  0
+        -:   75:        }
+        -:   76:
+    #####:   77:        float cSqrtLminLmax = sqrtf(LMin * LMax);
+        -:   78:
+    #####:   79:        #pragma omp parallel for
+        -:   80:        for(int i = 0; i < images[0]->size(); i++) {
+        -:   81:
+        -:   82:            float Lw = images[0]->data[i];
+        -:   83:
+        -:   84:            if(Lw > 0.0f) {
+        -:   85:                float p_prime_w = p_prime;
+        -:   86:
+        -:   87:                if(bNonUniform) {
+        -:   88:                    p_prime_w *= (1.0f - k + k * Lw / cSqrtLminLmax);
+        -:   89:                }
+        -:   90:
+        -:   91:                float Ld = (p_prime_w * Lw) / ((p_prime_w - 1.0f) * Lw + LMax);
+        -:   92:
+        -:   93:                int index = i * channels;
+        -:   94:                for(int j = 0; j < channels; j++) {
+        -:   95:                    int k = index + j;
+        -:   96:                    imgOut->data[k] = (imgIn[0]->data[k] * Ld) / Lw;
+        -:   97:                }
+        -:   98:            }
+        -:   99:        }
+        -:  100:
+    #####:  101:        return imgOut;
+    %%%%%:  101-block  0
+    %%%%%:  101-block  1
+        -:  102:    }
+        -:  103:
+        -:  104:public:
+        -:  105:
+        -:  106:    /**
+        -:  107:     * @brief SchlickTMO
+        -:  108:     * @param mode valid values are: "nonuniform", "automatic", "standard"
+        -:  109:     * @param p is a model parameter which takes values in [1,+inf].
+        -:  110:     * @param nBit the number of bits of the output LDR display
+        -:  111:     * @param L0 is lowest value of the LDR monitor that can be perceived by the HVS.
+        -:  112:     * @param k is a value in [0,1].
+        -:  113:     */
+        -:  114:    SchlickTMO(std::string mode, float p, int nBit, float L0, float k) : ToneMappingOperator()
+        -:  115:    {
+        -:  116:        images.push_back(NULL);
+        -:  117:        update(mode, p, nBit, L0, k);
+        -:  118:    }
+        -:  119:
+        -:  120:    ~SchlickTMO()
+        -:  121:    {
+        -:  122:        release();
+        -:  123:    }
+        -:  124:
+        -:  125:    /**
+        -:  126:     * @brief update
+        -:  127:     * @param mode valid values are: "nonuniform", "automatic", "standard"
+        -:  128:     * @param p is a model parameter which takes values in [1,+inf].
+        -:  129:     * @param nBit the number of bits of the output LDR display
+        -:  130:     * @param L0 is lowest value of the LDR monitor that can be perceived by the HVS.
+        -:  131:     * @param k is a value in [0,1].
+        -:  132:     */
+        -:  133:    void update(std::string mode = "automatic", float p = 200.0f, int nBit = 8, float L0 = 1.0f, float k = 0.5f)
+        -:  134:    {
+        -:  135:        this->mode = mode;
+        -:  136:        this->k = CLAMPi(k, 0.0f, 1.0f);
+        -:  137:        this->nBit = nBit < 1 ? 8 : nBit;
+        -:  138:        this->p = p < 1.0f ? 200.0f : p;
+        -:  139:        this->L0 = L0 < 0.0f ? 1.0f : L0;
+        -:  140:    }
+        -:  141:
+        -:  142:    /**
+        -:  143:     * @brief execute
+        -:  144:     * @param imgIn
+        -:  145:     * @param imgOut
+        -:  146:     * @return
+        -:  147:     */
+        -:  148:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  149:    {
+        -:  150:        SchlickTMO stmo("automatic", 1.0f / 0.005f, 8, 1.0f, 0.5f);
+        -:  151:        return stmo.Process(Single(imgIn), imgOut);
+        -:  152:    }
+        -:  153:};
+        -:  154:} // end namespace pic
+        -:  155:
+        -:  156:#endif /* PIC_TONE_MAPPING_SCHLICK_TMO_HPP */
+        -:  157:

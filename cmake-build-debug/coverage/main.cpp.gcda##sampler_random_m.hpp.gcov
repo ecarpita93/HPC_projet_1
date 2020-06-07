@@ -1,0 +1,266 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/point_samplers/sampler_random_m.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_POINT_SAMPLERS_SAMPLER_RANDOM_M_HPP
+        -:   19:#define PIC_POINT_SAMPLERS_SAMPLER_RANDOM_M_HPP
+        -:   20:
+        -:   21:#include <random>
+        -:   22:
+        -:   23:#include "../base.hpp"
+        -:   24:#include "../util/math.hpp"
+        -:   25:
+        -:   26:#include "../point_samplers/sampler_random.hpp"
+        -:   27:
+        -:   28:namespace pic {
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief The MRSamplers class
+        -:   32: */
+        -:   33:template<unsigned int N>
+        -:   34:class MRSamplers
+        -:   35:{
+        -:   36:protected:
+        -:   37:    RandomSampler<N> **samplers;
+        -:   38:    int nSamplers;
+        -:   39:    int oldSamples;
+        -:   40:    Vec<N, int> oldWindow;
+        -:   41:    SAMPLER_TYPE type;
+        -:   42:
+        -:   43:public:
+        -:   44:    int nLevels;
+        -:   45:
+        -:   46:    /**
+        -:   47:     * @brief MRSamplers
+        -:   48:     */
+        -:   49:    MRSamplers();
+        -:   50:
+        -:   51:    /**
+        -:   52:     * @brief MRSamplers
+        -:   53:     * @param type
+        -:   54:     * @param window
+        -:   55:     * @param nSamples
+        -:   56:     * @param nLevels
+        -:   57:     * @param nSamplers
+        -:   58:     */
+        -:   59:    MRSamplers(SAMPLER_TYPE type, Vec<N, int> window, int nSamples, int nLevels,
+        -:   60:               int nSamplers);
+        -:   61:
+        -:   62:    /**
+        -:   63:     * @brief update
+        -:   64:     * @param window
+        -:   65:     * @param nSamples
+        -:   66:     * @return
+        -:   67:     */
+        -:   68:    bool update(Vec<N, int> window, int nSamples);
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief getSampler gets a sampler at a given level
+        -:   72:     * @param m
+        -:   73:     * @return
+        -:   74:     */
+        -:   75:    RandomSampler<N> *getSampler(std::mt19937 *m);
+        -:   76:
+        -:   77:    /**
+        -:   78:     * @brief Write saves into an existing file
+        -:   79:     * @param name
+        -:   80:     * @return
+        -:   81:     */
+        -:   82:    bool Write(std::string name);
+        -:   83:
+        -:   84:    /**
+        -:   85:     * @brief Read
+        -:   86:     * @param name
+        -:   87:     * @return
+        -:   88:     */
+        -:   89:    bool Read(std::string name);
+        -:   90:};
+        -:   91:
+        -:   92:template <unsigned int N>
+        -:   93:PIC_INLINE MRSamplers<N>::MRSamplers()
+        -:   94:{
+        -:   95:    samplers = NULL;
+        -:   96:    nSamplers = -1;
+        -:   97:    oldWindow = 0;
+        -:   98:    oldSamples = -1;
+        -:   99:    nLevels = -1;
+        -:  100:}
+        -:  101:
+        -:  102:template <unsigned int N>
+    #####:  103:PIC_INLINE MRSamplers<N>::MRSamplers(
+    #####:  104:    SAMPLER_TYPE type, Vec<N, int> window, int nSamples, int nLevels, int nSamplers)
+    %%%%%:  104-block  0
+        -:  105:{
+    #####:  106:    this->type = type;
+    #####:  107:    this->nSamplers = nSamplers;
+    #####:  108:    this->nLevels = nLevels;
+    #####:  109:    oldSamples = nSamples;
+    #####:  110:    oldWindow = window;
+    %%%%%:  110-block  0
+        -:  111:
+    #####:  112:    samplers = new RandomSampler< N > *[nSamplers];
+    %%%%%:  112-block  0
+    %%%%%:  112-block  1
+        -:  113:
+    #####:  114:    #pragma omp parallel for
+        -:  115:
+        -:  116:    for(int i = 0; i < nSamplers; i++) {
+        -:  117:        samplers[i] = new RandomSampler< N >(type, window, nSamples, nLevels, 0);
+        -:  118:    }
+    #####:  119:}
+        -:  120:
+        -:  121:template <unsigned int N>
+        -:  122:PIC_INLINE bool MRSamplers<N>::update(Vec<N, int> window, int nSamples)
+        -:  123:{
+        -:  124:    if(window.equal(oldWindow) && (oldSamples == nSamples)) {
+        -:  125:        return false;
+        -:  126:    }
+        -:  127:
+        -:  128:    //#pragma omp parallel for
+        -:  129:    for(int i = 0; i < nSamplers; i++) {
+        -:  130:        samplers[i]->update(type, window, nSamples, nLevels);
+        -:  131:    }
+        -:  132:
+        -:  133:    oldWindow = window;
+        -:  134:    oldSamples = nSamples;
+        -:  135:    return true;
+        -:  136:}
+        -:  137:
+        -:  138:template <unsigned int N>
+    #####:  139:PIC_INLINE RandomSampler<N> *MRSamplers<N>::getSampler(std::mt19937 *m)
+        -:  140:{
+    #####:  141:    return samplers[(*m)() % nSamplers];
+    %%%%%:  141-block  0
+    %%%%%:  141-block  1
+    %%%%%:  141-block  2
+        -:  142:}
+        -:  143:
+        -:  144:template <unsigned int N>
+        -:  145:PIC_INLINE bool MRSamplers<N>::Read(std::string name)
+        -:  146:{
+        -:  147:    std::ifstream file;
+        -:  148:
+        -:  149:    file.open(name.c_str(), std::ios::in);
+        -:  150:
+        -:  151:    if(!file.is_open()) {
+        -:  152:        return false;
+        -:  153:    }
+        -:  154:
+        -:  155:    std::string tmp;
+        -:  156:    file >> tmp;
+        -:  157:    file >> nSamplers;
+        -:  158:
+        -:  159:    file >> tmp;
+        -:  160:    file >> oldSamples;
+        -:  161:
+        -:  162:    file >> tmp;
+        -:  163:    file >> nLevels;
+        -:  164:
+        -:  165:    file >> tmp;
+        -:  166:    for(unsigned int i = 0; i < N; i++) {
+        -:  167:        file >> oldWindow[i];
+        -:  168:    }
+        -:  169:
+        -:  170:    if(nSamplers < 1) {
+        -:  171:        file.close();
+        -:  172:
+        -:  173:        return false;
+        -:  174:    }
+        -:  175:
+        -:  176:    if(samplers != NULL) {
+        -:  177:        delete[] samplers;
+        -:  178:    }
+        -:  179:
+        -:  180:    samplers = new RandomSampler<N> *[nSamplers];
+        -:  181:
+        -:  182:    for(int i = 0; i < nSamplers; i++) {
+        -:  183:        samplers[i] = new RandomSampler<N>();
+        -:  184:        unsigned int samplesR = 0;
+        -:  185:
+        -:  186:        file >> tmp;
+        -:  187:        file >> samplesR;
+        -:  188:
+        -:  189:        int value;
+        -:  190:        for(unsigned int j=0; j<samplesR; j++) {
+        -:  191:            file >> value;
+        -:  192:            samplers[i]->samplesR.push_back(value);
+        -:  193:        }
+        -:  194:    }
+        -:  195:    /*
+        -:  196:    
+        -:  197:    int nSamplesR;
+        -:  198:    char tmp[512];
+        -:  199:    fscanf(file, "%s", tmp);
+        -:  200:    fscanf(file, "%d", &nSamplesR);
+        -:  201:
+        -:  202:    for(int i = 0; i < nSamplesR; i++) {
+        -:  203:        int tmpValue;
+        -:  204:        fscanf(file, "%d", &tmpValue);
+        -:  205:        samplesR.push_back(tmpValue);
+        -:  206:    }
+        -:  207:
+        -:  208:    levelsR.push_back(nSamplesR);**/
+        -:  209:
+        -:  210:
+        -:  211:    file.close();
+        -:  212:
+        -:  213:     return true;
+        -:  214:}
+        -:  215:
+        -:  216:template <unsigned int N>
+        -:  217:PIC_INLINE bool MRSamplers<N>::Write(std::string name)
+        -:  218:{
+        -:  219:    std::ofstream file;
+        -:  220:
+        -:  221:    file.open(name.c_str(), std::ios::out);
+        -:  222:
+        -:  223:    if(!file.is_open()) {
+        -:  224:        return false;
+        -:  225:    }
+        -:  226:
+        -:  227:    //general parameters
+        -:  228:    file << "nSamplers: " << nSamplers << " oldSamples: " << oldSamples << " nLevels: " << nLevels << std::endl;
+        -:  229:
+        -:  230:    file << "oldWindow: ";
+        -:  231:    for(unsigned int i = 0; i < N; i++) {
+        -:  232:        file << oldWindow[i] << " ";
+        -:  233:    }
+        -:  234:    file << std::endl;
+        -:  235:
+        -:  236:    //write samplers
+        -:  237:    for(int i = 0; i < nSamplers; i++) {
+        -:  238:        RandomSampler< N > *rs = samplers[i];
+        -:  239:        //write samples
+        -:  240:        file << "nSamplesR: " << rs->samplesR.size() << std::endl;
+        -:  241:        for(unsigned int j=0; j< rs->samplesR.size(); j++) {
+        -:  242:            file << rs->samplesR[j] << " ";
+        -:  243:        }
+        -:  244:        file << std::endl;
+        -:  245:    }
+        -:  246:
+        -:  247:    file.close();
+        -:  248:
+        -:  249:    return true;
+        -:  250:}
+        -:  251:
+        -:  252:} // end namespace pic
+        -:  253:
+        -:  254:#endif /* PIC_POINT_SAMPLERS_SAMPLER_RANDOM_M_HPP */
+        -:  255:

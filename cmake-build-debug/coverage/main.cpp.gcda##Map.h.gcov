@@ -1,0 +1,241 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/Map.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2007-2010 Benoit Jacob <jacob.benoit.1@gmail.com>
+        -:    5:// Copyright (C) 2008 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    6://
+        -:    7:// This Source Code Form is subject to the terms of the Mozilla
+        -:    8:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    9:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   10:
+        -:   11:#ifndef EIGEN_MAP_H
+        -:   12:#define EIGEN_MAP_H
+        -:   13:
+        -:   14:namespace Eigen { 
+        -:   15:
+        -:   16:namespace internal {
+        -:   17:template<typename PlainObjectType, int MapOptions, typename StrideType>
+        -:   18:struct traits<Map<PlainObjectType, MapOptions, StrideType> >
+        -:   19:  : public traits<PlainObjectType>
+        -:   20:{
+        -:   21:  typedef traits<PlainObjectType> TraitsBase;
+        -:   22:  enum {
+        -:   23:    InnerStrideAtCompileTime = StrideType::InnerStrideAtCompileTime == 0
+        -:   24:                             ? int(PlainObjectType::InnerStrideAtCompileTime)
+        -:   25:                             : int(StrideType::InnerStrideAtCompileTime),
+        -:   26:    OuterStrideAtCompileTime = StrideType::OuterStrideAtCompileTime == 0
+        -:   27:                             ? int(PlainObjectType::OuterStrideAtCompileTime)
+        -:   28:                             : int(StrideType::OuterStrideAtCompileTime),
+        -:   29:    Alignment = int(MapOptions)&int(AlignedMask),
+        -:   30:    Flags0 = TraitsBase::Flags & (~NestByRefBit),
+        -:   31:    Flags = is_lvalue<PlainObjectType>::value ? int(Flags0) : (int(Flags0) & ~LvalueBit)
+        -:   32:  };
+        -:   33:private:
+        -:   34:  enum { Options }; // Expressions don't have Options
+        -:   35:};
+        -:   36:}
+        -:   37:
+        -:   38:/** \class Map
+        -:   39:  * \ingroup Core_Module
+        -:   40:  *
+        -:   41:  * \brief A matrix or vector expression mapping an existing array of data.
+        -:   42:  *
+        -:   43:  * \tparam PlainObjectType the equivalent matrix type of the mapped data
+        -:   44:  * \tparam MapOptions specifies the pointer alignment in bytes. It can be: \c #Aligned128, , \c #Aligned64, \c #Aligned32, \c #Aligned16, \c #Aligned8 or \c #Unaligned.
+        -:   45:  *                The default is \c #Unaligned.
+        -:   46:  * \tparam StrideType optionally specifies strides. By default, Map assumes the memory layout
+        -:   47:  *                   of an ordinary, contiguous array. This can be overridden by specifying strides.
+        -:   48:  *                   The type passed here must be a specialization of the Stride template, see examples below.
+        -:   49:  *
+        -:   50:  * This class represents a matrix or vector expression mapping an existing array of data.
+        -:   51:  * It can be used to let Eigen interface without any overhead with non-Eigen data structures,
+        -:   52:  * such as plain C arrays or structures from other libraries. By default, it assumes that the
+        -:   53:  * data is laid out contiguously in memory. You can however override this by explicitly specifying
+        -:   54:  * inner and outer strides.
+        -:   55:  *
+        -:   56:  * Here's an example of simply mapping a contiguous array as a \ref TopicStorageOrders "column-major" matrix:
+        -:   57:  * \include Map_simple.cpp
+        -:   58:  * Output: \verbinclude Map_simple.out
+        -:   59:  *
+        -:   60:  * If you need to map non-contiguous arrays, you can do so by specifying strides:
+        -:   61:  *
+        -:   62:  * Here's an example of mapping an array as a vector, specifying an inner stride, that is, the pointer
+        -:   63:  * increment between two consecutive coefficients. Here, we're specifying the inner stride as a compile-time
+        -:   64:  * fixed value.
+        -:   65:  * \include Map_inner_stride.cpp
+        -:   66:  * Output: \verbinclude Map_inner_stride.out
+        -:   67:  *
+        -:   68:  * Here's an example of mapping an array while specifying an outer stride. Here, since we're mapping
+        -:   69:  * as a column-major matrix, 'outer stride' means the pointer increment between two consecutive columns.
+        -:   70:  * Here, we're specifying the outer stride as a runtime parameter. Note that here \c OuterStride<> is
+        -:   71:  * a short version of \c OuterStride<Dynamic> because the default template parameter of OuterStride
+        -:   72:  * is  \c Dynamic
+        -:   73:  * \include Map_outer_stride.cpp
+        -:   74:  * Output: \verbinclude Map_outer_stride.out
+        -:   75:  *
+        -:   76:  * For more details and for an example of specifying both an inner and an outer stride, see class Stride.
+        -:   77:  *
+        -:   78:  * \b Tip: to change the array of data mapped by a Map object, you can use the C++
+        -:   79:  * placement new syntax:
+        -:   80:  *
+        -:   81:  * Example: \include Map_placement_new.cpp
+        -:   82:  * Output: \verbinclude Map_placement_new.out
+        -:   83:  *
+        -:   84:  * This class is the return type of PlainObjectBase::Map() but can also be used directly.
+        -:   85:  *
+        -:   86:  * \sa PlainObjectBase::Map(), \ref TopicStorageOrders
+        -:   87:  */
+  231534*:   88:template<typename PlainObjectType, int MapOptions, typename StrideType> class Map
+    %%%%%:   88-block  0
+    30240:   88-block  1
+    %%%%%:   88-block  2
+    %%%%%:   88-block  3
+    %%%%%:   88-block  4
+    35328:   88-block  5
+     1530:   88-block  6
+        -:   89:  : public MapBase<Map<PlainObjectType, MapOptions, StrideType> >
+        -:   90:{
+        -:   91:  public:
+        -:   92:
+        -:   93:    typedef MapBase<Map> Base;
+        -:   94:    EIGEN_DENSE_PUBLIC_INTERFACE(Map)
+        -:   95:
+        -:   96:    typedef typename Base::PointerType PointerType;
+        -:   97:    typedef PointerType PointerArgType;
+        -:   98:    EIGEN_DEVICE_FUNC
+   10548*:   99:    inline PointerType cast_to_pointer_type(PointerArgType ptr) { return ptr; }
+        -:  100:
+        -:  101:    EIGEN_DEVICE_FUNC
+  177699*:  102:    inline Index innerStride() const
+    %%%%%:  102-block  0
+    35328:  102-block  1
+    35328:  102-block  2
+    %%%%%:  102-block  3
+     3585:  102-block  4
+    30240:  102-block  5
+    30240:  102-block  6
+    %%%%%:  102-block  7
+     1530:  102-block  8
+    %%%%%:  102-block  9
+    35328:  102-block 10
+    %%%%%:  102-block 11
+    %%%%%:  102-block 12
+    35328:  102-block 13
+    %%%%%:  102-block 14
+    %%%%%:  102-block 15
+    %%%%%:  102-block 16
+    %%%%%:  102-block 17
+    %%%%%:  102-block 18
+    %%%%%:  102-block 19
+     1530:  102-block 20
+     1530:  102-block 21
+     1530:  102-block 22
+    %%%%%:  102-block 23
+        -:  103:    {
+    79329:  104:      return StrideType::InnerStrideAtCompileTime != 0 ? m_stride.inner() : 1;
+     3585:  104-block  0
+    30240:  104-block  1
+    35328:  104-block  2
+     5088:  104-block  3
+        -:  105:    }
+        -:  106:
+        -:  107:    EIGEN_DEVICE_FUNC
+  280125*:  108:    inline Index outerStride() const
+        -:  109:    {
+  147459*:  110:      return StrideType::OuterStrideAtCompileTime != 0 ? m_stride.outer()
+    35328:  110-block  0
+     3585:  110-block  1
+    30240:  110-block  2
+    30240:  110-block  3
+    %%%%%:  110-block  4
+    %%%%%:  110-block  5
+     1530:  110-block  6
+     1530:  110-block  7
+    %%%%%:  110-block  8
+     5088:  110-block  9
+    %%%%%:  110-block 10
+    35328:  110-block 11
+    %%%%%:  110-block 12
+    %%%%%:  110-block 13
+    %%%%%:  110-block 14
+    %%%%%:  110-block 15
+    %%%%%:  110-block 16
+    %%%%%:  110-block 17
+     1530:  110-block 18
+     1530:  110-block 19
+     1530:  110-block 20
+    %%%%%:  110-block 21
+        -:  111:           : IsVectorAtCompileTime ? this->size()
+        -:  112:           : int(Flags)&RowMajorBit ? this->cols()
+        -:  113:           : this->rows();
+        -:  114:    }
+        -:  115:
+        -:  116:    /** Constructor in the fixed-size case.
+        -:  117:      *
+        -:  118:      * \param dataPtr pointer to the array to map
+        -:  119:      * \param stride optional Stride object, passing the strides.
+        -:  120:      */
+        -:  121:    EIGEN_DEVICE_FUNC
+        -:  122:    explicit inline Map(PointerArgType dataPtr, const StrideType& stride = StrideType())
+        -:  123:      : Base(cast_to_pointer_type(dataPtr)), m_stride(stride)
+        -:  124:    {
+        -:  125:      PlainObjectType::Base::_check_template_params();
+        -:  126:    }
+        -:  127:
+        -:  128:    /** Constructor in the dynamic-size vector case.
+        -:  129:      *
+        -:  130:      * \param dataPtr pointer to the array to map
+        -:  131:      * \param size the size of the vector expression
+        -:  132:      * \param stride optional Stride object, passing the strides.
+        -:  133:      */
+        -:  134:    EIGEN_DEVICE_FUNC
+    1503*:  135:    inline Map(PointerArgType dataPtr, Index size, const StrideType& stride = StrideType())
+     1503:  135-block  0
+    4536*:  136:      : Base(cast_to_pointer_type(dataPtr), size), m_stride(stride)
+     1503:  136-block  0
+     1503:  136-block  1
+     1503:  136-block  2
+     1503:  136-block  3
+    %%%%%:  136-block  4
+    %%%%%:  136-block  5
+    %%%%%:  136-block  6
+    %%%%%:  136-block  7
+    %%%%%:  136-block  8
+    %%%%%:  136-block  9
+    %%%%%:  136-block 10
+    %%%%%:  136-block 11
+     1530:  136-block 12
+     1530:  136-block 13
+    %%%%%:  136-block 14
+        -:  137:    {
+        -:  138:      PlainObjectType::Base::_check_template_params();
+        -:  139:    }
+        -:  140:
+        -:  141:    /** Constructor in the dynamic-size matrix case.
+        -:  142:      *
+        -:  143:      * \param dataPtr pointer to the array to map
+        -:  144:      * \param rows the number of rows of the matrix expression
+        -:  145:      * \param cols the number of columns of the matrix expression
+        -:  146:      * \param stride optional Stride object, passing the strides.
+        -:  147:      */
+        -:  148:    EIGEN_DEVICE_FUNC
+    3006*:  149:    inline Map(PointerArgType dataPtr, Index rows, Index cols, const StrideType& stride = StrideType())
+    3006*:  150:      : Base(cast_to_pointer_type(dataPtr), rows, cols), m_stride(stride)
+        -:  151:    {
+        -:  152:      PlainObjectType::Base::_check_template_params();
+        -:  153:    }
+        -:  154:
+        -:  155:    EIGEN_INHERIT_ASSIGNMENT_OPERATORS(Map)
+        -:  156:
+        -:  157:  protected:
+        -:  158:    StrideType m_stride;
+        -:  159:};
+        -:  160:
+        -:  161:
+        -:  162:} // end namespace Eigen
+        -:  163:
+        -:  164:#endif // EIGEN_MAP_H

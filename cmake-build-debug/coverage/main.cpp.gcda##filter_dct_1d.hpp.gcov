@@ -1,0 +1,310 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_dct_1d.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_DCT_1D_HPP
+        -:   19:#define PIC_FILTERING_FILTER_DCT_1D_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterDCT1D class
+        -:   27: */
+        -:   28:class FilterDCT1D: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:    int     dirs[3];
+        -:   32:    float   *coeff, sqr[2];
+        -:   33:    int     nCoeff;
+        -:   34:    bool    bForward;
+        -:   35:
+        -:   36:    /**
+        -:   37:     * @brief ProcessBBox
+        -:   38:     * @param dst
+        -:   39:     * @param src
+        -:   40:     * @param box
+        -:   41:     */
+        -:   42:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   43:
+        -:   44:public:
+        -:   45:
+        -:   46:    /**
+        -:   47:     * @brief FilterDCT1D
+        -:   48:     * @param nCoeff
+        -:   49:     * @param bForward
+        -:   50:     */
+        -:   51:    FilterDCT1D(int nCoeff, bool bForward);
+        -:   52:
+        -:   53:    ~FilterDCT1D();
+        -:   54:
+        -:   55:    /**
+        -:   56:     * @brief setForward
+        -:   57:     */
+        -:   58:    void setForward()
+        -:   59:    {
+        -:   60:        this->bForward = true;
+        -:   61:
+        -:   62:        if(coeff != NULL) {
+        -:   63:            delete[] coeff;
+        -:   64:            coeff = NULL;
+        -:   65:        }
+        -:   66:
+        -:   67:        coeff = createCoefficientsTransform(nCoeff);
+        -:   68:    }
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief setInverse
+        -:   72:     */
+        -:   73:    void setInverse()
+        -:   74:    {
+        -:   75:        this->bForward = false;
+        -:   76:
+        -:   77:        if(coeff != NULL) {
+        -:   78:            delete[] coeff;
+        -:   79:            coeff = NULL;
+        -:   80:        }
+        -:   81:
+        -:   82:        coeff = createCoefficientsInverse(nCoeff);
+        -:   83:    }
+        -:   84:
+        -:   85:    /**
+        -:   86:     * @brief createCoefficientsTransform
+        -:   87:     * @param size
+        -:   88:     * @return
+        -:   89:     */
+        -:   90:    static float *createCoefficientsTransform(int size)
+        -:   91:    {
+        -:   92:        if(size < 1) {
+        -:   93:            return NULL;
+        -:   94:        }
+        -:   95:
+        -:   96:        float size2 = float(size * 2);
+        -:   97:        float *ret = new float[size * size];
+        -:   98:        int val;
+        -:   99:
+        -:  100:        int ind = 0;
+        -:  101:
+        -:  102:        for(int u = 0; u < size; u++) {
+        -:  103:            for(int x = 0; x < size; x++) {
+        -:  104:                val		 = u * (2 * x + 1);
+        -:  105:                ret[ind] = cosf(C_PI * float(val) / size2);
+        -:  106:                ind++;
+        -:  107:            }
+        -:  108:        }
+        -:  109:
+        -:  110:        return ret;
+        -:  111:    }
+        -:  112:
+        -:  113:    /**
+        -:  114:     * @brief createCoefficientsInverse
+        -:  115:     * @param size
+        -:  116:     * @return
+        -:  117:     */
+        -:  118:    static float *createCoefficientsInverse(int size)
+        -:  119:    {
+        -:  120:        if(size < 1) {
+        -:  121:            return NULL;
+        -:  122:        }
+        -:  123:
+        -:  124:        float size2 = float(size * 2);
+        -:  125:        float *ret = new float[size * size];
+        -:  126:        int val;
+        -:  127:
+        -:  128:        float 	sqr[2];
+        -:  129:        sqr[0] = sqrtf(1.0f / float(size));
+        -:  130:        sqr[1] = sqrtf(2.0f / float(size));
+        -:  131:
+        -:  132:        int ind = 0;
+        -:  133:
+        -:  134:        for(int x = 0; x < size; x++) {
+        -:  135:            for(int u = 0; u < size; u++) {
+        -:  136:                val		 = u * (2 * x + 1);
+        -:  137:                ret[ind] = cosf(C_PI * float(val) / size2);
+        -:  138:
+        -:  139:                if(u == 0) {
+        -:  140:                    ret[ind] *= sqr[0];
+        -:  141:                } else {
+        -:  142:                    ret[ind] *= sqr[1];
+        -:  143:                }
+        -:  144:
+        -:  145:                ind++;
+        -:  146:            }
+        -:  147:        }
+        -:  148:
+        -:  149:        return ret;
+        -:  150:    }
+        -:  151:
+        -:  152:    /**
+        -:  153:     * @brief changePass
+        -:  154:     * @param pass
+        -:  155:     * @param tPass
+        -:  156:     */
+        -:  157:    void changePass(int pass, int tPass);
+        -:  158:
+        -:  159:    /**
+        -:  160:     * @brief changePass
+        -:  161:     * @param x
+        -:  162:     * @param y
+        -:  163:     * @param z
+        -:  164:     */
+        -:  165:    void changePass(int x, int y, int z);
+        -:  166:};
+        -:  167:
+        -:  168:PIC_INLINE FilterDCT1D::FilterDCT1D(int nCoeff, bool bForward)
+        -:  169:{
+        -:  170:    this->coeff = NULL;
+        -:  171:    this->nCoeff = nCoeff;
+        -:  172:
+        -:  173:    if(bForward) {
+        -:  174:        setForward();
+        -:  175:    } else {
+        -:  176:        setInverse();
+        -:  177:    }
+        -:  178:
+        -:  179:    sqr[0] = sqrtf(1.0f / float(nCoeff));
+        -:  180:    sqr[1] = sqrtf(2.0f / float(nCoeff));
+        -:  181:
+        -:  182:    dirs[0] = 1;
+        -:  183:    dirs[1] = 0;
+        -:  184:    dirs[2] = 0;
+        -:  185:}
+        -:  186:
+        -:  187:PIC_INLINE FilterDCT1D::~FilterDCT1D()
+        -:  188:{
+        -:  189:    if(coeff != NULL) {
+        -:  190:        delete[] coeff;
+        -:  191:    }
+        -:  192:}
+        -:  193:
+    #####:  194:PIC_INLINE void FilterDCT1D::changePass(int pass, int tPass)
+        -:  195:{
+    #####:  196:    int tMod;
+        -:  197:
+    #####:  198:    if(tPass > 1) {
+    %%%%%:  198-block  0
+        -:  199:        tMod = 3;
+        -:  200:    } else {
+    #####:  201:        if(tPass == 1) {
+    %%%%%:  201-block  0
+        -:  202:            tMod = 2;
+        -:  203:        } else {
+    #####:  204:            printf("ERROR: FilterDCT1D::changePass");
+    %%%%%:  204-block  0
+    #####:  205:            return;
+    %%%%%:  205-block  0
+        -:  206:        }
+        -:  207:    }
+        -:  208:
+    #####:  209:    dirs[pass % tMod] = 1;
+        -:  210:
+    #####:  211:    for(int i = 1; i < tMod; i++) {
+    %%%%%:  211-block  0
+    %%%%%:  211-block  1
+    #####:  212:        dirs[(pass + i) % tMod] = 0;
+    %%%%%:  212-block  0
+        -:  213:    }
+        -:  214:
+        -:  215:}
+        -:  216:
+        -:  217:PIC_INLINE void FilterDCT1D::changePass(int x, int y, int z)
+        -:  218:{
+        -:  219:    dirs[0] = y;
+        -:  220:    dirs[1] = x;
+        -:  221:    dirs[2] = z;
+        -:  222:}
+        -:  223:
+    #####:  224:PIC_INLINE void FilterDCT1D::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:  225:{
+    #####:  226:    int channels = dst->channels;
+        -:  227:
+    #####:  228:    Image *source = src[0];
+    %%%%%:  228-block  0
+        -:  229:
+    #####:  230:    for(int m = box->z0; m < box->z1; m++) {
+    %%%%%:  230-block  0
+    %%%%%:  230-block  1
+    %%%%%:  230-block  2
+    #####:  231:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  231-block  0
+    %%%%%:  231-block  1
+    %%%%%:  231-block  2
+    #####:  232:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  232-block  0
+    %%%%%:  232-block  1
+    %%%%%:  232-block  2
+    #####:  233:                float *tmpDst = (*dst)(i, j, m);
+        -:  234:
+    #####:  235:                for(int l = 0; l < channels; l++) {
+    %%%%%:  235-block  0
+    %%%%%:  235-block  1
+    #####:  236:                    tmpDst[l] = 0.0f;
+    %%%%%:  236-block  0
+        -:  237:                }
+        -:  238:
+    #####:  239:                int ind = (j * dirs[0] + i * dirs[1] + m * dirs[2]) % nCoeff;
+    #####:  240:                int ind2 = ind * nCoeff;
+        -:  241:
+    #####:  242:                for(int k = 0; k < nCoeff; k++) { //1D Filtering
+    %%%%%:  242-block  0
+    %%%%%:  242-block  1
+    #####:  243:                    int k2 = k - ind;
+        -:  244:                    //Address cj
+    #####:  245:                    int cj = j + k2 * dirs[0];
+        -:  246:                    //Address ci
+    #####:  247:                    int ci = i + k2 * dirs[1];
+        -:  248:                    //Address cm
+    #####:  249:                    int cm = m + k2 * dirs[2];
+        -:  250:
+    #####:  251:                    float *tmpSource = (*source)(ci, cj, cm);
+        -:  252:
+    #####:  253:                    float tmpCoeff = coeff[ind2];
+        -:  254:
+    #####:  255:                    for(int l = 0; l < channels; l++) {
+    %%%%%:  255-block  0
+    %%%%%:  255-block  1
+    #####:  256:                        tmpDst[l] += tmpSource[l] * tmpCoeff;
+    %%%%%:  256-block  0
+        -:  257:                    }
+        -:  258:
+    #####:  259:                    ind2++;
+    %%%%%:  259-block  0
+        -:  260:                }
+        -:  261:
+    #####:  262:                if(bForward) {
+    %%%%%:  262-block  0
+    #####:  263:                    int select = (ind == 0) ? 0 : 1;
+    #####:  264:                    for(int l = 0; l < channels; l++) {
+    %%%%%:  264-block  0
+    %%%%%:  264-block  1
+    #####:  265:                        tmpDst[l] *= sqr[select];
+    %%%%%:  265-block  0
+        -:  266:                    }
+        -:  267:                }
+        -:  268:            }
+        -:  269:        }
+        -:  270:    }
+    #####:  271:}
+        -:  272:
+        -:  273:} // end namespace pic
+        -:  274:
+        -:  275:#endif /* PIC_FILTERING_FILTER_DCT_1D_HPP */
+        -:  276:

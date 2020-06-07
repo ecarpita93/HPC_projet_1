@@ -1,0 +1,167 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/tone_mapping_operator.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_TONE_MAPPING_OPERATOR_HPP
+        -:   19:#define PIC_TONE_MAPPING_TONE_MAPPING_OPERATOR_HPP
+        -:   20:
+        -:   21:#include "../image.hpp"
+        -:   22:#include "../image_vec.hpp"
+        -:   23:#include "../util/array.hpp"
+        -:   24:#include "../filtering/filter_luminance.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:/**
+        -:   29: * @brief The ToneMappingOperator class
+        -:   30: */
+        1:   31:class ToneMappingOperator
+    $$$$$:   31-block  0
+        -:   32:{
+        -:   33:protected:
+        -:   34:
+        -:   35:    ImageVec images;
+        -:   36:
+        -:   37:    /**
+        -:   38:     * @brief ProcessAux
+        -:   39:     * @param imgIn
+        -:   40:     * @param imgOut
+        -:   41:     */
+    #####:   42:    virtual Image *ProcessAux(ImageVec imgIn, Image *imgOut)
+        -:   43:    {
+    #####:   44:        return imgOut;
+        -:   45:    }
+        -:   46:
+        -:   47:    /**
+        -:   48:     * @brief releaseAux
+        -:   49:     */
+    #####:   50:    virtual void releaseAux()
+        -:   51:    {
+        -:   52:
+    #####:   53:    }
+        -:   54:
+        -:   55:public:
+        -:   56:
+        -:   57:    /**
+        -:   58:     * @brief ToneMappingOperator
+        -:   59:     */
+        1:   60:    ToneMappingOperator()
+        1:   61:    {
+        1:   61-block  0
+        -:   62:
+        -:   63:    }
+        -:   64:
+        -:   65:    /**
+        -:   66:     * @brief release
+        -:   67:     */
+       1*:   68:    void release()
+        -:   69:    {
+       1*:   70:        stdVectorClear<Image>(images);
+        1:   70-block  0
+       1*:   71:        releaseAux();
+    #####:   72:    }
+        -:   73:
+        -:   74:    /**
+        -:   75:     * @brief updateImage
+        -:   76:     * @param imgIn
+        -:   77:     */
+    #####:   78:    void updateImage(Image *imgIn)
+        -:   79:    {
+    #####:   80:        bool bRelease = false;
+    #####:   81:        for(auto i = 0; i < images.size(); i++) {
+    %%%%%:   81-block  0
+    %%%%%:   81-block  1
+    %%%%%:   81-block  2
+    #####:   82:            if(images[i] != NULL) {
+    %%%%%:   82-block  0
+    #####:   83:                if((imgIn->width  != images[i]->width) ||
+    %%%%%:   83-block  0
+    %%%%%:   83-block  1
+    #####:   84:                   (imgIn->height != images[i]->height)) {
+    %%%%%:   84-block  0
+        -:   85:                    bRelease = true;
+        -:   86:                    break;
+        -:   87:                }
+        -:   88:            }
+        -:   89:        }
+        -:   90:
+    #####:   91:        if(bRelease) {
+    %%%%%:   91-block  0
+    #####:   92:            release();
+    %%%%%:   92-block  0
+        -:   93:        }
+    #####:   94:    }
+        -:   95:
+        -:   96:    /**
+        -:   97:     * @brief getScaleFiltering
+        -:   98:     * @param imgIn
+        -:   99:     * @param fx
+        -:  100:     * @param fy
+        -:  101:     */
+    #####:  102:    static void getScaleFiltering(Image *imgIn, int &fScaleX, int &fScaleY)
+        -:  103:    {
+    #####:  104:        int maxCoord = MAX(imgIn->width, imgIn->height);
+        -:  105:
+    #####:  106:        float maxCoordf       = 2.0f * float(maxCoord) * 0.75f;
+    #####:  107:        float viewAngleWidth  = 2.0f * atanf(imgIn->width / maxCoordf);
+    #####:  108:        float viewAngleHeight = 2.0f * atanf(imgIn->height / maxCoordf);
+        -:  109:
+    #####:  110:        fScaleX = int((2.0f * tanf(viewAngleWidth / 2.0f) / 0.01745f));
+    #####:  111:        fScaleY = int((2.0f * tanf(viewAngleHeight / 2.0f) / 0.01745f));
+    #####:  112:    }
+        -:  113:
+        -:  114:    /**
+        -:  115:     * @brief Process
+        -:  116:     * @param imgIn
+        -:  117:     * @param imgOut
+        -:  118:     * @return
+        -:  119:     */
+        1:  120:    Image *Process(ImageVec imgIn, Image *imgOut = NULL)
+        -:  121:    {
+        1:  122:        if(!ImageVecCheck(imgIn, -1)) {
+        1:  122-block  0
+        -:  123:            return imgOut;
+        -:  124:        }
+        -:  125:
+        1:  126:        if(imgOut == NULL) {
+        1:  126-block  0
+        1:  127:            imgOut = imgIn[0]->clone();
+        1:  127-block  0
+        -:  128:        } else {
+    #####:  129:            if(!imgOut->isSimilarType(imgIn[0])) {
+    %%%%%:  129-block  0
+    #####:  130:                imgOut = imgIn[0]->allocateSimilarOne();
+    %%%%%:  130-block  0
+        -:  131:            }
+        -:  132:        }
+        -:  133:
+        1:  134:        imgOut = ProcessAux(imgIn, imgOut);
+        1:  134-block  0
+        1:  134-block  1
+        -:  135:
+        1:  136:        return imgOut;
+        1:  136-block  0
+        -:  137:    }
+        -:  138:};
+        -:  139:
+        -:  140:} // end namespace pic
+        -:  141:
+        -:  142:#endif /* PIC_TONE_MAPPING_WARD_HISTOGRAM_TMO_HPP */
+        -:  143:

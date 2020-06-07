@@ -1,0 +1,190 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_linear_color_space.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_LINEAR_COLOR_SPACE_HPP
+        -:   19:#define PIC_FILTERING_FILTER_LINEAR_COLOR_SPACE_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterLinearColorSpace class
+        -:   27: */
+        -:   28:class FilterLinearColorSpace: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:    float		*matrix;
+        -:   32:    int			nMatrix;
+        -:   33:
+        -:   34:    /**
+        -:   35:     * @brief ProcessBBox
+        -:   36:     * @param dst
+        -:   37:     * @param src
+        -:   38:     * @param box
+        -:   39:     */
+    #####:   40:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   41:    {
+    #####:   42:        if(src[0]->channels != nMatrix) {
+    %%%%%:   42-block  0
+        -:   43:            return;
+        -:   44:        }
+        -:   45:
+    #####:   46:        int width = dst->width;
+    #####:   47:        int channels = src[0]->channels;
+    %%%%%:   47-block  0
+    #####:   48:        float *data  = src[0]->data;
+        -:   49:
+    #####:   50:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   50-block  0
+    %%%%%:   50-block  1
+    %%%%%:   50-block  2
+    #####:   51:            int c = j * width;
+        -:   52:
+    #####:   53:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   53-block  0
+    %%%%%:   53-block  1
+    %%%%%:   53-block  2
+    #####:   54:                int c1 = (c + i) * channels;
+        -:   55:
+    #####:   56:                for(int k = 0; k < channels; k++) {
+    %%%%%:   56-block  0
+    %%%%%:   56-block  1
+    #####:   57:                    float sum = 0.0f;
+    #####:   58:                    int ind   = k * nMatrix;
+        -:   59:
+    #####:   60:                    for(int l = 0; l < channels; l++) {
+    %%%%%:   60-block  0
+    %%%%%:   60-block  1
+    #####:   61:                        sum += data[c1 + l] * matrix[ind + l];
+    %%%%%:   61-block  0
+        -:   62:                    }
+        -:   63:
+    #####:   64:                    dst->data[c1 + k] = sum;
+    %%%%%:   64-block  0
+        -:   65:                }
+        -:   66:            }
+        -:   67:        }
+        -:   68:    }
+        -:   69:
+        -:   70:public:
+        -:   71:    /**
+        -:   72:     * @brief FilterLinearColorSpace
+        -:   73:     */
+        -:   74:    FilterLinearColorSpace() : Filter()
+        -:   75:    {
+        -:   76:        matrix  = NULL;
+        -:   77:        nMatrix = 0;
+        -:   78:    }
+        -:   79:
+        -:   80:    ~FilterLinearColorSpace()
+        -:   81:    {
+        -:   82:        if(matrix != NULL) {
+        -:   83:            delete[] matrix;
+        -:   84:        }
+        -:   85:    }
+        -:   86:
+        -:   87:    /**
+        -:   88:     * @brief getRGB2XYZMatrix
+        -:   89:     * @return
+        -:   90:     */
+        -:   91:    float *getRGB2XYZMatrix()
+        -:   92:    {
+        -:   93:        if(matrix == NULL) {
+        -:   94:            matrix = new float[9];
+        -:   95:        }
+        -:   96:
+        -:   97:        nMatrix = 3;
+        -:   98:
+        -:   99:        matrix[0] = 0.4124f;
+        -:  100:        matrix[1] = 0.3576f;
+        -:  101:        matrix[2] = 0.1805f;
+        -:  102:        matrix[3] = 0.2126f;
+        -:  103:        matrix[4] = 0.7152f;
+        -:  104:        matrix[5] = 0.0722f;
+        -:  105:        matrix[6] = 0.0193f;
+        -:  106:        matrix[7] = 0.1192f;
+        -:  107:        matrix[8] = 0.9505f;
+        -:  108:
+        -:  109:        return matrix;
+        -:  110:    }
+        -:  111:
+        -:  112:    /**
+        -:  113:     * @brief getXYZ2RGBMatrix
+        -:  114:     * @return
+        -:  115:     */
+        -:  116:    float *getXYZ2RGBMatrix()
+        -:  117:    {
+        -:  118:        if(matrix == NULL) {
+        -:  119:            matrix = new float[9];
+        -:  120:        }
+        -:  121:
+        -:  122:        nMatrix = 3;
+        -:  123:
+        -:  124:        matrix[0] =  3.2406f;
+        -:  125:        matrix[1] = -1.5372f;
+        -:  126:        matrix[2] = -0.4986f;
+        -:  127:        matrix[3] = -0.9689f;
+        -:  128:        matrix[4] =  1.8758f;
+        -:  129:        matrix[5] =  0.0415f;
+        -:  130:        matrix[6] =  0.0557f;
+        -:  131:        matrix[7] = -0.2040f;
+        -:  132:        matrix[8] =  1.0570f;
+        -:  133:
+        -:  134:        return matrix;
+        -:  135:    }
+        -:  136:
+        -:  137:    /**
+        -:  138:     * @brief execute_RGB_to_XYZ
+        -:  139:     * @param imgIn
+        -:  140:     * @param imgOut
+        -:  141:     * @return
+        -:  142:     */
+        -:  143:    static Image *execute_RGB_to_XYZ(Image *imgIn, Image *imgOut)
+        -:  144:    {
+        -:  145:        FilterLinearColorSpace flt;
+        -:  146:
+        -:  147:        flt.getRGB2XYZMatrix();
+        -:  148:
+        -:  149:        return flt.Process(Single(imgIn), imgOut);
+        -:  150:    }
+        -:  151:
+        -:  152:    /**
+        -:  153:     * @brief execute_XYZ_to_RGB
+        -:  154:     * @param imgIn
+        -:  155:     * @param imgOut
+        -:  156:     * @return
+        -:  157:     */
+        -:  158:    static Image *execute_XYZ_to_RGB(Image *imgIn, Image *imgOut)
+        -:  159:    {
+        -:  160:        FilterLinearColorSpace flt;
+        -:  161:
+        -:  162:        flt.getXYZ2RGBMatrix();
+        -:  163:
+        -:  164:        return flt.Process(Single(imgIn), imgOut);
+        -:  165:    }
+        -:  166:
+        -:  167:};
+        -:  168:
+        -:  169:} // end namespace pic
+        -:  170:
+        -:  171:#endif /* PIC_FILTERING_FILTER_LINEAR_COLOR_SPACE_HPP */
+        -:  172:

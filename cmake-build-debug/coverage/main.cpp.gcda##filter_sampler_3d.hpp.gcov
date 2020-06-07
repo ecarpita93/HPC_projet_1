@@ -1,0 +1,125 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_sampler_3d.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_SAMPLER_3D_HPP
+        -:   19:#define PIC_FILTERING_FILTER_SAMPLER_3D_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:#include "../image_samplers/image_sampler.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The FilterSampler3D class
+        -:   28: */
+        -:   29:class FilterSampler3D: public Filter
+        -:   30:{
+        -:   31:protected:
+        -:   32:    ImageSampler *isb;
+        -:   33:
+        -:   34:    /**
+        -:   35:     * @brief ProcessBBox
+        -:   36:     * @param dst
+        -:   37:     * @param src
+        -:   38:     * @param box
+        -:   39:     */
+        -:   40:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   41:
+        -:   42:public:
+        -:   43:    /**
+        -:   44:     * @brief FilterSampler3D
+        -:   45:     * @param scale
+        -:   46:     * @param isb
+        -:   47:     */
+        -:   48:    FilterSampler3D(float scale, ImageSampler *isb);
+        -:   49:
+        -:   50:    /**
+        -:   51:     * @brief OutputSize
+        -:   52:     * @param imgIn
+        -:   53:     * @param width
+        -:   54:     * @param height
+        -:   55:     * @param channels
+        -:   56:     * @param frames
+        -:   57:     */
+    #####:   58:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:   59:    {
+    #####:   60:        width  = int(imgIn[0]->widthf  * scale);
+    #####:   61:        height = int(imgIn[0]->heightf * scale);
+    #####:   62:        frames = int(imgIn[0]->framesf * scale);
+    #####:   63:        channels = imgIn[0]->channels;
+    #####:   64:    }
+        -:   65:
+        -:   66:    /**
+        -:   67:     * @brief execute
+        -:   68:     * @param in
+        -:   69:     * @param isb
+        -:   70:     * @param scale
+        -:   71:     * @return
+        -:   72:     */
+        -:   73:    static Image *execute(Image *in, ImageSampler *isb, float scale)
+        -:   74:    {
+        -:   75:        FilterSampler3D filterUp(scale, isb);
+        -:   76:        Image *out = filterUp.Process(Single(in), NULL);
+        -:   77:        return out;
+        -:   78:    }
+        -:   79:};
+        -:   80:
+        -:   81:PIC_INLINE FilterSampler3D::FilterSampler3D(float scale, ImageSampler *isb) : Filter()
+        -:   82:{
+        -:   83:    this->scale = scale;
+        -:   84:    this->isb = isb;
+        -:   85:}
+        -:   86:
+    #####:   87:PIC_INLINE void FilterSampler3D::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   88:{
+    #####:   89:    Image *source = src[0];
+    %%%%%:   89-block  0
+        -:   90:
+    #####:   91:    for(int p = box->z0; p < box->z1; p++) {
+    %%%%%:   91-block  0
+    %%%%%:   91-block  1
+    %%%%%:   91-block  2
+    #####:   92:        float t = float(p) / float(box->frames - 1);
+        -:   93:
+    #####:   94:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   94-block  0
+    %%%%%:   94-block  1
+    %%%%%:   94-block  2
+    #####:   95:            float y = float(j) / float(box->height - 1);
+        -:   96:
+    #####:   97:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   97-block  0
+    %%%%%:   97-block  1
+    #####:   98:                float x = float(i) / float(box->width - 1);
+        -:   99:
+    #####:  100:                int c = p * source->tstride + j * source->ystride + i * source->xstride;
+        -:  101:
+    #####:  102:                isb->SampleImage(source, x, y, t, &dst->data[c]);
+    %%%%%:  102-block  0
+        -:  103:            }
+        -:  104:        }
+        -:  105:    }
+    #####:  106:}
+        -:  107:
+        -:  108:} // end namespace pic
+        -:  109:
+        -:  110:#endif /* PIC_FILTERING_FILTER_SAMPLER_3D_HPP */
+        -:  111:

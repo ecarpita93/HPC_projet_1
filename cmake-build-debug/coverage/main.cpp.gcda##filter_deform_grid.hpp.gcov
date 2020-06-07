@@ -1,0 +1,154 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_deform_grid.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_DEFORM_GRID_HPP
+        -:   19:#define PIC_FILTERING_FILTER_DEFORM_GRID_HPP
+        -:   20:
+        -:   21:#include "../util/vec.hpp"
+        -:   22:
+        -:   23:#include "../util/std_util.hpp"
+        -:   24:
+        -:   25:#include "../filtering/filter.hpp"
+        -:   26:#include "../image_samplers/image_sampler_bicubic.hpp"
+        -:   27:#include "../image_samplers/image_sampler_bilinear.hpp"
+        -:   28:#include "../image_samplers/image_sampler_nearest.hpp"
+        -:   29:
+        -:   30:namespace pic {
+        -:   31:
+        -:   32:/**
+        -:   33: * @brief The FilterDeformGrid class
+        -:   34: */
+        -:   35:class FilterDeformGrid: public Filter
+        -:   36:{
+        -:   37:protected:
+        -:   38:    ImageSamplerBicubic isb;
+        -:   39:    ImageSamplerNearest isb_lin;
+        -:   40:    Image *grid_rest, *grid_move, grid_diff;
+        -:   41:
+        -:   42:    /**
+        -:   43:     * @brief ProcessBBox
+        -:   44:     * @param dst
+        -:   45:     * @param src
+        -:   46:     * @param box
+        -:   47:     */
+    #####:   48:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   49:    {
+    #####:   50:        float vDiff[3];
+    #####:   51:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   51-block  0
+    %%%%%:   51-block  1
+    %%%%%:   51-block  2
+    #####:   52:            float y = float(j) / dst->height1f;
+        -:   53:
+    #####:   54:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   54-block  0
+    %%%%%:   54-block  1
+    #####:   55:                float *tmp_dst = (*dst)(i, j);
+    %%%%%:   55-block  0
+        -:   56:
+    #####:   57:                float x = float(i) / dst->width1f;
+        -:   58:
+    #####:   59:                isb.SampleImage(&grid_diff, x, y, vDiff);
+    %%%%%:   59-block  0
+        -:   60:
+    #####:   61:                isb.SampleImage(src[0], x + vDiff[0], y + vDiff[1] , tmp_dst);
+        -:   62:            }
+        -:   63:        }
+    #####:   64:    }
+        -:   65:
+        -:   66:public:
+        -:   67:
+        -:   68:    /**
+        -:   69:     * @brief FilterDeformGrid
+        -:   70:     * @param type
+        -:   71:     */
+        -:   72:    FilterDeformGrid(Image *grid_move)
+        -:   73:    {
+        -:   74:        this->grid_rest = getUniformGrid(grid_move->width, grid_move->height);
+        -:   75:        this->grid_move = grid_move;
+        -:   76:
+        -:   77:        grid_diff = *grid_rest - *grid_move;
+        -:   78:    }
+        -:   79:
+        -:   80:    ~FilterDeformGrid()
+        -:   81:    {
+        -:   82:        delete_s(grid_rest);
+        -:   83:    }
+        -:   84:
+        -:   85:    /**
+        -:   86:     * @brief getUniformGrid
+        -:   87:     * @param sampleX
+        -:   88:     * @param sampleY
+        -:   89:     * @return
+        -:   90:     */
+        -:   91:    static Image* getUniformGrid(int sampleX, int sampleY)
+        -:   92:    {
+        -:   93:        if(sampleX < 1) {
+        -:   94:            sampleX = 5;
+        -:   95:        }
+        -:   96:
+        -:   97:        if(sampleY < 1) {
+        -:   98:            sampleY = 5;
+        -:   99:        }
+        -:  100:
+        -:  101:        //the grid has sampleX \times sampleY squares, so it has to have
+        -:  102:        //some one extra control point for each direction
+        -:  103:
+        -:  104:        Image *ret = new Image(1, sampleX, sampleY, 3);
+        -:  105:
+        -:  106:        float tmp_x = 1.0f / float(sampleX - 1);
+        -:  107:        float tmp_y = 1.0f / float(sampleY - 1);
+        -:  108:
+        -:  109:        for(int y = 0; y < sampleY; y++) {
+        -:  110:            float y_f = float(y) * tmp_y;
+        -:  111:
+        -:  112:            for(int x = 0; x < sampleX; x++) {
+        -:  113:                float *ret_val = (*ret)(x, y);
+        -:  114:
+        -:  115:                ret_val[0]= float(x) * tmp_x;
+        -:  116:                ret_val[1]= y_f;
+        -:  117:            }
+        -:  118:        }
+        -:  119:
+        -:  120:        return ret;
+        -:  121:    }
+        -:  122:
+        -:  123:    /**
+        -:  124:     * @brief getCoordinatesAfterTransform
+        -:  125:     * @param x is normalized in [0,1]
+        -:  126:     * @param y is normalized in [0,1]
+        -:  127:     * @param xOut
+        -:  128:     * @param yOut
+        -:  129:     */
+        -:  130:    void getCoordinatesAfterTransform(float x, float y, float &xOut, float &yOut)
+        -:  131:    {
+        -:  132:        float vDiff[3];
+        -:  133:        isb.SampleImage(&grid_diff, x, y, vDiff);
+        -:  134:
+        -:  135:        xOut = x + vDiff[0];
+        -:  136:        yOut = y + vDiff[1];
+        -:  137:    }
+        -:  138:};
+        -:  139:
+        -:  140:} // end namespace pic
+        -:  141:
+        -:  142:#endif /* PIC_FILTERING_FILTER_LUMINANCE_HPP */
+        -:  143:

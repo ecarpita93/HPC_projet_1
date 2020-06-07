@@ -1,0 +1,203 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/io/vol.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IO_VOL_HPP
+        -:   19:#define PIC_IO_VOL_HPP
+        -:   20:
+        -:   21:#include <stdio.h>
+        -:   22:#include <string>
+        -:   23:
+        -:   24:#include "../base.hpp"
+        -:   25:
+        -:   26:#include "../util/math.hpp"
+        -:   27:
+        -:   28:namespace pic {
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief ReadVOL
+        -:   32: * @param nameFile
+        -:   33: * @param data
+        -:   34: * @param width
+        -:   35: * @param height
+        -:   36: * @param depth
+        -:   37: * @param channels
+        -:   38: * @return
+        -:   39: */
+    #####:   40:PIC_INLINE float *ReadVOL(std::string nameFile, float *data, int &width,
+        -:   41:                          int &height, int &depth, int &channels)
+        -:   42:{
+    #####:   43:    FILE *file = fopen(nameFile.c_str(), "rb");
+    %%%%%:   43-block  0
+        -:   44:
+    #####:   45:    if(file == NULL) {
+        -:   46:        return NULL;
+        -:   47:    }
+        -:   48:
+        -:   49:    //File size
+    #####:   50:    fseek(file, 0, SEEK_END);
+    %%%%%:   50-block  0
+    #####:   51:    int fileSize = ftell(file) / 3;
+    #####:   52:    rewind(file);
+        -:   53:
+        -:   54:    //Check size
+    #####:   55:    int c64  = 64 * 64 * 64;
+    #####:   56:    int c128 = 128 * 128 * 128;
+    #####:   57:    int c256 = 256 * 256 * 256;
+        -:   58:
+    #####:   59:    if(fileSize != c64 && fileSize != c128 && fileSize != c256) {
+    %%%%%:   59-block  0
+        -:   60:        return NULL;
+        -:   61:    }
+        -:   62:
+    #####:   63:    int len;
+    #####:   64:    len = fileSize == c64  ?  64 : 128;
+    %%%%%:   64-block  0
+    #####:   65:    len = fileSize == c128 ? 128 : len;
+    %%%%%:   65-block  0
+    #####:   66:    len = fileSize == c256 ? 256 : len;
+    %%%%%:   66-block  0
+        -:   67:
+    #####:   68:    width	= len;
+    #####:   69:    height	= len;
+    #####:   70:    depth	= len;
+        -:   71:
+    #####:   72:    if(data == NULL) {
+    %%%%%:   72-block  0
+    #####:   73:        data = new float[len * len * len * 4];
+    %%%%%:   73-block  0
+        -:   74:    }
+        -:   75:
+    #####:   76:    unsigned char *tmpData = new unsigned char[fileSize * 3];
+    %%%%%:   76-block  0
+        -:   77:
+    #####:   78:    fread(tmpData, sizeof(unsigned char), fileSize * 3, file);
+        -:   79:
+        -:   80:    int ind0, ind1;
+        -:   81:
+    #####:   82:    for(int i = 0; i < len; i++) {
+    %%%%%:   82-block  0
+    %%%%%:   82-block  1
+    #####:   83:        int tmpI = len * len * i;
+        -:   84:
+    #####:   85:        for(int j = 0; j < len; j++) {
+    %%%%%:   85-block  0
+    %%%%%:   85-block  1
+    %%%%%:   85-block  2
+    #####:   86:            int tmpJ = tmpI + len * j;
+        -:   87:
+    #####:   88:            for(int k = 0; k < len; k++) {
+    %%%%%:   88-block  0
+    %%%%%:   88-block  1
+    #####:   89:                ind0 = (tmpJ + k) * 3;
+    #####:   90:                ind1 = (tmpJ + k) * channels;
+    #####:   91:                data[ind1    ] = float(tmpData[ind0    ]) / 255.0f;
+    #####:   92:                data[ind1 + 1] = float(tmpData[ind0 + 1]) / 255.0f;
+    #####:   93:                data[ind1 + 2] = float(tmpData[ind0 + 2]) / 255.0f;
+    #####:   94:                data[ind1 + 3] = sqrtf(data[ind1    ] * data[ind1    ] +
+    #####:   95:                                       data[ind1 + 1] * data[ind1 + 1] +
+    #####:   96:                                       data[ind1 + 2] * data[ind1 + 2]);
+    %%%%%:   96-block  0
+        -:   97://				data[ind1+3] = 1.0f;
+        -:   98:            }
+        -:   99:        }
+    #####:  100:    };
+        -:  101:
+    #####:  102:    delete[] tmpData;
+    %%%%%:  102-block  0
+        -:  103:
+    #####:  104:    fclose(file);
+        -:  105:
+    #####:  106:    return data;
+        -:  107:}
+        -:  108:
+        -:  109:/**
+        -:  110: * @brief WriteVOL
+        -:  111: * @param nameFile
+        -:  112: * @param data
+        -:  113: * @param width
+        -:  114: * @param height
+        -:  115: * @param depth
+        -:  116: * @param channels
+        -:  117: * @return
+        -:  118: */
+    #####:  119:PIC_INLINE bool WriteVOL(std::string nameFile, float *data, int width, int height,
+        -:  120:               int depth, int channels = 3)
+        -:  121:{
+        -:  122:
+    #####:  123:    FILE *file = fopen(nameFile.c_str(), "wb");
+    %%%%%:  123-block  0
+        -:  124:
+    #####:  125:    if(file == NULL) {
+        -:  126:        return false;
+        -:  127:    }
+        -:  128:
+    #####:  129:    int tot = width * height * depth * 3;
+        -:  130:
+    #####:  131:    unsigned char *tmpData = new unsigned char[tot];
+    %%%%%:  131-block  0
+        -:  132:
+    #####:  133:    int sh1 = 0;
+    #####:  134:    int sh2 = 0;
+        -:  135:
+    #####:  136:    if(channels == 2) {
+    #####:  137:        sh1 = 1;
+    #####:  138:        sh2 = 1;
+    %%%%%:  138-block  0
+        -:  139:    }
+        -:  140:
+    #####:  141:    if(channels > 2) {
+    %%%%%:  141-block  0
+    #####:  142:        sh1 = 1;
+    #####:  143:        sh2 = 2;
+    %%%%%:  143-block  0
+        -:  144:    }
+        -:  145:
+    #####:  146:    for(int i = 0; i < tot; i += 3) {
+    %%%%%:  146-block  0
+    %%%%%:  146-block  1
+    #####:  147:        int j = (i / 3) * channels;
+    #####:  148:        tmpData[i    ] = int(CLAMPi(data[j      ] * 255.0f, 0.0f, 255.0f));
+    %%%%%:  148-block  0
+    %%%%%:  148-block  1
+    %%%%%:  148-block  2
+    #####:  149:        tmpData[i + 1] = int(CLAMPi(data[j + sh1] * 255.0f, 0.0f, 255.0f));
+    %%%%%:  149-block  0
+    %%%%%:  149-block  1
+    %%%%%:  149-block  2
+    #####:  150:        tmpData[i + 2] = int(CLAMPi(data[j + sh2] * 255.0f, 0.0f, 255.0f));
+    %%%%%:  150-block  0
+    %%%%%:  150-block  1
+    %%%%%:  150-block  2
+    %%%%%:  150-block  3
+        -:  151:    }
+        -:  152:
+    #####:  153:    fwrite(tmpData, sizeof(unsigned char), tot, file);
+    %%%%%:  153-block  0
+        -:  154:
+    #####:  155:    fclose(file);
+        -:  156:
+    #####:  157:    return true;
+        -:  158:}
+        -:  159:
+        -:  160:} // end namespace pic
+        -:  161:
+        -:  162:#endif /* PIC_IO_VOL_HPP */
+        -:  163:

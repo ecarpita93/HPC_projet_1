@@ -1,0 +1,943 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/vec.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_VEC_HPP
+        -:   19:#define PIC_UTIL_VEC_HPP
+        -:   20:
+        -:   21:#include <random>
+        -:   22:#include <assert.h>
+        -:   23:
+        -:   24:#include "../util/math.hpp"
+        -:   25:
+        -:   26:#include "../util/string.hpp"
+        -:   27:
+        -:   28:namespace pic {
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief The Vec class
+        -:   32: */
+        -:   33:template<unsigned int N, class T>
+        -:   34:class Vec
+        -:   35:{
+        -:   36:public:
+        -:   37:    T data[N];
+        -:   38:
+        -:   39:    /**
+        -:   40:     * @brief Vec<N, T>
+        -:   41:     */
+    #####:   42:    Vec<N, T>()
+        -:   43:    {
+    #####:   44:        for(unsigned int i = 0; i < N; i++) {
+    %%%%%:   44-block  0
+    %%%%%:   44-block  1
+    %%%%%:   44-block  2
+    %%%%%:   44-block  3
+    %%%%%:   44-block  4
+    %%%%%:   44-block  5
+    %%%%%:   44-block  6
+    %%%%%:   44-block  7
+    %%%%%:   44-block  8
+    %%%%%:   44-block  9
+    %%%%%:   44-block 10
+    %%%%%:   44-block 11
+    %%%%%:   44-block 12
+    %%%%%:   44-block 13
+    %%%%%:   44-block 14
+    %%%%%:   44-block 15
+    #####:   45:            this->data[i] = T(0);
+    %%%%%:   45-block  0
+    %%%%%:   45-block  1
+    %%%%%:   45-block  2
+    %%%%%:   45-block  3
+    %%%%%:   45-block  4
+    %%%%%:   45-block  5
+    %%%%%:   45-block  6
+    %%%%%:   45-block  7
+    %%%%%:   45-block  8
+        -:   46:        }
+        -:   47:    }
+        -:   48:    
+        -:   49:    /**
+        -:   50:     * @brief Vec<N, T>
+        -:   51:     * @param data0
+        -:   52:     * @param data1
+        -:   53:     */
+    #####:   54:    Vec<N, T>(T data0, T data1)
+    %%%%%:   54-block  0
+    %%%%%:   54-block  1
+        -:   55:    {
+        -:   56:        assert(N >= 2);
+    #####:   57:        data[0] = data0;
+    #####:   58:        data[1] = data1;
+    %%%%%:   58-block  0
+    %%%%%:   58-block  1
+    #####:   59:    }
+    %%%%%:   59-block  0
+    %%%%%:   59-block  1
+        -:   60:
+        -:   61:    /**
+        -:   62:     * @brief Vec<N, T>
+        -:   63:     * @param data0
+        -:   64:     * @param data1
+        -:   65:     * @param data2
+        -:   66:     */
+        -:   67:    Vec<N, T>(T data0, T data1, T data2)
+        -:   68:    {
+        -:   69:        assert(N >= 3);
+        -:   70:        data[0] = data0;
+        -:   71:        data[1] = data1;
+        -:   72:        data[2] = data2;
+        -:   73:    }
+        -:   74:
+        -:   75:    /**
+        -:   76:    * @brief Vec<N, T>
+        -:   77:    * @param data
+        -:   78:    */
+        -:   79:    Vec<N, T>(T *data)
+        -:   80:    {
+        -:   81:        for (auto i = 0; i < N; i++) {
+        -:   82:            this->data[i] = data[i];
+        -:   83:        }
+        -:   84:    }
+        -:   85:
+        -:   86:    /**
+        -:   87:     * @brief setZero
+        -:   88:     */
+        -:   89:    void setZero()
+        -:   90:    {
+        -:   91:        for(auto i = 0; i < N; i++) {
+        -:   92:            data[i] = T(0);
+        -:   93:        }
+        -:   94:    }
+        -:   95:
+        -:   96:    /**
+        -:   97:     * @brief setOne
+        -:   98:     */
+        -:   99:    void setOne()
+        -:  100:    {
+        -:  101:        for(auto i = 0; i < N; i++) {
+        -:  102:            data[i] = T(1);
+        -:  103:        }
+        -:  104:    }
+        -:  105:
+        -:  106:    /**
+        -:  107:     * @brief inverse
+        -:  108:     * @return
+        -:  109:     */
+        -:  110:    Vec<N, T> inverse(T maxVal = T(-1))
+        -:  111:    {
+        -:  112:        if(maxVal <= T(0)) {
+        -:  113:            maxVal = this->getMax();
+        -:  114:        }
+        -:  115:
+        -:  116:        Vec<N, T> ret;
+        -:  117:
+        -:  118:        for (auto i = 0; i < N; i++) {
+        -:  119:            ret.data[i] = maxVal - this->data[i];
+        -:  120:        }
+        -:  121:
+        -:  122:        return ret;
+        -:  123:    }
+        -:  124:
+        -:  125:    /**
+        -:  126:     * @brief convertToArray
+        -:  127:     * @param col
+        -:  128:     */
+        -:  129:    T *convertToArray(T *ret)
+        -:  130:    {
+        -:  131:        if(ret == NULL) {
+        -:  132:            ret = new T[N];
+        -:  133:        }
+        -:  134:
+        -:  135:        memcpy(ret, this->data, sizeof(T) * N);
+        -:  136:
+        -:  137:        return ret;
+        -:  138:    }
+        -:  139:
+        -:  140:    /**
+        -:  141:     * @brief isGreaterThanZero
+        -:  142:     * @return
+        -:  143:     */
+        -:  144:    bool isGreaterThanZero()
+        -:  145:    {
+        -:  146:        bool ret = true;
+        -:  147:        T zero = T(0);
+        -:  148:        for (auto i = 0; i < N; i++) {
+        -:  149:            ret = ret && (this->data[i] > zero);
+        -:  150:        }
+        -:  151:
+        -:  152:        return ret;
+        -:  153:    }
+        -:  154:
+        -:  155:    /**
+        -:  156:    * @brief hasNegative
+        -:  157:    * @return
+        -:  158:    */
+        -:  159:    bool hasNegative()
+        -:  160:    {
+        -:  161:        bool ret = false;
+        -:  162:        T zero = T(0);
+        -:  163:        for (auto i = 0; i < N; i++) {
+        -:  164:            ret = ret || (this->data[i] < zero);
+        -:  165:        }
+        -:  166:
+        -:  167:        return ret;
+        -:  168:    }
+        -:  169:
+        -:  170:    Vec<N, T> clone()
+        -:  171:    {
+        -:  172:        Vec<N, T> ret;
+        -:  173:        memcpy(ret.data, data, N * sizeof(T));
+        -:  174:        return ret;
+        -:  175:    }
+        -:  176:
+        -:  177:    /**
+        -:  178:     * @brief operator []
+        -:  179:     * @param index
+        -:  180:     * @return
+        -:  181:     */
+    #####:  182:    const T &operator[](std::size_t i) const
+        -:  183:    {
+        -:  184:        return data[i];
+        -:  185:    }
+        -:  186:
+        -:  187:    /**
+        -:  188:     * @brief operator []
+        -:  189:     * @param index
+        -:  190:     * @return
+        -:  191:     */
+    #####:  192:    T &operator[](std::size_t i)
+    %%%%%:  192-block  0
+    %%%%%:  192-block  1
+    %%%%%:  192-block  2
+    %%%%%:  192-block  3
+    %%%%%:  192-block  4
+    %%%%%:  192-block  5
+    %%%%%:  192-block  6
+    %%%%%:  192-block  7
+    %%%%%:  192-block  8
+    %%%%%:  192-block  9
+    %%%%%:  192-block 10
+    %%%%%:  192-block 11
+    %%%%%:  192-block 12
+    %%%%%:  192-block 13
+    %%%%%:  192-block 14
+    %%%%%:  192-block 15
+    %%%%%:  192-block 16
+    %%%%%:  192-block 17
+    %%%%%:  192-block 18
+        -:  193:    {
+    #####:  194:        return data[i];
+    %%%%%:  194-block  0
+    %%%%%:  194-block  1
+        -:  195:    }
+        -:  196:
+        -:  197:    /**
+        -:  198:     * @brief equal
+        -:  199:     * @param a
+        -:  200:     * @return
+        -:  201:     */
+        -:  202:    bool equal(Vec<N, T> a)
+        -:  203:    {
+        -:  204:        for(auto i = 0; i < N; i++) {
+        -:  205:            if(a[i] != data[i]) {
+        -:  206:                return false;
+        -:  207:            }
+        -:  208:        }
+        -:  209:
+        -:  210:        return true;
+        -:  211:    }
+        -:  212:
+        -:  213:    /**
+        -:  214:     * @brief Mean
+        -:  215:     * @return
+        -:  216:     */
+        -:  217:    T getMean()
+        -:  218:    {
+        -:  219:        T ret = T(0);
+        -:  220:        for (auto i = 0; i < N; i++) {
+        -:  221:            ret += this->data[i];
+        -:  222:        }
+        -:  223:
+        -:  224:        return ret / T(N);
+        -:  225:    }
+        -:  226:
+        -:  227:    /**
+        -:  228:    * @brief getSum
+        -:  229:    * @return
+        -:  230:    */
+        -:  231:    T getSum()
+        -:  232:    {
+        -:  233:        T ret = T(0);
+        -:  234:        for (auto i = 0; i < N; i++) {
+        -:  235:            ret += this->data[i];
+        -:  236:        }
+        -:  237:
+        -:  238:        return ret;
+        -:  239:    }
+        -:  240:
+        -:  241:    /**
+        -:  242:     * @brief getMax
+        -:  243:     * @return
+        -:  244:     */
+        -:  245:    T getMax()
+        -:  246:    {
+        -:  247:        T ret = this->data[0];
+        -:  248:        for (auto i = 1; i < N; i++) {
+        -:  249:            ret = this->data[i] > ret ? this->data[i] : ret;
+        -:  250:        }
+        -:  251:        return ret;
+        -:  252:    }
+        -:  253:
+        -:  254:    /**
+        -:  255:     * @brief getMaxChannel
+        -:  256:     * @return
+        -:  257:     */
+        -:  258:    int getMaxChannel()
+        -:  259:    {
+        -:  260:        float valMax = getMax();
+        -:  261:
+        -:  262:        for (auto i = 1; i < N; i++) {
+        -:  263:            if (valMax == this->data[i]) {
+        -:  264:                return i;
+        -:  265:            }
+        -:  266:        }
+        -:  267:
+        -:  268:        return -1;
+        -:  269:    }
+        -:  270:
+        -:  271:    /**
+        -:  272:     * @brief dot
+        -:  273:     * @param a
+        -:  274:     */
+        -:  275:    T dot(Vec<N, T> a)
+        -:  276:    {
+        -:  277:        T out = T(0);
+        -:  278:        for(auto i=0; i<N; i++) {
+        -:  279:            out += data[i] * a[i];
+        -:  280:        }
+        -:  281:        return out;
+        -:  282:    }
+        -:  283:
+        -:  284:    /**
+        -:  285:     * @brief squaredSum
+        -:  286:     * @return
+        -:  287:     */
+        -:  288:    T squaredSum()
+        -:  289:    {
+        -:  290:        T ret = this->data[0] * this->data[0];
+        -:  291:
+        -:  292:        for(auto i = 1; i < N; i++) {
+        -:  293:            ret += this->data[i] * this->data[i];
+        -:  294:        }
+        -:  295:
+        -:  296:        return ret;
+        -:  297:    }
+        -:  298:
+        -:  299:    /**
+        -:  300:     * @brief distanceSq
+        -:  301:     * @param x
+        -:  302:     * @return
+        -:  303:     */
+    #####:  304:    T distanceSq(Vec<N, T> &x)
+        -:  305:    {
+    #####:  306:        T tmp = data[0] - x[0];
+    #####:  307:        T d2 = tmp * tmp;
+        -:  308:
+    #####:  309:        for(auto i = 1; i < N; i++) {
+    #####:  310:            tmp = data[i] - x[i];
+    #####:  311:            d2 += tmp * tmp;
+    %%%%%:  311-block  0
+        -:  312:        }
+        -:  313:
+        -:  314:        return d2;
+        -:  315:    }
+        -:  316:
+        -:  317:    /**
+        -:  318:    * @brief clamp
+        -:  319:    * @param min
+        -:  320:    * @param max
+        -:  321:    * @return
+        -:  322:    */
+        -:  323:    void clamp(T min, T max)
+        -:  324:    {
+        -:  325:        for (auto i = 0; i < N; i++) {
+        -:  326:            data[i] = CLAMPi(data[i], min, max);
+        -:  327:        }
+        -:  328:    }
+        -:  329:
+        -:  330:    /**
+        -:  331:     * @brief lengthSq
+        -:  332:     * @return
+        -:  333:     */
+    #####:  334:    T lengthSq()
+        -:  335:    {
+    #####:  336:        T out = data[0] * data[0];
+        -:  337:
+    #####:  338:        for(auto i = 1; i < N; i++) {
+    #####:  339:            out += data[i] * data[i];
+    %%%%%:  339-block  0
+        -:  340:        }
+        -:  341:
+        -:  342:        return out;
+        -:  343:    }
+        -:  344:
+        -:  345:    /**
+        -:  346:    * @brief toString
+        -:  347:    * @param x
+        -:  348:    * @return
+        -:  349:    */
+        -:  350:    std::string toString()
+        -:  351:    {
+        -:  352:        std::string ret = "[";
+        -:  353:        for (auto i = 0; i < N; i++) {
+        -:  354:            ret += fromNumberToString(data[i]);
+        -:  355:            if (i != (N - 1)) {
+        -:  356:                ret += ", ";
+        -:  357:            }
+        -:  358:        }
+        -:  359:        ret += "]";
+        -:  360:
+        -:  361:        return ret;
+        -:  362:    }
+        -:  363:
+        -:  364:    /**
+        -:  365:     * @brief print
+        -:  366:     */
+        -:  367:    void print()
+        -:  368:    {
+        -:  369:        std::string vec_str = toString();
+        -:  370:        printf("%s\n", vec_str.c_str());
+        -:  371:    }
+        -:  372:
+        -:  373:    /*
+        -:  374:    *
+        -:  375:    *	Scalar Operands
+        -:  376:    *
+        -:  377:    */
+        -:  378:
+        -:  379:    /**
+        -:  380:     * @brief operator =
+        -:  381:     * @param a
+        -:  382:     */
+        -:  383:    void operator =(const T &a)
+        -:  384:    {
+        -:  385:        for (auto i = 0; i < N; i++) {
+        -:  386:            this->data[i] = a;
+        -:  387:        }
+        -:  388:    }
+        -:  389:
+        -:  390:    /**
+        -:  391:    * @brief operator =
+        -:  392:    * @param a
+        -:  393:    */
+        -:  394:    void operator =(const T *a)
+        -:  395:    {
+        -:  396:        for (auto i = 0; i < N; i++) {
+        -:  397:            this->data[i] = a[i];
+        -:  398:        }
+        -:  399:    }
+        -:  400:
+        -:  401:    /**
+        -:  402:    * @brief operator =
+        -:  403:    * @param a
+        -:  404:    */
+    #####:  405:    void operator =(const Vec<N, T> &a)
+    %%%%%:  405-block  0
+    %%%%%:  405-block  1
+        -:  406:    {
+    #####:  407:        for (auto i = 0; i < N; i++) {
+    %%%%%:  407-block  0
+    %%%%%:  407-block  1
+    %%%%%:  407-block  2
+    %%%%%:  407-block  3
+    %%%%%:  407-block  4
+    %%%%%:  407-block  5
+    #####:  408:            this->data[i] = a.data[i];
+    %%%%%:  408-block  0
+    %%%%%:  408-block  1
+    %%%%%:  408-block  2
+    %%%%%:  408-block  3
+    %%%%%:  408-block  4
+    %%%%%:  408-block  5
+        -:  409:        }
+        -:  410:    }
+        -:  411:
+        -:  412:    /**
+        -:  413:     * @brief operator +=
+        -:  414:     * @param a
+        -:  415:     */
+        -:  416:    void operator +=(const T &a)
+        -:  417:    {
+        -:  418:        for (auto i = 0; i < N; i++) {
+        -:  419:            this->data[i] += a;
+        -:  420:        }
+        -:  421:    }
+        -:  422:
+        -:  423:    /**
+        -:  424:     * @brief operator +=
+        -:  425:     * @param a
+        -:  426:     */
+        -:  427:    void operator +=(const T *a)
+        -:  428:    {
+        -:  429:        for (auto i = 0; i < N; i++) {
+        -:  430:            this->data[i] = a[i];
+        -:  431:        }
+        -:  432:    }
+        -:  433:
+        -:  434:    /**
+        -:  435:     * @brief operator +
+        -:  436:     * @param a
+        -:  437:     * @return
+        -:  438:     */
+        -:  439:    Vec<N, T> operator +(const T &a) const
+        -:  440:    {
+        -:  441:        Vec<N, T> ret = this->clone();
+        -:  442:        ret += a;
+        -:  443:        return ret;
+        -:  444:    }
+        -:  445:
+        -:  446:    /**
+        -:  447:     * @brief operator -=
+        -:  448:     * @param a
+        -:  449:     */
+        -:  450:    void operator -=(const T &a)
+        -:  451:    {
+        -:  452:        for (auto i = 0; i < N; i++) {
+        -:  453:            this->data[i] -= a;
+        -:  454:        }
+        -:  455:    }
+        -:  456:
+        -:  457:    /**
+        -:  458:     * @brief operator -
+        -:  459:     * @param a
+        -:  460:     * @return
+        -:  461:     */
+        -:  462:    Vec<N, T> operator -(const T &a) const
+        -:  463:    {
+        -:  464:        Vec<N, T> ret;
+        -:  465:        memcpy(ret.data, this->data, sizeof(T) * N);
+        -:  466:        ret -= a;
+        -:  467:        return ret;
+        -:  468:    }
+        -:  469:
+        -:  470:    void mul(const T &a)
+        -:  471:    {
+        -:  472:        for (auto i = 0; i < N; i++) {
+        -:  473:            this->data[i] *= a;
+        -:  474:        }
+        -:  475:    }
+        -:  476:
+        -:  477:    /**
+        -:  478:     * @brief operator *=
+        -:  479:     * @param a
+        -:  480:     */
+        -:  481:    void operator *=(const T &a)
+        -:  482:    {
+        -:  483:        this->mul(a);
+        -:  484:    }
+        -:  485:
+        -:  486:    /**
+        -:  487:     * @brief operator *=
+        -:  488:     * @param a
+        -:  489:     */
+        -:  490:    void operator *=(const T *a)
+        -:  491:    {
+        -:  492:        for (auto i = 0; i < N; i++) {
+        -:  493:            this->data[i] *= a[i];
+        -:  494:        }
+        -:  495:    }
+        -:  496:
+        -:  497:    /**
+        -:  498:     * @brief operator *
+        -:  499:     * @param a
+        -:  500:     * @return
+        -:  501:     */
+        -:  502:    Vec<N, T> operator *(const T &a) const
+        -:  503:    {
+        -:  504:        Vec<N, T> ret;
+        -:  505:        memcpy(ret.data, this->data, sizeof(T) * N);
+        -:  506:        ret.mul(a);
+        -:  507:        return ret;
+        -:  508:    }
+        -:  509:
+        -:  510:    /**
+        -:  511:     * @brief operator /=
+        -:  512:     * @param a
+        -:  513:     */
+        -:  514:    void operator /=(const float &a)
+        -:  515:    {
+        -:  516:        for (auto i = 0; i < N; i++) {
+        -:  517:            this->data[i] /= a;
+        -:  518:        }
+        -:  519:    }
+        -:  520:
+        -:  521:    /**
+        -:  522:     * @brief operator /
+        -:  523:     * @param a
+        -:  524:     * @return
+        -:  525:     */
+        -:  526:    Vec<N, T> operator /(const float &a) const
+        -:  527:    {
+        -:  528:        Vec<N, T> ret;
+        -:  529:        memcpy(ret.data, this->data, sizeof(T) * N);
+        -:  530:        ret /= a;
+        -:  531:        return ret;
+        -:  532:    }
+        -:  533:
+        -:  534:    /*
+        -:  535:    *
+        -:  536:    *	Vec Operands
+        -:  537:    *
+        -:  538:    */
+        -:  539:
+        -:  540:    /**
+        -:  541:     * @brief operator +=
+        -:  542:     * @param col
+        -:  543:     */
+    #####:  544:    void operator +=(const Vec<N, T> &col)
+    %%%%%:  544-block  0
+        -:  545:    {
+    #####:  546:        for (auto i = 0; i < N; i++) {
+    %%%%%:  546-block  0
+    #####:  547:            this->data[i] += col.data[i];
+    %%%%%:  547-block  0
+        -:  548:        }
+        -:  549:    }
+        -:  550:
+        -:  551:    /**
+        -:  552:     * @brief operator +
+        -:  553:     * @param col
+        -:  554:     * @return
+        -:  555:     */
+        -:  556:    Vec<N, T> operator +(const Vec<N, T> &col) const
+        -:  557:    {
+        -:  558:        Vec<N, T> ret;
+        -:  559:        memcpy(ret.data, this->data, sizeof(T) * N);
+        -:  560:        ret += col;
+        -:  561:        return ret;
+        -:  562:    }
+        -:  563:
+        -:  564:    /**
+        -:  565:     * @brief operator -=
+        -:  566:     * @param col
+        -:  567:     */
+        -:  568:    void operator -=(const Vec<N, T> &col)
+        -:  569:    {
+        -:  570:        for (auto i = 0; i < N; i++) {
+        -:  571:            this->data[i] -= col.data[i];
+        -:  572:        }
+        -:  573:    }
+        -:  574:
+        -:  575:    /**
+        -:  576:     * @brief operator -
+        -:  577:     * @return
+        -:  578:     */
+        -:  579:    Vec<N, T> operator -() const
+        -:  580:    {
+        -:  581:        Vec<N, T> ret;
+        -:  582:        for (auto i = 0; i < N; i++) {
+        -:  583:            ret.data[i] = -this->data[i];
+        -:  584:        }
+        -:  585:
+        -:  586:        return ret;
+        -:  587:    }
+        -:  588:
+        -:  589:    /**
+        -:  590:     * @brief operator -
+        -:  591:     * @param col
+        -:  592:     * @return
+        -:  593:     */
+        -:  594:    Vec<N, T> operator -(const Vec<N, T> &col) const
+        -:  595:    {
+        -:  596:        Vec<N, T> ret;
+        -:  597:        memcpy(ret.data, this->data, sizeof(T) * N);
+        -:  598:        ret -= col;
+        -:  599:        return ret;
+        -:  600:    }
+        -:  601:
+        -:  602:    void mul(const Vec<N, T> &a)
+        -:  603:    {
+        -:  604:        for (auto i = 0; i < N; i++) {
+        -:  605:            this->data[i] *= a.data[i];
+        -:  606:        }
+        -:  607:    }
+        -:  608:
+        -:  609:    /**
+        -:  610:     * @brief operator *=
+        -:  611:     * @param col
+        -:  612:     */
+        -:  613:    void operator *=(const Vec<N, T> &a)
+        -:  614:    {
+        -:  615:        this->mul(a);
+        -:  616:    }
+        -:  617:
+        -:  618:    /**
+        -:  619:     * @brief operator *
+        -:  620:     * @param col
+        -:  621:     * @return
+        -:  622:     */
+        -:  623:    Vec<N, T> operator *(const Vec<N, T> &a)
+        -:  624:    {
+        -:  625:        Vec<N, T> ret;
+        -:  626:        memcpy(ret.data, this->data, sizeof(T) * N);
+        -:  627:        ret.mul(a);
+        -:  628:        return ret;
+        -:  629:    }
+        -:  630:
+        -:  631:    /**
+        -:  632:     * @brief operator /=
+        -:  633:     * @param col
+        -:  634:     */
+        -:  635:    void operator /=(Vec<N, T> &a)
+        -:  636:    {
+        -:  637:        for (auto i = 0; i < N; i++) {
+        -:  638:            this->data[i] /= a.data[i];
+        -:  639:        }
+        -:  640:    }
+        -:  641:
+        -:  642:    /**
+        -:  643:     * @brief operator /
+        -:  644:     * @param col
+        -:  645:     * @return
+        -:  646:     */
+        -:  647:    Vec<N, T> operator /(Vec<N, T> &a) const
+        -:  648:    {
+        -:  649:        Vec<N, T> ret;
+        -:  650:        memcpy(ret.data, this->data, sizeof(T) * N);
+        -:  651:        ret /= a;
+        -:  652:        return ret;
+        -:  653:    }
+        -:  654:
+        -:  655:    /**
+        -:  656:     * @brief operator !=
+        -:  657:     * @param col
+        -:  658:     * @return
+        -:  659:     */
+        -:  660:    bool operator !=(Vec<N, T> &a)
+        -:  661:    {
+        -:  662:        bool ret = false;
+        -:  663:        for (auto i = 0; i < N; i++) {
+        -:  664:            ret = ret || (this->data[i] != a.data[i]);
+        -:  665:        }
+        -:  666:        return ret;
+        -:  667:    }
+        -:  668:
+        -:  669:    /**
+        -:  670:     * @brief operator ==
+        -:  671:     * @param col
+        -:  672:     * @return
+        -:  673:     */
+        -:  674:    bool operator ==(Vec<N, T> &a)
+        -:  675:    {
+        -:  676:        bool ret = true;
+        -:  677:        for (auto i = 0; i < N; i++) {
+        -:  678:            ret = ret && (this->data[i] == a.data[i]);
+        -:  679:        }
+        -:  680:        return ret;
+        -:  681:    }
+        -:  682:
+        -:  683:};
+        -:  684:
+        -:  685:/**
+        -:  686: * @brief insideVecBBox
+        -:  687: * @param sample
+        -:  688: * @return
+        -:  689: */
+        -:  690:template<unsigned int N>
+    #####:  691:PIC_INLINE bool insideVecBBox(const Vec<N, float> &sample)
+    %%%%%:  691-block  0
+        -:  692:{
+    #####:  693:    for(auto i = 0; i < N; i++) {
+    %%%%%:  693-block  0
+    %%%%%:  693-block  1
+    #####:  694:        if((sample[i] < -1.0f) || (sample[i] > 1.0f)) {
+    %%%%%:  694-block  0
+    %%%%%:  694-block  1
+        -:  695:            return false;
+        -:  696:        }
+        -:  697:    }
+        -:  698:
+        -:  699:    return true;
+        -:  700:}
+        -:  701:
+        -:  702:template<unsigned int N>
+        -:  703:PIC_INLINE Vec<N, float> normalize(Vec<N, float> x)
+        -:  704:{
+        -:  705:    float length = x.squaredSum();
+        -:  706:
+        -:  707:    if(length > 0.0f) {
+        -:  708:        length = sqrtf(length);
+        -:  709:        for(auto i = 0; i < N; i++) {
+        -:  710:            x[i] /= length;
+        -:  711:        }
+        -:  712:    }
+        -:  713:
+        -:  714:    return x;
+        -:  715:}
+        -:  716:
+        -:  717:/**
+        -:  718: * @brief randomPoint
+        -:  719: * @param m
+        -:  720: * @return
+        -:  721: */
+        -:  722:template<unsigned int N>
+    #####:  723:PIC_INLINE Vec<N, float> randomPoint(std::mt19937 *m)
+    %%%%%:  723-block  0
+        -:  724:{
+    #####:  725:    Vec<N, float> x;
+        -:  726:
+    #####:  727:    for(auto i = 0; i < N; i++) {
+    %%%%%:  727-block  0
+    #####:  728:        x[i] = getRandom((*m)()) * 2.0f - 1.0f;
+    %%%%%:  728-block  0
+        -:  729:    }
+        -:  730:
+    #####:  731:    return x;
+        -:  732:}
+        -:  733:
+        -:  734:template<unsigned int N>
+        -:  735:void vecrint(Vec<N, float> &ret)
+        -:  736:{
+        -:  737:    printf("\n Values :");
+        -:  738:    for(auto i = 0; i < N; i++) {
+        -:  739:        printf("%d ", ret.data[i]);
+        -:  740:    }
+        -:  741:    printf("\n");
+        -:  742:}
+        -:  743:
+        -:  744:/**
+        -:  745: * @brief annulusSampling
+        -:  746: * @param m
+        -:  747: * @param center
+        -:  748: * @param radius
+        -:  749: * @return
+        -:  750: */
+        -:  751:template<unsigned int N>
+    #####:  752:PIC_INLINE Vec<N, float> annulusSampling(std::mt19937 *m, Vec<N, float> center, float radius)
+    %%%%%:  752-block  0
+        -:  753:{
+    #####:  754:    Vec<N, float> x;
+        -:  755:
+        -:  756:    while(true) {
+    #####:  757:        for(auto i = 0; i < N; i++) {
+    %%%%%:  757-block  0
+    %%%%%:  757-block  1
+    #####:  758:            x[i] = getRandom((*m)()) * 4.0f - 2.0f;
+    %%%%%:  758-block  0
+        -:  759:        }
+        -:  760:
+    #####:  761:        float t = x.lengthSq();
+        -:  762:
+    #####:  763:        if((t < 1.0f) || (t > 4.0f)) {
+    %%%%%:  763-block  0
+        -:  764:            break;
+        -:  765:        }
+        -:  766:    }
+        -:  767:
+    #####:  768:    for(auto i = 0; i < N; i++) {
+    %%%%%:  768-block  0
+    #####:  769:        x[i] = x[i] * radius + center[i];
+    %%%%%:  769-block  0
+        -:  770:    }
+        -:  771:
+    #####:  772:    return x;
+        -:  773:}
+        -:  774:
+        -:  775:template<unsigned int N>
+        -:  776:void vecGamma(Vec<N, float> &ret, float g)
+        -:  777:{
+        -:  778:    for (auto i = 0; i < N; i++) {
+        -:  779:        ret.data[i] = powf(ret.data[i], g);
+        -:  780:    }
+        -:  781:}
+        -:  782:
+        -:  783:template<unsigned int N>
+        -:  784:void vecSqrt(Vec<N, float> &ret)
+        -:  785:{
+        -:  786:    for (auto i = 0; i < N; i++) {
+        -:  787:        ret.data[i] = sqrtf(ret.data[i]);
+        -:  788:    }
+        -:  789:}
+        -:  790:
+        -:  791:template<unsigned int N>
+        -:  792:Vec<N, float> vecValOver(Vec<N, float> &in, float value)
+        -:  793:{
+        -:  794:    Vec<N, float> ret;
+        -:  795:    for (auto i = 0; i < N; i++) {
+        -:  796:        ret.data[i] = value / in.data[i];
+        -:  797:    }
+        -:  798:
+        -:  799:    return ret;
+        -:  800:}
+        -:  801:
+        -:  802:template<unsigned int N, class T>
+        -:  803:void transferFromVecToPlain(std::vector< Vec<N, T> > &in, std::vector< T > &out)
+        -:  804:{
+        -:  805:    for(auto i = 0; i < in.size(); i++) {
+        -:  806:        for(auto j = 0; j < N; j++) {
+        -:  807:            out.push_back(in[i][j]);
+        -:  808:        }
+        -:  809:    }
+        -:  810:}
+        -:  811:
+        -:  812:template<unsigned int N, class T>
+        -:  813:void transferFromPlainToVec(std::vector< T > &in, std::vector< Vec<N, T> > &out)
+        -:  814:{
+        -:  815:    for(auto i = 0; i < in.size(); i+= N) {
+        -:  816:        Vec<N, T> tmp;
+        -:  817:        for(auto j = 0; j < N; j++) {
+        -:  818:            tmp[j] = in[i + j];
+        -:  819:        }
+        -:  820:
+        -:  821:        out.push_back(tmp);
+        -:  822:    }
+        -:  823:}
+        -:  824:
+        -:  825:/**
+        -:  826: * @brief Vec2i
+        -:  827: */
+        -:  828:typedef Vec<2, int> Vec2i;
+        -:  829:
+        -:  830:/**
+        -:  831: * @brief Vec3i
+        -:  832: */
+        -:  833:typedef Vec<3, int> Vec3i;
+        -:  834:
+        -:  835:/**
+        -:  836: * @brief Vec4i
+        -:  837: */
+        -:  838:typedef Vec<4, int> Vec4i;
+        -:  839:
+        -:  840:/**
+        -:  841: * @brief Vec2f
+        -:  842: */
+        -:  843:typedef Vec<2, float> Vec2f;
+        -:  844:
+        -:  845:/**
+        -:  846: * @brief Vec3f
+        -:  847: */
+        -:  848:typedef Vec<3, float> Vec3f;
+        -:  849:
+        -:  850:} // end namespace pic
+        -:  851:
+        -:  852:#endif /* PIC_UTIL_VEC_HPP */
+        -:  853:

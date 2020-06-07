@@ -1,0 +1,149 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_color_distance.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_COLOR_DISTANCE_HPP
+        -:   19:#define PIC_FILTERING_FILTER_COLOR_DISTANCE_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:#include "../util/array.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The FilterColorDistance class
+        -:   28: */
+        -:   29:class FilterColorDistance: public Filter
+        -:   30:{
+        -:   31:protected:
+        -:   32:    float *color, sigma, sigma_sq_2;
+        -:   33:
+        -:   34:    /**
+        -:   35:     * @brief f
+        -:   36:     * @param data
+        -:   37:     */
+    #####:   38:    void f(FilterFData *data)
+        -:   39:    {
+    #####:   40:        float *in = (*data->src[0])(data->x, data->y);
+    %%%%%:   40-block  0
+        -:   41:
+    #####:   42:        float sum = Arrayf::distanceSq(in, color, data->dst->channels);
+    %%%%%:   42-block  0
+        -:   43:
+    #####:   44:        data->out[0] = expf(- sum / sigma_sq_2);
+    #####:   45:    }
+        -:   46:
+        -:   47:    /**
+        -:   48:     * @brief ProcessBBox
+        -:   49:     * @param dst
+        -:   50:     * @param src
+        -:   51:     * @param box
+        -:   52:     */
+        -:   53:    /*
+        -:   54:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   55:    {
+        -:   56:        int width = dst->width;
+        -:   57:        int channels = src[0]->channels;
+        -:   58:        float *data = src[0]->data;
+        -:   59:
+        -:   60:        for(int j = box->y0; j < box->y1; j++) {
+        -:   61:            int c = j * width;
+        -:   62:
+        -:   63:            for(int i = box->x0; i < box->x1; i++) {
+        -:   64:                int c1 = (c + i);
+        -:   65:                int c2 = c1 * channels;
+        -:   66:
+        -:   67:                float sum = 0.0f;
+        -:   68:
+        -:   69:                for(int k = 0; k < channels; k++) {
+        -:   70:                    float tmp = data[c2 + k] - color[k];
+        -:   71:                    sum += tmp * tmp;
+        -:   72:                }
+        -:   73:
+        -:   74:                dst->data[c1] = expf(-sum / sigma_sq_2);
+        -:   75:            }
+        -:   76:        }
+        -:   77:    }
+        -:   78:    */
+        -:   79:
+        -:   80:public:
+        -:   81:
+        -:   82:    /**
+        -:   83:     * @brief FilterColorDistance
+        -:   84:     * @param color
+        -:   85:     * @param sigma
+        -:   86:     */
+        -:   87:    FilterColorDistance(float *color, float sigma) : Filter()
+        -:   88:    {
+        -:   89:        update(color, sigma);
+        -:   90:    }
+        -:   91:
+        -:   92:    /**
+        -:   93:     * @brief update
+        -:   94:     * @param color
+        -:   95:     * @param sigma
+        -:   96:     */
+        -:   97:    void update(float *color, float sigma)
+        -:   98:    {
+        -:   99:        if(color != NULL) {
+        -:  100:            this->color = color;
+        -:  101:        }
+        -:  102:
+        -:  103:        sigma = sigma > 0.0f ? sigma : 1.0f;
+        -:  104:        this->sigma = sigma;
+        -:  105:        sigma_sq_2 = sigma * sigma * 2.0f;
+        -:  106:    }
+        -:  107:
+        -:  108:    /**
+        -:  109:     * @brief OutputSize
+        -:  110:     * @param imgIn
+        -:  111:     * @param width
+        -:  112:     * @param height
+        -:  113:     * @param channels
+        -:  114:     * @param frames
+        -:  115:     */
+    #####:  116:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  117:    {
+    #####:  118:        width = imgIn[0]->width;
+    #####:  119:        height = imgIn[0]->height;
+    #####:  120:        channels = 1;
+    #####:  121:        frames = imgIn[0]->frames;
+    #####:  122:    }
+        -:  123:
+        -:  124:    /**
+        -:  125:     * @brief execute
+        -:  126:     * @param imgIn
+        -:  127:     * @param imgOut
+        -:  128:     * @param color
+        -:  129:     * @param sigma
+        -:  130:     * @return
+        -:  131:     */
+        -:  132:    static Image *execute(Image *imgIn, Image *imgOut, float *color,
+        -:  133:                             float sigma)
+        -:  134:    {
+        -:  135:        FilterColorDistance fltColDst(color, sigma);
+        -:  136:        return fltColDst.Process(Single(imgIn), imgOut);
+        -:  137:    }
+        -:  138:};
+        -:  139:
+        -:  140:} // end namespace pic
+        -:  141:
+        -:  142:#endif /* PIC_FILTERING_FILTER_COLOR_DISTANCE_HPP */
+        -:  143:

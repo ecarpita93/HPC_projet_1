@@ -1,0 +1,115 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/ward_global_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_WARD_GLOBAL_TMO_HPP
+        -:   19:#define PIC_TONE_MAPPING_WARD_GLOBAL_TMO_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:#include "../filtering/filter.hpp"
+        -:   24:#include "../filtering/filter_luminance.hpp"
+        -:   25:#include "../tone_mapping/tone_mapping_operator.hpp"
+        -:   26:
+        -:   27:namespace pic {
+        -:   28:
+        -:   29:/**
+        -:   30: * @brief The WardGlobalTMO class
+        -:   31: */
+        -:   32:class WardGlobalTMO: public ToneMappingOperator
+        -:   33:{
+        -:   34:protected:
+        -:   35:    float Ld_Max;
+        -:   36:    FilterLuminance flt_lum;
+        -:   37:
+        -:   38:    /**
+        -:   39:     * @brief ProcessAux
+        -:   40:     * @param imgIn
+        -:   41:     * @param imgOut
+        -:   42:     * @return
+        -:   43:     */    
+    #####:   44:    Image *ProcessAux(ImageVec imgIn, Image *imgOut)
+        -:   45:    {
+    #####:   46:        updateImage(imgIn[0]);
+    %%%%%:   46-block  0
+        -:   47:
+        -:   48:        //compute luminance and its statistics
+    #####:   49:        images[0] = flt_lum.Process(imgIn, images[0]);
+    %%%%%:   49-block  0
+        -:   50:
+    #####:   51:        float Lw_a;
+    #####:   52:        images[0]->getLogMeanVal(NULL, &Lw_a);
+    %%%%%:   52-block  0
+        -:   53:
+    #####:   54:        float m = (1.219f + powf(Ld_Max * 0.5f, 0.4f)) /
+    #####:   55:                  (1.219f + powf(Lw_a , 0.4f));
+    #####:   56:        m = powf(m, 2.5f);
+        -:   57:
+    #####:   58:        float scale = m / Ld_Max;
+        -:   59:
+    #####:   60:        imgOut->assign(imgIn[0]);
+        -:   61:
+    #####:   62:        (*imgOut) *= scale;
+        -:   63:
+    #####:   64:        return imgOut;
+        -:   65:    }
+        -:   66:
+        -:   67:public:
+        -:   68:
+        -:   69:    /**
+        -:   70:     * @brief WardGlobalTMO
+        -:   71:     * @param Ld_Max
+        -:   72:     */
+        -:   73:    WardGlobalTMO(float Ld_Max = 100.0f) : ToneMappingOperator()
+        -:   74:    {
+        -:   75:        images.push_back(NULL);
+        -:   76:        update(Ld_Max);
+        -:   77:    }
+        -:   78:
+        -:   79:    ~WardGlobalTMO()
+        -:   80:    {
+        -:   81:        release();
+        -:   82:    }
+        -:   83:
+        -:   84:    /**
+        -:   85:     * @brief update
+        -:   86:     * @param Ld_Max
+        -:   87:     */
+        -:   88:    void update(float Ld_Max = 100.0f)
+        -:   89:    {
+        -:   90:        this->Ld_Max = Ld_Max > 0.0f ? Ld_Max : 100.0f;
+        -:   91:    }
+        -:   92:
+        -:   93:    /**
+        -:   94:     * @brief execute
+        -:   95:     * @param imgIn
+        -:   96:     * @param imgOut
+        -:   97:     * @return
+        -:   98:     */
+        -:   99:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  100:    {
+        -:  101:        WardGlobalTMO wgtmo;
+        -:  102:        return wgtmo.Process(Single(imgIn), imgOut);
+        -:  103:    }
+        -:  104:};
+        -:  105:} // end namespace pic
+        -:  106:
+        -:  107:#endif /* PIC_TONE_MAPPING_WARD_GLOBAL_TMO_HPP */
+        -:  108:

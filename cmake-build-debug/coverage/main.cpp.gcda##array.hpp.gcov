@@ -1,0 +1,930 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/array.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_ARRAY_HPP
+        -:   19:#define PIC_UTIL_ARRAY_HPP
+        -:   20:
+        -:   21:#include <vector>
+        -:   22:#include <math.h>
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The Array class
+        -:   28: */
+        -:   29:template<class T>
+        -:   30:class Array
+        -:   31:{
+        -:   32:protected:
+        -:   33:    bool bShallow;
+        -:   34:
+        -:   35:public:
+        -:   36:    T *data;
+        -:   37:    int nData;
+        -:   38:
+        -:   39:    /**
+        -:   40:     * @brief Array
+        -:   41:     */
+        -:   42:    Array()
+        -:   43:    {
+        -:   44:        bShallow = false;
+        -:   45:        data = NULL;
+        -:   46:        nData = -1;
+        -:   47:    }
+        -:   48:
+        -:   49:    /**
+        -:   50:     * @brief Array
+        -:   51:     * @param n
+        -:   52:     */
+        -:   53:    Array(int n)
+        -:   54:    {
+        -:   55:        bShallow = false;
+        -:   56:        data = NULL;
+        -:   57:        allocate(n);
+        -:   58:    }
+        -:   59:
+        -:   60:    /**
+        -:   61:     * @brief Array
+        -:   62:     * @param data
+        -:   63:     * @param nData
+        -:   64:     * @param bShallow
+        -:   65:     */
+        -:   66:    Array(T *data, int nData, bool bShallow)
+        -:   67:    {
+        -:   68:        this->nData = nData;
+        -:   69:
+        -:   70:        if(bShallow) {
+        -:   71:            this->data = data;
+        -:   72:            this->bShallow = bShallow;
+        -:   73:        } else {
+        -:   74:            this->data = new T[nData];
+        -:   75:            memcpy(this->data, data, sizeof(T) * nData);
+        -:   76:        }
+        -:   77:    }
+        -:   78:
+        -:   79:    ~Array()
+        -:   80:    {
+        -:   81:        release();
+        -:   82:    }
+        -:   83:
+        -:   84:    /**
+        -:   85:     * @brief allocate
+        -:   86:     * @param n
+        -:   87:     */
+        -:   88:    void allocate(int n)
+        -:   89:    {
+        -:   90:        if(n < 1) {
+        -:   91:            return;
+        -:   92:        }
+        -:   93:
+        -:   94:        if((data != NULL) && (!bShallow)) {
+        -:   95:            delete[] data;
+        -:   96:        }
+        -:   97:
+        -:   98:        data = new T[n];
+        -:   99:        this->nData = n;
+        -:  100:        bShallow = false;
+        -:  101:    }
+        -:  102:
+        -:  103:    /**
+        -:  104:     * @brief release
+        -:  105:     */
+        -:  106:    void release()
+        -:  107:    {
+        -:  108:        if(nData > 0 && data != NULL && !bShallow) {
+        -:  109:            delete[] data;
+        -:  110:            data = NULL;
+        -:  111:            nData = -1;
+        -:  112:        }
+        -:  113:    }
+        -:  114:
+        -:  115:    /**
+        -:  116:     * @brief clone
+        -:  117:     * @return
+        -:  118:     */
+        -:  119:    Array<T> *clone()
+        -:  120:    {
+        -:  121:        Array<T> *out = new Array<T>(nData);
+        -:  122:        memcpy(this->data, data, sizeof(T) * nData);
+        -:  123:    }
+        -:  124:
+        -:  125:    /**
+        -:  126:     * @brief genValue
+        -:  127:     * @param value
+        -:  128:     * @param n
+        -:  129:     * @param ret
+        -:  130:     * @return
+        -:  131:     */
+        -:  132:    static T* genValue(T value, int n, T *ret)
+        -:  133:    {
+        -:  134:        if(n < 1) {
+        -:  135:            return ret;
+        -:  136:        }
+        -:  137:
+        -:  138:        if(ret == NULL) {
+        -:  139:            ret = new T[n];
+        -:  140:        }
+        -:  141:
+        -:  142:        for(int i = 0; i < n; i++) {
+        -:  143:            ret[i] = value;
+        -:  144:        }
+        -:  145:
+        -:  146:        return ret;
+        -:  147:    }
+        -:  148:
+        -:  149:    /**
+        -:  150:     * @brief genRange
+        -:  151:     * @param minVal
+        -:  152:     * @param step
+        -:  153:     * @param maxVal
+        -:  154:     * @param ret
+        -:  155:     */
+        -:  156:    static T *genRange(T minVal, T step, T maxVal, T *ret, int &n)
+        -:  157:    {
+        -:  158:        n = int((maxVal - minVal) / step) + 1;
+        -:  159:
+        -:  160:        if(ret == NULL) {
+        -:  161:            ret = new T[n];
+        -:  162:        }
+        -:  163:
+        -:  164:        ret[0] = minVal;
+        -:  165:        for(int i = 1; i < n; i++) {
+        -:  166:            ret[i] = ret[i - 1] + step;
+        -:  167:        }
+        -:  168:
+        -:  169:        return ret;
+        -:  170:    }
+        -:  171:
+        -:  172:    /**
+        -:  173:     * @brief linspace
+        -:  174:     * @param minVal
+        -:  175:     * @param maxVal
+        -:  176:     * @param n
+        -:  177:     * @param ret
+        -:  178:     * @return
+        -:  179:     */
+        -:  180:    static T *linspace(T minVal, T maxVal, int n, T *ret)
+        -:  181:    {
+        -:  182:        T step = (maxVal - minVal) / (n - 1);
+        -:  183:        int tmp = n;
+        -:  184:
+        -:  185:        return genRange(minVal, step, maxVal, ret, tmp);
+        -:  186:    }
+        -:  187:
+        -:  188:    /**
+        -:  189:     * @brief distanceSq
+        -:  190:     * @param data0
+        -:  191:     * @param data1
+        -:  192:     * @param n
+        -:  193:     * @return
+        -:  194:     */
+    #####:  195:    static T distanceSq(T *data0, T *data1, int n)
+        -:  196:    {
+    #####:  197:        T tmp = data0[0] - data1[0];
+    #####:  198:        T distSq = tmp * tmp;
+        -:  199:
+    #####:  200:        for(int k = 1; k < n; k++) {
+    %%%%%:  200-block  0
+    %%%%%:  200-block  1
+    %%%%%:  200-block  2
+    %%%%%:  200-block  3
+    %%%%%:  200-block  4
+    %%%%%:  200-block  5
+    %%%%%:  200-block  6
+    %%%%%:  200-block  7
+    %%%%%:  200-block  8
+    %%%%%:  200-block  9
+    %%%%%:  200-block 10
+    %%%%%:  200-block 11
+    %%%%%:  200-block 12
+    %%%%%:  200-block 13
+    %%%%%:  200-block 14
+    %%%%%:  200-block 15
+    %%%%%:  200-block 16
+    %%%%%:  200-block 17
+    %%%%%:  200-block 18
+    %%%%%:  200-block 19
+    %%%%%:  200-block 20
+    %%%%%:  200-block 21
+    %%%%%:  200-block 22
+    %%%%%:  200-block 23
+    #####:  201:            tmp = data0[k] - data1[k];
+    #####:  202:            distSq += tmp * tmp;
+    %%%%%:  202-block  0
+    %%%%%:  202-block  1
+    %%%%%:  202-block  2
+    %%%%%:  202-block  3
+    %%%%%:  202-block  4
+    %%%%%:  202-block  5
+    %%%%%:  202-block  6
+    %%%%%:  202-block  7
+    %%%%%:  202-block  8
+    %%%%%:  202-block  9
+    %%%%%:  202-block 10
+    %%%%%:  202-block 11
+        -:  203:        }
+        -:  204:
+        -:  205:        return distSq;
+        -:  206:    }
+        -:  207:
+        -:  208:    /**
+        -:  209:     * @brief zeros
+        -:  210:     * @param n
+        -:  211:     * @return
+        -:  212:     */
+        -:  213:    static T* zeros(int n)
+        -:  214:    {
+        -:  215:        T *ret = new T[n];
+        -:  216:        assign(T(0), ret, n);
+        -:  217:
+        -:  218:        return ret;
+        -:  219:    }
+        -:  220:
+        -:  221:    /**
+        -:  222:     * @brief norm_sq
+        -:  223:     * @param data
+        -:  224:     * @param n
+        -:  225:     * @return
+        -:  226:     */
+        -:  227:    static T norm_sq(float *data, int n)
+        -:  228:    {
+        -:  229:        T n_sq = data[0] * data[0];
+        -:  230:
+        -:  231:        for(int k = 1; k < n; k++) {
+        -:  232:            T tmp = data[k];
+        -:  233:            n_sq += tmp * tmp;
+        -:  234:        }
+        -:  235:
+        -:  236:        return n_sq;
+        -:  237:    }
+        -:  238:
+        -:  239:    /**
+        -:  240:     * @brief norm
+        -:  241:     * @param data
+        -:  242:     * @param n
+        -:  243:     * @return
+        -:  244:     */
+        -:  245:    static T norm(float *data, int n)
+        -:  246:    {
+        -:  247:        return sqrtf(Array<float>::norm(data, n));
+        -:  248:    }
+        -:  249:
+        -:  250:    /**
+        -:  251:     * @brief normalize
+        -:  252:     * @param data
+        -:  253:     * @param n
+        -:  254:     * @param norm_sq
+        -:  255:     * @return
+        -:  256:     */
+        -:  257:    static float normalize(float *data, int n, float norm_sq = -1.0f)
+        -:  258:    {
+        -:  259:        if(norm_sq < 0.0f) {
+        -:  260:            norm_sq = Array<float>::norm_sq(data, n);
+        -:  261:        }
+        -:  262:
+        -:  263:        if(norm_sq > 0.0f) {
+        -:  264:            norm_sq = sqrtf(norm_sq);
+        -:  265:
+        -:  266:            for(int k = 0; k < n; k++) {
+        -:  267:                data[k] /= norm_sq;
+        -:  268:            }
+        -:  269:        }
+        -:  270:
+        -:  271:        return norm_sq;
+        -:  272:    }
+        -:  273:
+        -:  274:    /**
+        -:  275:     * @brief dot
+        -:  276:     * @param data0
+        -:  277:     * @param data1
+        -:  278:     * @param n
+        -:  279:     * @return
+        -:  280:     */
+  819840*:  281:    static T dot(T *data0, T *data1, int n)
+        -:  282:    {
+  819840*:  283:        T out = data0[0] * data1[0];
+        -:  284:
+ 1366400*:  285:        for(int k = 1; k < n; k++) {
+    %%%%%:  285-block  0
+    %%%%%:  285-block  1
+    %%%%%:  285-block  2
+   273280:  285-block  3
+   273280:  285-block  4
+   273280:  285-block  5
+   273280:  285-block  6
+   273280:  285-block  7
+   819840:  285-block  8
+  546560*:  286:            out += data0[k] * data1[k];
+    %%%%%:  286-block  0
+    %%%%%:  286-block  1
+    %%%%%:  286-block  2
+    %%%%%:  286-block  3
+   546560:  286-block  4
+        -:  287:        }
+        -:  288:
+        -:  289:        return out;
+        -:  290:    }
+        -:  291:
+        -:  292:    /**
+        -:  293:     * @brief mul
+        -:  294:     * @param vec
+        -:  295:     * @param size
+        -:  296:     * @param scale
+        -:  297:     * @return
+        -:  298:     */
+        -:  299:    static void mul(T *vec, int size, T scale)
+        -:  300:    {
+        -:  301:        if(vec == NULL || size < 1) {
+        -:  302:            return;
+        -:  303:        }
+        -:  304:
+        -:  305:        for(int i = 0; i < size; i++) {
+        -:  306:            vec[i] *= scale;
+        -:  307:        }
+        -:  308:    }
+        -:  309:
+        -:  310:    /**
+        -:  311:     * @brief mul
+        -:  312:     * @param data
+        -:  313:     * @param size
+        -:  314:     * @param ret
+        -:  315:     * @return
+        -:  316:     */
+        -:  317:    static void mul(T *data, int size, T *ret)
+        -:  318:    {
+        -:  319:        if(data == NULL || size < 1 || ret == NULL) {
+        -:  320:            return;
+        -:  321:        }
+        -:  322:
+        -:  323:        for(int i = 0; i < size; i++) {
+        -:  324:            ret[i] *= data[i];
+        -:  325:        }
+        -:  326:    }
+        -:  327:
+        -:  328:    /**
+        -:  329:     * @brief add
+        -:  330:     * @param data
+        -:  331:     * @param size
+        -:  332:     * @param ret
+        -:  333:     */
+    #####:  334:    static T* add(T *data, int size, T *ret)
+        -:  335:    {
+    #####:  336:        for(int i = 0; i < size; i++) {
+    %%%%%:  336-block  0
+    %%%%%:  336-block  1
+    %%%%%:  336-block  2
+    #####:  337:            ret[i] += data[i];
+    %%%%%:  337-block  0
+    %%%%%:  337-block  1
+        -:  338:        }
+        -:  339:
+        -:  340:        return ret;
+        -:  341:    }
+        -:  342:
+        -:  343:    /**
+        -:  344:     * @brief div
+        -:  345:     * @param data
+        -:  346:     * @param size
+        -:  347:     * @param value
+        -:  348:     */
+    #####:  349:    static void div(T *data, int size, T value)
+    %%%%%:  349-block  0
+    %%%%%:  349-block  1
+        -:  350:    {
+    #####:  351:        for(int i = 0; i < size; i++) {
+    %%%%%:  351-block  0
+    %%%%%:  351-block  1
+    %%%%%:  351-block  2
+    %%%%%:  351-block  3
+    %%%%%:  351-block  4
+    %%%%%:  351-block  5
+    %%%%%:  351-block  6
+    %%%%%:  351-block  7
+    %%%%%:  351-block  8
+    %%%%%:  351-block  9
+    %%%%%:  351-block 10
+    %%%%%:  351-block 11
+    #####:  352:            data[i] /= value;
+    %%%%%:  352-block  0
+    %%%%%:  352-block  1
+    %%%%%:  352-block  2
+    %%%%%:  352-block  3
+    %%%%%:  352-block  4
+    %%%%%:  352-block  5
+    %%%%%:  352-block  6
+    %%%%%:  352-block  7
+    %%%%%:  352-block  8
+    %%%%%:  352-block  9
+        -:  353:        }
+        -:  354:    }
+        -:  355:
+        -:  356:    /**
+        -:  357:     * @brief getMean
+        -:  358:     * @param data
+        -:  359:     * @param size
+        -:  360:     * @param ind
+        -:  361:     * @return
+        -:  362:     */
+    #####:  363:    static T getMean(T *data, int size)
+        -:  364:    {
+    #####:  365:        if(data == NULL || size < 1) {
+        -:  366:            return T(0);
+        -:  367:        }
+        -:  368:
+    #####:  369:        T ret = data[0];
+        -:  370:
+    #####:  371:        for(int i = 1; i < size; i++) {
+    %%%%%:  371-block  0
+    %%%%%:  371-block  1
+    #####:  372:            ret += data[i];
+    %%%%%:  372-block  0
+        -:  373:        }
+        -:  374:
+    #####:  375:        ret /= T(size);
+        -:  376:
+    #####:  377:        return ret;
+    %%%%%:  377-block  0
+        -:  378:    }
+        -:  379:
+        -:  380:    /**
+        -:  381:     * @brief getVariance
+        -:  382:     * @param data
+        -:  383:     * @param size
+        -:  384:     * @return
+        -:  385:     */
+    #####:  386:    static T getVariance(T *data, int size)
+    %%%%%:  386-block  0
+        -:  387:    {
+    #####:  388:        T mu = getMean(data, size);
+        -:  389:
+    #####:  390:        T tmp = data[0] - mu;
+    #####:  391:        T ret = tmp * tmp;
+        -:  392:
+    #####:  393:        for(int i = 1; i < size; i++) {
+    %%%%%:  393-block  0
+    %%%%%:  393-block  1
+    #####:  394:            tmp = data[i] - mu;
+    #####:  395:            ret += tmp * tmp;
+    %%%%%:  395-block  0
+        -:  396:        }
+        -:  397:
+    #####:  398:        return ret / T(size);
+        -:  399:    }
+        -:  400:
+        -:  401:    /**
+        -:  402:     * @brief sum
+        -:  403:     * @param data
+        -:  404:     * @param size
+        -:  405:     * @return
+        -:  406:     */
+ 1912960*:  407:    static T sum(T *data, int size)
+        -:  408:    {
+ 1912960*:  409:        if(data == NULL || size < 1) {
+    %%%%%:  409-block  0
+  1912960:  409-block  1
+    %%%%%:  409-block  2
+    %%%%%:  409-block  3
+    %%%%%:  409-block  4
+        -:  410:            return T(0);
+        -:  411:        }
+        -:  412:
+ 1912960*:  413:        T ret = data[0];
+        -:  414:
+ 5738880*:  415:        for(int i = 1; i < size; i++) {
+    %%%%%:  415-block  0
+    %%%%%:  415-block  1
+  1912960:  415-block  2
+  5738880:  415-block  3
+    %%%%%:  415-block  4
+    %%%%%:  415-block  5
+    %%%%%:  415-block  6
+    %%%%%:  415-block  7
+    %%%%%:  415-block  8
+    %%%%%:  415-block  9
+ 3825920*:  416:            ret += data[i];
+    %%%%%:  416-block  0
+  3825920:  416-block  1
+    %%%%%:  416-block  2
+    %%%%%:  416-block  3
+    %%%%%:  416-block  4
+        -:  417:        }
+        -:  418:
+        -:  419:        return ret;
+        -:  420:    }
+        -:  421:
+        -:  422:    /**
+        -:  423:     * @brief cumsum
+        -:  424:     * @param vec
+        -:  425:     * @param size
+        -:  426:     * @param ret
+        -:  427:     * @return
+        -:  428:     */
+      21*:  429:    static T *cumsum(T *vec, int size, T *ret)
+        -:  430:    {
+      21*:  431:        if(vec == NULL || size < 1) {
+        -:  432:            return NULL;
+        -:  433:        }
+        -:  434:
+      21*:  435:        if(ret == NULL) {
+      21*:  436:            ret = new T[size];
+        -:  437:        }
+        -:  438:
+      21*:  439:        ret[0] = vec[0];
+        -:  440:
+    5376*:  441:        for(int i = 1; i < size; i++) {
+    5355*:  442:            ret[i] = vec[i] + ret[i - 1];
+        -:  443:        }
+        -:  444:
+        -:  445:        return ret;
+        -:  446:    }
+------------------
+_ZN3pic5ArrayIjE6cumsumEPjiS2_:
+    #####:  429:    static T *cumsum(T *vec, int size, T *ret)
+        -:  430:    {
+    #####:  431:        if(vec == NULL || size < 1) {
+    %%%%%:  431-block  0
+        -:  432:            return NULL;
+        -:  433:        }
+        -:  434:
+    #####:  435:        if(ret == NULL) {
+    %%%%%:  435-block  0
+    #####:  436:            ret = new T[size];
+    %%%%%:  436-block  0
+        -:  437:        }
+        -:  438:
+    #####:  439:        ret[0] = vec[0];
+        -:  440:
+    #####:  441:        for(int i = 1; i < size; i++) {
+    %%%%%:  441-block  0
+    %%%%%:  441-block  1
+    #####:  442:            ret[i] = vec[i] + ret[i - 1];
+    %%%%%:  442-block  0
+        -:  443:        }
+        -:  444:
+        -:  445:        return ret;
+        -:  446:    }
+------------------
+_ZN3pic5ArrayIfE6cumsumEPfiS2_:
+       21:  429:    static T *cumsum(T *vec, int size, T *ret)
+        -:  430:    {
+       21:  431:        if(vec == NULL || size < 1) {
+       21:  431-block  0
+        -:  432:            return NULL;
+        -:  433:        }
+        -:  434:
+       21:  435:        if(ret == NULL) {
+       21:  435-block  0
+       21:  436:            ret = new T[size];
+       21:  436-block  0
+        -:  437:        }
+        -:  438:
+       21:  439:        ret[0] = vec[0];
+        -:  440:
+     5376:  441:        for(int i = 1; i < size; i++) {
+       21:  441-block  0
+     5376:  441-block  1
+     5355:  442:            ret[i] = vec[i] + ret[i - 1];
+     5355:  442-block  0
+        -:  443:        }
+        -:  444:
+        -:  445:        return ret;
+        -:  446:    }
+------------------
+        -:  447:
+        -:  448:    /**
+        -:  449:     * @brief assign
+        -:  450:     * @param data
+        -:  451:     * @param size
+        -:  452:     * @param ret
+        -:  453:     * @return
+        -:  454:     */
+    #####:  455:    static T* assign (T* data, int size, T* ret)
+        -:  456:    {
+    #####:  457:        memcpy(ret, data, sizeof(T) * size);
+    %%%%%:  457-block  0
+    %%%%%:  457-block  1
+    %%%%%:  457-block  2
+    %%%%%:  457-block  3
+    %%%%%:  457-block  4
+    %%%%%:  457-block  5
+    #####:  458:        return ret;
+    %%%%%:  458-block  0
+    %%%%%:  458-block  1
+    %%%%%:  458-block  2
+    %%%%%:  458-block  3
+    %%%%%:  458-block  4
+        -:  459:    }
+        -:  460:
+        -:  461:    /**
+        -:  462:     * @brief assign
+        -:  463:     * @param data
+        -:  464:     * @param ret
+        -:  465:     * @param size
+        -:  466:     * @return
+        -:  467:     */
+    #####:  468:    static T* assign (T data, T* ret, int size)
+    %%%%%:  468-block  0
+    %%%%%:  468-block  1
+    %%%%%:  468-block  2
+    %%%%%:  468-block  3
+    %%%%%:  468-block  4
+    %%%%%:  468-block  5
+    %%%%%:  468-block  6
+        -:  469:    {
+ 1912976*:  470:        for(int i = 0; i < size; i++) {
+    %%%%%:  470-block  0
+    %%%%%:  470-block  1
+    %%%%%:  470-block  2
+    %%%%%:  470-block  3
+    %%%%%:  470-block  4
+    %%%%%:  470-block  5
+    %%%%%:  470-block  6
+    %%%%%:  470-block  7
+    %%%%%:  470-block  8
+    %%%%%:  470-block  9
+    %%%%%:  470-block 10
+    %%%%%:  470-block 11
+    %%%%%:  470-block 12
+    %%%%%:  470-block 13
+    %%%%%:  470-block 14
+    %%%%%:  470-block 15
+    %%%%%:  470-block 16
+    %%%%%:  470-block 17
+    %%%%%:  470-block 18
+    %%%%%:  470-block 19
+   273280:  470-block 20
+  1093120:  470-block 21
+  1093120:  470-block 22
+        3:  470-block 23
+       12:  470-block 24
+    %%%%%:  470-block 25
+    %%%%%:  470-block 26
+    %%%%%:  470-block 27
+    %%%%%:  470-block 28
+        2:  470-block 29
+        4:  470-block 30
+    %%%%%:  470-block 31
+    %%%%%:  470-block 32
+    %%%%%:  470-block 33
+    %%%%%:  470-block 34
+    %%%%%:  470-block 35
+    %%%%%:  470-block 36
+ 1639691*:  471:            ret[i] = data;
+    %%%%%:  471-block  0
+    %%%%%:  471-block  1
+    %%%%%:  471-block  2
+    %%%%%:  471-block  3
+    %%%%%:  471-block  4
+    %%%%%:  471-block  5
+    %%%%%:  471-block  6
+    %%%%%:  471-block  7
+    %%%%%:  471-block  8
+    %%%%%:  471-block  9
+    %%%%%:  471-block 10
+    %%%%%:  471-block 11
+    %%%%%:  471-block 12
+    %%%%%:  471-block 13
+    %%%%%:  471-block 14
+    %%%%%:  471-block 15
+   819840:  471-block 16
+   819840:  471-block 17
+        9:  471-block 18
+    %%%%%:  471-block 19
+    %%%%%:  471-block 20
+        2:  471-block 21
+    %%%%%:  471-block 22
+    %%%%%:  471-block 23
+    %%%%%:  471-block 24
+        -:  472:        }
+        -:  473:        return ret;
+        -:  474:    }
+        -:  475:
+        -:  476:    /**
+        -:  477:     * @brief apply
+        -:  478:     * @param data
+        -:  479:     * @param size
+        -:  480:     * @param ret
+        -:  481:     * @return
+        -:  482:     */
+        -:  483:    static T* apply(T *data,  int size, T *ret, T(*func)(T))
+        -:  484:    {
+        -:  485:        if(data == NULL || size < 1) {
+        -:  486:            return ret;
+        -:  487:        }
+        -:  488:
+        -:  489:        if(ret == NULL) {
+        -:  490:            ret = new T[size];
+        -:  491:        }
+        -:  492:
+        -:  493:        for(int i = 1; i < size; i++) {
+        -:  494:            ret[i] = func(data[i]);
+        -:  495:        }
+        -:  496:
+        -:  497:        return ret;
+        -:  498:    }
+        -:  499:
+        -:  500:    /**
+        -:  501:     * @brief getMax
+        -:  502:     * @param data
+        -:  503:     * @param size
+        -:  504:     * @param ind
+        -:  505:     * @return
+        -:  506:     */
+      21*:  507:    static T getMax(T *data, int size, int &ind)
+        -:  508:    {
+      21*:  509:        if(data == NULL || size < 1) {
+    %%%%%:  509-block  0
+    %%%%%:  509-block  1
+       21:  509-block  2
+    #####:  510:            return T(size + 1);
+    %%%%%:  510-block  0
+    %%%%%:  510-block  1
+    %%%%%:  510-block  2
+    %%%%%:  510-block  3
+    %%%%%:  510-block  4
+        -:  511:        }
+        -:  512:
+      21*:  513:        T ret = data[0];
+      21*:  514:        ind = 0;
+        -:  515:
+    5376*:  516:        for(int i = 1; i < size; i++) {
+    %%%%%:  516-block  0
+    %%%%%:  516-block  1
+    %%%%%:  516-block  2
+    %%%%%:  516-block  3
+    %%%%%:  516-block  4
+    %%%%%:  516-block  5
+    %%%%%:  516-block  6
+    %%%%%:  516-block  7
+       21:  516-block  8
+     5376:  516-block  9
+    5355*:  517:            if(ret < data[i]) {
+    %%%%%:  517-block  0
+    %%%%%:  517-block  1
+    %%%%%:  517-block  2
+    %%%%%:  517-block  3
+     5355:  517-block  4
+        -:  518:                ret = data[i];
+        -:  519:                ind = i;
+        -:  520:            }
+        -:  521:        }
+        -:  522:
+        -:  523:        return ret;
+        -:  524:    }
+        -:  525:
+        -:  526:    /**
+        -:  527:     * @brief getMin
+        -:  528:     * @param data
+        -:  529:     * @param size
+        -:  530:     * @param ind
+        -:  531:     * @return
+        -:  532:     */
+    #####:  533:    static T getMin(T *data, int size, int &ind)
+        -:  534:    {
+    #####:  535:        if(data == NULL || size < 1) {
+    #####:  536:            return T(size + 1);
+    %%%%%:  536-block  0
+        -:  537:        }
+        -:  538:
+    #####:  539:        T ret = data[0];
+    #####:  540:        ind = 0;
+        -:  541:
+    #####:  542:        for(int i = 1; i < size; i++) {
+    %%%%%:  542-block  0
+    %%%%%:  542-block  1
+    #####:  543:            if(ret > data[i]) {
+    %%%%%:  543-block  0
+        -:  544:                ret = data[i];
+        -:  545:                ind = i;
+        -:  546:            }
+        -:  547:        }
+        -:  548:
+        -:  549:        return ret;
+        -:  550:    }
+        -:  551:
+        -:  552:    /**
+        -:  553:     * @brief interp linearly interpolates x and y data
+        -:  554:     * @param x
+        -:  555:     * @param y
+        -:  556:     * @param size the size of x and y
+        -:  557:     * @param xval
+        -:  558:     * @return
+        -:  559:     */
+    #####:  560:    static T interp(T *x, T *y, int size, T xval)
+        -:  561:    {
+    #####:  562:        int sm1 = size - 1;
+    #####:  563:        if((xval >= x[0]) && (xval <= x[sm1])) {
+    %%%%%:  563-block  0
+    %%%%%:  563-block  1
+        -:  564:            int offset2;
+    #####:  565:            T *ptr = std::lower_bound(&x[0], &x[sm1], xval);
+    %%%%%:  565-block  0
+    #####:  566:            int offset = MAX(0, (int)(ptr - x - 1));
+        -:  567:
+    #####:  568:            if(offset == sm1) {
+    %%%%%:  568-block  0
+    #####:  569:                offset2 = offset;
+    #####:  570:                offset  = offset2 - 1;
+    %%%%%:  570-block  0
+        -:  571:            } else {
+    #####:  572:                offset2 = MIN(size - 1, offset + 1);
+    %%%%%:  572-block  0
+        -:  573:            }
+        -:  574:
+    #####:  575:            T t = (xval - x[offset]) / (x[offset2] - x[offset]);
+        -:  576:
+    #####:  577:            return y[offset] * (T(1) - t) + t * y[offset2];
+    %%%%%:  577-block  0
+        -:  578:        } else {
+    #####:  579:            if(xval > x[sm1]) {
+    %%%%%:  579-block  0
+    #####:  580:                int sm2 = size - 2;
+    #####:  581:                T t = (xval - x[sm2]) / (x[sm1] - x[sm2]);
+    #####:  582:                return t * (y[sm1] - y[sm2])  + y[sm2];
+    %%%%%:  582-block  0
+        -:  583:            } else {
+    #####:  584:                T t = (xval - x[0]) / (x[1] - x[0]);
+    #####:  585:                return t * (y[1] - y[0])  + y[0];
+    %%%%%:  585-block  0
+        -:  586:            }
+        -:  587:        }
+        -:  588:
+        -:  589:    }
+        -:  590:
+        -:  591:    /**
+        -:  592:     * @brief binSearchLeft
+        -:  593:     * @param data
+        -:  594:     * @param key
+        -:  595:     * @param low
+        -:  596:     * @param high
+        -:  597:     * @return
+        -:  598:     */
+        -:  599:    static int binSearchLeft(T *data, T key, int low, int high)
+        -:  600:    {
+        -:  601:        if( (high < low) ||
+        -:  602:            (key > data[high - 1]) ||
+        -:  603:            (key < data[low]) ) {
+        -:  604:
+        -:  605:            #ifdef PIC_DEBUG
+        -:  606:                printf("\nbinSearchLeft: bounds error!\n");
+        -:  607:            #endif
+        -:  608:            return -1;
+        -:  609:        }
+        -:  610:
+        -:  611:        int mid;
+        -:  612:        while(low < high) {
+        -:  613:            mid = (low + high) / 2;
+        -:  614:
+        -:  615:            if(data[mid] < key) {
+        -:  616:                low = mid + 1;
+        -:  617:            } else {
+        -:  618:                high = mid;
+        -:  619:            }
+        -:  620:
+        -:  621:        }
+        -:  622:
+        -:  623:        if (low > 0) {
+        -:  624:            low--;
+        -:  625:        }
+        -:  626:
+        -:  627:        return low;
+        -:  628:    }
+        -:  629:};
+        -:  630:
+        -:  631:/**
+        -:  632: * @brief Arrayf
+        -:  633: */
+        -:  634:typedef	Array<float> Arrayf;
+        -:  635:
+        -:  636:/**
+        -:  637: * @brief Arrayi
+        -:  638: */
+        -:  639:typedef	Array<int> Arrayi;
+        -:  640:
+        -:  641:/**
+        -:  642: * @brief Arrayui
+        -:  643: */
+        -:  644:typedef	Array<unsigned int> Arrayui;
+        -:  645:
+        -:  646:} // end namespace pic
+        -:  647:
+        -:  648:#endif /* PIC_UTIL_ARRAY_HPP */
+        -:  649:

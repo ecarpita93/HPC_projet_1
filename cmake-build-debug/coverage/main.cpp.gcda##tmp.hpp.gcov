@@ -1,0 +1,164 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/io/tmp.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IO_TMP_HPP
+        -:   19:#define PIC_IO_TMP_HPP
+        -:   20:
+        -:   21:#include <stdio.h>
+        -:   22:#include <string>
+        -:   23:
+        -:   24:#include "../base.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:/**
+        -:   29: * @brief The TMP_IMG_HEADER struct is a header for a tmp image
+        -:   30: */
+        -:   31:struct TMP_IMG_HEADER {
+        -:   32:    int frames, width, height, channels;
+        -:   33:};
+        -:   34:
+        -:   35:
+        -:   36:/**
+        -:   37: * @brief ReadTMP reads a dump temp file.
+        -:   38: * @param nameFile
+        -:   39: * @param data
+        -:   40: * @param width
+        -:   41: * @param height
+        -:   42: * @param channels
+        -:   43: * @param frames
+        -:   44: * @param bHeader
+        -:   45: * @return
+        -:   46: */
+    #####:   47:PIC_INLINE float *ReadTMP(std::string nameFile, float *data, int &width,
+        -:   48:                          int &height, int &channels, int &frames, bool bHeader = true)
+        -:   49:{
+    #####:   50:    FILE *file = fopen(nameFile.c_str(), "rb");
+    %%%%%:   50-block  0
+        -:   51:
+    #####:   52:    if(file == NULL) {
+        -:   53:        return NULL;
+        -:   54:    }
+        -:   55:
+        -:   56:    //read the header
+    #####:   57:    TMP_IMG_HEADER header;
+    #####:   58:    header.channels = -1;
+    #####:   59:    header.frames = -1;
+    #####:   60:    header.width = -1;
+    #####:   61:    header.height = -1;
+        -:   62:
+    #####:   63:    if(bHeader) {
+    %%%%%:   63-block  0
+    #####:   64:        fread(&header, sizeof(TMP_IMG_HEADER), 1, file);
+    %%%%%:   64-block  0
+        -:   65:
+    #####:   66:        if(header.channels < 1 && header.frames < 1 && header.height < 1 &&
+    %%%%%:   66-block  0
+    %%%%%:   66-block  1
+    #####:   67:           header.width < 1) { //invalid image!
+    %%%%%:   67-block  0
+        -:   68:            return NULL;
+        -:   69:        }
+        -:   70:    }
+        -:   71:
+    #####:   72:    if(data == NULL) {
+    %%%%%:   72-block  0
+    #####:   73:        data = new float[width * height * channels * frames];
+    %%%%%:   73-block  0
+    %%%%%:   73-block  1
+    %%%%%:   73-block  2
+        -:   74:    }
+        -:   75:
+    #####:   76:    if(bHeader) {
+    %%%%%:   76-block  0
+    #####:   77:        width    = header.width;
+    #####:   78:        height   = header.height;
+    #####:   79:        channels = header.channels;
+    #####:   80:        frames   = header.frames;
+    %%%%%:   80-block  0
+        -:   81:    }
+        -:   82:
+    #####:   83:    fread(data, sizeof(float), frames * width * height * channels, file);
+    %%%%%:   83-block  0
+        -:   84:
+    #####:   85:    fclose(file);
+    %%%%%:   85-block  0
+        -:   86:
+        -:   87:    return data;
+        -:   88:}
+        -:   89:
+        -:   90:/**
+        -:   91: * @brief WriteTMP writes a dump temp file.
+        -:   92: * @param nameFile
+        -:   93: * @param data
+        -:   94: * @param width
+        -:   95: * @param height
+        -:   96: * @param channels
+        -:   97: * @param frames
+        -:   98: * @param bHeader
+        -:   99: * @return
+        -:  100: */
+    #####:  101:PIC_INLINE bool WriteTMP(std::string nameFile, float *data, int &width,
+        -:  102:                         int &height, int &channels, int &frames, bool bHeader = true)
+        -:  103:{
+        -:  104:
+    #####:  105:    TMP_IMG_HEADER header;
+        -:  106:
+    #####:  107:    if(bHeader) {
+    %%%%%:  107-block  0
+    #####:  108:        header.frames = frames;
+    #####:  109:        header.width = width;
+    #####:  110:        header.height = height;
+    #####:  111:        header.channels = channels;
+    %%%%%:  111-block  0
+        -:  112:    }
+        -:  113:
+    #####:  114:    FILE *file = fopen(nameFile.c_str(), "wb");
+    %%%%%:  114-block  0
+        -:  115:
+    #####:  116:    if(file == NULL) {
+        -:  117:        return false;
+        -:  118:    }
+        -:  119:
+    #####:  120:    int size = frames * width * height * channels;
+        -:  121:
+    #####:  122:     if(size < 1)
+    %%%%%:  122-block  0
+        -:  123:         return false;
+        -:  124:
+    #####:  125:    if(bHeader) {
+    %%%%%:  125-block  0
+    #####:  126:        fwrite(&header, sizeof(TMP_IMG_HEADER), 1, file);
+    %%%%%:  126-block  0
+        -:  127:    }
+        -:  128:  
+    #####:  129:    fwrite(data, sizeof(float), size, file);
+    %%%%%:  129-block  0
+        -:  130:
+    #####:  131:    fclose(file);
+        -:  132:
+        -:  133:    return true;
+        -:  134:}
+        -:  135:
+        -:  136:} // end namespace pic
+        -:  137:
+        -:  138:#endif /* PIC_IO_TMP_HPP */
+        -:  139:

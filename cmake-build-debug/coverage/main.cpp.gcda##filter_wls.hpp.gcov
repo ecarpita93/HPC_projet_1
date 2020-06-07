@@ -1,0 +1,505 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_wls.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_WLS_HPP
+        -:   19:#define PIC_FILTERING_FILTER_WLS_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:#ifndef PIC_DISABLE_EIGEN
+        -:   24:
+        -:   25:#ifndef PIC_EIGEN_NOT_BUNDLED
+        -:   26:    #include "../externals/Eigen/Sparse"
+        -:   27:    #include "../externals/Eigen/src/SparseCore/SparseMatrix.h"
+        -:   28:#else
+        -:   29:    #include <Eigen/Sparse>
+        -:   30:    #include <Eigen/src/SparseCore/SparseMatrix.h>
+        -:   31:#endif
+        -:   32:
+        -:   33:#endif
+        -:   34:
+        -:   35:namespace pic {
+        -:   36:
+        -:   37:#ifndef PIC_DISABLE_EIGEN
+        -:   38:
+        -:   39:class FilterWLS: public Filter
+        -:   40:{
+        -:   41:protected:
+        -:   42:    /**
+        -:   43:     * @brief singleChannel applies WLS smoothing filter for gray-scale images.
+        -:   44:     * @param imgIn
+        -:   45:     * @param imgOut
+        -:   46:     * @return
+        -:   47:     */
+    #####:   48:    Image *singleChannel(ImageVec imgIn, Image *imgOut)
+        -:   49:    {
+    #####:   50:        Image *L = imgIn[0];
+    %%%%%:   50-block  0
+        -:   51:
+    #####:   52:        int width  = L->width;
+    #####:   53:        int height = L->height;
+    #####:   54:        int tot    = height * width;
+        -:   55:
+    #####:   56:        Eigen::VectorXd b, x;
+    %%%%%:   56-block  0
+    %%%%%:   56-block  1
+    %%%%%:   56-block  2
+    $$$$$:   56-block  3
+    #####:   57:        b = Eigen::VectorXd::Zero(tot);
+    %%%%%:   57-block  0
+    $$$$$:   57-block  1
+        -:   58:
+        -:   59:        #ifdef PIC_DEBUG
+        -:   60:            printf("Init matrix...");
+        -:   61:        #endif
+        -:   62:
+    #####:   63:        std::vector< Eigen::Triplet< double > > tL;
+    %%%%%:   63-block  0
+    %%%%%:   63-block  1
+    $$$$$:   63-block  2
+        -:   64:
+    #####:   65:        for(int i = 0; i < height; i++) {
+    %%%%%:   65-block  0
+    %%%%%:   65-block  1
+    %%%%%:   65-block  2
+    #####:   66:            int tmpInd = i * width;
+        -:   67:
+    #####:   68:            for(int j = 0; j < width; j++) {
+    %%%%%:   68-block  0
+    %%%%%:   68-block  1
+        -:   69:
+    #####:   70:                float Ltmp, tmp;
+    #####:   71:                int indJ;
+    #####:   72:                int indI = tmpInd + j;
+    #####:   73:                float Lref = L->data[indI];
+        -:   74:
+    #####:   75:                b[indI] = Lref;
+    %%%%%:   75-block  0
+        -:   76:
+    #####:   77:                float sum = 0.0f;
+        -:   78:
+    #####:   79:                if((i - 1) >= 0) {
+    #####:   80:                    indJ = indI - width;
+    #####:   81:                    Ltmp = L->data[indJ];
+    #####:   82:                    tmp  = -lambda / (powf(fabsf(Ltmp - Lref), alpha) + epsilon);
+    #####:   83:                    tL.push_back(Eigen::Triplet< double > (indI, indJ, tmp));
+    %%%%%:   83-block  0
+    #####:   84:                    sum += tmp;
+    %%%%%:   84-block  0
+        -:   85:                }
+        -:   86:
+    #####:   87:                if((i + 1) < height) {
+    %%%%%:   87-block  0
+    #####:   88:                    indJ = indI + width;
+    #####:   89:                    Ltmp = L->data[indJ];
+    #####:   90:                    tmp  = -lambda / (powf(fabsf(Ltmp - Lref), alpha) + epsilon);
+    #####:   91:                    tL.push_back(Eigen::Triplet< double > (indI, indJ, tmp));
+    %%%%%:   91-block  0
+    #####:   92:                    sum += tmp;
+    %%%%%:   92-block  0
+        -:   93:                }
+        -:   94:
+    #####:   95:                if((j - 1) >= 0) {
+    %%%%%:   95-block  0
+    #####:   96:                    indJ = indI - 1;
+    #####:   97:                    Ltmp = L->data[indJ];
+    #####:   98:                    tmp  = -lambda / (powf(fabsf(Ltmp - Lref), alpha) + epsilon);
+    #####:   99:                    tL.push_back(Eigen::Triplet< double > (indI, indJ, tmp));
+    %%%%%:   99-block  0
+    #####:  100:                    sum += tmp;
+    %%%%%:  100-block  0
+        -:  101:                }
+        -:  102:
+    #####:  103:                if((j + 1) < width) {
+    %%%%%:  103-block  0
+    #####:  104:                    indJ = indI + 1;
+    #####:  105:                    Ltmp = L->data[indJ];
+    #####:  106:                    tmp  = -lambda / (powf(fabsf(Ltmp - Lref), alpha) + epsilon);
+    #####:  107:                    tL.push_back(Eigen::Triplet< double > (indI, indJ, tmp));
+    %%%%%:  107-block  0
+    #####:  108:                    sum += tmp;
+    %%%%%:  108-block  0
+        -:  109:                }
+        -:  110:
+    #####:  111:                tL.push_back(Eigen::Triplet< double > (indI, indI, 1.0f - sum));
+    %%%%%:  111-block  0
+    %%%%%:  111-block  1
+    $$$$$:  111-block  2
+        -:  112:            }
+        -:  113:        }
+        -:  114:
+        -:  115:        #ifdef PIC_DEBUG
+        -:  116:            printf("Ok\n");
+        -:  117:        #endif
+        -:  118:
+    #####:  119:        Eigen::SparseMatrix<double> A = Eigen::SparseMatrix<double>(tot, tot);
+    %%%%%:  119-block  0
+    #####:  120:        A.setFromTriplets(tL.begin(), tL.end());
+    %%%%%:  120-block  0
+    $$$$$:  120-block  1
+        -:  121:
+    #####:  122:        Eigen::SimplicialCholesky<Eigen::SparseMatrix<double> > solver(A);
+    %%%%%:  122-block  0
+    #####:  123:        x = solver.solve(b);
+    %%%%%:  123-block  0
+    $$$$$:  123-block  1
+        -:  124:
+    #####:  125:        if(solver.info() != Eigen::Success) {
+    %%%%%:  125-block  0
+    %%%%%:  125-block  1
+        -:  126:            #ifdef PIC_DEBUG
+        -:  127:                printf("SOLVER FAILED!\n");
+        -:  128:            #endif
+        -:  129:            return NULL;
+        -:  130:        }
+        -:  131:
+        -:  132:        #ifdef PIC_DEBUG
+        -:  133:            printf("SOLVER SUCCESS!\n");
+        -:  134:        #endif
+        -:  135:
+    #####:  136:        #pragma omp parallel for
+        -:  137:
+        -:  138:        for(int i = 0; i < tot; i++) {
+        -:  139:            imgOut->data[i] = float(x(i));
+        -:  140:        }
+        -:  141:
+    #####:  142:        return imgOut;
+    %%%%%:  142-block  0
+        -:  143:    }
+        -:  144:
+        -:  145:    /**
+        -:  146:     * @brief multiChannel applies WLS filter for color images.
+        -:  147:     * @param imgIn
+        -:  148:     * @param imgOut
+        -:  149:     * @return
+        -:  150:     */
+    #####:  151:    Image *multiChannel(ImageVec imgIn, Image *imgOut)
+        -:  152:    {
+    #####:  153:        Image *img = imgIn[0];
+    %%%%%:  153-block  0
+        -:  154:
+    #####:  155:        int width  = img->width;
+    #####:  156:        int height = img->height;
+    #####:  157:        int tot    = height * width;
+        -:  158:
+    #####:  159:        alpha /= 2.0f;
+        -:  160:
+    #####:  161:        int stridex = width * img->channels;
+        -:  162:
+        -:  163:        #ifdef PIC_DEBUG
+        -:  164:            printf("Init matrix...");
+        -:  165:        #endif
+        -:  166:
+    #####:  167:        std::vector< Eigen::Triplet< double > > tL;
+    %%%%%:  167-block  0
+        -:  168:
+    #####:  169:        for(int i = 0; i < height; i++) {
+    %%%%%:  169-block  0
+    %%%%%:  169-block  1
+    %%%%%:  169-block  2
+    #####:  170:            int tmpInd = i * width;
+        -:  171:
+    #####:  172:            for(int j = 0; j < width; j++) {
+    %%%%%:  172-block  0
+    %%%%%:  172-block  1
+        -:  173:
+    #####:  174:                float sum = 0.0f;
+    #####:  175:                float tmp;
+    #####:  176:                int indJ;
+    #####:  177:                int indI = tmpInd + j;
+    #####:  178:                int indImg = indI * img->channels;
+        -:  179:
+    #####:  180:                if((i - 1) >= 0) {
+    %%%%%:  180-block  0
+    #####:  181:                    indJ = indImg - stridex;
+    #####:  182:                    float diff = 0.0f;
+        -:  183:
+    #####:  184:                    for(int p = 0; p < img->channels; p++) {
+    %%%%%:  184-block  0
+    %%%%%:  184-block  1
+    #####:  185:                        float tmpDiff = img->data[indJ + p] - img->data[indImg + p];
+    #####:  186:                        diff += tmpDiff * tmpDiff;
+    %%%%%:  186-block  0
+        -:  187:                    }
+        -:  188:
+    #####:  189:                    tmp  = -lambda / (powf(diff, alpha) + epsilon);
+        -:  190:
+    #####:  191:                    tL.push_back(Eigen::Triplet< double > (indI, indI - width , tmp));
+    %%%%%:  191-block  0
+        -:  192:
+    #####:  193:                    sum += tmp;
+    %%%%%:  193-block  0
+        -:  194:                }
+        -:  195:
+    #####:  196:                if((i + 1) < height) {
+    %%%%%:  196-block  0
+    #####:  197:                    indJ = indImg + stridex;
+    #####:  198:                    float diff = 0.0f;
+        -:  199:
+    #####:  200:                    for(int p = 0; p < img->channels; p++) {
+    %%%%%:  200-block  0
+    %%%%%:  200-block  1
+    #####:  201:                        float tmpDiff = img->data[indJ + p] - img->data[indImg + p];
+    #####:  202:                        diff += tmpDiff * tmpDiff;
+    %%%%%:  202-block  0
+        -:  203:                    }
+        -:  204:
+    #####:  205:                    tmp  = -lambda / (powf(diff, alpha) + epsilon);
+    #####:  206:                    tL.push_back(Eigen::Triplet< double > (indI, indI + width , tmp));
+    %%%%%:  206-block  0
+    #####:  207:                    sum += tmp;
+    %%%%%:  207-block  0
+        -:  208:                }
+        -:  209:
+    #####:  210:                if((j - 1) >= 0) {
+    %%%%%:  210-block  0
+    #####:  211:                    indJ = indImg - img->channels;
+    #####:  212:                    float diff = 0.0f;
+        -:  213:
+    #####:  214:                    for(int p = 0; p < img->channels; p++) {
+    %%%%%:  214-block  0
+    %%%%%:  214-block  1
+    #####:  215:                        float tmpDiff = img->data[indJ + p] - img->data[indImg + p];
+    #####:  216:                        diff += tmpDiff * tmpDiff;
+    %%%%%:  216-block  0
+        -:  217:                    }
+        -:  218:
+    #####:  219:                    tmp  = -lambda / (powf(diff, alpha) + epsilon);
+    #####:  220:                    tL.push_back(Eigen::Triplet< double > (indI, indI - 1 , tmp));
+    %%%%%:  220-block  0
+    #####:  221:                    sum += tmp;
+    %%%%%:  221-block  0
+        -:  222:                }
+        -:  223:
+    #####:  224:                if((j + 1) < width) {
+    %%%%%:  224-block  0
+    #####:  225:                    indJ = indImg + img->channels;
+    #####:  226:                    float diff = 0.0f;
+        -:  227:
+    #####:  228:                    for(int p = 0; p < img->channels; p++) {
+    %%%%%:  228-block  0
+    %%%%%:  228-block  1
+    #####:  229:                        float tmpDiff = img->data[indJ + p] - img->data[indImg + p];
+    #####:  230:                        diff += tmpDiff * tmpDiff;
+    %%%%%:  230-block  0
+        -:  231:                    }
+        -:  232:
+    #####:  233:                    tmp  = -lambda / (powf(diff, alpha) + epsilon);
+        -:  234:
+    #####:  235:                    tL.push_back(Eigen::Triplet< double > (indI, indI + 1 , tmp));
+    %%%%%:  235-block  0
+    #####:  236:                    sum += tmp;
+    %%%%%:  236-block  0
+        -:  237:                }
+        -:  238:
+    #####:  239:                tL.push_back(Eigen::Triplet< double > (indI, indI, 1.0f - sum));
+    %%%%%:  239-block  0
+    %%%%%:  239-block  1
+    $$$$$:  239-block  2
+        -:  240:            }
+        -:  241:        }
+        -:  242:
+        -:  243:        #ifdef PIC_DEBUG
+        -:  244:            printf("Ok\n");
+        -:  245:        #endif
+        -:  246:
+    #####:  247:        Eigen::SparseMatrix<double> A = Eigen::SparseMatrix<double>(tot, tot);
+    %%%%%:  247-block  0
+        -:  248:
+    #####:  249:        A.setFromTriplets(tL.begin(), tL.end());
+    %%%%%:  249-block  0
+    $$$$$:  249-block  1
+        -:  250:
+    #####:  251:        Eigen::SimplicialCholesky< Eigen::SparseMatrix< double > > solver(A);
+    %%%%%:  251-block  0
+        -:  252:
+    #####:  253:        for(int i = 0; i < imgOut->channels; i++) {
+    %%%%%:  253-block  0
+    #####:  254:            Eigen::VectorXd b, x;
+    %%%%%:  254-block  0
+    %%%%%:  254-block  1
+    %%%%%:  254-block  2
+    $$$$$:  254-block  3
+    $$$$$:  254-block  4
+        -:  255:
+    #####:  256:            b = Eigen::VectorXd::Zero(tot);
+    %%%%%:  256-block  0
+    #####:  257:            #pragma omp parallel for
+        -:  258:
+        -:  259:            for(int j = 0; j < tot; j++) {
+        -:  260:                b[j] = img->data[j * img->channels + i];
+        -:  261:            }
+        -:  262:
+    #####:  263:            x = solver.solve(b);
+    %%%%%:  263-block  0
+    $$$$$:  263-block  1
+        -:  264:
+    #####:  265:            if(solver.info() == Eigen::Success) {
+    %%%%%:  265-block  0
+    %%%%%:  265-block  1
+        -:  266:
+        -:  267:                #ifdef PIC_DEBUG
+        -:  268:                    printf("SOLVER SUCCESS!\n");
+        -:  269:                #endif
+        -:  270:
+    #####:  271:                #pragma omp parallel for
+    %%%%%:  271-block  0
+        -:  272:
+        -:  273:                for(int j = 0; j < tot; j++) {
+        -:  274:                    imgOut->data[j * imgOut->channels + i] = float(x(j));
+        -:  275:                }
+        -:  276:            } else {
+        -:  277:                #ifdef PIC_DEBUG
+        -:  278:                    printf("SOLVER FAILED!\n");
+        -:  279:                #endif
+        -:  280:            }
+        -:  281:
+        -:  282:        }
+        -:  283:
+    #####:  284:        return imgOut;
+    %%%%%:  284-block  0
+    %%%%%:  284-block  1
+        -:  285:    }
+        -:  286:
+        -:  287:    float alpha, lambda, epsilon;
+        -:  288:
+        -:  289:public:
+        -:  290:
+        -:  291:    /**
+        -:  292:     * @brief FilterWLS
+        -:  293:     */
+        -:  294:    FilterWLS() : Filter()
+        -:  295:    {
+        -:  296:        update(1.2f, 1.0f);
+        -:  297:    }
+        -:  298:
+        -:  299:    /**
+        -:  300:     * @brief FilterWLS
+        -:  301:     * @param alpha
+        -:  302:     * @param lambda
+        -:  303:     */
+        -:  304:    FilterWLS(float alpha, float lambda) : Filter()
+        -:  305:    {
+        -:  306:        update(alpha, lambda);
+        -:  307:    }
+        -:  308:
+        -:  309:    /**
+        -:  310:     * @brief update
+        -:  311:     * @param alpha
+        -:  312:     * @param lambda
+        -:  313:     */
+        -:  314:    void update(float alpha, float lambda)
+        -:  315:    {
+        -:  316:        epsilon = 0.0001f;
+        -:  317:
+        -:  318:        if(alpha <= 0.0f) {
+        -:  319:            alpha = 1.2f;
+        -:  320:        }
+        -:  321:
+        -:  322:        if(lambda <= 0.0f) {
+        -:  323:            lambda = 1.0f;
+        -:  324:        }
+        -:  325:
+        -:  326:        this->alpha = alpha;
+        -:  327:        this->lambda = lambda;
+        -:  328:    }
+        -:  329:
+        -:  330:    /**
+        -:  331:     * @brief Process
+        -:  332:     * @param imgIn
+        -:  333:     * @param imgOut
+        -:  334:     * @return
+        -:  335:     */
+    #####:  336:    Image *Process(ImageVec imgIn, Image *imgOut)
+        -:  337:    {
+    #####:  338:        if(imgIn.empty()){
+    %%%%%:  338-block  0
+        -:  339:            return imgOut;
+        -:  340:        }
+        -:  341:
+    #####:  342:        if(imgIn[0] == NULL) {
+    %%%%%:  342-block  0
+        -:  343:            return imgOut;
+        -:  344:        }
+        -:  345:
+    #####:  346:        imgOut = setupAux(imgIn, imgOut);
+    %%%%%:  346-block  0
+    %%%%%:  346-block  1
+    $$$$$:  346-block  2
+        -:  347:
+    #####:  348:        if(imgOut == NULL) {
+    %%%%%:  348-block  0
+        -:  349:            return imgOut;
+        -:  350:        }
+        -:  351:
+        -:  352:        //convolution
+    #####:  353:        if(imgIn[0]->channels == 1) {
+    %%%%%:  353-block  0
+    #####:  354:            return singleChannel(imgIn, imgOut);
+    %%%%%:  354-block  0
+    %%%%%:  354-block  1
+    %%%%%:  354-block  2
+    $$$$$:  354-block  3
+        -:  355:        } else {
+    #####:  356:            return multiChannel(imgIn, imgOut);
+    %%%%%:  356-block  0
+    %%%%%:  356-block  1
+    %%%%%:  356-block  2
+        -:  357:        }
+        -:  358:    }
+        -:  359:
+        -:  360:    /**
+        -:  361:     * @brief main
+        -:  362:     * @param argc
+        -:  363:     * @param argv
+        -:  364:     * @return
+        -:  365:     */
+        -:  366:    static int main(int argc, char* argv[])
+        -:  367:    {
+        -:  368:        if(argc < 4) {
+        -:  369:            printf("Usage: name_input alpha lambad\n");
+        -:  370:            return 0;
+        -:  371:        }
+        -:  372:
+        -:  373:        std::string nameIn = argv[1];
+        -:  374:        std::string name = removeExtension(nameIn);
+        -:  375:        std::string ext = getExtension(nameIn);
+        -:  376:
+        -:  377:        float alpha = float(atof(argv[2]));
+        -:  378:        float lambda = float(atof(argv[3]));
+        -:  379:
+        -:  380:        std::string nameOut = name + "_wls." + ext; 
+        -:  381:
+        -:  382:        Image img(nameIn);
+        -:  383:
+        -:  384:        FilterWLS *filter = new FilterWLS(alpha, lambda);
+        -:  385:
+        -:  386:        filter->Process(Single(&img), NULL)->Write(nameOut);
+        -:  387:
+        -:  388:        return 0;
+        -:  389:    }
+        -:  390:};
+        -:  391:#endif
+        -:  392:
+        -:  393:} // end namespace pic
+        -:  394:
+        -:  395:#endif /* PIC_FILTERING_FILTER_WLS_HPP */
+        -:  396:

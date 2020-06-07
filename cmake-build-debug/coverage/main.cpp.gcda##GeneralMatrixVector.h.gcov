@@ -1,0 +1,2050 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/products/GeneralMatrixVector.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2008-2009 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5://
+        -:    6:// This Source Code Form is subject to the terms of the Mozilla
+        -:    7:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    8:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:    9:
+        -:   10:#ifndef EIGEN_GENERAL_MATRIX_VECTOR_H
+        -:   11:#define EIGEN_GENERAL_MATRIX_VECTOR_H
+        -:   12:
+        -:   13:namespace Eigen {
+        -:   14:
+        -:   15:namespace internal {
+        -:   16:
+        -:   17:/* Optimized col-major matrix * vector product:
+        -:   18: * This algorithm processes 4 columns at onces that allows to both reduce
+        -:   19: * the number of load/stores of the result by a factor 4 and to reduce
+        -:   20: * the instruction dependency. Moreover, we know that all bands have the
+        -:   21: * same alignment pattern.
+        -:   22: *
+        -:   23: * Mixing type logic: C += alpha * A * B
+        -:   24: *  |  A  |  B  |alpha| comments
+        -:   25: *  |real |cplx |cplx | no vectorization
+        -:   26: *  |real |cplx |real | alpha is converted to a cplx when calling the run function, no vectorization
+        -:   27: *  |cplx |real |cplx | invalid, the caller has to do tmp: = A * B; C += alpha*tmp
+        -:   28: *  |cplx |real |real | optimal case, vectorization possible via real-cplx mul
+        -:   29: *
+        -:   30: * Accesses to the matrix coefficients follow the following logic:
+        -:   31: *
+        -:   32: * - if all columns have the same alignment then
+        -:   33: *   - if the columns have the same alignment as the result vector, then easy! (-> AllAligned case)
+        -:   34: *   - otherwise perform unaligned loads only (-> NoneAligned case)
+        -:   35: * - otherwise
+        -:   36: *   - if even columns have the same alignment then
+        -:   37: *     // odd columns are guaranteed to have the same alignment too
+        -:   38: *     - if even or odd columns have the same alignment as the result, then
+        -:   39: *       // for a register size of 2 scalars, this is guarantee to be the case (e.g., SSE with double)
+        -:   40: *       - perform half aligned and half unaligned loads (-> EvenAligned case)
+        -:   41: *     - otherwise perform unaligned loads only (-> NoneAligned case)
+        -:   42: *   - otherwise, if the register size is 4 scalars (e.g., SSE with float) then
+        -:   43: *     - one over 4 consecutive columns is guaranteed to be aligned with the result vector,
+        -:   44: *       perform simple aligned loads for this column and aligned loads plus re-alignment for the other. (-> FirstAligned case)
+        -:   45: *       // this re-alignment is done by the palign function implemented for SSE in Eigen/src/Core/arch/SSE/PacketMath.h
+        -:   46: *   - otherwise,
+        -:   47: *     // if we get here, this means the register size is greater than 4 (e.g., AVX with floats),
+        -:   48: *     // we currently fall back to the NoneAligned case
+        -:   49: *
+        -:   50: * The same reasoning apply for the transposed case.
+        -:   51: *
+        -:   52: * The last case (PacketSize>4) could probably be improved by generalizing the FirstAligned case, but since we do not support AVX yet...
+        -:   53: * One might also wonder why in the EvenAligned case we perform unaligned loads instead of using the aligned-loads plus re-alignment
+        -:   54: * strategy as in the FirstAligned case. The reason is that we observed that unaligned loads on a 8 byte boundary are not too slow
+        -:   55: * compared to unaligned loads on a 4 byte boundary.
+        -:   56: *
+        -:   57: */
+        -:   58:template<typename Index, typename LhsScalar, typename LhsMapper, bool ConjugateLhs, typename RhsScalar, typename RhsMapper, bool ConjugateRhs, int Version>
+        -:   59:struct general_matrix_vector_product<Index,LhsScalar,LhsMapper,ColMajor,ConjugateLhs,RhsScalar,RhsMapper,ConjugateRhs,Version>
+        -:   60:{
+        -:   61:  typedef typename ScalarBinaryOpTraits<LhsScalar, RhsScalar>::ReturnType ResScalar;
+        -:   62:
+        -:   63:enum {
+        -:   64:  Vectorizable = packet_traits<LhsScalar>::Vectorizable && packet_traits<RhsScalar>::Vectorizable
+        -:   65:              && int(packet_traits<LhsScalar>::size)==int(packet_traits<RhsScalar>::size),
+        -:   66:  LhsPacketSize = Vectorizable ? packet_traits<LhsScalar>::size : 1,
+        -:   67:  RhsPacketSize = Vectorizable ? packet_traits<RhsScalar>::size : 1,
+        -:   68:  ResPacketSize = Vectorizable ? packet_traits<ResScalar>::size : 1
+        -:   69:};
+        -:   70:
+        -:   71:typedef typename packet_traits<LhsScalar>::type  _LhsPacket;
+        -:   72:typedef typename packet_traits<RhsScalar>::type  _RhsPacket;
+        -:   73:typedef typename packet_traits<ResScalar>::type  _ResPacket;
+        -:   74:
+        -:   75:typedef typename conditional<Vectorizable,_LhsPacket,LhsScalar>::type LhsPacket;
+        -:   76:typedef typename conditional<Vectorizable,_RhsPacket,RhsScalar>::type RhsPacket;
+        -:   77:typedef typename conditional<Vectorizable,_ResPacket,ResScalar>::type ResPacket;
+        -:   78:
+        -:   79:EIGEN_DONT_INLINE static void run(
+        -:   80:  Index rows, Index cols,
+        -:   81:  const LhsMapper& lhs,
+        -:   82:  const RhsMapper& rhs,
+        -:   83:        ResScalar* res, Index resIncr,
+        -:   84:  RhsScalar alpha);
+        -:   85:};
+        -:   86:
+        -:   87:template<typename Index, typename LhsScalar, typename LhsMapper, bool ConjugateLhs, typename RhsScalar, typename RhsMapper, bool ConjugateRhs, int Version>
+    3588*:   88:EIGEN_DONT_INLINE void general_matrix_vector_product<Index,LhsScalar,LhsMapper,ColMajor,ConjugateLhs,RhsScalar,RhsMapper,ConjugateRhs,Version>::run(
+        -:   89:  Index rows, Index cols,
+        -:   90:  const LhsMapper& lhs,
+        -:   91:  const RhsMapper& rhs,
+        -:   92:        ResScalar* res, Index resIncr,
+        -:   93:  RhsScalar alpha)
+        -:   94:{
+    3588*:   95:  EIGEN_UNUSED_VARIABLE(resIncr);
+        -:   96:  eigen_internal_assert(resIncr==1);
+        -:   97:  #ifdef _EIGEN_ACCUMULATE_PACKETS
+        -:   98:  #error _EIGEN_ACCUMULATE_PACKETS has already been defined
+        -:   99:  #endif
+        -:  100:  #define _EIGEN_ACCUMULATE_PACKETS(Alignment0,Alignment13,Alignment2) \
+        -:  101:    pstore(&res[j], \
+        -:  102:      padd(pload<ResPacket>(&res[j]), \
+        -:  103:        padd( \
+        -:  104:      padd(pcj.pmul(lhs0.template load<LhsPacket, Alignment0>(j),    ptmp0), \
+        -:  105:      pcj.pmul(lhs1.template load<LhsPacket, Alignment13>(j),   ptmp1)),   \
+        -:  106:      padd(pcj.pmul(lhs2.template load<LhsPacket, Alignment2>(j),    ptmp2), \
+        -:  107:      pcj.pmul(lhs3.template load<LhsPacket, Alignment13>(j),   ptmp3)) )))
+        -:  108:
+        -:  109:  typedef typename LhsMapper::VectorMapper LhsScalars;
+        -:  110:
+        -:  111:  conj_helper<LhsScalar,RhsScalar,ConjugateLhs,ConjugateRhs> cj;
+        -:  112:  conj_helper<LhsPacket,RhsPacket,ConjugateLhs,ConjugateRhs> pcj;
+        -:  113:  if(ConjugateRhs)
+        -:  114:    alpha = numext::conj(alpha);
+        -:  115:
+        -:  116:  enum { AllAligned = 0, EvenAligned, FirstAligned, NoneAligned };
+    3588*:  117:  const Index columnsAtOnce = 4;
+    3588*:  118:  const Index peels = 2;
+    3588*:  119:  const Index LhsPacketAlignedMask = LhsPacketSize-1;
+    3588*:  120:  const Index ResPacketAlignedMask = ResPacketSize-1;
+        -:  121://  const Index PeelAlignedMask = ResPacketSize*peels-1;
+    3588*:  122:  const Index size = rows;
+        -:  123:
+    3588*:  124:  const Index lhsStride = lhs.stride();
+        -:  125:
+        -:  126:  // How many coeffs of the result do we have to skip to be aligned.
+        -:  127:  // Here we assume data are at least aligned on the base scalar type.
+    3588*:  128:  Index alignedStart = internal::first_default_aligned(res,size);
+    3588*:  129:  Index alignedSize = ResPacketSize>1 ? alignedStart + ((size-alignedStart) & ~ResPacketAlignedMask) : 0;
+    3588*:  130:  const Index peeledSize = alignedSize - RhsPacketSize*peels - RhsPacketSize + 1;
+        -:  131:
+    3588*:  132:  const Index alignmentStep = LhsPacketSize>1 ? (LhsPacketSize - lhsStride % LhsPacketSize) & LhsPacketAlignedMask : 0;
+    3588*:  133:  Index alignmentPattern = alignmentStep==0 ? AllAligned
+        -:  134:                       : alignmentStep==(LhsPacketSize/2) ? EvenAligned
+        -:  135:                       : FirstAligned;
+        -:  136:
+        -:  137:  // we cannot assume the first element is aligned because of sub-matrices
+    3588*:  138:  const Index lhsAlignmentOffset = lhs.firstAligned(size);
+        -:  139:
+        -:  140:  // find how many columns do we have to skip to be aligned with the result (if possible)
+    3588*:  141:  Index skipColumns = 0;
+        -:  142:  // if the data cannot be aligned (TODO add some compile time tests when possible, e.g. for floats)
+    3588*:  143:  if( (lhsAlignmentOffset < 0) || (lhsAlignmentOffset == size) || (UIntPtr(res)%sizeof(ResScalar)) )
+        -:  144:  {
+        -:  145:    alignedSize = 0;
+        -:  146:    alignedStart = 0;
+        -:  147:    alignmentPattern = NoneAligned;
+        -:  148:  }
+        -:  149:  else if(LhsPacketSize > 4)
+        -:  150:  {
+        -:  151:    // TODO: extend the code to support aligned loads whenever possible when LhsPacketSize > 4.
+        -:  152:    // Currently, it seems to be better to perform unaligned loads anyway
+    2475*:  153:    alignmentPattern = NoneAligned;
+        -:  154:  }
+        -:  155:  else if (LhsPacketSize>1)
+        -:  156:  {
+        -:  157:  //    eigen_internal_assert(size_t(firstLhs+lhsAlignmentOffset)%sizeof(LhsPacket)==0 || size<LhsPacketSize);
+        -:  158:
+        -:  159:    while (skipColumns<LhsPacketSize &&
+        -:  160:          alignedStart != ((lhsAlignmentOffset + alignmentStep*skipColumns)%LhsPacketSize))
+        -:  161:      ++skipColumns;
+        -:  162:    if (skipColumns==LhsPacketSize)
+        -:  163:    {
+        -:  164:      // nothing can be aligned, no need to skip any column
+        -:  165:      alignmentPattern = NoneAligned;
+        -:  166:      skipColumns = 0;
+        -:  167:    }
+        -:  168:    else
+        -:  169:    {
+        -:  170:      skipColumns = (std::min)(skipColumns,cols);
+        -:  171:      // note that the skiped columns are processed later.
+        -:  172:    }
+        -:  173:
+        -:  174:    /*    eigen_internal_assert(  (alignmentPattern==NoneAligned)
+        -:  175:                      || (skipColumns + columnsAtOnce >= cols)
+        -:  176:                      || LhsPacketSize > size
+        -:  177:                      || (size_t(firstLhs+alignedStart+lhsStride*skipColumns)%sizeof(LhsPacket))==0);*/
+        -:  178:  }
+        -:  179:  else if(Vectorizable)
+        -:  180:  {
+        -:  181:    alignedStart = 0;
+        -:  182:    alignedSize = size;
+        -:  183:    alignmentPattern = AllAligned;
+        -:  184:  }
+        -:  185:
+    3588*:  186:  const Index offset1 = (FirstAligned && alignmentStep==1)?3:1;
+    3588*:  187:  const Index offset3 = (FirstAligned && alignmentStep==1)?1:3;
+        -:  188:
+    3588*:  189:  Index columnBound = ((cols-skipColumns)/columnsAtOnce)*columnsAtOnce + skipColumns;
+   11139*:  190:  for (Index i=skipColumns; i<columnBound; i+=columnsAtOnce)
+        -:  191:  {
+    7551*:  192:    RhsPacket ptmp0 = pset1<RhsPacket>(alpha*rhs(i, 0)),
+    7551*:  193:              ptmp1 = pset1<RhsPacket>(alpha*rhs(i+offset1, 0)),
+    7551*:  194:              ptmp2 = pset1<RhsPacket>(alpha*rhs(i+2, 0)),
+    7551*:  195:              ptmp3 = pset1<RhsPacket>(alpha*rhs(i+offset3, 0));
+        -:  196:
+        -:  197:    // this helps a lot generating better binary code
+    7551*:  198:    const LhsScalars lhs0 = lhs.getVectorMapper(0, i+0),   lhs1 = lhs.getVectorMapper(0, i+offset1),
+    7551*:  199:                     lhs2 = lhs.getVectorMapper(0, i+2),   lhs3 = lhs.getVectorMapper(0, i+offset3);
+        -:  200:
+        -:  201:    if (Vectorizable)
+        -:  202:    {
+        -:  203:      /* explicit vectorization */
+        -:  204:      // process initial unaligned coeffs
+    7551*:  205:      for (Index j=0; j<alignedStart; ++j)
+        -:  206:      {
+    #####:  207:        res[j] = cj.pmadd(lhs0(j), pfirst(ptmp0), res[j]);
+    #####:  208:        res[j] = cj.pmadd(lhs1(j), pfirst(ptmp1), res[j]);
+    #####:  209:        res[j] = cj.pmadd(lhs2(j), pfirst(ptmp2), res[j]);
+    #####:  210:        res[j] = cj.pmadd(lhs3(j), pfirst(ptmp3), res[j]);
+        -:  211:      }
+        -:  212:
+    7551*:  213:      if (alignedSize>alignedStart)
+        -:  214:      {
+        -:  215:        switch(alignmentPattern)
+        -:  216:        {
+        -:  217:          case AllAligned:
+        -:  218:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+        -:  219:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Aligned,Aligned);
+        -:  220:            break;
+        -:  221:          case EvenAligned:
+        -:  222:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+        -:  223:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Aligned);
+        -:  224:            break;
+        -:  225:          case FirstAligned:
+        -:  226:          {
+        -:  227:            Index j = alignedStart;
+        -:  228:            if(peels>1)
+        -:  229:            {
+        -:  230:              LhsPacket A00, A01, A02, A03, A10, A11, A12, A13;
+        -:  231:              ResPacket T0, T1;
+        -:  232:
+        -:  233:              A01 = lhs1.template load<LhsPacket, Aligned>(alignedStart-1);
+        -:  234:              A02 = lhs2.template load<LhsPacket, Aligned>(alignedStart-2);
+        -:  235:              A03 = lhs3.template load<LhsPacket, Aligned>(alignedStart-3);
+        -:  236:
+        -:  237:              for (; j<peeledSize; j+=peels*ResPacketSize)
+        -:  238:              {
+        -:  239:                A11 = lhs1.template load<LhsPacket, Aligned>(j-1+LhsPacketSize);  palign<1>(A01,A11);
+        -:  240:                A12 = lhs2.template load<LhsPacket, Aligned>(j-2+LhsPacketSize);  palign<2>(A02,A12);
+        -:  241:                A13 = lhs3.template load<LhsPacket, Aligned>(j-3+LhsPacketSize);  palign<3>(A03,A13);
+        -:  242:
+        -:  243:                A00 = lhs0.template load<LhsPacket, Aligned>(j);
+        -:  244:                A10 = lhs0.template load<LhsPacket, Aligned>(j+LhsPacketSize);
+        -:  245:                T0  = pcj.pmadd(A00, ptmp0, pload<ResPacket>(&res[j]));
+        -:  246:                T1  = pcj.pmadd(A10, ptmp0, pload<ResPacket>(&res[j+ResPacketSize]));
+        -:  247:
+        -:  248:                T0  = pcj.pmadd(A01, ptmp1, T0);
+        -:  249:                A01 = lhs1.template load<LhsPacket, Aligned>(j-1+2*LhsPacketSize);  palign<1>(A11,A01);
+        -:  250:                T0  = pcj.pmadd(A02, ptmp2, T0);
+        -:  251:                A02 = lhs2.template load<LhsPacket, Aligned>(j-2+2*LhsPacketSize);  palign<2>(A12,A02);
+        -:  252:                T0  = pcj.pmadd(A03, ptmp3, T0);
+        -:  253:                pstore(&res[j],T0);
+        -:  254:                A03 = lhs3.template load<LhsPacket, Aligned>(j-3+2*LhsPacketSize);  palign<3>(A13,A03);
+        -:  255:                T1  = pcj.pmadd(A11, ptmp1, T1);
+        -:  256:                T1  = pcj.pmadd(A12, ptmp2, T1);
+        -:  257:                T1  = pcj.pmadd(A13, ptmp3, T1);
+        -:  258:                pstore(&res[j+ResPacketSize],T1);
+        -:  259:              }
+        -:  260:            }
+        -:  261:            for (; j<alignedSize; j+=ResPacketSize)
+        -:  262:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Unaligned);
+        -:  263:            break;
+        -:  264:          }
+        -:  265:          default:
+   39501*:  266:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+   34176*:  267:              _EIGEN_ACCUMULATE_PACKETS(Unaligned,Unaligned,Unaligned);
+        -:  268:            break;
+        -:  269:        }
+        -:  270:      }
+        -:  271:    } // end explicit vectorization
+        -:  272:
+        -:  273:    /* process remaining coeffs (or all if there is no explicit vectorization) */
+   33759*:  274:    for (Index j=alignedSize; j<size; ++j)
+        -:  275:    {
+   26208*:  276:      res[j] = cj.pmadd(lhs0(j), pfirst(ptmp0), res[j]);
+   26208*:  277:      res[j] = cj.pmadd(lhs1(j), pfirst(ptmp1), res[j]);
+   26208*:  278:      res[j] = cj.pmadd(lhs2(j), pfirst(ptmp2), res[j]);
+   26208*:  279:      res[j] = cj.pmadd(lhs3(j), pfirst(ptmp3), res[j]);
+        -:  280:    }
+        -:  281:  }
+        -:  282:
+        -:  283:  // process remaining first and last columns (at most columnsAtOnce-1)
+        -:  284:  Index end = cols;
+        -:  285:  Index start = columnBound;
+        -:  286:  do
+        -:  287:  {
+    3594*:  288:    for (Index k=start; k<end; ++k)
+        -:  289:    {
+       6*:  290:      RhsPacket ptmp0 = pset1<RhsPacket>(alpha*rhs(k, 0));
+       6*:  291:      const LhsScalars lhs0 = lhs.getVectorMapper(0, k);
+        -:  292:
+        -:  293:      if (Vectorizable)
+        -:  294:      {
+        -:  295:        /* explicit vectorization */
+        -:  296:        // process first unaligned result's coeffs
+       6*:  297:        for (Index j=0; j<alignedStart; ++j)
+    #####:  298:          res[j] += cj.pmul(lhs0(j), pfirst(ptmp0));
+        -:  299:        // process aligned result's coeffs
+       6*:  300:        if (lhs0.template aligned<LhsPacket>(alignedStart))
+     390*:  301:          for (Index i = alignedStart;i<alignedSize;i+=ResPacketSize)
+     384*:  302:            pstore(&res[i], pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(i), ptmp0, pload<ResPacket>(&res[i])));
+        -:  303:        else
+    #####:  304:          for (Index i = alignedStart;i<alignedSize;i+=ResPacketSize)
+    #####:  305:            pstore(&res[i], pcj.pmadd(lhs0.template load<LhsPacket, Unaligned>(i), ptmp0, pload<ResPacket>(&res[i])));
+        -:  306:      }
+        -:  307:
+        -:  308:      // process remaining scalars (or all if no explicit vectorization)
+       6*:  309:      for (Index i=alignedSize; i<size; ++i)
+    #####:  310:        res[i] += cj.pmul(lhs0(i), pfirst(ptmp0));
+        -:  311:    }
+        -:  312:    if (skipColumns)
+        -:  313:    {
+        -:  314:      start = 0;
+        -:  315:      end = skipColumns;
+        -:  316:      skipColumns = 0;
+        -:  317:    }
+        -:  318:    else
+        -:  319:      break;
+        -:  320:  } while(Vectorizable);
+        -:  321:  #undef _EIGEN_ACCUMULATE_PACKETS
+    3588*:  322:}
+------------------
+_ZN5Eigen8internal29general_matrix_vector_productIlfNS0_22const_blas_data_mapperIflLi0EEELi0ELb0EfNS2_IflLi1EEELb0ELi1EE3runEllRKS3_RKS4_Pflf:
+     3585:   88:EIGEN_DONT_INLINE void general_matrix_vector_product<Index,LhsScalar,LhsMapper,ColMajor,ConjugateLhs,RhsScalar,RhsMapper,ConjugateRhs,Version>::run(
+        -:   89:  Index rows, Index cols,
+        -:   90:  const LhsMapper& lhs,
+        -:   91:  const RhsMapper& rhs,
+        -:   92:        ResScalar* res, Index resIncr,
+        -:   93:  RhsScalar alpha)
+        -:   94:{
+     3585:   95:  EIGEN_UNUSED_VARIABLE(resIncr);
+     3585:   95-block  0
+        -:   96:  eigen_internal_assert(resIncr==1);
+        -:   97:  #ifdef _EIGEN_ACCUMULATE_PACKETS
+        -:   98:  #error _EIGEN_ACCUMULATE_PACKETS has already been defined
+        -:   99:  #endif
+        -:  100:  #define _EIGEN_ACCUMULATE_PACKETS(Alignment0,Alignment13,Alignment2) \
+        -:  101:    pstore(&res[j], \
+        -:  102:      padd(pload<ResPacket>(&res[j]), \
+        -:  103:        padd( \
+        -:  104:      padd(pcj.pmul(lhs0.template load<LhsPacket, Alignment0>(j),    ptmp0), \
+        -:  105:      pcj.pmul(lhs1.template load<LhsPacket, Alignment13>(j),   ptmp1)),   \
+        -:  106:      padd(pcj.pmul(lhs2.template load<LhsPacket, Alignment2>(j),    ptmp2), \
+        -:  107:      pcj.pmul(lhs3.template load<LhsPacket, Alignment13>(j),   ptmp3)) )))
+        -:  108:
+        -:  109:  typedef typename LhsMapper::VectorMapper LhsScalars;
+        -:  110:
+        -:  111:  conj_helper<LhsScalar,RhsScalar,ConjugateLhs,ConjugateRhs> cj;
+        -:  112:  conj_helper<LhsPacket,RhsPacket,ConjugateLhs,ConjugateRhs> pcj;
+        -:  113:  if(ConjugateRhs)
+        -:  114:    alpha = numext::conj(alpha);
+        -:  115:
+        -:  116:  enum { AllAligned = 0, EvenAligned, FirstAligned, NoneAligned };
+     3585:  117:  const Index columnsAtOnce = 4;
+     3585:  118:  const Index peels = 2;
+     3585:  119:  const Index LhsPacketAlignedMask = LhsPacketSize-1;
+     3585:  120:  const Index ResPacketAlignedMask = ResPacketSize-1;
+        -:  121://  const Index PeelAlignedMask = ResPacketSize*peels-1;
+     3585:  122:  const Index size = rows;
+        -:  123:
+     3585:  124:  const Index lhsStride = lhs.stride();
+     3585:  124-block  0
+        -:  125:
+        -:  126:  // How many coeffs of the result do we have to skip to be aligned.
+        -:  127:  // Here we assume data are at least aligned on the base scalar type.
+     3585:  128:  Index alignedStart = internal::first_default_aligned(res,size);
+     3585:  129:  Index alignedSize = ResPacketSize>1 ? alignedStart + ((size-alignedStart) & ~ResPacketAlignedMask) : 0;
+     3585:  130:  const Index peeledSize = alignedSize - RhsPacketSize*peels - RhsPacketSize + 1;
+        -:  131:
+     3585:  132:  const Index alignmentStep = LhsPacketSize>1 ? (LhsPacketSize - lhsStride % LhsPacketSize) & LhsPacketAlignedMask : 0;
+     3585:  133:  Index alignmentPattern = alignmentStep==0 ? AllAligned
+        -:  134:                       : alignmentStep==(LhsPacketSize/2) ? EvenAligned
+        -:  135:                       : FirstAligned;
+        -:  136:
+        -:  137:  // we cannot assume the first element is aligned because of sub-matrices
+     3585:  138:  const Index lhsAlignmentOffset = lhs.firstAligned(size);
+     3585:  138-block  0
+        -:  139:
+        -:  140:  // find how many columns do we have to skip to be aligned with the result (if possible)
+     3585:  141:  Index skipColumns = 0;
+        -:  142:  // if the data cannot be aligned (TODO add some compile time tests when possible, e.g. for floats)
+     3585:  143:  if( (lhsAlignmentOffset < 0) || (lhsAlignmentOffset == size) || (UIntPtr(res)%sizeof(ResScalar)) )
+     3585:  143-block  0
+     2472:  143-block  1
+        -:  144:  {
+        -:  145:    alignedSize = 0;
+        -:  146:    alignedStart = 0;
+        -:  147:    alignmentPattern = NoneAligned;
+        -:  148:  }
+        -:  149:  else if(LhsPacketSize > 4)
+        -:  150:  {
+        -:  151:    // TODO: extend the code to support aligned loads whenever possible when LhsPacketSize > 4.
+        -:  152:    // Currently, it seems to be better to perform unaligned loads anyway
+     2472:  153:    alignmentPattern = NoneAligned;
+     2472:  153-block  0
+        -:  154:  }
+        -:  155:  else if (LhsPacketSize>1)
+        -:  156:  {
+        -:  157:  //    eigen_internal_assert(size_t(firstLhs+lhsAlignmentOffset)%sizeof(LhsPacket)==0 || size<LhsPacketSize);
+        -:  158:
+        -:  159:    while (skipColumns<LhsPacketSize &&
+        -:  160:          alignedStart != ((lhsAlignmentOffset + alignmentStep*skipColumns)%LhsPacketSize))
+        -:  161:      ++skipColumns;
+        -:  162:    if (skipColumns==LhsPacketSize)
+        -:  163:    {
+        -:  164:      // nothing can be aligned, no need to skip any column
+        -:  165:      alignmentPattern = NoneAligned;
+        -:  166:      skipColumns = 0;
+        -:  167:    }
+        -:  168:    else
+        -:  169:    {
+        -:  170:      skipColumns = (std::min)(skipColumns,cols);
+        -:  171:      // note that the skiped columns are processed later.
+        -:  172:    }
+        -:  173:
+        -:  174:    /*    eigen_internal_assert(  (alignmentPattern==NoneAligned)
+        -:  175:                      || (skipColumns + columnsAtOnce >= cols)
+        -:  176:                      || LhsPacketSize > size
+        -:  177:                      || (size_t(firstLhs+alignedStart+lhsStride*skipColumns)%sizeof(LhsPacket))==0);*/
+        -:  178:  }
+        -:  179:  else if(Vectorizable)
+        -:  180:  {
+        -:  181:    alignedStart = 0;
+        -:  182:    alignedSize = size;
+        -:  183:    alignmentPattern = AllAligned;
+        -:  184:  }
+        -:  185:
+     3585:  186:  const Index offset1 = (FirstAligned && alignmentStep==1)?3:1;
+     3585:  186-block  0
+     3585:  187:  const Index offset3 = (FirstAligned && alignmentStep==1)?1:3;
+     3585:  187-block  0
+        -:  188:
+     3585:  189:  Index columnBound = ((cols-skipColumns)/columnsAtOnce)*columnsAtOnce + skipColumns;
+    10755:  190:  for (Index i=skipColumns; i<columnBound; i+=columnsAtOnce)
+     3585:  190-block  0
+    10755:  190-block  1
+     7170:  190-block  2
+        -:  191:  {
+     7170:  192:    RhsPacket ptmp0 = pset1<RhsPacket>(alpha*rhs(i, 0)),
+     7170:  192-block  0
+     7170:  193:              ptmp1 = pset1<RhsPacket>(alpha*rhs(i+offset1, 0)),
+     7170:  194:              ptmp2 = pset1<RhsPacket>(alpha*rhs(i+2, 0)),
+     7170:  195:              ptmp3 = pset1<RhsPacket>(alpha*rhs(i+offset3, 0));
+        -:  196:
+        -:  197:    // this helps a lot generating better binary code
+     7170:  198:    const LhsScalars lhs0 = lhs.getVectorMapper(0, i+0),   lhs1 = lhs.getVectorMapper(0, i+offset1),
+     7170:  198-block  0
+     7170:  199:                     lhs2 = lhs.getVectorMapper(0, i+2),   lhs3 = lhs.getVectorMapper(0, i+offset3);
+        -:  200:
+        -:  201:    if (Vectorizable)
+        -:  202:    {
+        -:  203:      /* explicit vectorization */
+        -:  204:      // process initial unaligned coeffs
+    7170*:  205:      for (Index j=0; j<alignedStart; ++j)
+     7170:  205-block  0
+     7170:  205-block  1
+        -:  206:      {
+    #####:  207:        res[j] = cj.pmadd(lhs0(j), pfirst(ptmp0), res[j]);
+    %%%%%:  207-block  0
+    #####:  208:        res[j] = cj.pmadd(lhs1(j), pfirst(ptmp1), res[j]);
+    #####:  209:        res[j] = cj.pmadd(lhs2(j), pfirst(ptmp2), res[j]);
+    #####:  210:        res[j] = cj.pmadd(lhs3(j), pfirst(ptmp3), res[j]);
+        -:  211:      }
+        -:  212:
+     7170:  213:      if (alignedSize>alignedStart)
+     7170:  213-block  0
+        -:  214:      {
+        -:  215:        switch(alignmentPattern)
+        -:  216:        {
+        -:  217:          case AllAligned:
+        -:  218:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+        -:  219:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Aligned,Aligned);
+        -:  220:            break;
+        -:  221:          case EvenAligned:
+        -:  222:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+        -:  223:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Aligned);
+        -:  224:            break;
+        -:  225:          case FirstAligned:
+        -:  226:          {
+        -:  227:            Index j = alignedStart;
+        -:  228:            if(peels>1)
+        -:  229:            {
+        -:  230:              LhsPacket A00, A01, A02, A03, A10, A11, A12, A13;
+        -:  231:              ResPacket T0, T1;
+        -:  232:
+        -:  233:              A01 = lhs1.template load<LhsPacket, Aligned>(alignedStart-1);
+        -:  234:              A02 = lhs2.template load<LhsPacket, Aligned>(alignedStart-2);
+        -:  235:              A03 = lhs3.template load<LhsPacket, Aligned>(alignedStart-3);
+        -:  236:
+        -:  237:              for (; j<peeledSize; j+=peels*ResPacketSize)
+        -:  238:              {
+        -:  239:                A11 = lhs1.template load<LhsPacket, Aligned>(j-1+LhsPacketSize);  palign<1>(A01,A11);
+        -:  240:                A12 = lhs2.template load<LhsPacket, Aligned>(j-2+LhsPacketSize);  palign<2>(A02,A12);
+        -:  241:                A13 = lhs3.template load<LhsPacket, Aligned>(j-3+LhsPacketSize);  palign<3>(A03,A13);
+        -:  242:
+        -:  243:                A00 = lhs0.template load<LhsPacket, Aligned>(j);
+        -:  244:                A10 = lhs0.template load<LhsPacket, Aligned>(j+LhsPacketSize);
+        -:  245:                T0  = pcj.pmadd(A00, ptmp0, pload<ResPacket>(&res[j]));
+        -:  246:                T1  = pcj.pmadd(A10, ptmp0, pload<ResPacket>(&res[j+ResPacketSize]));
+        -:  247:
+        -:  248:                T0  = pcj.pmadd(A01, ptmp1, T0);
+        -:  249:                A01 = lhs1.template load<LhsPacket, Aligned>(j-1+2*LhsPacketSize);  palign<1>(A11,A01);
+        -:  250:                T0  = pcj.pmadd(A02, ptmp2, T0);
+        -:  251:                A02 = lhs2.template load<LhsPacket, Aligned>(j-2+2*LhsPacketSize);  palign<2>(A12,A02);
+        -:  252:                T0  = pcj.pmadd(A03, ptmp3, T0);
+        -:  253:                pstore(&res[j],T0);
+        -:  254:                A03 = lhs3.template load<LhsPacket, Aligned>(j-3+2*LhsPacketSize);  palign<3>(A13,A03);
+        -:  255:                T1  = pcj.pmadd(A11, ptmp1, T1);
+        -:  256:                T1  = pcj.pmadd(A12, ptmp2, T1);
+        -:  257:                T1  = pcj.pmadd(A13, ptmp3, T1);
+        -:  258:                pstore(&res[j+ResPacketSize],T1);
+        -:  259:              }
+        -:  260:            }
+        -:  261:            for (; j<alignedSize; j+=ResPacketSize)
+        -:  262:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Unaligned);
+        -:  263:            break;
+        -:  264:          }
+        -:  265:          default:
+    14736:  266:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+    14736:  266-block  0
+     9792:  266-block  1
+     9792:  267:              _EIGEN_ACCUMULATE_PACKETS(Unaligned,Unaligned,Unaligned);
+     9792:  267-block  0
+        -:  268:            break;
+        -:  269:        }
+        -:  270:      }
+        -:  271:    } // end explicit vectorization
+        -:  272:
+        -:  273:    /* process remaining coeffs (or all if there is no explicit vectorization) */
+    33378:  274:    for (Index j=alignedSize; j<size; ++j)
+    33378:  274-block  0
+        -:  275:    {
+    26208:  276:      res[j] = cj.pmadd(lhs0(j), pfirst(ptmp0), res[j]);
+    26208:  276-block  0
+    26208:  277:      res[j] = cj.pmadd(lhs1(j), pfirst(ptmp1), res[j]);
+    26208:  278:      res[j] = cj.pmadd(lhs2(j), pfirst(ptmp2), res[j]);
+    26208:  279:      res[j] = cj.pmadd(lhs3(j), pfirst(ptmp3), res[j]);
+        -:  280:    }
+        -:  281:  }
+        -:  282:
+        -:  283:  // process remaining first and last columns (at most columnsAtOnce-1)
+        -:  284:  Index end = cols;
+        -:  285:  Index start = columnBound;
+        -:  286:  do
+        -:  287:  {
+    3585*:  288:    for (Index k=start; k<end; ++k)
+     3585:  288-block  0
+    %%%%%:  288-block  1
+        -:  289:    {
+    #####:  290:      RhsPacket ptmp0 = pset1<RhsPacket>(alpha*rhs(k, 0));
+    %%%%%:  290-block  0
+    #####:  291:      const LhsScalars lhs0 = lhs.getVectorMapper(0, k);
+    %%%%%:  291-block  0
+        -:  292:
+        -:  293:      if (Vectorizable)
+        -:  294:      {
+        -:  295:        /* explicit vectorization */
+        -:  296:        // process first unaligned result's coeffs
+    #####:  297:        for (Index j=0; j<alignedStart; ++j)
+    %%%%%:  297-block  0
+    %%%%%:  297-block  1
+    #####:  298:          res[j] += cj.pmul(lhs0(j), pfirst(ptmp0));
+    %%%%%:  298-block  0
+        -:  299:        // process aligned result's coeffs
+    #####:  300:        if (lhs0.template aligned<LhsPacket>(alignedStart))
+    %%%%%:  300-block  0
+    #####:  301:          for (Index i = alignedStart;i<alignedSize;i+=ResPacketSize)
+    %%%%%:  301-block  0
+    %%%%%:  301-block  1
+    #####:  302:            pstore(&res[i], pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(i), ptmp0, pload<ResPacket>(&res[i])));
+    %%%%%:  302-block  0
+        -:  303:        else
+    #####:  304:          for (Index i = alignedStart;i<alignedSize;i+=ResPacketSize)
+    %%%%%:  304-block  0
+    %%%%%:  304-block  1
+    #####:  305:            pstore(&res[i], pcj.pmadd(lhs0.template load<LhsPacket, Unaligned>(i), ptmp0, pload<ResPacket>(&res[i])));
+    %%%%%:  305-block  0
+        -:  306:      }
+        -:  307:
+        -:  308:      // process remaining scalars (or all if no explicit vectorization)
+    #####:  309:      for (Index i=alignedSize; i<size; ++i)
+    %%%%%:  309-block  0
+    #####:  310:        res[i] += cj.pmul(lhs0(i), pfirst(ptmp0));
+    %%%%%:  310-block  0
+        -:  311:    }
+        -:  312:    if (skipColumns)
+        -:  313:    {
+        -:  314:      start = 0;
+        -:  315:      end = skipColumns;
+        -:  316:      skipColumns = 0;
+        -:  317:    }
+        -:  318:    else
+        -:  319:      break;
+        -:  320:  } while(Vectorizable);
+        -:  321:  #undef _EIGEN_ACCUMULATE_PACKETS
+     3585:  322:}
+------------------
+_ZN5Eigen8internal29general_matrix_vector_productIlfNS0_22const_blas_data_mapperIflLi0EEELi0ELb0EfNS2_IflLi1EEELb0ELi0EE3runEllRKS3_RKS4_Pflf:
+        3:   88:EIGEN_DONT_INLINE void general_matrix_vector_product<Index,LhsScalar,LhsMapper,ColMajor,ConjugateLhs,RhsScalar,RhsMapper,ConjugateRhs,Version>::run(
+        -:   89:  Index rows, Index cols,
+        -:   90:  const LhsMapper& lhs,
+        -:   91:  const RhsMapper& rhs,
+        -:   92:        ResScalar* res, Index resIncr,
+        -:   93:  RhsScalar alpha)
+        -:   94:{
+        3:   95:  EIGEN_UNUSED_VARIABLE(resIncr);
+        3:   95-block  0
+        -:   96:  eigen_internal_assert(resIncr==1);
+        -:   97:  #ifdef _EIGEN_ACCUMULATE_PACKETS
+        -:   98:  #error _EIGEN_ACCUMULATE_PACKETS has already been defined
+        -:   99:  #endif
+        -:  100:  #define _EIGEN_ACCUMULATE_PACKETS(Alignment0,Alignment13,Alignment2) \
+        -:  101:    pstore(&res[j], \
+        -:  102:      padd(pload<ResPacket>(&res[j]), \
+        -:  103:        padd( \
+        -:  104:      padd(pcj.pmul(lhs0.template load<LhsPacket, Alignment0>(j),    ptmp0), \
+        -:  105:      pcj.pmul(lhs1.template load<LhsPacket, Alignment13>(j),   ptmp1)),   \
+        -:  106:      padd(pcj.pmul(lhs2.template load<LhsPacket, Alignment2>(j),    ptmp2), \
+        -:  107:      pcj.pmul(lhs3.template load<LhsPacket, Alignment13>(j),   ptmp3)) )))
+        -:  108:
+        -:  109:  typedef typename LhsMapper::VectorMapper LhsScalars;
+        -:  110:
+        -:  111:  conj_helper<LhsScalar,RhsScalar,ConjugateLhs,ConjugateRhs> cj;
+        -:  112:  conj_helper<LhsPacket,RhsPacket,ConjugateLhs,ConjugateRhs> pcj;
+        -:  113:  if(ConjugateRhs)
+        -:  114:    alpha = numext::conj(alpha);
+        -:  115:
+        -:  116:  enum { AllAligned = 0, EvenAligned, FirstAligned, NoneAligned };
+        3:  117:  const Index columnsAtOnce = 4;
+        3:  118:  const Index peels = 2;
+        3:  119:  const Index LhsPacketAlignedMask = LhsPacketSize-1;
+        3:  120:  const Index ResPacketAlignedMask = ResPacketSize-1;
+        -:  121://  const Index PeelAlignedMask = ResPacketSize*peels-1;
+        3:  122:  const Index size = rows;
+        -:  123:
+        3:  124:  const Index lhsStride = lhs.stride();
+        3:  124-block  0
+        -:  125:
+        -:  126:  // How many coeffs of the result do we have to skip to be aligned.
+        -:  127:  // Here we assume data are at least aligned on the base scalar type.
+        3:  128:  Index alignedStart = internal::first_default_aligned(res,size);
+        3:  129:  Index alignedSize = ResPacketSize>1 ? alignedStart + ((size-alignedStart) & ~ResPacketAlignedMask) : 0;
+        3:  130:  const Index peeledSize = alignedSize - RhsPacketSize*peels - RhsPacketSize + 1;
+        -:  131:
+        3:  132:  const Index alignmentStep = LhsPacketSize>1 ? (LhsPacketSize - lhsStride % LhsPacketSize) & LhsPacketAlignedMask : 0;
+        3:  133:  Index alignmentPattern = alignmentStep==0 ? AllAligned
+        -:  134:                       : alignmentStep==(LhsPacketSize/2) ? EvenAligned
+        -:  135:                       : FirstAligned;
+        -:  136:
+        -:  137:  // we cannot assume the first element is aligned because of sub-matrices
+        3:  138:  const Index lhsAlignmentOffset = lhs.firstAligned(size);
+        3:  138-block  0
+        -:  139:
+        -:  140:  // find how many columns do we have to skip to be aligned with the result (if possible)
+        3:  141:  Index skipColumns = 0;
+        -:  142:  // if the data cannot be aligned (TODO add some compile time tests when possible, e.g. for floats)
+        3:  143:  if( (lhsAlignmentOffset < 0) || (lhsAlignmentOffset == size) || (UIntPtr(res)%sizeof(ResScalar)) )
+        3:  143-block  0
+        3:  143-block  1
+        -:  144:  {
+        -:  145:    alignedSize = 0;
+        -:  146:    alignedStart = 0;
+        -:  147:    alignmentPattern = NoneAligned;
+        -:  148:  }
+        -:  149:  else if(LhsPacketSize > 4)
+        -:  150:  {
+        -:  151:    // TODO: extend the code to support aligned loads whenever possible when LhsPacketSize > 4.
+        -:  152:    // Currently, it seems to be better to perform unaligned loads anyway
+        3:  153:    alignmentPattern = NoneAligned;
+        3:  153-block  0
+        -:  154:  }
+        -:  155:  else if (LhsPacketSize>1)
+        -:  156:  {
+        -:  157:  //    eigen_internal_assert(size_t(firstLhs+lhsAlignmentOffset)%sizeof(LhsPacket)==0 || size<LhsPacketSize);
+        -:  158:
+        -:  159:    while (skipColumns<LhsPacketSize &&
+        -:  160:          alignedStart != ((lhsAlignmentOffset + alignmentStep*skipColumns)%LhsPacketSize))
+        -:  161:      ++skipColumns;
+        -:  162:    if (skipColumns==LhsPacketSize)
+        -:  163:    {
+        -:  164:      // nothing can be aligned, no need to skip any column
+        -:  165:      alignmentPattern = NoneAligned;
+        -:  166:      skipColumns = 0;
+        -:  167:    }
+        -:  168:    else
+        -:  169:    {
+        -:  170:      skipColumns = (std::min)(skipColumns,cols);
+        -:  171:      // note that the skiped columns are processed later.
+        -:  172:    }
+        -:  173:
+        -:  174:    /*    eigen_internal_assert(  (alignmentPattern==NoneAligned)
+        -:  175:                      || (skipColumns + columnsAtOnce >= cols)
+        -:  176:                      || LhsPacketSize > size
+        -:  177:                      || (size_t(firstLhs+alignedStart+lhsStride*skipColumns)%sizeof(LhsPacket))==0);*/
+        -:  178:  }
+        -:  179:  else if(Vectorizable)
+        -:  180:  {
+        -:  181:    alignedStart = 0;
+        -:  182:    alignedSize = size;
+        -:  183:    alignmentPattern = AllAligned;
+        -:  184:  }
+        -:  185:
+        3:  186:  const Index offset1 = (FirstAligned && alignmentStep==1)?3:1;
+        3:  186-block  0
+        3:  187:  const Index offset3 = (FirstAligned && alignmentStep==1)?1:3;
+        3:  187-block  0
+        -:  188:
+        3:  189:  Index columnBound = ((cols-skipColumns)/columnsAtOnce)*columnsAtOnce + skipColumns;
+      384:  190:  for (Index i=skipColumns; i<columnBound; i+=columnsAtOnce)
+        3:  190-block  0
+      384:  190-block  1
+      381:  190-block  2
+        -:  191:  {
+      381:  192:    RhsPacket ptmp0 = pset1<RhsPacket>(alpha*rhs(i, 0)),
+      381:  192-block  0
+      381:  193:              ptmp1 = pset1<RhsPacket>(alpha*rhs(i+offset1, 0)),
+      381:  194:              ptmp2 = pset1<RhsPacket>(alpha*rhs(i+2, 0)),
+      381:  195:              ptmp3 = pset1<RhsPacket>(alpha*rhs(i+offset3, 0));
+        -:  196:
+        -:  197:    // this helps a lot generating better binary code
+      381:  198:    const LhsScalars lhs0 = lhs.getVectorMapper(0, i+0),   lhs1 = lhs.getVectorMapper(0, i+offset1),
+      381:  198-block  0
+      381:  199:                     lhs2 = lhs.getVectorMapper(0, i+2),   lhs3 = lhs.getVectorMapper(0, i+offset3);
+        -:  200:
+        -:  201:    if (Vectorizable)
+        -:  202:    {
+        -:  203:      /* explicit vectorization */
+        -:  204:      // process initial unaligned coeffs
+     381*:  205:      for (Index j=0; j<alignedStart; ++j)
+      381:  205-block  0
+      381:  205-block  1
+        -:  206:      {
+    #####:  207:        res[j] = cj.pmadd(lhs0(j), pfirst(ptmp0), res[j]);
+    %%%%%:  207-block  0
+    #####:  208:        res[j] = cj.pmadd(lhs1(j), pfirst(ptmp1), res[j]);
+    #####:  209:        res[j] = cj.pmadd(lhs2(j), pfirst(ptmp2), res[j]);
+    #####:  210:        res[j] = cj.pmadd(lhs3(j), pfirst(ptmp3), res[j]);
+        -:  211:      }
+        -:  212:
+      381:  213:      if (alignedSize>alignedStart)
+      381:  213-block  0
+        -:  214:      {
+        -:  215:        switch(alignmentPattern)
+        -:  216:        {
+        -:  217:          case AllAligned:
+        -:  218:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+        -:  219:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Aligned,Aligned);
+        -:  220:            break;
+        -:  221:          case EvenAligned:
+        -:  222:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+        -:  223:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Aligned);
+        -:  224:            break;
+        -:  225:          case FirstAligned:
+        -:  226:          {
+        -:  227:            Index j = alignedStart;
+        -:  228:            if(peels>1)
+        -:  229:            {
+        -:  230:              LhsPacket A00, A01, A02, A03, A10, A11, A12, A13;
+        -:  231:              ResPacket T0, T1;
+        -:  232:
+        -:  233:              A01 = lhs1.template load<LhsPacket, Aligned>(alignedStart-1);
+        -:  234:              A02 = lhs2.template load<LhsPacket, Aligned>(alignedStart-2);
+        -:  235:              A03 = lhs3.template load<LhsPacket, Aligned>(alignedStart-3);
+        -:  236:
+        -:  237:              for (; j<peeledSize; j+=peels*ResPacketSize)
+        -:  238:              {
+        -:  239:                A11 = lhs1.template load<LhsPacket, Aligned>(j-1+LhsPacketSize);  palign<1>(A01,A11);
+        -:  240:                A12 = lhs2.template load<LhsPacket, Aligned>(j-2+LhsPacketSize);  palign<2>(A02,A12);
+        -:  241:                A13 = lhs3.template load<LhsPacket, Aligned>(j-3+LhsPacketSize);  palign<3>(A03,A13);
+        -:  242:
+        -:  243:                A00 = lhs0.template load<LhsPacket, Aligned>(j);
+        -:  244:                A10 = lhs0.template load<LhsPacket, Aligned>(j+LhsPacketSize);
+        -:  245:                T0  = pcj.pmadd(A00, ptmp0, pload<ResPacket>(&res[j]));
+        -:  246:                T1  = pcj.pmadd(A10, ptmp0, pload<ResPacket>(&res[j+ResPacketSize]));
+        -:  247:
+        -:  248:                T0  = pcj.pmadd(A01, ptmp1, T0);
+        -:  249:                A01 = lhs1.template load<LhsPacket, Aligned>(j-1+2*LhsPacketSize);  palign<1>(A11,A01);
+        -:  250:                T0  = pcj.pmadd(A02, ptmp2, T0);
+        -:  251:                A02 = lhs2.template load<LhsPacket, Aligned>(j-2+2*LhsPacketSize);  palign<2>(A12,A02);
+        -:  252:                T0  = pcj.pmadd(A03, ptmp3, T0);
+        -:  253:                pstore(&res[j],T0);
+        -:  254:                A03 = lhs3.template load<LhsPacket, Aligned>(j-3+2*LhsPacketSize);  palign<3>(A13,A03);
+        -:  255:                T1  = pcj.pmadd(A11, ptmp1, T1);
+        -:  256:                T1  = pcj.pmadd(A12, ptmp2, T1);
+        -:  257:                T1  = pcj.pmadd(A13, ptmp3, T1);
+        -:  258:                pstore(&res[j+ResPacketSize],T1);
+        -:  259:              }
+        -:  260:            }
+        -:  261:            for (; j<alignedSize; j+=ResPacketSize)
+        -:  262:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Unaligned);
+        -:  263:            break;
+        -:  264:          }
+        -:  265:          default:
+    24765:  266:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+    24765:  266-block  0
+    24384:  266-block  1
+    24384:  267:              _EIGEN_ACCUMULATE_PACKETS(Unaligned,Unaligned,Unaligned);
+    24384:  267-block  0
+        -:  268:            break;
+        -:  269:        }
+        -:  270:      }
+        -:  271:    } // end explicit vectorization
+        -:  272:
+        -:  273:    /* process remaining coeffs (or all if there is no explicit vectorization) */
+     381*:  274:    for (Index j=alignedSize; j<size; ++j)
+      381:  274-block  0
+        -:  275:    {
+    #####:  276:      res[j] = cj.pmadd(lhs0(j), pfirst(ptmp0), res[j]);
+    %%%%%:  276-block  0
+    #####:  277:      res[j] = cj.pmadd(lhs1(j), pfirst(ptmp1), res[j]);
+    #####:  278:      res[j] = cj.pmadd(lhs2(j), pfirst(ptmp2), res[j]);
+    #####:  279:      res[j] = cj.pmadd(lhs3(j), pfirst(ptmp3), res[j]);
+        -:  280:    }
+        -:  281:  }
+        -:  282:
+        -:  283:  // process remaining first and last columns (at most columnsAtOnce-1)
+        -:  284:  Index end = cols;
+        -:  285:  Index start = columnBound;
+        -:  286:  do
+        -:  287:  {
+        9:  288:    for (Index k=start; k<end; ++k)
+        9:  288-block  0
+        6:  288-block  1
+        -:  289:    {
+        6:  290:      RhsPacket ptmp0 = pset1<RhsPacket>(alpha*rhs(k, 0));
+        6:  290-block  0
+        6:  291:      const LhsScalars lhs0 = lhs.getVectorMapper(0, k);
+        6:  291-block  0
+        -:  292:
+        -:  293:      if (Vectorizable)
+        -:  294:      {
+        -:  295:        /* explicit vectorization */
+        -:  296:        // process first unaligned result's coeffs
+       6*:  297:        for (Index j=0; j<alignedStart; ++j)
+        6:  297-block  0
+        6:  297-block  1
+    #####:  298:          res[j] += cj.pmul(lhs0(j), pfirst(ptmp0));
+    %%%%%:  298-block  0
+        -:  299:        // process aligned result's coeffs
+        6:  300:        if (lhs0.template aligned<LhsPacket>(alignedStart))
+        6:  300-block  0
+      390:  301:          for (Index i = alignedStart;i<alignedSize;i+=ResPacketSize)
+      390:  301-block  0
+      384:  301-block  1
+      384:  302:            pstore(&res[i], pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(i), ptmp0, pload<ResPacket>(&res[i])));
+      384:  302-block  0
+        -:  303:        else
+    #####:  304:          for (Index i = alignedStart;i<alignedSize;i+=ResPacketSize)
+    %%%%%:  304-block  0
+    %%%%%:  304-block  1
+    #####:  305:            pstore(&res[i], pcj.pmadd(lhs0.template load<LhsPacket, Unaligned>(i), ptmp0, pload<ResPacket>(&res[i])));
+    %%%%%:  305-block  0
+        -:  306:      }
+        -:  307:
+        -:  308:      // process remaining scalars (or all if no explicit vectorization)
+       6*:  309:      for (Index i=alignedSize; i<size; ++i)
+        6:  309-block  0
+    #####:  310:        res[i] += cj.pmul(lhs0(i), pfirst(ptmp0));
+    %%%%%:  310-block  0
+        -:  311:    }
+        -:  312:    if (skipColumns)
+        -:  313:    {
+        -:  314:      start = 0;
+        -:  315:      end = skipColumns;
+        -:  316:      skipColumns = 0;
+        -:  317:    }
+        -:  318:    else
+        -:  319:      break;
+        -:  320:  } while(Vectorizable);
+        -:  321:  #undef _EIGEN_ACCUMULATE_PACKETS
+        3:  322:}
+------------------
+_ZN5Eigen8internal29general_matrix_vector_productIlfNS0_22const_blas_data_mapperIflLi0EEELi0ELb0EfS3_Lb0ELi0EE3runEllRKS3_S6_Pflf:
+    #####:   88:EIGEN_DONT_INLINE void general_matrix_vector_product<Index,LhsScalar,LhsMapper,ColMajor,ConjugateLhs,RhsScalar,RhsMapper,ConjugateRhs,Version>::run(
+        -:   89:  Index rows, Index cols,
+        -:   90:  const LhsMapper& lhs,
+        -:   91:  const RhsMapper& rhs,
+        -:   92:        ResScalar* res, Index resIncr,
+        -:   93:  RhsScalar alpha)
+        -:   94:{
+    #####:   95:  EIGEN_UNUSED_VARIABLE(resIncr);
+    %%%%%:   95-block  0
+        -:   96:  eigen_internal_assert(resIncr==1);
+        -:   97:  #ifdef _EIGEN_ACCUMULATE_PACKETS
+        -:   98:  #error _EIGEN_ACCUMULATE_PACKETS has already been defined
+        -:   99:  #endif
+        -:  100:  #define _EIGEN_ACCUMULATE_PACKETS(Alignment0,Alignment13,Alignment2) \
+        -:  101:    pstore(&res[j], \
+        -:  102:      padd(pload<ResPacket>(&res[j]), \
+        -:  103:        padd( \
+        -:  104:      padd(pcj.pmul(lhs0.template load<LhsPacket, Alignment0>(j),    ptmp0), \
+        -:  105:      pcj.pmul(lhs1.template load<LhsPacket, Alignment13>(j),   ptmp1)),   \
+        -:  106:      padd(pcj.pmul(lhs2.template load<LhsPacket, Alignment2>(j),    ptmp2), \
+        -:  107:      pcj.pmul(lhs3.template load<LhsPacket, Alignment13>(j),   ptmp3)) )))
+        -:  108:
+        -:  109:  typedef typename LhsMapper::VectorMapper LhsScalars;
+        -:  110:
+        -:  111:  conj_helper<LhsScalar,RhsScalar,ConjugateLhs,ConjugateRhs> cj;
+        -:  112:  conj_helper<LhsPacket,RhsPacket,ConjugateLhs,ConjugateRhs> pcj;
+        -:  113:  if(ConjugateRhs)
+        -:  114:    alpha = numext::conj(alpha);
+        -:  115:
+        -:  116:  enum { AllAligned = 0, EvenAligned, FirstAligned, NoneAligned };
+    #####:  117:  const Index columnsAtOnce = 4;
+    #####:  118:  const Index peels = 2;
+    #####:  119:  const Index LhsPacketAlignedMask = LhsPacketSize-1;
+    #####:  120:  const Index ResPacketAlignedMask = ResPacketSize-1;
+        -:  121://  const Index PeelAlignedMask = ResPacketSize*peels-1;
+    #####:  122:  const Index size = rows;
+        -:  123:
+    #####:  124:  const Index lhsStride = lhs.stride();
+    %%%%%:  124-block  0
+        -:  125:
+        -:  126:  // How many coeffs of the result do we have to skip to be aligned.
+        -:  127:  // Here we assume data are at least aligned on the base scalar type.
+    #####:  128:  Index alignedStart = internal::first_default_aligned(res,size);
+    #####:  129:  Index alignedSize = ResPacketSize>1 ? alignedStart + ((size-alignedStart) & ~ResPacketAlignedMask) : 0;
+    #####:  130:  const Index peeledSize = alignedSize - RhsPacketSize*peels - RhsPacketSize + 1;
+        -:  131:
+    #####:  132:  const Index alignmentStep = LhsPacketSize>1 ? (LhsPacketSize - lhsStride % LhsPacketSize) & LhsPacketAlignedMask : 0;
+    #####:  133:  Index alignmentPattern = alignmentStep==0 ? AllAligned
+        -:  134:                       : alignmentStep==(LhsPacketSize/2) ? EvenAligned
+        -:  135:                       : FirstAligned;
+        -:  136:
+        -:  137:  // we cannot assume the first element is aligned because of sub-matrices
+    #####:  138:  const Index lhsAlignmentOffset = lhs.firstAligned(size);
+    %%%%%:  138-block  0
+        -:  139:
+        -:  140:  // find how many columns do we have to skip to be aligned with the result (if possible)
+    #####:  141:  Index skipColumns = 0;
+        -:  142:  // if the data cannot be aligned (TODO add some compile time tests when possible, e.g. for floats)
+    #####:  143:  if( (lhsAlignmentOffset < 0) || (lhsAlignmentOffset == size) || (UIntPtr(res)%sizeof(ResScalar)) )
+    %%%%%:  143-block  0
+    %%%%%:  143-block  1
+        -:  144:  {
+        -:  145:    alignedSize = 0;
+        -:  146:    alignedStart = 0;
+        -:  147:    alignmentPattern = NoneAligned;
+        -:  148:  }
+        -:  149:  else if(LhsPacketSize > 4)
+        -:  150:  {
+        -:  151:    // TODO: extend the code to support aligned loads whenever possible when LhsPacketSize > 4.
+        -:  152:    // Currently, it seems to be better to perform unaligned loads anyway
+    #####:  153:    alignmentPattern = NoneAligned;
+    %%%%%:  153-block  0
+        -:  154:  }
+        -:  155:  else if (LhsPacketSize>1)
+        -:  156:  {
+        -:  157:  //    eigen_internal_assert(size_t(firstLhs+lhsAlignmentOffset)%sizeof(LhsPacket)==0 || size<LhsPacketSize);
+        -:  158:
+        -:  159:    while (skipColumns<LhsPacketSize &&
+        -:  160:          alignedStart != ((lhsAlignmentOffset + alignmentStep*skipColumns)%LhsPacketSize))
+        -:  161:      ++skipColumns;
+        -:  162:    if (skipColumns==LhsPacketSize)
+        -:  163:    {
+        -:  164:      // nothing can be aligned, no need to skip any column
+        -:  165:      alignmentPattern = NoneAligned;
+        -:  166:      skipColumns = 0;
+        -:  167:    }
+        -:  168:    else
+        -:  169:    {
+        -:  170:      skipColumns = (std::min)(skipColumns,cols);
+        -:  171:      // note that the skiped columns are processed later.
+        -:  172:    }
+        -:  173:
+        -:  174:    /*    eigen_internal_assert(  (alignmentPattern==NoneAligned)
+        -:  175:                      || (skipColumns + columnsAtOnce >= cols)
+        -:  176:                      || LhsPacketSize > size
+        -:  177:                      || (size_t(firstLhs+alignedStart+lhsStride*skipColumns)%sizeof(LhsPacket))==0);*/
+        -:  178:  }
+        -:  179:  else if(Vectorizable)
+        -:  180:  {
+        -:  181:    alignedStart = 0;
+        -:  182:    alignedSize = size;
+        -:  183:    alignmentPattern = AllAligned;
+        -:  184:  }
+        -:  185:
+    #####:  186:  const Index offset1 = (FirstAligned && alignmentStep==1)?3:1;
+    %%%%%:  186-block  0
+    #####:  187:  const Index offset3 = (FirstAligned && alignmentStep==1)?1:3;
+    %%%%%:  187-block  0
+        -:  188:
+    #####:  189:  Index columnBound = ((cols-skipColumns)/columnsAtOnce)*columnsAtOnce + skipColumns;
+    #####:  190:  for (Index i=skipColumns; i<columnBound; i+=columnsAtOnce)
+    %%%%%:  190-block  0
+    %%%%%:  190-block  1
+    %%%%%:  190-block  2
+        -:  191:  {
+    #####:  192:    RhsPacket ptmp0 = pset1<RhsPacket>(alpha*rhs(i, 0)),
+    %%%%%:  192-block  0
+    #####:  193:              ptmp1 = pset1<RhsPacket>(alpha*rhs(i+offset1, 0)),
+    #####:  194:              ptmp2 = pset1<RhsPacket>(alpha*rhs(i+2, 0)),
+    #####:  195:              ptmp3 = pset1<RhsPacket>(alpha*rhs(i+offset3, 0));
+        -:  196:
+        -:  197:    // this helps a lot generating better binary code
+    #####:  198:    const LhsScalars lhs0 = lhs.getVectorMapper(0, i+0),   lhs1 = lhs.getVectorMapper(0, i+offset1),
+    %%%%%:  198-block  0
+    #####:  199:                     lhs2 = lhs.getVectorMapper(0, i+2),   lhs3 = lhs.getVectorMapper(0, i+offset3);
+        -:  200:
+        -:  201:    if (Vectorizable)
+        -:  202:    {
+        -:  203:      /* explicit vectorization */
+        -:  204:      // process initial unaligned coeffs
+    #####:  205:      for (Index j=0; j<alignedStart; ++j)
+    %%%%%:  205-block  0
+    %%%%%:  205-block  1
+        -:  206:      {
+    #####:  207:        res[j] = cj.pmadd(lhs0(j), pfirst(ptmp0), res[j]);
+    %%%%%:  207-block  0
+    #####:  208:        res[j] = cj.pmadd(lhs1(j), pfirst(ptmp1), res[j]);
+    #####:  209:        res[j] = cj.pmadd(lhs2(j), pfirst(ptmp2), res[j]);
+    #####:  210:        res[j] = cj.pmadd(lhs3(j), pfirst(ptmp3), res[j]);
+        -:  211:      }
+        -:  212:
+    #####:  213:      if (alignedSize>alignedStart)
+    %%%%%:  213-block  0
+        -:  214:      {
+        -:  215:        switch(alignmentPattern)
+        -:  216:        {
+        -:  217:          case AllAligned:
+        -:  218:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+        -:  219:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Aligned,Aligned);
+        -:  220:            break;
+        -:  221:          case EvenAligned:
+        -:  222:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+        -:  223:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Aligned);
+        -:  224:            break;
+        -:  225:          case FirstAligned:
+        -:  226:          {
+        -:  227:            Index j = alignedStart;
+        -:  228:            if(peels>1)
+        -:  229:            {
+        -:  230:              LhsPacket A00, A01, A02, A03, A10, A11, A12, A13;
+        -:  231:              ResPacket T0, T1;
+        -:  232:
+        -:  233:              A01 = lhs1.template load<LhsPacket, Aligned>(alignedStart-1);
+        -:  234:              A02 = lhs2.template load<LhsPacket, Aligned>(alignedStart-2);
+        -:  235:              A03 = lhs3.template load<LhsPacket, Aligned>(alignedStart-3);
+        -:  236:
+        -:  237:              for (; j<peeledSize; j+=peels*ResPacketSize)
+        -:  238:              {
+        -:  239:                A11 = lhs1.template load<LhsPacket, Aligned>(j-1+LhsPacketSize);  palign<1>(A01,A11);
+        -:  240:                A12 = lhs2.template load<LhsPacket, Aligned>(j-2+LhsPacketSize);  palign<2>(A02,A12);
+        -:  241:                A13 = lhs3.template load<LhsPacket, Aligned>(j-3+LhsPacketSize);  palign<3>(A03,A13);
+        -:  242:
+        -:  243:                A00 = lhs0.template load<LhsPacket, Aligned>(j);
+        -:  244:                A10 = lhs0.template load<LhsPacket, Aligned>(j+LhsPacketSize);
+        -:  245:                T0  = pcj.pmadd(A00, ptmp0, pload<ResPacket>(&res[j]));
+        -:  246:                T1  = pcj.pmadd(A10, ptmp0, pload<ResPacket>(&res[j+ResPacketSize]));
+        -:  247:
+        -:  248:                T0  = pcj.pmadd(A01, ptmp1, T0);
+        -:  249:                A01 = lhs1.template load<LhsPacket, Aligned>(j-1+2*LhsPacketSize);  palign<1>(A11,A01);
+        -:  250:                T0  = pcj.pmadd(A02, ptmp2, T0);
+        -:  251:                A02 = lhs2.template load<LhsPacket, Aligned>(j-2+2*LhsPacketSize);  palign<2>(A12,A02);
+        -:  252:                T0  = pcj.pmadd(A03, ptmp3, T0);
+        -:  253:                pstore(&res[j],T0);
+        -:  254:                A03 = lhs3.template load<LhsPacket, Aligned>(j-3+2*LhsPacketSize);  palign<3>(A13,A03);
+        -:  255:                T1  = pcj.pmadd(A11, ptmp1, T1);
+        -:  256:                T1  = pcj.pmadd(A12, ptmp2, T1);
+        -:  257:                T1  = pcj.pmadd(A13, ptmp3, T1);
+        -:  258:                pstore(&res[j+ResPacketSize],T1);
+        -:  259:              }
+        -:  260:            }
+        -:  261:            for (; j<alignedSize; j+=ResPacketSize)
+        -:  262:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Unaligned);
+        -:  263:            break;
+        -:  264:          }
+        -:  265:          default:
+    #####:  266:            for (Index j = alignedStart; j<alignedSize; j+=ResPacketSize)
+    %%%%%:  266-block  0
+    %%%%%:  266-block  1
+    #####:  267:              _EIGEN_ACCUMULATE_PACKETS(Unaligned,Unaligned,Unaligned);
+    %%%%%:  267-block  0
+        -:  268:            break;
+        -:  269:        }
+        -:  270:      }
+        -:  271:    } // end explicit vectorization
+        -:  272:
+        -:  273:    /* process remaining coeffs (or all if there is no explicit vectorization) */
+    #####:  274:    for (Index j=alignedSize; j<size; ++j)
+    %%%%%:  274-block  0
+        -:  275:    {
+    #####:  276:      res[j] = cj.pmadd(lhs0(j), pfirst(ptmp0), res[j]);
+    %%%%%:  276-block  0
+    #####:  277:      res[j] = cj.pmadd(lhs1(j), pfirst(ptmp1), res[j]);
+    #####:  278:      res[j] = cj.pmadd(lhs2(j), pfirst(ptmp2), res[j]);
+    #####:  279:      res[j] = cj.pmadd(lhs3(j), pfirst(ptmp3), res[j]);
+        -:  280:    }
+        -:  281:  }
+        -:  282:
+        -:  283:  // process remaining first and last columns (at most columnsAtOnce-1)
+        -:  284:  Index end = cols;
+        -:  285:  Index start = columnBound;
+        -:  286:  do
+        -:  287:  {
+    #####:  288:    for (Index k=start; k<end; ++k)
+    %%%%%:  288-block  0
+    %%%%%:  288-block  1
+        -:  289:    {
+    #####:  290:      RhsPacket ptmp0 = pset1<RhsPacket>(alpha*rhs(k, 0));
+    %%%%%:  290-block  0
+    #####:  291:      const LhsScalars lhs0 = lhs.getVectorMapper(0, k);
+    %%%%%:  291-block  0
+        -:  292:
+        -:  293:      if (Vectorizable)
+        -:  294:      {
+        -:  295:        /* explicit vectorization */
+        -:  296:        // process first unaligned result's coeffs
+    #####:  297:        for (Index j=0; j<alignedStart; ++j)
+    %%%%%:  297-block  0
+    %%%%%:  297-block  1
+    #####:  298:          res[j] += cj.pmul(lhs0(j), pfirst(ptmp0));
+    %%%%%:  298-block  0
+        -:  299:        // process aligned result's coeffs
+    #####:  300:        if (lhs0.template aligned<LhsPacket>(alignedStart))
+    %%%%%:  300-block  0
+    #####:  301:          for (Index i = alignedStart;i<alignedSize;i+=ResPacketSize)
+    %%%%%:  301-block  0
+    %%%%%:  301-block  1
+    #####:  302:            pstore(&res[i], pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(i), ptmp0, pload<ResPacket>(&res[i])));
+    %%%%%:  302-block  0
+        -:  303:        else
+    #####:  304:          for (Index i = alignedStart;i<alignedSize;i+=ResPacketSize)
+    %%%%%:  304-block  0
+    %%%%%:  304-block  1
+    #####:  305:            pstore(&res[i], pcj.pmadd(lhs0.template load<LhsPacket, Unaligned>(i), ptmp0, pload<ResPacket>(&res[i])));
+    %%%%%:  305-block  0
+        -:  306:      }
+        -:  307:
+        -:  308:      // process remaining scalars (or all if no explicit vectorization)
+    #####:  309:      for (Index i=alignedSize; i<size; ++i)
+    %%%%%:  309-block  0
+    #####:  310:        res[i] += cj.pmul(lhs0(i), pfirst(ptmp0));
+    %%%%%:  310-block  0
+        -:  311:    }
+        -:  312:    if (skipColumns)
+        -:  313:    {
+        -:  314:      start = 0;
+        -:  315:      end = skipColumns;
+        -:  316:      skipColumns = 0;
+        -:  317:    }
+        -:  318:    else
+        -:  319:      break;
+        -:  320:  } while(Vectorizable);
+        -:  321:  #undef _EIGEN_ACCUMULATE_PACKETS
+    #####:  322:}
+------------------
+        -:  323:
+        -:  324:/* Optimized row-major matrix * vector product:
+        -:  325: * This algorithm processes 4 rows at onces that allows to both reduce
+        -:  326: * the number of load/stores of the result by a factor 4 and to reduce
+        -:  327: * the instruction dependency. Moreover, we know that all bands have the
+        -:  328: * same alignment pattern.
+        -:  329: *
+        -:  330: * Mixing type logic:
+        -:  331: *  - alpha is always a complex (or converted to a complex)
+        -:  332: *  - no vectorization
+        -:  333: */
+        -:  334:template<typename Index, typename LhsScalar, typename LhsMapper, bool ConjugateLhs, typename RhsScalar, typename RhsMapper, bool ConjugateRhs, int Version>
+        -:  335:struct general_matrix_vector_product<Index,LhsScalar,LhsMapper,RowMajor,ConjugateLhs,RhsScalar,RhsMapper,ConjugateRhs,Version>
+        -:  336:{
+        -:  337:typedef typename ScalarBinaryOpTraits<LhsScalar, RhsScalar>::ReturnType ResScalar;
+        -:  338:
+        -:  339:enum {
+        -:  340:  Vectorizable = packet_traits<LhsScalar>::Vectorizable && packet_traits<RhsScalar>::Vectorizable
+        -:  341:              && int(packet_traits<LhsScalar>::size)==int(packet_traits<RhsScalar>::size),
+        -:  342:  LhsPacketSize = Vectorizable ? packet_traits<LhsScalar>::size : 1,
+        -:  343:  RhsPacketSize = Vectorizable ? packet_traits<RhsScalar>::size : 1,
+        -:  344:  ResPacketSize = Vectorizable ? packet_traits<ResScalar>::size : 1
+        -:  345:};
+        -:  346:
+        -:  347:typedef typename packet_traits<LhsScalar>::type  _LhsPacket;
+        -:  348:typedef typename packet_traits<RhsScalar>::type  _RhsPacket;
+        -:  349:typedef typename packet_traits<ResScalar>::type  _ResPacket;
+        -:  350:
+        -:  351:typedef typename conditional<Vectorizable,_LhsPacket,LhsScalar>::type LhsPacket;
+        -:  352:typedef typename conditional<Vectorizable,_RhsPacket,RhsScalar>::type RhsPacket;
+        -:  353:typedef typename conditional<Vectorizable,_ResPacket,ResScalar>::type ResPacket;
+        -:  354:
+        -:  355:EIGEN_DONT_INLINE static void run(
+        -:  356:  Index rows, Index cols,
+        -:  357:  const LhsMapper& lhs,
+        -:  358:  const RhsMapper& rhs,
+        -:  359:        ResScalar* res, Index resIncr,
+        -:  360:  ResScalar alpha);
+        -:  361:};
+        -:  362:
+        -:  363:template<typename Index, typename LhsScalar, typename LhsMapper, bool ConjugateLhs, typename RhsScalar, typename RhsMapper, bool ConjugateRhs, int Version>
+     6621:  364:EIGEN_DONT_INLINE void general_matrix_vector_product<Index,LhsScalar,LhsMapper,RowMajor,ConjugateLhs,RhsScalar,RhsMapper,ConjugateRhs,Version>::run(
+        -:  365:  Index rows, Index cols,
+        -:  366:  const LhsMapper& lhs,
+        -:  367:  const RhsMapper& rhs,
+        -:  368:  ResScalar* res, Index resIncr,
+        -:  369:  ResScalar alpha)
+        -:  370:{
+        -:  371:  eigen_internal_assert(rhs.stride()==1);
+        -:  372:
+        -:  373:  #ifdef _EIGEN_ACCUMULATE_PACKETS
+        -:  374:  #error _EIGEN_ACCUMULATE_PACKETS has already been defined
+        -:  375:  #endif
+        -:  376:
+        -:  377:  #define _EIGEN_ACCUMULATE_PACKETS(Alignment0,Alignment13,Alignment2) {\
+        -:  378:    RhsPacket b = rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0);  \
+        -:  379:    ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Alignment0>(j), b, ptmp0); \
+        -:  380:    ptmp1 = pcj.pmadd(lhs1.template load<LhsPacket, Alignment13>(j), b, ptmp1); \
+        -:  381:    ptmp2 = pcj.pmadd(lhs2.template load<LhsPacket, Alignment2>(j), b, ptmp2); \
+        -:  382:    ptmp3 = pcj.pmadd(lhs3.template load<LhsPacket, Alignment13>(j), b, ptmp3); }
+        -:  383:
+        -:  384:  conj_helper<LhsScalar,RhsScalar,ConjugateLhs,ConjugateRhs> cj;
+        -:  385:  conj_helper<LhsPacket,RhsPacket,ConjugateLhs,ConjugateRhs> pcj;
+        -:  386:
+        -:  387:  typedef typename LhsMapper::VectorMapper LhsScalars;
+        -:  388:
+        -:  389:  enum { AllAligned=0, EvenAligned=1, FirstAligned=2, NoneAligned=3 };
+     6621:  390:  const Index rowsAtOnce = 4;
+     6621:  391:  const Index peels = 2;
+     6621:  392:  const Index RhsPacketAlignedMask = RhsPacketSize-1;
+     6621:  393:  const Index LhsPacketAlignedMask = LhsPacketSize-1;
+     6621:  394:  const Index depth = cols;
+     6621:  395:  const Index lhsStride = lhs.stride();
+        -:  396:
+        -:  397:  // How many coeffs of the result do we have to skip to be aligned.
+        -:  398:  // Here we assume data are at least aligned on the base scalar type
+        -:  399:  // if that's not the case then vectorization is discarded, see below.
+     6621:  400:  Index alignedStart = rhs.firstAligned(depth);
+     6621:  401:  Index alignedSize = RhsPacketSize>1 ? alignedStart + ((depth-alignedStart) & ~RhsPacketAlignedMask) : 0;
+     6621:  402:  const Index peeledSize = alignedSize - RhsPacketSize*peels - RhsPacketSize + 1;
+        -:  403:
+     6621:  404:  const Index alignmentStep = LhsPacketSize>1 ? (LhsPacketSize - lhsStride % LhsPacketSize) & LhsPacketAlignedMask : 0;
+     6621:  405:  Index alignmentPattern = alignmentStep==0 ? AllAligned
+        -:  406:                           : alignmentStep==(LhsPacketSize/2) ? EvenAligned
+        -:  407:                           : FirstAligned;
+        -:  408:
+        -:  409:  // we cannot assume the first element is aligned because of sub-matrices
+     6621:  410:  const Index lhsAlignmentOffset = lhs.firstAligned(depth);
+     6621:  411:  const Index rhsAlignmentOffset = rhs.firstAligned(rows);
+        -:  412:
+        -:  413:  // find how many rows do we have to skip to be aligned with rhs (if possible)
+     6621:  414:  Index skipRows = 0;
+        -:  415:  // if the data cannot be aligned (TODO add some compile time tests when possible, e.g. for floats)
+     6621:  416:  if( (sizeof(LhsScalar)!=sizeof(RhsScalar)) ||
+     6621:  417:      (lhsAlignmentOffset < 0) || (lhsAlignmentOffset == depth) ||
+     6621:  418:      (rhsAlignmentOffset < 0) || (rhsAlignmentOffset == rows) )
+        -:  419:  {
+        -:  420:    alignedSize = 0;
+        -:  421:    alignedStart = 0;
+        -:  422:    alignmentPattern = NoneAligned;
+        -:  423:  }
+        -:  424:  else if(LhsPacketSize > 4)
+        -:  425:  {
+        -:  426:    // TODO: extend the code to support aligned loads whenever possible when LhsPacketSize > 4.
+     5460:  427:    alignmentPattern = NoneAligned;
+        -:  428:  }
+        -:  429:  else if (LhsPacketSize>1)
+        -:  430:  {
+        -:  431:  //    eigen_internal_assert(size_t(firstLhs+lhsAlignmentOffset)%sizeof(LhsPacket)==0  || depth<LhsPacketSize);
+        -:  432:
+        -:  433:    while (skipRows<LhsPacketSize &&
+        -:  434:           alignedStart != ((lhsAlignmentOffset + alignmentStep*skipRows)%LhsPacketSize))
+        -:  435:      ++skipRows;
+        -:  436:    if (skipRows==LhsPacketSize)
+        -:  437:    {
+        -:  438:      // nothing can be aligned, no need to skip any column
+        -:  439:      alignmentPattern = NoneAligned;
+        -:  440:      skipRows = 0;
+        -:  441:    }
+        -:  442:    else
+        -:  443:    {
+        -:  444:      skipRows = (std::min)(skipRows,Index(rows));
+        -:  445:      // note that the skiped columns are processed later.
+        -:  446:    }
+        -:  447:    /*    eigen_internal_assert(  alignmentPattern==NoneAligned
+        -:  448:                      || LhsPacketSize==1
+        -:  449:                      || (skipRows + rowsAtOnce >= rows)
+        -:  450:                      || LhsPacketSize > depth
+        -:  451:                      || (size_t(firstLhs+alignedStart+lhsStride*skipRows)%sizeof(LhsPacket))==0);*/
+        -:  452:  }
+        -:  453:  else if(Vectorizable)
+        -:  454:  {
+        -:  455:    alignedStart = 0;
+        -:  456:    alignedSize = depth;
+        -:  457:    alignmentPattern = AllAligned;
+        -:  458:  }
+        -:  459:
+     6621:  460:  const Index offset1 = (FirstAligned && alignmentStep==1)?3:1;
+     6621:  461:  const Index offset3 = (FirstAligned && alignmentStep==1)?1:3;
+        -:  462:
+     6621:  463:  Index rowBound = ((rows-skipRows)/rowsAtOnce)*rowsAtOnce + skipRows;
+   112794:  464:  for (Index i=skipRows; i<rowBound; i+=rowsAtOnce)
+        -:  465:  {
+        -:  466:    // FIXME: what is the purpose of this EIGEN_ALIGN_DEFAULT ??
+   106173:  467:    EIGEN_ALIGN_MAX ResScalar tmp0 = ResScalar(0);
+   106173:  468:    ResScalar tmp1 = ResScalar(0), tmp2 = ResScalar(0), tmp3 = ResScalar(0);
+        -:  469:
+        -:  470:    // this helps the compiler generating good binary code
+   106173:  471:    const LhsScalars lhs0 = lhs.getVectorMapper(i+0, 0),    lhs1 = lhs.getVectorMapper(i+offset1, 0),
+   106173:  472:                     lhs2 = lhs.getVectorMapper(i+2, 0),    lhs3 = lhs.getVectorMapper(i+offset3, 0);
+        -:  473:
+        -:  474:    if (Vectorizable)
+        -:  475:    {
+        -:  476:      /* explicit vectorization */
+   106173:  477:      ResPacket ptmp0 = pset1<ResPacket>(ResScalar(0)), ptmp1 = pset1<ResPacket>(ResScalar(0)),
+   106173:  478:                ptmp2 = pset1<ResPacket>(ResScalar(0)), ptmp3 = pset1<ResPacket>(ResScalar(0));
+        -:  479:
+        -:  480:      // process initial unaligned coeffs
+        -:  481:      // FIXME this loop get vectorized by the compiler !
+   526248:  482:      for (Index j=0; j<alignedStart; ++j)
+        -:  483:      {
+   420075:  484:        RhsScalar b = rhs(j, 0);
+   420075:  485:        tmp0 += cj.pmul(lhs0(j),b); tmp1 += cj.pmul(lhs1(j),b);
+   420075:  486:        tmp2 += cj.pmul(lhs2(j),b); tmp3 += cj.pmul(lhs3(j),b);
+        -:  487:      }
+        -:  488:
+   106173:  489:      if (alignedSize>alignedStart)
+        -:  490:      {
+        -:  491:        switch(alignmentPattern)
+        -:  492:        {
+        -:  493:          case AllAligned:
+        -:  494:            for (Index j = alignedStart; j<alignedSize; j+=RhsPacketSize)
+        -:  495:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Aligned,Aligned);
+        -:  496:            break;
+        -:  497:          case EvenAligned:
+        -:  498:            for (Index j = alignedStart; j<alignedSize; j+=RhsPacketSize)
+        -:  499:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Aligned);
+        -:  500:            break;
+        -:  501:          case FirstAligned:
+        -:  502:          {
+        -:  503:            Index j = alignedStart;
+        -:  504:            if (peels>1)
+        -:  505:            {
+        -:  506:              /* Here we proccess 4 rows with with two peeled iterations to hide
+        -:  507:               * the overhead of unaligned loads. Moreover unaligned loads are handled
+        -:  508:               * using special shift/move operations between the two aligned packets
+        -:  509:               * overlaping the desired unaligned packet. This is *much* more efficient
+        -:  510:               * than basic unaligned loads.
+        -:  511:               */
+        -:  512:              LhsPacket A01, A02, A03, A11, A12, A13;
+        -:  513:              A01 = lhs1.template load<LhsPacket, Aligned>(alignedStart-1);
+        -:  514:              A02 = lhs2.template load<LhsPacket, Aligned>(alignedStart-2);
+        -:  515:              A03 = lhs3.template load<LhsPacket, Aligned>(alignedStart-3);
+        -:  516:
+        -:  517:              for (; j<peeledSize; j+=peels*RhsPacketSize)
+        -:  518:              {
+        -:  519:                RhsPacket b = rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0);
+        -:  520:                A11 = lhs1.template load<LhsPacket, Aligned>(j-1+LhsPacketSize);  palign<1>(A01,A11);
+        -:  521:                A12 = lhs2.template load<LhsPacket, Aligned>(j-2+LhsPacketSize);  palign<2>(A02,A12);
+        -:  522:                A13 = lhs3.template load<LhsPacket, Aligned>(j-3+LhsPacketSize);  palign<3>(A03,A13);
+        -:  523:
+        -:  524:                ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(j), b, ptmp0);
+        -:  525:                ptmp1 = pcj.pmadd(A01, b, ptmp1);
+        -:  526:                A01 = lhs1.template load<LhsPacket, Aligned>(j-1+2*LhsPacketSize);  palign<1>(A11,A01);
+        -:  527:                ptmp2 = pcj.pmadd(A02, b, ptmp2);
+        -:  528:                A02 = lhs2.template load<LhsPacket, Aligned>(j-2+2*LhsPacketSize);  palign<2>(A12,A02);
+        -:  529:                ptmp3 = pcj.pmadd(A03, b, ptmp3);
+        -:  530:                A03 = lhs3.template load<LhsPacket, Aligned>(j-3+2*LhsPacketSize);  palign<3>(A13,A03);
+        -:  531:
+        -:  532:                b = rhs.getVectorMapper(j+RhsPacketSize, 0).template load<RhsPacket, Aligned>(0);
+        -:  533:                ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(j+LhsPacketSize), b, ptmp0);
+        -:  534:                ptmp1 = pcj.pmadd(A11, b, ptmp1);
+        -:  535:                ptmp2 = pcj.pmadd(A12, b, ptmp2);
+        -:  536:                ptmp3 = pcj.pmadd(A13, b, ptmp3);
+        -:  537:              }
+        -:  538:            }
+        -:  539:            for (; j<alignedSize; j+=RhsPacketSize)
+        -:  540:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Unaligned);
+        -:  541:            break;
+        -:  542:          }
+        -:  543:          default:
+ 24712686:  544:            for (Index j = alignedStart; j<alignedSize; j+=RhsPacketSize)
+ 24607092:  545:              _EIGEN_ACCUMULATE_PACKETS(Unaligned,Unaligned,Unaligned);
+        -:  546:            break;
+        -:  547:        }
+   105594:  548:        tmp0 += predux(ptmp0);
+   105594:  549:        tmp1 += predux(ptmp1);
+   105594:  550:        tmp2 += predux(ptmp2);
+   211188:  551:        tmp3 += predux(ptmp3);
+        -:  552:      }
+        -:  553:    } // end explicit vectorization
+        -:  554:
+        -:  555:    // process remaining coeffs (or all if no explicit vectorization)
+        -:  556:    // FIXME this loop get vectorized by the compiler !
+  1497423:  557:    for (Index j=alignedSize; j<depth; ++j)
+        -:  558:    {
+  1391250:  559:      RhsScalar b = rhs(j, 0);
+  1391250:  560:      tmp0 += cj.pmul(lhs0(j),b); tmp1 += cj.pmul(lhs1(j),b);
+  1391250:  561:      tmp2 += cj.pmul(lhs2(j),b); tmp3 += cj.pmul(lhs3(j),b);
+        -:  562:    }
+   106173:  563:    res[i*resIncr]            += alpha*tmp0;
+   106173:  564:    res[(i+offset1)*resIncr]  += alpha*tmp1;
+   106173:  565:    res[(i+2)*resIncr]        += alpha*tmp2;
+   106173:  566:    res[(i+offset3)*resIncr]  += alpha*tmp3;
+        -:  567:  }
+        -:  568:
+        -:  569:  // process remaining first and last rows (at most columnsAtOnce-1)
+        -:  570:  Index end = rows;
+        -:  571:  Index start = rowBound;
+        -:  572:  do
+        -:  573:  {
+    11232:  574:    for (Index i=start; i<end; ++i)
+        -:  575:    {
+     4611:  576:      EIGEN_ALIGN_MAX ResScalar tmp0 = ResScalar(0);
+     4611:  577:      ResPacket ptmp0 = pset1<ResPacket>(tmp0);
+     4611:  578:      const LhsScalars lhs0 = lhs.getVectorMapper(i, 0);
+        -:  579:      // process first unaligned result's coeffs
+        -:  580:      // FIXME this loop get vectorized by the compiler !
+   17502*:  581:      for (Index j=0; j<alignedStart; ++j)
+   12891*:  582:        tmp0 += cj.pmul(lhs0(j), rhs(j, 0));
+        -:  583:
+     4611:  584:      if (alignedSize>alignedStart)
+        -:  585:      {
+        -:  586:        // process aligned rhs coeffs
+     2859:  587:        if (lhs0.template aligned<LhsPacket>(alignedStart))
+    #####:  588:          for (Index j = alignedStart;j<alignedSize;j+=RhsPacketSize)
+    #####:  589:            ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(j), rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0), ptmp0);
+        -:  590:        else
+   640353:  591:          for (Index j = alignedStart;j<alignedSize;j+=RhsPacketSize)
+   637494:  592:            ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Unaligned>(j), rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0), ptmp0);
+     5718:  593:        tmp0 += predux(ptmp0);
+        -:  594:      }
+        -:  595:
+        -:  596:      // process remaining scalars
+        -:  597:      // FIXME this loop get vectorized by the compiler !
+  3108216:  598:      for (Index j=alignedSize; j<depth; ++j)
+  3103605:  599:        tmp0 += cj.pmul(lhs0(j), rhs(j, 0));
+     4611:  600:      res[i*resIncr] += alpha*tmp0;
+        -:  601:    }
+        -:  602:    if (skipRows)
+        -:  603:    {
+        -:  604:      start = 0;
+        -:  605:      end = skipRows;
+        -:  606:      skipRows = 0;
+        -:  607:    }
+        -:  608:    else
+        -:  609:      break;
+        -:  610:  } while(Vectorizable);
+        -:  611:
+        -:  612:  #undef _EIGEN_ACCUMULATE_PACKETS
+     6621:  613:}
+------------------
+_ZN5Eigen8internal29general_matrix_vector_productIlfNS0_22const_blas_data_mapperIflLi1EEELi1ELb0EfS3_Lb0ELi1EE3runEllRKS3_S6_Pflf:
+     5088:  364:EIGEN_DONT_INLINE void general_matrix_vector_product<Index,LhsScalar,LhsMapper,RowMajor,ConjugateLhs,RhsScalar,RhsMapper,ConjugateRhs,Version>::run(
+        -:  365:  Index rows, Index cols,
+        -:  366:  const LhsMapper& lhs,
+        -:  367:  const RhsMapper& rhs,
+        -:  368:  ResScalar* res, Index resIncr,
+        -:  369:  ResScalar alpha)
+        -:  370:{
+        -:  371:  eigen_internal_assert(rhs.stride()==1);
+        -:  372:
+        -:  373:  #ifdef _EIGEN_ACCUMULATE_PACKETS
+        -:  374:  #error _EIGEN_ACCUMULATE_PACKETS has already been defined
+        -:  375:  #endif
+        -:  376:
+        -:  377:  #define _EIGEN_ACCUMULATE_PACKETS(Alignment0,Alignment13,Alignment2) {\
+        -:  378:    RhsPacket b = rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0);  \
+        -:  379:    ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Alignment0>(j), b, ptmp0); \
+        -:  380:    ptmp1 = pcj.pmadd(lhs1.template load<LhsPacket, Alignment13>(j), b, ptmp1); \
+        -:  381:    ptmp2 = pcj.pmadd(lhs2.template load<LhsPacket, Alignment2>(j), b, ptmp2); \
+        -:  382:    ptmp3 = pcj.pmadd(lhs3.template load<LhsPacket, Alignment13>(j), b, ptmp3); }
+        -:  383:
+        -:  384:  conj_helper<LhsScalar,RhsScalar,ConjugateLhs,ConjugateRhs> cj;
+        -:  385:  conj_helper<LhsPacket,RhsPacket,ConjugateLhs,ConjugateRhs> pcj;
+        -:  386:
+        -:  387:  typedef typename LhsMapper::VectorMapper LhsScalars;
+        -:  388:
+        -:  389:  enum { AllAligned=0, EvenAligned=1, FirstAligned=2, NoneAligned=3 };
+     5088:  390:  const Index rowsAtOnce = 4;
+     5088:  391:  const Index peels = 2;
+     5088:  392:  const Index RhsPacketAlignedMask = RhsPacketSize-1;
+     5088:  393:  const Index LhsPacketAlignedMask = LhsPacketSize-1;
+     5088:  394:  const Index depth = cols;
+     5088:  395:  const Index lhsStride = lhs.stride();
+     5088:  395-block  0
+        -:  396:
+        -:  397:  // How many coeffs of the result do we have to skip to be aligned.
+        -:  398:  // Here we assume data are at least aligned on the base scalar type
+        -:  399:  // if that's not the case then vectorization is discarded, see below.
+     5088:  400:  Index alignedStart = rhs.firstAligned(depth);
+     5088:  400-block  0
+     5088:  401:  Index alignedSize = RhsPacketSize>1 ? alignedStart + ((depth-alignedStart) & ~RhsPacketAlignedMask) : 0;
+     5088:  402:  const Index peeledSize = alignedSize - RhsPacketSize*peels - RhsPacketSize + 1;
+        -:  403:
+     5088:  404:  const Index alignmentStep = LhsPacketSize>1 ? (LhsPacketSize - lhsStride % LhsPacketSize) & LhsPacketAlignedMask : 0;
+     5088:  405:  Index alignmentPattern = alignmentStep==0 ? AllAligned
+        -:  406:                           : alignmentStep==(LhsPacketSize/2) ? EvenAligned
+        -:  407:                           : FirstAligned;
+        -:  408:
+        -:  409:  // we cannot assume the first element is aligned because of sub-matrices
+     5088:  410:  const Index lhsAlignmentOffset = lhs.firstAligned(depth);
+     5088:  410-block  0
+     5088:  411:  const Index rhsAlignmentOffset = rhs.firstAligned(rows);
+     5088:  411-block  0
+        -:  412:
+        -:  413:  // find how many rows do we have to skip to be aligned with rhs (if possible)
+     5088:  414:  Index skipRows = 0;
+        -:  415:  // if the data cannot be aligned (TODO add some compile time tests when possible, e.g. for floats)
+     5088:  416:  if( (sizeof(LhsScalar)!=sizeof(RhsScalar)) ||
+     5088:  417:      (lhsAlignmentOffset < 0) || (lhsAlignmentOffset == depth) ||
+     5088:  417-block  0
+     5088:  418:      (rhsAlignmentOffset < 0) || (rhsAlignmentOffset == rows) )
+     5088:  418-block  0
+        -:  419:  {
+        -:  420:    alignedSize = 0;
+        -:  421:    alignedStart = 0;
+        -:  422:    alignmentPattern = NoneAligned;
+        -:  423:  }
+        -:  424:  else if(LhsPacketSize > 4)
+        -:  425:  {
+        -:  426:    // TODO: extend the code to support aligned loads whenever possible when LhsPacketSize > 4.
+     3936:  427:    alignmentPattern = NoneAligned;
+     3936:  427-block  0
+        -:  428:  }
+        -:  429:  else if (LhsPacketSize>1)
+        -:  430:  {
+        -:  431:  //    eigen_internal_assert(size_t(firstLhs+lhsAlignmentOffset)%sizeof(LhsPacket)==0  || depth<LhsPacketSize);
+        -:  432:
+        -:  433:    while (skipRows<LhsPacketSize &&
+        -:  434:           alignedStart != ((lhsAlignmentOffset + alignmentStep*skipRows)%LhsPacketSize))
+        -:  435:      ++skipRows;
+        -:  436:    if (skipRows==LhsPacketSize)
+        -:  437:    {
+        -:  438:      // nothing can be aligned, no need to skip any column
+        -:  439:      alignmentPattern = NoneAligned;
+        -:  440:      skipRows = 0;
+        -:  441:    }
+        -:  442:    else
+        -:  443:    {
+        -:  444:      skipRows = (std::min)(skipRows,Index(rows));
+        -:  445:      // note that the skiped columns are processed later.
+        -:  446:    }
+        -:  447:    /*    eigen_internal_assert(  alignmentPattern==NoneAligned
+        -:  448:                      || LhsPacketSize==1
+        -:  449:                      || (skipRows + rowsAtOnce >= rows)
+        -:  450:                      || LhsPacketSize > depth
+        -:  451:                      || (size_t(firstLhs+alignedStart+lhsStride*skipRows)%sizeof(LhsPacket))==0);*/
+        -:  452:  }
+        -:  453:  else if(Vectorizable)
+        -:  454:  {
+        -:  455:    alignedStart = 0;
+        -:  456:    alignedSize = depth;
+        -:  457:    alignmentPattern = AllAligned;
+        -:  458:  }
+        -:  459:
+     5088:  460:  const Index offset1 = (FirstAligned && alignmentStep==1)?3:1;
+     5088:  460-block  0
+     5088:  461:  const Index offset3 = (FirstAligned && alignmentStep==1)?1:3;
+     5088:  461-block  0
+        -:  462:
+     5088:  463:  Index rowBound = ((rows-skipRows)/rowsAtOnce)*rowsAtOnce + skipRows;
+    13344:  464:  for (Index i=skipRows; i<rowBound; i+=rowsAtOnce)
+     5088:  464-block  0
+    13344:  464-block  1
+        -:  465:  {
+        -:  466:    // FIXME: what is the purpose of this EIGEN_ALIGN_DEFAULT ??
+     8256:  467:    EIGEN_ALIGN_MAX ResScalar tmp0 = ResScalar(0);
+     8256:  468:    ResScalar tmp1 = ResScalar(0), tmp2 = ResScalar(0), tmp3 = ResScalar(0);
+        -:  469:
+        -:  470:    // this helps the compiler generating good binary code
+     8256:  471:    const LhsScalars lhs0 = lhs.getVectorMapper(i+0, 0),    lhs1 = lhs.getVectorMapper(i+offset1, 0),
+     8256:  471-block  0
+     8256:  472:                     lhs2 = lhs.getVectorMapper(i+2, 0),    lhs3 = lhs.getVectorMapper(i+offset3, 0);
+        -:  473:
+        -:  474:    if (Vectorizable)
+        -:  475:    {
+        -:  476:      /* explicit vectorization */
+     8256:  477:      ResPacket ptmp0 = pset1<ResPacket>(ResScalar(0)), ptmp1 = pset1<ResPacket>(ResScalar(0)),
+     8256:  477-block  0
+     8256:  478:                ptmp2 = pset1<ResPacket>(ResScalar(0)), ptmp3 = pset1<ResPacket>(ResScalar(0));
+        -:  479:
+        -:  480:      // process initial unaligned coeffs
+        -:  481:      // FIXME this loop get vectorized by the compiler !
+    38208:  482:      for (Index j=0; j<alignedStart; ++j)
+     8256:  482-block  0
+    38208:  482-block  1
+        -:  483:      {
+    29952:  484:        RhsScalar b = rhs(j, 0);
+    29952:  484-block  0
+    29952:  485:        tmp0 += cj.pmul(lhs0(j),b); tmp1 += cj.pmul(lhs1(j),b);
+    29952:  485-block  0
+    29952:  486:        tmp2 += cj.pmul(lhs2(j),b); tmp3 += cj.pmul(lhs3(j),b);
+    29952:  486-block  0
+        -:  487:      }
+        -:  488:
+     8256:  489:      if (alignedSize>alignedStart)
+     8256:  489-block  0
+        -:  490:      {
+        -:  491:        switch(alignmentPattern)
+        -:  492:        {
+        -:  493:          case AllAligned:
+        -:  494:            for (Index j = alignedStart; j<alignedSize; j+=RhsPacketSize)
+        -:  495:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Aligned,Aligned);
+        -:  496:            break;
+        -:  497:          case EvenAligned:
+        -:  498:            for (Index j = alignedStart; j<alignedSize; j+=RhsPacketSize)
+        -:  499:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Aligned);
+        -:  500:            break;
+        -:  501:          case FirstAligned:
+        -:  502:          {
+        -:  503:            Index j = alignedStart;
+        -:  504:            if (peels>1)
+        -:  505:            {
+        -:  506:              /* Here we proccess 4 rows with with two peeled iterations to hide
+        -:  507:               * the overhead of unaligned loads. Moreover unaligned loads are handled
+        -:  508:               * using special shift/move operations between the two aligned packets
+        -:  509:               * overlaping the desired unaligned packet. This is *much* more efficient
+        -:  510:               * than basic unaligned loads.
+        -:  511:               */
+        -:  512:              LhsPacket A01, A02, A03, A11, A12, A13;
+        -:  513:              A01 = lhs1.template load<LhsPacket, Aligned>(alignedStart-1);
+        -:  514:              A02 = lhs2.template load<LhsPacket, Aligned>(alignedStart-2);
+        -:  515:              A03 = lhs3.template load<LhsPacket, Aligned>(alignedStart-3);
+        -:  516:
+        -:  517:              for (; j<peeledSize; j+=peels*RhsPacketSize)
+        -:  518:              {
+        -:  519:                RhsPacket b = rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0);
+        -:  520:                A11 = lhs1.template load<LhsPacket, Aligned>(j-1+LhsPacketSize);  palign<1>(A01,A11);
+        -:  521:                A12 = lhs2.template load<LhsPacket, Aligned>(j-2+LhsPacketSize);  palign<2>(A02,A12);
+        -:  522:                A13 = lhs3.template load<LhsPacket, Aligned>(j-3+LhsPacketSize);  palign<3>(A03,A13);
+        -:  523:
+        -:  524:                ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(j), b, ptmp0);
+        -:  525:                ptmp1 = pcj.pmadd(A01, b, ptmp1);
+        -:  526:                A01 = lhs1.template load<LhsPacket, Aligned>(j-1+2*LhsPacketSize);  palign<1>(A11,A01);
+        -:  527:                ptmp2 = pcj.pmadd(A02, b, ptmp2);
+        -:  528:                A02 = lhs2.template load<LhsPacket, Aligned>(j-2+2*LhsPacketSize);  palign<2>(A12,A02);
+        -:  529:                ptmp3 = pcj.pmadd(A03, b, ptmp3);
+        -:  530:                A03 = lhs3.template load<LhsPacket, Aligned>(j-3+2*LhsPacketSize);  palign<3>(A13,A03);
+        -:  531:
+        -:  532:                b = rhs.getVectorMapper(j+RhsPacketSize, 0).template load<RhsPacket, Aligned>(0);
+        -:  533:                ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(j+LhsPacketSize), b, ptmp0);
+        -:  534:                ptmp1 = pcj.pmadd(A11, b, ptmp1);
+        -:  535:                ptmp2 = pcj.pmadd(A12, b, ptmp2);
+        -:  536:                ptmp3 = pcj.pmadd(A13, b, ptmp3);
+        -:  537:              }
+        -:  538:            }
+        -:  539:            for (; j<alignedSize; j+=RhsPacketSize)
+        -:  540:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Unaligned);
+        -:  541:            break;
+        -:  542:          }
+        -:  543:          default:
+  1706484:  544:            for (Index j = alignedStart; j<alignedSize; j+=RhsPacketSize)
+  1706484:  544-block  0
+  1698804:  544-block  1
+  1698804:  545:              _EIGEN_ACCUMULATE_PACKETS(Unaligned,Unaligned,Unaligned);
+  1698804:  545-block  0
+        -:  546:            break;
+        -:  547:        }
+     7680:  548:        tmp0 += predux(ptmp0);
+     7680:  548-block  0
+     7680:  549:        tmp1 += predux(ptmp1);
+     7680:  550:        tmp2 += predux(ptmp2);
+    15360:  551:        tmp3 += predux(ptmp3);
+        -:  552:      }
+        -:  553:    } // end explicit vectorization
+        -:  554:
+        -:  555:    // process remaining coeffs (or all if no explicit vectorization)
+        -:  556:    // FIXME this loop get vectorized by the compiler !
+  1053888:  557:    for (Index j=alignedSize; j<depth; ++j)
+  1053888:  557-block  0
+        -:  558:    {
+  1045632:  559:      RhsScalar b = rhs(j, 0);
+  1045632:  559-block  0
+  1045632:  560:      tmp0 += cj.pmul(lhs0(j),b); tmp1 += cj.pmul(lhs1(j),b);
+  1045632:  560-block  0
+  1045632:  561:      tmp2 += cj.pmul(lhs2(j),b); tmp3 += cj.pmul(lhs3(j),b);
+  1045632:  561-block  0
+        -:  562:    }
+     8256:  563:    res[i*resIncr]            += alpha*tmp0;
+     8256:  564:    res[(i+offset1)*resIncr]  += alpha*tmp1;
+     8256:  565:    res[(i+2)*resIncr]        += alpha*tmp2;
+     8256:  566:    res[(i+offset3)*resIncr]  += alpha*tmp3;
+     8256:  566-block  0
+        -:  567:  }
+        -:  568:
+        -:  569:  // process remaining first and last rows (at most columnsAtOnce-1)
+        -:  570:  Index end = rows;
+        -:  571:  Index start = rowBound;
+        -:  572:  do
+        -:  573:  {
+     7392:  574:    for (Index i=start; i<end; ++i)
+     7392:  574-block  0
+        -:  575:    {
+     2304:  576:      EIGEN_ALIGN_MAX ResScalar tmp0 = ResScalar(0);
+     2304:  577:      ResPacket ptmp0 = pset1<ResPacket>(tmp0);
+     2304:  577-block  0
+     2304:  578:      const LhsScalars lhs0 = lhs.getVectorMapper(i, 0);
+     2304:  578-block  0
+        -:  579:      // process first unaligned result's coeffs
+        -:  580:      // FIXME this loop get vectorized by the compiler !
+    2304*:  581:      for (Index j=0; j<alignedStart; ++j)
+     2304:  581-block  0
+     2304:  581-block  1
+    %%%%%:  581-block  2
+    #####:  582:        tmp0 += cj.pmul(lhs0(j), rhs(j, 0));
+    %%%%%:  582-block  0
+        -:  583:
+     2304:  584:      if (alignedSize>alignedStart)
+     2304:  584-block  0
+        -:  585:      {
+        -:  586:        // process aligned rhs coeffs
+      576:  587:        if (lhs0.template aligned<LhsPacket>(alignedStart))
+      576:  587-block  0
+    #####:  588:          for (Index j = alignedStart;j<alignedSize;j+=RhsPacketSize)
+    %%%%%:  588-block  0
+    %%%%%:  588-block  1
+    #####:  589:            ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(j), rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0), ptmp0);
+    %%%%%:  589-block  0
+        -:  590:        else
+   127908:  591:          for (Index j = alignedStart;j<alignedSize;j+=RhsPacketSize)
+   127908:  591-block  0
+   127332:  591-block  1
+   127332:  592:            ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Unaligned>(j), rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0), ptmp0);
+   127332:  592-block  0
+     1152:  593:        tmp0 += predux(ptmp0);
+      576:  593-block  0
+        -:  594:      }
+        -:  595:
+        -:  596:      // process remaining scalars
+        -:  597:      // FIXME this loop get vectorized by the compiler !
+  3060576:  598:      for (Index j=alignedSize; j<depth; ++j)
+  3060576:  598-block  0
+  3058272:  598-block  1
+  3058272:  599:        tmp0 += cj.pmul(lhs0(j), rhs(j, 0));
+  3058272:  599-block  0
+     2304:  600:      res[i*resIncr] += alpha*tmp0;
+     2304:  600-block  0
+        -:  601:    }
+        -:  602:    if (skipRows)
+        -:  603:    {
+        -:  604:      start = 0;
+        -:  605:      end = skipRows;
+        -:  606:      skipRows = 0;
+        -:  607:    }
+        -:  608:    else
+        -:  609:      break;
+        -:  610:  } while(Vectorizable);
+        -:  611:
+        -:  612:  #undef _EIGEN_ACCUMULATE_PACKETS
+     5088:  613:}
+------------------
+_ZN5Eigen8internal29general_matrix_vector_productIlfNS0_22const_blas_data_mapperIflLi1EEELi1ELb0EfNS2_IflLi0EEELb0ELi0EE3runEllRKS3_RKS4_Pflf:
+     1533:  364:EIGEN_DONT_INLINE void general_matrix_vector_product<Index,LhsScalar,LhsMapper,RowMajor,ConjugateLhs,RhsScalar,RhsMapper,ConjugateRhs,Version>::run(
+        -:  365:  Index rows, Index cols,
+        -:  366:  const LhsMapper& lhs,
+        -:  367:  const RhsMapper& rhs,
+        -:  368:  ResScalar* res, Index resIncr,
+        -:  369:  ResScalar alpha)
+        -:  370:{
+        -:  371:  eigen_internal_assert(rhs.stride()==1);
+        -:  372:
+        -:  373:  #ifdef _EIGEN_ACCUMULATE_PACKETS
+        -:  374:  #error _EIGEN_ACCUMULATE_PACKETS has already been defined
+        -:  375:  #endif
+        -:  376:
+        -:  377:  #define _EIGEN_ACCUMULATE_PACKETS(Alignment0,Alignment13,Alignment2) {\
+        -:  378:    RhsPacket b = rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0);  \
+        -:  379:    ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Alignment0>(j), b, ptmp0); \
+        -:  380:    ptmp1 = pcj.pmadd(lhs1.template load<LhsPacket, Alignment13>(j), b, ptmp1); \
+        -:  381:    ptmp2 = pcj.pmadd(lhs2.template load<LhsPacket, Alignment2>(j), b, ptmp2); \
+        -:  382:    ptmp3 = pcj.pmadd(lhs3.template load<LhsPacket, Alignment13>(j), b, ptmp3); }
+        -:  383:
+        -:  384:  conj_helper<LhsScalar,RhsScalar,ConjugateLhs,ConjugateRhs> cj;
+        -:  385:  conj_helper<LhsPacket,RhsPacket,ConjugateLhs,ConjugateRhs> pcj;
+        -:  386:
+        -:  387:  typedef typename LhsMapper::VectorMapper LhsScalars;
+        -:  388:
+        -:  389:  enum { AllAligned=0, EvenAligned=1, FirstAligned=2, NoneAligned=3 };
+     1533:  390:  const Index rowsAtOnce = 4;
+     1533:  391:  const Index peels = 2;
+     1533:  392:  const Index RhsPacketAlignedMask = RhsPacketSize-1;
+     1533:  393:  const Index LhsPacketAlignedMask = LhsPacketSize-1;
+     1533:  394:  const Index depth = cols;
+     1533:  395:  const Index lhsStride = lhs.stride();
+     1533:  395-block  0
+        -:  396:
+        -:  397:  // How many coeffs of the result do we have to skip to be aligned.
+        -:  398:  // Here we assume data are at least aligned on the base scalar type
+        -:  399:  // if that's not the case then vectorization is discarded, see below.
+     1533:  400:  Index alignedStart = rhs.firstAligned(depth);
+     1533:  400-block  0
+     1533:  401:  Index alignedSize = RhsPacketSize>1 ? alignedStart + ((depth-alignedStart) & ~RhsPacketAlignedMask) : 0;
+     1533:  402:  const Index peeledSize = alignedSize - RhsPacketSize*peels - RhsPacketSize + 1;
+        -:  403:
+     1533:  404:  const Index alignmentStep = LhsPacketSize>1 ? (LhsPacketSize - lhsStride % LhsPacketSize) & LhsPacketAlignedMask : 0;
+     1533:  405:  Index alignmentPattern = alignmentStep==0 ? AllAligned
+        -:  406:                           : alignmentStep==(LhsPacketSize/2) ? EvenAligned
+        -:  407:                           : FirstAligned;
+        -:  408:
+        -:  409:  // we cannot assume the first element is aligned because of sub-matrices
+     1533:  410:  const Index lhsAlignmentOffset = lhs.firstAligned(depth);
+     1533:  410-block  0
+     1533:  411:  const Index rhsAlignmentOffset = rhs.firstAligned(rows);
+     1533:  411-block  0
+        -:  412:
+        -:  413:  // find how many rows do we have to skip to be aligned with rhs (if possible)
+     1533:  414:  Index skipRows = 0;
+        -:  415:  // if the data cannot be aligned (TODO add some compile time tests when possible, e.g. for floats)
+     1533:  416:  if( (sizeof(LhsScalar)!=sizeof(RhsScalar)) ||
+     1533:  417:      (lhsAlignmentOffset < 0) || (lhsAlignmentOffset == depth) ||
+     1533:  417-block  0
+     1533:  418:      (rhsAlignmentOffset < 0) || (rhsAlignmentOffset == rows) )
+     1533:  418-block  0
+        -:  419:  {
+        -:  420:    alignedSize = 0;
+        -:  421:    alignedStart = 0;
+        -:  422:    alignmentPattern = NoneAligned;
+        -:  423:  }
+        -:  424:  else if(LhsPacketSize > 4)
+        -:  425:  {
+        -:  426:    // TODO: extend the code to support aligned loads whenever possible when LhsPacketSize > 4.
+     1524:  427:    alignmentPattern = NoneAligned;
+     1524:  427-block  0
+        -:  428:  }
+        -:  429:  else if (LhsPacketSize>1)
+        -:  430:  {
+        -:  431:  //    eigen_internal_assert(size_t(firstLhs+lhsAlignmentOffset)%sizeof(LhsPacket)==0  || depth<LhsPacketSize);
+        -:  432:
+        -:  433:    while (skipRows<LhsPacketSize &&
+        -:  434:           alignedStart != ((lhsAlignmentOffset + alignmentStep*skipRows)%LhsPacketSize))
+        -:  435:      ++skipRows;
+        -:  436:    if (skipRows==LhsPacketSize)
+        -:  437:    {
+        -:  438:      // nothing can be aligned, no need to skip any column
+        -:  439:      alignmentPattern = NoneAligned;
+        -:  440:      skipRows = 0;
+        -:  441:    }
+        -:  442:    else
+        -:  443:    {
+        -:  444:      skipRows = (std::min)(skipRows,Index(rows));
+        -:  445:      // note that the skiped columns are processed later.
+        -:  446:    }
+        -:  447:    /*    eigen_internal_assert(  alignmentPattern==NoneAligned
+        -:  448:                      || LhsPacketSize==1
+        -:  449:                      || (skipRows + rowsAtOnce >= rows)
+        -:  450:                      || LhsPacketSize > depth
+        -:  451:                      || (size_t(firstLhs+alignedStart+lhsStride*skipRows)%sizeof(LhsPacket))==0);*/
+        -:  452:  }
+        -:  453:  else if(Vectorizable)
+        -:  454:  {
+        -:  455:    alignedStart = 0;
+        -:  456:    alignedSize = depth;
+        -:  457:    alignmentPattern = AllAligned;
+        -:  458:  }
+        -:  459:
+     1533:  460:  const Index offset1 = (FirstAligned && alignmentStep==1)?3:1;
+     1533:  460-block  0
+     1533:  461:  const Index offset3 = (FirstAligned && alignmentStep==1)?1:3;
+     1533:  461-block  0
+        -:  462:
+     1533:  463:  Index rowBound = ((rows-skipRows)/rowsAtOnce)*rowsAtOnce + skipRows;
+    99450:  464:  for (Index i=skipRows; i<rowBound; i+=rowsAtOnce)
+     1533:  464-block  0
+    99450:  464-block  1
+        -:  465:  {
+        -:  466:    // FIXME: what is the purpose of this EIGEN_ALIGN_DEFAULT ??
+    97917:  467:    EIGEN_ALIGN_MAX ResScalar tmp0 = ResScalar(0);
+    97917:  468:    ResScalar tmp1 = ResScalar(0), tmp2 = ResScalar(0), tmp3 = ResScalar(0);
+        -:  469:
+        -:  470:    // this helps the compiler generating good binary code
+    97917:  471:    const LhsScalars lhs0 = lhs.getVectorMapper(i+0, 0),    lhs1 = lhs.getVectorMapper(i+offset1, 0),
+    97917:  471-block  0
+    97917:  472:                     lhs2 = lhs.getVectorMapper(i+2, 0),    lhs3 = lhs.getVectorMapper(i+offset3, 0);
+        -:  473:
+        -:  474:    if (Vectorizable)
+        -:  475:    {
+        -:  476:      /* explicit vectorization */
+    97917:  477:      ResPacket ptmp0 = pset1<ResPacket>(ResScalar(0)), ptmp1 = pset1<ResPacket>(ResScalar(0)),
+    97917:  477-block  0
+    97917:  478:                ptmp2 = pset1<ResPacket>(ResScalar(0)), ptmp3 = pset1<ResPacket>(ResScalar(0));
+        -:  479:
+        -:  480:      // process initial unaligned coeffs
+        -:  481:      // FIXME this loop get vectorized by the compiler !
+   488040:  482:      for (Index j=0; j<alignedStart; ++j)
+    97917:  482-block  0
+   488040:  482-block  1
+        -:  483:      {
+   390123:  484:        RhsScalar b = rhs(j, 0);
+   390123:  484-block  0
+   390123:  485:        tmp0 += cj.pmul(lhs0(j),b); tmp1 += cj.pmul(lhs1(j),b);
+   390123:  485-block  0
+   390123:  486:        tmp2 += cj.pmul(lhs2(j),b); tmp3 += cj.pmul(lhs3(j),b);
+   390123:  486-block  0
+        -:  487:      }
+        -:  488:
+    97917:  489:      if (alignedSize>alignedStart)
+    97917:  489-block  0
+        -:  490:      {
+        -:  491:        switch(alignmentPattern)
+        -:  492:        {
+        -:  493:          case AllAligned:
+        -:  494:            for (Index j = alignedStart; j<alignedSize; j+=RhsPacketSize)
+        -:  495:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Aligned,Aligned);
+        -:  496:            break;
+        -:  497:          case EvenAligned:
+        -:  498:            for (Index j = alignedStart; j<alignedSize; j+=RhsPacketSize)
+        -:  499:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Aligned);
+        -:  500:            break;
+        -:  501:          case FirstAligned:
+        -:  502:          {
+        -:  503:            Index j = alignedStart;
+        -:  504:            if (peels>1)
+        -:  505:            {
+        -:  506:              /* Here we proccess 4 rows with with two peeled iterations to hide
+        -:  507:               * the overhead of unaligned loads. Moreover unaligned loads are handled
+        -:  508:               * using special shift/move operations between the two aligned packets
+        -:  509:               * overlaping the desired unaligned packet. This is *much* more efficient
+        -:  510:               * than basic unaligned loads.
+        -:  511:               */
+        -:  512:              LhsPacket A01, A02, A03, A11, A12, A13;
+        -:  513:              A01 = lhs1.template load<LhsPacket, Aligned>(alignedStart-1);
+        -:  514:              A02 = lhs2.template load<LhsPacket, Aligned>(alignedStart-2);
+        -:  515:              A03 = lhs3.template load<LhsPacket, Aligned>(alignedStart-3);
+        -:  516:
+        -:  517:              for (; j<peeledSize; j+=peels*RhsPacketSize)
+        -:  518:              {
+        -:  519:                RhsPacket b = rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0);
+        -:  520:                A11 = lhs1.template load<LhsPacket, Aligned>(j-1+LhsPacketSize);  palign<1>(A01,A11);
+        -:  521:                A12 = lhs2.template load<LhsPacket, Aligned>(j-2+LhsPacketSize);  palign<2>(A02,A12);
+        -:  522:                A13 = lhs3.template load<LhsPacket, Aligned>(j-3+LhsPacketSize);  palign<3>(A03,A13);
+        -:  523:
+        -:  524:                ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(j), b, ptmp0);
+        -:  525:                ptmp1 = pcj.pmadd(A01, b, ptmp1);
+        -:  526:                A01 = lhs1.template load<LhsPacket, Aligned>(j-1+2*LhsPacketSize);  palign<1>(A11,A01);
+        -:  527:                ptmp2 = pcj.pmadd(A02, b, ptmp2);
+        -:  528:                A02 = lhs2.template load<LhsPacket, Aligned>(j-2+2*LhsPacketSize);  palign<2>(A12,A02);
+        -:  529:                ptmp3 = pcj.pmadd(A03, b, ptmp3);
+        -:  530:                A03 = lhs3.template load<LhsPacket, Aligned>(j-3+2*LhsPacketSize);  palign<3>(A13,A03);
+        -:  531:
+        -:  532:                b = rhs.getVectorMapper(j+RhsPacketSize, 0).template load<RhsPacket, Aligned>(0);
+        -:  533:                ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(j+LhsPacketSize), b, ptmp0);
+        -:  534:                ptmp1 = pcj.pmadd(A11, b, ptmp1);
+        -:  535:                ptmp2 = pcj.pmadd(A12, b, ptmp2);
+        -:  536:                ptmp3 = pcj.pmadd(A13, b, ptmp3);
+        -:  537:              }
+        -:  538:            }
+        -:  539:            for (; j<alignedSize; j+=RhsPacketSize)
+        -:  540:              _EIGEN_ACCUMULATE_PACKETS(Aligned,Unaligned,Unaligned);
+        -:  541:            break;
+        -:  542:          }
+        -:  543:          default:
+ 23006202:  544:            for (Index j = alignedStart; j<alignedSize; j+=RhsPacketSize)
+ 23006202:  544-block  0
+ 22908288:  544-block  1
+ 22908288:  545:              _EIGEN_ACCUMULATE_PACKETS(Unaligned,Unaligned,Unaligned);
+ 22908288:  545-block  0
+        -:  546:            break;
+        -:  547:        }
+    97914:  548:        tmp0 += predux(ptmp0);
+    97914:  548-block  0
+    97914:  549:        tmp1 += predux(ptmp1);
+    97914:  550:        tmp2 += predux(ptmp2);
+   195828:  551:        tmp3 += predux(ptmp3);
+        -:  552:      }
+        -:  553:    } // end explicit vectorization
+        -:  554:
+        -:  555:    // process remaining coeffs (or all if no explicit vectorization)
+        -:  556:    // FIXME this loop get vectorized by the compiler !
+   443535:  557:    for (Index j=alignedSize; j<depth; ++j)
+   443535:  557-block  0
+        -:  558:    {
+   345618:  559:      RhsScalar b = rhs(j, 0);
+   345618:  559-block  0
+   345618:  560:      tmp0 += cj.pmul(lhs0(j),b); tmp1 += cj.pmul(lhs1(j),b);
+   345618:  560-block  0
+   345618:  561:      tmp2 += cj.pmul(lhs2(j),b); tmp3 += cj.pmul(lhs3(j),b);
+   345618:  561-block  0
+        -:  562:    }
+    97917:  563:    res[i*resIncr]            += alpha*tmp0;
+    97917:  564:    res[(i+offset1)*resIncr]  += alpha*tmp1;
+    97917:  565:    res[(i+2)*resIncr]        += alpha*tmp2;
+    97917:  566:    res[(i+offset3)*resIncr]  += alpha*tmp3;
+    97917:  566-block  0
+        -:  567:  }
+        -:  568:
+        -:  569:  // process remaining first and last rows (at most columnsAtOnce-1)
+        -:  570:  Index end = rows;
+        -:  571:  Index start = rowBound;
+        -:  572:  do
+        -:  573:  {
+     3840:  574:    for (Index i=start; i<end; ++i)
+     3840:  574-block  0
+        -:  575:    {
+     2307:  576:      EIGEN_ALIGN_MAX ResScalar tmp0 = ResScalar(0);
+     2307:  577:      ResPacket ptmp0 = pset1<ResPacket>(tmp0);
+     2307:  577-block  0
+     2307:  578:      const LhsScalars lhs0 = lhs.getVectorMapper(i, 0);
+     2307:  578-block  0
+        -:  579:      // process first unaligned result's coeffs
+        -:  580:      // FIXME this loop get vectorized by the compiler !
+    15198:  581:      for (Index j=0; j<alignedStart; ++j)
+     2307:  581-block  0
+    15198:  581-block  1
+    12891:  581-block  2
+    12891:  582:        tmp0 += cj.pmul(lhs0(j), rhs(j, 0));
+    12891:  582-block  0
+        -:  583:
+     2307:  584:      if (alignedSize>alignedStart)
+     2307:  584-block  0
+        -:  585:      {
+        -:  586:        // process aligned rhs coeffs
+     2283:  587:        if (lhs0.template aligned<LhsPacket>(alignedStart))
+     2283:  587-block  0
+    #####:  588:          for (Index j = alignedStart;j<alignedSize;j+=RhsPacketSize)
+    %%%%%:  588-block  0
+    %%%%%:  588-block  1
+    #####:  589:            ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Aligned>(j), rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0), ptmp0);
+    %%%%%:  589-block  0
+        -:  590:        else
+   512445:  591:          for (Index j = alignedStart;j<alignedSize;j+=RhsPacketSize)
+   512445:  591-block  0
+   510162:  591-block  1
+   510162:  592:            ptmp0 = pcj.pmadd(lhs0.template load<LhsPacket, Unaligned>(j), rhs.getVectorMapper(j, 0).template load<RhsPacket, Aligned>(0), ptmp0);
+   510162:  592-block  0
+     4566:  593:        tmp0 += predux(ptmp0);
+     2283:  593-block  0
+        -:  594:      }
+        -:  595:
+        -:  596:      // process remaining scalars
+        -:  597:      // FIXME this loop get vectorized by the compiler !
+    47640:  598:      for (Index j=alignedSize; j<depth; ++j)
+    47640:  598-block  0
+    45333:  598-block  1
+    45333:  599:        tmp0 += cj.pmul(lhs0(j), rhs(j, 0));
+    45333:  599-block  0
+     2307:  600:      res[i*resIncr] += alpha*tmp0;
+     2307:  600-block  0
+        -:  601:    }
+        -:  602:    if (skipRows)
+        -:  603:    {
+        -:  604:      start = 0;
+        -:  605:      end = skipRows;
+        -:  606:      skipRows = 0;
+        -:  607:    }
+        -:  608:    else
+        -:  609:      break;
+        -:  610:  } while(Vectorizable);
+        -:  611:
+        -:  612:  #undef _EIGEN_ACCUMULATE_PACKETS
+     1533:  613:}
+------------------
+        -:  614:
+        -:  615:} // end namespace internal
+        -:  616:
+        -:  617:} // end namespace Eigen
+        -:  618:
+        -:  619:#endif // EIGEN_GENERAL_MATRIX_VECTOR_H

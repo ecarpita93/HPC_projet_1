@@ -1,0 +1,231 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/features_matching/patch_comp.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FEATURES_MATCHING_PATCH_COMP_HPP
+        -:   19:#define PIC_FEATURES_MATCHING_PATCH_COMP_HPP
+        -:   20:
+        -:   21:#include "../image.hpp"
+        -:   22:
+        -:   23:#include "../util/math.hpp"
+        -:   24:#include "../util/std_util.hpp"
+        -:   25:#include "../util/array.hpp"
+        -:   26:
+        -:   27:#include "../image_samplers/image_sampler_bilinear.hpp"
+        -:   28:
+        -:   29:#include "../features_matching/transform_data.hpp"
+        -:   30:
+        -:   31:namespace pic {
+        -:   32:
+        -:   33:/**
+        -:   34: * @brief The PatchComp class
+        -:   35: */
+    #####:   36:class PatchComp
+        -:   37:{
+        -:   38:protected:
+        -:   39:    ImageSamplerBilinear isb;
+        -:   40:
+        -:   41:    Image *img0, *img1, *img0_g, *img1_g;
+        -:   42:
+        -:   43:    //patchsize
+        -:   44:    int patchSize, halfPatchSize;
+        -:   45:    float patchSize_sq;
+        -:   46:
+        -:   47:    //stereo
+        -:   48:    float alpha;
+        -:   49:
+        -:   50:public:
+        -:   51:
+        -:   52:    /**
+        -:   53:     * @brief PatchComp
+        -:   54:     */
+        -:   55:    PatchComp()
+        -:   56:    {
+        -:   57:        setNULL();
+        -:   58:    }
+        -:   59:
+        -:   60:    /**
+        -:   61:     * @brief PatchComp
+        -:   62:     * @param img0
+        -:   63:     * @param img1
+        -:   64:     * @param patchSize
+        -:   65:     */
+    #####:   66:    PatchComp(Image *img0, Image *img1, int patchSize)
+    #####:   67:    {
+    %%%%%:   67-block  0
+    %%%%%:   67-block  1
+    #####:   68:        setNULL();
+        -:   69:
+    #####:   70:        setup(img0, img1, NULL, NULL, patchSize, 0.05f);
+    %%%%%:   70-block  0
+    %%%%%:   70-block  1
+    %%%%%:   70-block  2
+        -:   71:    }
+        -:   72:
+        -:   73:    /**
+        -:   74:     * @brief PatchComp
+        -:   75:     * @param img0
+        -:   76:     * @param img1
+        -:   77:     * @param patchSize
+        -:   78:     * @param alpha
+        -:   79:     */
+    #####:   80:    PatchComp(Image *img0, Image *img1,
+        -:   81:              Image *img0_g, Image *img1_g,
+        -:   82:              int patchSize, float alpha)
+    #####:   83:    {
+    #####:   84:        setNULL();
+    #####:   85:        setup(img0, img1, img0_g, img1_g, patchSize, alpha);
+    %%%%%:   85-block  0
+        -:   86:    }
+        -:   87:
+        -:   88:    /**
+        -:   89:     * @brief setNULL
+        -:   90:     */
+    #####:   91:    void setNULL()
+        -:   92:    {
+    #####:   93:        img0   = NULL;
+    #####:   94:        img0_g = NULL;
+    #####:   95:        img1   = NULL;
+    #####:   96:        img1_g = NULL;
+        -:   97:
+    #####:   98:        alpha = -1.0f;
+        -:   99:
+    #####:  100:        patchSize = -1;
+    #####:  101:        halfPatchSize = -1;
+        -:  102:    }
+        -:  103:
+        -:  104:    /**
+        -:  105:     * @brief setup
+        -:  106:     * @param img0
+        -:  107:     * @param img1
+        -:  108:     * @param patchSize
+        -:  109:     */
+    #####:  110:    void setup(Image *img0,   Image *img1,
+        -:  111:               Image *img0_g, Image *img1_g,
+        -:  112:               int patchSize, float alpha)
+        -:  113:    {
+    #####:  114:        if(patchSize < 1) {
+    %%%%%:  114-block  0
+    %%%%%:  114-block  1
+        -:  115:            return;
+        -:  116:        }
+        -:  117:
+    #####:  118:        this->img0 = img0;
+    #####:  119:        this->img1 = img1;
+    #####:  120:        this->img0_g = img0_g;
+    #####:  121:        this->img1_g = img1_g;
+        -:  122:
+    #####:  123:        this->alpha = CLAMPi(alpha, 0.0f, 1.0f);
+        -:  124:
+    #####:  125:        if(this->patchSize != patchSize) {
+    #####:  126:            this->patchSize_sq = float(patchSize * patchSize);
+    #####:  127:            this->halfPatchSize = patchSize >> 1;
+    #####:  128:            this->patchSize = (halfPatchSize << 1) + 1;
+    %%%%%:  128-block  0
+    %%%%%:  128-block  1
+    %%%%%:  128-block  2
+    %%%%%:  128-block  3
+        -:  129:        }
+        -:  130:    }
+        -:  131:
+        -:  132:    /**
+        -:  133:     * @brief getSSDSmooth
+        -:  134:     * @param x0
+        -:  135:     * @param y0
+        -:  136:     * @param x1
+        -:  137:     * @param y1
+        -:  138:     * @return
+        -:  139:     */
+    #####:  140:    float getSSDSmooth(int x0, int y0, int x1, int y1)
+        -:  141:    {
+    #####:  142:        float alpha_i = 1.0f - alpha;
+        -:  143:
+    #####:  144:        float ret = 0.0f;
+        -:  145:
+    #####:  146:        for(int i = -halfPatchSize; i <= halfPatchSize; i++) {
+    %%%%%:  146-block  0
+    %%%%%:  146-block  1
+    %%%%%:  146-block  2
+    #####:  147:            for(int j = -halfPatchSize; j <= halfPatchSize; j++) {
+    %%%%%:  147-block  0
+    #####:  148:                float *img0_ij = (*img0)(x0 + j, y0 + i);
+    %%%%%:  148-block  0
+    #####:  149:                float *img1_ij = (*img1)(x1 + j, y1 + i);
+    %%%%%:  149-block  0
+        -:  150:
+    #####:  151:                float *img0_g_ij = (*img0_g)(x0 + j, y0 + i);
+    %%%%%:  151-block  0
+    #####:  152:                float *img1_g_ij = (*img1_g)(x1 + j, y1 + i);
+    %%%%%:  152-block  0
+        -:  153:
+        -:  154:                //color term
+    #####:  155:                float err_col = sqrtf(Arrayf::distanceSq(img1_ij, img0_ij, img0->channels));
+    %%%%%:  155-block  0
+        -:  156:
+        -:  157:                //gradient term
+    #####:  158:                float err_grad = sqrtf(Arrayf::distanceSq(img0_g_ij, img1_g_ij, 2));
+    %%%%%:  158-block  0
+        -:  159:
+        -:  160:                //err term
+    #####:  161:                ret += alpha_i * err_col + alpha * err_grad;
+    %%%%%:  161-block  0
+        -:  162:
+        -:  163:            }            
+        -:  164:        }
+        -:  165:
+    #####:  166:        return ret;
+        -:  167:    }
+        -:  168:
+        -:  169:    /**
+        -:  170:     * @brief getSSD
+        -:  171:     * @param x0
+        -:  172:     * @param y0
+        -:  173:     * @param x1
+        -:  174:     * @param y1
+        -:  175:     * @return
+        -:  176:     */
+    #####:  177:    float getSSD(int x0, int y0, int x1, int y1)
+        -:  178:    {
+    #####:  179:        float ret = 0.0f;
+    #####:  180:        for(int i = -halfPatchSize; i <= halfPatchSize; i++) {
+    %%%%%:  180-block  0
+    %%%%%:  180-block  1
+    %%%%%:  180-block  2
+    #####:  181:            for(int j = -halfPatchSize; j <= halfPatchSize; j++) {
+    %%%%%:  181-block  0
+    #####:  182:                float *img0_ij = (*img0)(x0 + j, y0 + i);
+    %%%%%:  182-block  0
+    #####:  183:                float *img1_ij = (*img1)(x1 + j, y1 + i);
+    %%%%%:  183-block  0
+        -:  184:
+    #####:  185:                ret += Arrayf::distanceSq(img0_ij, img1_ij, img0->channels);
+    %%%%%:  185-block  0
+    %%%%%:  185-block  1
+        -:  186:            }
+        -:  187:        }
+        -:  188:
+    #####:  189:        return ret;
+        -:  190:    }
+        -:  191:};
+        -:  192:
+        -:  193:} // end namespace pic
+        -:  194:
+        -:  195:#endif /* PIC_FEATURES_MATCHING_PATCH_COMP_HPP */
+        -:  196:

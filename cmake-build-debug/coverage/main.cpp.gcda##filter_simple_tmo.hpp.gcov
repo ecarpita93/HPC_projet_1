@@ -1,0 +1,99 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_simple_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_SIMPLE_TMO_HPP
+        -:   19:#define PIC_FILTERING_FILTER_SIMPLE_TMO_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterSimpleTMO class
+        -:   27: */
+    #####:   28:class FilterSimpleTMO: public Filter
+    %%%%%:   28-block  0
+    $$$$$:   28-block  1
+        -:   29:{
+        -:   30:protected:
+        -:   31:    float gamma, fstop, exposure;
+        -:   32:
+        -:   33:    /**
+        -:   34:     * @brief f
+        -:   35:     * @param data
+        -:   36:     */
+    #####:   37:    void f(FilterFData *data)
+        -:   38:    {
+    #####:   39:        float *dataIn = (*data->src[0])(data->x, data->y);
+    %%%%%:   39-block  0
+        -:   40:
+    #####:   41:        for(int k = 0; k < data->dst->channels; k++) {
+    %%%%%:   41-block  0
+    %%%%%:   41-block  1
+    #####:   42:            data->out[k] = powf((dataIn[k] * exposure), gamma);
+    %%%%%:   42-block  0
+        -:   43:        }
+    #####:   44:    }
+        -:   45:
+        -:   46:public:
+        -:   47:    /**
+        -:   48:     * @brief FilterSimpleTMO
+        -:   49:     * @param gamma
+        -:   50:     * @param fstop
+        -:   51:     */
+    #####:   52:    FilterSimpleTMO(float gamma, float fstop) : Filter()
+        -:   53:    {
+    #####:   54:        update(gamma, fstop);
+    #####:   55:    }
+        -:   56:
+        -:   57:    /**
+        -:   58:     * @brief update
+        -:   59:     * @param gamma
+        -:   60:     * @param fstop
+        -:   61:     */
+    #####:   62:    void update(float gamma, float fstop)
+        -:   63:    {
+    #####:   64:        this->gamma = 1.0f / gamma;
+    #####:   65:        this->fstop = fstop;
+    #####:   66:        exposure = powf(2.0f, fstop);
+    %%%%%:   66-block  0
+        -:   67:    }
+        -:   68:
+        -:   69:    /**
+        -:   70:     * @brief execute
+        -:   71:     * @param imgIn
+        -:   72:     * @param imgOut
+        -:   73:     * @param gamma
+        -:   74:     * @param fstop
+        -:   75:     * @return
+        -:   76:     */
+        -:   77:    static Image *execute(Image *imgIn, Image *imgOut, float gamma,
+        -:   78:                             float fstop)
+        -:   79:    {
+        -:   80:        FilterSimpleTMO filter(gamma, fstop);
+        -:   81:        return filter.Process(Single(imgIn), imgOut);
+        -:   82:    }
+        -:   83:};
+        -:   84:
+        -:   85:} // end namespace pic
+        -:   86:
+        -:   87:#endif /* PIC_FILTERING_FILTER_SIMPLE_TMO_HPP */
+        -:   88:

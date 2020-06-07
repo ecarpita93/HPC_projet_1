@@ -1,0 +1,182 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_deconvolution.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_DECONVOLUTION_HPP
+        -:   19:#define PIC_FILTERING_FILTER_DECONVOLUTION_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:#include "../image.hpp"
+        -:   24:#include "../filtering/filter_conv_2d.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:/**
+        -:   29: * @brief The FilterDeconvolution class
+        -:   30: */
+        -:   31:class FilterDeconvolution: public Filter
+        -:   32:{
+        -:   33:protected:
+        -:   34:    Image *psf_hat;
+        -:   35:    Image *img_est_conv;
+        -:   36:    Image *img_err;
+        -:   37:    Image *img_rel_blur;
+        -:   38:    FilterConv2D *flt_conv;
+        -:   39:
+        -:   40:    int nIterations;
+        -:   41:
+        -:   42:public:
+        -:   43:
+        -:   44:    /**
+        -:   45:     * @brief FilterDeconvolution
+        -:   46:     * @param nIterations
+        -:   47:     */
+        -:   48:    FilterDeconvolution(int nIterations) : Filter()
+        -:   49:    {
+        -:   50:        minInputImages = 2;
+        -:   51:        psf_hat = NULL;
+        -:   52:        img_est_conv = NULL;
+        -:   53:        img_err = NULL;
+        -:   54:        img_rel_blur = NULL;
+        -:   55:        flt_conv = new FilterConv2D();
+        -:   56:
+        -:   57:        this->nIterations = 0;
+        -:   58:        setup(nIterations);
+        -:   59:    }
+        -:   60:
+        -:   61:    /**
+        -:   62:     * @brief setup
+        -:   63:     * @param nIterations
+        -:   64:     */
+        -:   65:    void setup(int nIterations)
+        -:   66:    {
+        -:   67:        this->nIterations = nIterations > 0 ? nIterations : 16;
+        -:   68:    }
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief Process
+        -:   72:     * @param imgIn
+        -:   73:     * @param imgOut
+        -:   74:     * @return
+        -:   75:     */
+    #####:   76:    Image *Process(ImageVec imgIn, Image *imgOut)
+        -:   77:    {
+    #####:   78:        if (!checkInput(imgIn)) {
+    %%%%%:   78-block  0
+        -:   79:            return imgOut;
+        -:   80:        }
+        -:   81:
+    #####:   82:        imgOut = setupAux(imgIn, imgOut);
+    %%%%%:   82-block  0
+    %%%%%:   82-block  1
+    $$$$$:   82-block  2
+        -:   83:
+    #####:   84:        if (imgOut == NULL) {
+    %%%%%:   84-block  0
+        -:   85:            return imgOut;
+        -:   86:        }
+        -:   87:
+        -:   88:        //
+        -:   89:        //
+        -:   90:        //
+        -:   91:
+    #####:   92:        Image *psf = imgIn[1];
+    %%%%%:   92-block  0
+        -:   93:
+    #####:   94:        if(psf_hat == NULL) {
+    %%%%%:   94-block  0
+    #####:   95:            psf_hat = psf->clone();
+    %%%%%:   95-block  0
+        -:   96:        } else {
+    #####:   97:            psf_hat->assign(psf);
+    %%%%%:   97-block  0
+        -:   98:        }
+        -:   99:
+    #####:  100:        psf_hat->flipHV();
+    %%%%%:  100-block  0
+        -:  101:
+    #####:  102:        *imgOut = 0.5f;
+        -:  103:
+    #####:  104:        img_rel_blur = allocateOutputMemory(imgIn, img_rel_blur, true);
+    %%%%%:  104-block  0
+    $$$$$:  104-block  1
+    #####:  105:        img_est_conv = allocateOutputMemory(imgIn, img_est_conv, true);
+    %%%%%:  105-block  0
+    %%%%%:  105-block  1
+    $$$$$:  105-block  2
+    #####:  106:        img_err = allocateOutputMemory(imgIn, img_err, true);
+    %%%%%:  106-block  0
+    %%%%%:  106-block  1
+    $$$$$:  106-block  2
+        -:  107:
+    #####:  108:        ImageVec vec = Double(imgOut, psf);
+    %%%%%:  108-block  0
+    %%%%%:  108-block  1
+    #####:  109:        ImageVec vec_err = Double(img_rel_blur, psf_hat);
+    %%%%%:  109-block  0
+    $$$$$:  109-block  1
+        -:  110:
+    #####:  111:        for(int i = 0; i < nIterations; i++) {
+    %%%%%:  111-block  0
+        -:  112:
+        -:  113:            #ifdef PIC_DEBUG
+        -:  114:                printf("%d\n", i);
+        -:  115:            #endif
+        -:  116:
+    #####:  117:            img_est_conv = flt_conv->Process(vec, img_est_conv);
+    %%%%%:  117-block  0
+    %%%%%:  117-block  1
+    %%%%%:  117-block  2
+    $$$$$:  117-block  3
+        -:  118:
+    #####:  119:            img_rel_blur->assign(imgIn[0]);
+    %%%%%:  119-block  0
+    #####:  120:            *img_rel_blur /= *img_est_conv;
+    %%%%%:  120-block  0
+        -:  121:
+    #####:  122:            img_err = flt_conv->Process(vec_err, img_err);
+    %%%%%:  122-block  0
+    %%%%%:  122-block  1
+    $$$$$:  122-block  2
+    $$$$$:  122-block  3
+        -:  123:
+    #####:  124:            *imgOut *= *img_err;
+    %%%%%:  124-block  0
+        -:  125:        }
+        -:  126:
+    #####:  127:        return imgOut;
+    %%%%%:  127-block  0
+        -:  128:    }
+        -:  129:
+        -:  130:
+        -:  131:    /**
+        -:  132:     * @brief execute
+        -:  133:     */
+        -:  134:    static Image *execute(Image *imgIn, Image *psf, Image *imgOut, int nIterations)
+        -:  135:    {
+        -:  136:        FilterDeconvolution flt(nIterations);
+        -:  137:        return flt.Process(Double(imgIn, psf), imgOut);
+        -:  138:    }
+        -:  139:};
+        -:  140:
+        -:  141:}
+        -:  142:
+        -:  143:#endif //PIC_FILTERING_FILTER_DECONVOLUTION_HPP

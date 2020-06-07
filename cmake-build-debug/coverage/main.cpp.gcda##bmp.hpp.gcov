@@ -1,0 +1,323 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/io/bmp.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IO_BMP_HPP
+        -:   19:#define PIC_IO_BMP_HPP
+        -:   20:
+        -:   21:#include <stdio.h>
+        -:   22:#include <string>
+        -:   23:
+        -:   24:#ifdef PIC_WIN32
+        -:   25:#include <windows.h>
+        -:   26:#endif
+        -:   27:
+        -:   28:#include "../base.hpp"
+        -:   29:
+        -:   30:namespace pic {
+        -:   31:
+        -:   32:#ifndef PIC_WIN32
+        -:   33:
+        -:   34:/**
+        -:   35: * @brief The BITMAPFILEHEADER struct
+        -:   36: */
+        -:   37:struct BITMAPFILEHEADER {
+        -:   38:    unsigned short  bfType;
+        -:   39:    unsigned int    bfSize;
+        -:   40:    unsigned short  bfReserved1;
+        -:   41:    unsigned short  bfReserved2;
+        -:   42:    unsigned int    bfOffBits;
+        -:   43:};
+        -:   44:
+        -:   45:/**
+        -:   46: * @brief The BITMAPINFOHEADER struct
+        -:   47: */
+        -:   48:struct BITMAPINFOHEADER {
+        -:   49:    unsigned int      biSize;
+        -:   50:    int               biWidth;
+        -:   51:    int               biHeight;
+        -:   52:    unsigned short    biPlanes;
+        -:   53:    unsigned short    biBitCount;
+        -:   54:    unsigned int      biCompression;
+        -:   55:    unsigned int      biSizeImage;
+        -:   56:    int               biXPelsPerMeter;
+        -:   57:    int               biYPelsPerMeter;
+        -:   58:    unsigned int      biClrUsed;
+        -:   59:    unsigned int      biClrImportant;
+        -:   60:};
+        -:   61:
+        -:   62:#define BI_RGB              0L
+        -:   63:
+        -:   64:#endif
+        -:   65:
+        -:   66:/**
+        -:   67: * @brief BitmapPadding (SYSTEM: X POS Y POS).
+        -:   68: * @param bpp
+        -:   69: * @param width
+        -:   70: * @return
+        -:   71: */
+    #####:   72:inline int BitmapPadding(int bpp, int width)
+        -:   73:{
+    #####:   74:    int padding;
+        -:   75:
+    #####:   76:    if(((width * bpp / 8) % 4) != 0) {
+    #####:   77:        padding = 4 - ((width * bpp / 8) % 4);
+        -:   78:    } else {
+        -:   79:        padding = 0;
+        -:   80:    }
+        -:   81:
+    #####:   82:    return padding;
+        -:   83:}
+        -:   84:
+        -:   85:/**
+        -:   86: * @brief ReadBMP reads an image as .bmp file.
+        -:   87: * @param nameFile
+        -:   88: * @param data
+        -:   89: * @param width
+        -:   90: * @param height
+        -:   91: * @param channels
+        -:   92: * @return
+        -:   93: */
+    #####:   94:PIC_INLINE unsigned char *ReadBMP(std::string nameFile, unsigned char *data,
+        -:   95:                                  int &width, int &height, int &channels)
+        -:   96:{
+    #####:   97:    FILE *file = fopen(nameFile.c_str(), "rb");
+    %%%%%:   97-block  0
+        -:   98:
+    #####:   99:    if(file == NULL) {
+        -:  100:        return data;
+        -:  101:    }
+        -:  102:
+    #####:  103:    BITMAPFILEHEADER    bmpfh;
+    #####:  104:    BITMAPINFOHEADER    bmpih;
+        -:  105:
+        -:  106:    //reading the bitmap file header:
+        -:  107:    //this structure is 14 bytes ==> no alignment
+        -:  108:    //so issues for some compilers
+    #####:  109:    fread(&bmpfh.bfType, sizeof(unsigned short), 1, file);
+    %%%%%:  109-block  0
+    #####:  110:    fread(&bmpfh.bfSize, sizeof(unsigned int), 1, file);
+    #####:  111:    fread(&bmpfh.bfReserved1, sizeof(unsigned short), 1, file);
+    #####:  112:    fread(&bmpfh.bfReserved2, sizeof(unsigned short), 1, file);
+    #####:  113:    fread(&bmpfh.bfOffBits, sizeof(unsigned int), 1, file);
+        -:  114:
+    #####:  115:    fread(&bmpih, sizeof(BITMAPINFOHEADER), 1, file);
+        -:  116:
+        -:  117:    //24-bit images only!
+    #####:  118:    if(bmpih.biCompression != BI_RGB) {
+    #####:  119:        fclose(file);
+    #####:  120:        return data;
+    %%%%%:  120-block  0
+        -:  121:    }
+        -:  122:
+    #####:  123:    int bpp = bmpih.biBitCount;
+        -:  124:
+    #####:  125:    channels = bpp / 8;
+        -:  126:
+    #####:  127:    if(!(channels == 3 || channels == 1)) {
+    %%%%%:  127-block  0
+    #####:  128:        fclose(file);
+    #####:  129:        return data;
+    %%%%%:  129-block  0
+        -:  130:    }
+        -:  131:
+    #####:  132:    fseek(file, bmpfh.bfOffBits, SEEK_SET);
+    %%%%%:  132-block  0
+        -:  133:
+    #####:  134:    width  = bmpih.biWidth;
+    #####:  135:    height = bmpih.biHeight;
+        -:  136:
+    #####:  137:    if(data == NULL) {
+    #####:  138:        data = new unsigned char[width * height * channels];
+    %%%%%:  138-block  0
+        -:  139:    }
+        -:  140:
+        -:  141:    //compute padding
+    #####:  142:    int padding = BitmapPadding(bpp, width);
+    %%%%%:  142-block  0
+        -:  143:
+    #####:  144:    unsigned char *pads = NULL;
+        -:  145:
+    #####:  146:    if(padding > 0) {
+    #####:  147:        pads = new unsigned char[padding];
+    %%%%%:  147-block  0
+        -:  148:    }
+        -:  149:
+    #####:  150:    unsigned char tmp[3];
+        -:  151:
+    #####:  152:    for(int j = (height - 1); j > -1; j--) {
+    %%%%%:  152-block  0
+    %%%%%:  152-block  1
+    #####:  153:        int cj = j * width;
+        -:  154:
+    #####:  155:        if(channels == 3) {
+    %%%%%:  155-block  0
+    #####:  156:            for(int i = 0; i < width; i++) {
+    %%%%%:  156-block  0
+    #####:  157:                int c = (cj + i) * 3;
+    #####:  158:                fread(tmp, sizeof(unsigned char), 3, file);
+    %%%%%:  158-block  0
+        -:  159:                //from BGR to RGB
+    #####:  160:                data[c + 2] = tmp[0];
+    #####:  161:                data[c + 1] = tmp[1];
+    #####:  162:                data[c    ] = tmp[2];
+        -:  163:            }
+        -:  164:        }
+        -:  165:
+    #####:  166:        if(channels == 1) {
+    %%%%%:  166-block  0
+    #####:  167:            fread(&data[cj], sizeof(unsigned char), width, file);
+    %%%%%:  167-block  0
+        -:  168:        }
+        -:  169:
+    #####:  170:        if(padding > 0) {
+    %%%%%:  170-block  0
+    #####:  171:            fread(pads, sizeof(unsigned char), padding, file);
+    %%%%%:  171-block  0
+    %%%%%:  171-block  1
+        -:  172:        }
+        -:  173:    }
+        -:  174:
+    #####:  175:    fclose(file);
+    %%%%%:  175-block  0
+        -:  176:    return data;
+        -:  177:}
+        -:  178:
+        -:  179:/**
+        -:  180: * @brief WriteBMP writes an image as a .bmp file.
+        -:  181: * @param nameFile
+        -:  182: * @param data
+        -:  183: * @param width
+        -:  184: * @param height
+        -:  185: * @param channels
+        -:  186: * @return
+        -:  187: */
+    #####:  188:PIC_INLINE bool WriteBMP(std::string nameFile, const unsigned char *data,
+        -:  189:                         int width, int height, int channels)
+        -:  190:{
+    #####:  191:    if(data == NULL) {
+    %%%%%:  191-block  0
+        -:  192:        return false;
+        -:  193:    }
+        -:  194:
+        -:  195:    //	4*(bbp/32*width)
+    #####:  196:    BITMAPFILEHEADER    bmpfh;
+    #####:  197:    BITMAPINFOHEADER    bmpih;
+        -:  198:
+        -:  199:    //preparing the file header info
+    #####:  200:    bmpfh.bfType = 19778;
+        -:  201:    //to avoid issues with 4-byte alignment
+    #####:  202:    bmpfh.bfOffBits = 54; //sizeof(BITMAPINFOHEADER) + sizeof(BITMAPFILEHEADER);
+    #####:  203:    bmpfh.bfReserved1 = 0L;
+    #####:  204:    bmpfh.bfReserved2 = 0L;
+    #####:  205:    bmpfh.bfSize = 1078;
+        -:  206:
+        -:  207:    //preparing the bmp header info
+    #####:  208:    bmpih.biBitCount = 24;
+    #####:  209:    bmpih.biCompression = 0;
+    #####:  210:    bmpih.biHeight = height;
+    #####:  211:    bmpih.biWidth = width;
+    #####:  212:    bmpih.biClrUsed = 0;
+    #####:  213:    bmpih.biClrImportant = 0;
+    #####:  214:    bmpih.biXPelsPerMeter = 0;
+    #####:  215:    bmpih.biYPelsPerMeter = 0;
+    #####:  216:    bmpih.biSize = sizeof(bmpih);
+    #####:  217:    bmpih.biPlanes = 1;
+    #####:  218:    bmpih.biSizeImage = 0;
+        -:  219:
+    #####:  220:    FILE *file = fopen(nameFile.c_str(), "wb");
+    %%%%%:  220-block  0
+        -:  221:
+    #####:  222:    if(file == NULL) {
+        -:  223:        return false;
+        -:  224:    }
+        -:  225:
+        -:  226:    //writing the bitmap file header:
+        -:  227:    //this structure is 14 bytes ==> no alignment
+        -:  228:    //so issues for some compilers
+    #####:  229:    fwrite(&bmpfh.bfType, sizeof(unsigned short), 1, file);
+    %%%%%:  229-block  0
+    #####:  230:    fwrite(&bmpfh.bfSize, sizeof(unsigned int), 1, file);
+    #####:  231:    fwrite(&bmpfh.bfReserved1, sizeof(unsigned short), 1, file);
+    #####:  232:    fwrite(&bmpfh.bfReserved2, sizeof(unsigned short), 1, file);
+    #####:  233:    fwrite(&bmpfh.bfOffBits, sizeof(unsigned int), 1, file);
+        -:  234:
+        -:  235:    //writing the bitmap info header:
+        -:  236:    //this is already 4-byte aligned so no issues
+        -:  237:    //depending on the compiler
+    #####:  238:    fwrite(&bmpih, sizeof(BITMAPINFOHEADER), 1, file);
+        -:  239:
+        -:  240:    //padding?
+    #####:  241:    int bpp = 24;
+    #####:  242:    int padding = BitmapPadding(bpp, width);
+        -:  243:
+    #####:  244:    unsigned char *pads = NULL;
+        -:  245:
+    #####:  246:    if(padding > 0) {
+    #####:  247:        pads = new unsigned char[padding];
+    %%%%%:  247-block  0
+        -:  248:    }
+        -:  249:
+    #####:  250:    unsigned char tmp[3];
+        -:  251:
+    #####:  252:    int shiftG = 1;
+    #####:  253:    int shiftB = 2;
+        -:  254:
+    #####:  255:    if(channels==1) {
+    %%%%%:  255-block  0
+    #####:  256:        shiftG = 0;
+    #####:  257:        shiftB = 0;
+    %%%%%:  257-block  0
+        -:  258:    }
+        -:  259:
+    #####:  260:    for(int j = (height - 1); j > -1; j--) {
+    %%%%%:  260-block  0
+    %%%%%:  260-block  1
+    %%%%%:  260-block  2
+    #####:  261:        int cj = j * width;
+        -:  262:
+    #####:  263:        for(int i = 0; i < width; i++) {
+    %%%%%:  263-block  0
+    %%%%%:  263-block  1
+    #####:  264:            int c = (cj + i) * channels;
+        -:  265:            //From RGB to BGR
+    #####:  266:            tmp[0] = data[c + shiftB];
+    #####:  267:            tmp[1] = data[c + shiftG];
+    #####:  268:            tmp[2] = data[c    ];
+    #####:  269:            fwrite(tmp, sizeof(unsigned char), 3, file);
+    %%%%%:  269-block  0
+        -:  270:        }
+        -:  271:
+    #####:  272:        if(padding > 0) {
+    %%%%%:  272-block  0
+    #####:  273:            fwrite(pads, sizeof(unsigned char), padding, file);
+    %%%%%:  273-block  0
+        -:  274:        }
+        -:  275:    }
+        -:  276:
+    #####:  277:    fclose(file);
+    %%%%%:  277-block  0
+        -:  278:    return true;
+        -:  279:}
+        -:  280:
+        -:  281:} // end namespace pic
+        -:  282:
+        -:  283:#endif /* PIC_IO_BMP_HPP */
+        -:  284:

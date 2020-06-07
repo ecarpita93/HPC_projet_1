@@ -1,0 +1,243 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/io/ppm.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IO_PPM_HPP
+        -:   19:#define PIC_IO_PPM_HPP
+        -:   20:
+        -:   21:#include <iostream>
+        -:   22:#include <fstream>
+        -:   23:
+        -:   24:#include "../base.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:/**
+        -:   29: * @brief ReadPPM  reads an .ppm file
+        -:   30: * @param nameFile
+        -:   31: * @param data
+        -:   32: * @param width
+        -:   33: * @param height
+        -:   34: * @param channels
+        -:   35: * @return
+        -:   36: */
+    #####:   37:PIC_INLINE unsigned char *ReadPPM(std::string nameFile, unsigned char *data,
+        -:   38:                                  int &width, int &height, int &channels)
+        -:   39:{
+    #####:   40:    std::ifstream ppm_in(nameFile.c_str(), std::ios::binary);
+    %%%%%:   40-block  0
+    $$$$$:   40-block  1
+        -:   41:
+    #####:   42:    std::string magic_number("  ");
+    %%%%%:   42-block  0
+    $$$$$:   42-block  1
+        -:   43:
+    #####:   44:    ppm_in.get(magic_number[0]);
+    %%%%%:   44-block  0
+    #####:   45:    ppm_in.get(magic_number[1]);
+    %%%%%:   45-block  0
+        -:   46:
+    #####:   47:    bool bBinary = true;
+        -:   48:
+    #####:   49:    if(magic_number != std::string("P6")) {
+    %%%%%:   49-block  0
+    %%%%%:   49-block  1
+    %%%%%:   49-block  2
+    #####:   50:        ppm_in.close();
+    %%%%%:   50-block  0
+        -:   51:
+    #####:   52:        if(magic_number == std::string("P3")) {
+    %%%%%:   52-block  0
+    %%%%%:   52-block  1
+    %%%%%:   52-block  2
+    #####:   53:            bBinary = false;
+    #####:   54:            ppm_in.open(nameFile.c_str(), std::ios::in);
+    %%%%%:   54-block  0
+    #####:   55:            ppm_in.get(magic_number[0]);
+    %%%%%:   55-block  0
+    #####:   56:            ppm_in.get(magic_number[1]);
+    %%%%%:   56-block  0
+        -:   57:        } else {
+        -:   58:            return data;
+        -:   59:        }
+        -:   60:    }
+        -:   61:
+    #####:   62:    unsigned tmpWidth, tmpHeight, bpp;
+        -:   63:
+    #####:   64:    ppm_in >> tmpWidth >> tmpHeight >> bpp;
+    %%%%%:   64-block  0
+    %%%%%:   64-block  1
+    %%%%%:   64-block  2
+        -:   65:
+    #####:   66:    if(bpp > 255) {
+    %%%%%:   66-block  0
+    #####:   67:        printf("ERROR ReadPPM: BPP\n");
+    %%%%%:   67-block  0
+    %%%%%:   67-block  1
+        -:   68:        return data;
+        -:   69:    }
+        -:   70:
+    #####:   71:    channels = 3;
+        -:   72:
+        -:   73:    //Allocate memory
+    #####:   74:    if(data == NULL) {
+    %%%%%:   74-block  0
+    #####:   75:        data = new unsigned char[tmpWidth * tmpHeight * channels];
+    %%%%%:   75-block  0
+        -:   76:    }
+        -:   77:
+    #####:   78:    width = tmpWidth;
+    #####:   79:    height = tmpHeight;
+        -:   80:
+    #####:   81:    char ch;
+    #####:   82:    ppm_in.get(ch); // Trailing white space.
+    %%%%%:   82-block  0
+        -:   83:
+    #####:   84:    for(int y = 0; y < height; y++) {
+    %%%%%:   84-block  0
+    %%%%%:   84-block  1
+    #####:   85:        int ind = y * width;
+        -:   86:
+    #####:   87:        for(int x = 0; x < width; x++) {
+    %%%%%:   87-block  0
+    %%%%%:   87-block  1
+    %%%%%:   87-block  2
+    #####:   88:            int c = (ind + x) * 3;
+        -:   89:
+    #####:   90:            if(bBinary) {
+    %%%%%:   90-block  0
+    #####:   91:                char r, g, b;
+    #####:   92:                ppm_in.get(r);
+    %%%%%:   92-block  0
+    #####:   93:                ppm_in.get(g);
+    %%%%%:   93-block  0
+    #####:   94:                ppm_in.get(b);
+    %%%%%:   94-block  0
+        -:   95:
+    #####:   96:                data[c    ] = (static_cast<unsigned char>(r) * 255) / bpp;
+    #####:   97:                data[c + 1] = (static_cast<unsigned char>(g) * 255) / bpp;
+    #####:   98:                data[c + 2] = (static_cast<unsigned char>(b) * 255) / bpp;
+    %%%%%:   98-block  0
+        -:   99:            } else {
+    #####:  100:                int r, g, b;
+    #####:  101:                ppm_in >> r;
+    %%%%%:  101-block  0
+    #####:  102:                ppm_in >> g;
+    %%%%%:  102-block  0
+    #####:  103:                ppm_in >> b;
+    %%%%%:  103-block  0
+        -:  104:
+    #####:  105:                data[c    ] = (r * 255) / bpp;
+    #####:  106:                data[c + 1] = (g * 255) / bpp;
+    #####:  107:                data[c + 2] = (b * 255) / bpp;
+    %%%%%:  107-block  0
+        -:  108:            }
+        -:  109:        }
+        -:  110:    }
+        -:  111:
+    #####:  112:    ppm_in.close();
+    %%%%%:  112-block  0
+        -:  113:
+        -:  114:    return data;
+        -:  115:}
+        -:  116:
+        -:  117:/**
+        -:  118: * @brief WritePPM  writes an .ppm file.
+        -:  119: * @param nameFile
+        -:  120: * @param data
+        -:  121: * @param width
+        -:  122: * @param height
+        -:  123: * @param channels
+        -:  124: * @return
+        -:  125: */
+    #####:  126:PIC_INLINE bool WritePPM(std::string nameFile, const unsigned char *data,
+        -:  127:                         int width, int height, int channels)
+        -:  128:{
+    #####:  129:    std::ofstream ppm_out(nameFile.c_str(), std::ios::binary);
+    %%%%%:  129-block  0
+    %%%%%:  129-block  1
+    $$$$$:  129-block  2
+        -:  130:
+    #####:  131:    if(!ppm_out.is_open()) {
+        -:  132:        return false;
+        -:  133:    }
+        -:  134:
+    #####:  135:    ppm_out << "P6";
+    %%%%%:  135-block  0
+    #####:  136:    ppm_out << ' ';
+    %%%%%:  136-block  0
+    #####:  137:    ppm_out << '\n';
+    %%%%%:  137-block  0
+    #####:  138:    ppm_out << width;
+    %%%%%:  138-block  0
+    #####:  139:    ppm_out << ' ';
+    %%%%%:  139-block  0
+    #####:  140:    ppm_out << height;
+    %%%%%:  140-block  0
+    #####:  141:    ppm_out << ' ';
+    %%%%%:  141-block  0
+    #####:  142:    ppm_out << '\n';
+    %%%%%:  142-block  0
+    #####:  143:    ppm_out << "255";
+    %%%%%:  143-block  0
+    #####:  144:    ppm_out << '\n';
+    %%%%%:  144-block  0
+        -:  145:
+    #####:  146:    int shiftG = 1;
+    #####:  147:    int shiftB = 2;
+        -:  148:
+    #####:  149:    if(channels == 1) {
+    %%%%%:  149-block  0
+    #####:  150:        shiftG = 0;
+    #####:  151:        shiftB = 0;
+    %%%%%:  151-block  0
+        -:  152:    }
+        -:  153:
+    #####:  154:    for(int y = 0; y < height; y++) {
+    %%%%%:  154-block  0
+    %%%%%:  154-block  1
+    %%%%%:  154-block  2
+    #####:  155:        int ind = y * width;
+        -:  156:
+    #####:  157:        for(int x = 0; x < width; x++) {
+    %%%%%:  157-block  0
+    %%%%%:  157-block  1
+    #####:  158:            int c = (ind + x) * channels;
+    #####:  159:            ppm_out << data[c  ];
+    %%%%%:  159-block  0
+    #####:  160:            ppm_out << data[c + shiftG];
+    %%%%%:  160-block  0
+    #####:  161:            ppm_out << data[c + shiftB];
+    %%%%%:  161-block  0
+    %%%%%:  161-block  1
+        -:  162:        }
+        -:  163:    }
+        -:  164:
+    #####:  165:    ppm_out.flush();
+    %%%%%:  165-block  0
+    #####:  166:    ppm_out.close();
+    %%%%%:  166-block  0
+        -:  167:    return true;
+        -:  168:}
+        -:  169:
+        -:  170:} // end namespace pic
+        -:  171:
+        -:  172:#endif /* PIC_IO_PPM_HPP */
+        -:  173:

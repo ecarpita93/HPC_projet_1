@@ -1,0 +1,241 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_anisotropic_diffusion.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_ANISOTROPIC_DIFFUSION_HPP
+        -:   19:#define PIC_FILTERING_FILTER_ANISOTROPIC_DIFFUSION_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:#include "../filtering/filter.hpp"
+        -:   23:#include "../filtering/filter_iterative.hpp"
+        -:   24:
+        -:   25:namespace pic {
+        -:   26:
+        -:   27:/**
+        -:   28: * @brief The FilterAnsiotropicDiffusion class
+        -:   29: */
+        -:   30:class FilterAnsiotropicDiffusion: public Filter
+        -:   31:{
+        -:   32:protected:
+        -:   33:    /**
+        -:   34:     * @brief ProcessBBox
+        -:   35:     * @param dst
+        -:   36:     * @param src
+        -:   37:     * @param box
+        -:   38:     */
+        -:   39:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   40:
+        -:   41:    float k, k_sq, delta_t;
+        -:   42:    unsigned int mode;
+        -:   43:
+        -:   44:public:
+        -:   45:
+        -:   46:    /**
+        -:   47:     * @brief FilterAnsiotropicDiffusion
+        -:   48:     * @param k
+        -:   49:     * @param mode
+        -:   50:     */
+        -:   51:    FilterAnsiotropicDiffusion(float k, unsigned int mode);
+        -:   52:
+        -:   53:    /**
+        -:   54:     * @brief execute
+        -:   55:     * @param imgIn
+        -:   56:     * @param imgOut
+        -:   57:     * @param k
+        -:   58:     * @param mode
+        -:   59:     * @param iterations
+        -:   60:     * @return
+        -:   61:     */
+        -:   62:    static Image *execute(ImageVec imgIn, Image *imgOut,
+        -:   63:                                          float k, unsigned int mode, unsigned int iterations)
+        -:   64:    {
+        -:   65:        FilterAnsiotropicDiffusion ansio_flt(k, mode);
+        -:   66:        FilterIterative iter_flt(&ansio_flt, iterations);
+        -:   67:        imgOut = iter_flt.Process(imgIn, imgOut);
+        -:   68:        return imgOut;
+        -:   69:    }
+        -:   70:
+        -:   71:    /**
+        -:   72:     * @brief execute
+        -:   73:     * @param imgIn
+        -:   74:     * @param imgOut
+        -:   75:     * @param sigma_s
+        -:   76:     * @param sigma_r
+        -:   77:     * @param maxIterations
+        -:   78:     * @return
+        -:   79:     */
+        -:   80:    static Image *execute(ImageVec imgIn, Image *imgOut,
+        -:   81:                                          float sigma_s, float sigma_r, int maxIterations = -1)
+        -:   82:    {
+        -:   83:        if(sigma_s <= 0.0f) {
+        -:   84:            sigma_s = 1.0f;
+        -:   85:        }
+        -:   86:
+        -:   87:        if(sigma_r <= 0.0f) {
+        -:   88:            sigma_r = 0.05f;
+        -:   89:        }
+        -:   90:
+        -:   91:        int iterations = 0;
+        -:   92:
+        -:   93:        if(maxIterations > 0) {
+        -:   94:            iterations = maxIterations;
+        -:   95:        } else {
+        -:   96:            iterations = int(ceilf(5.0f * sigma_s));
+        -:   97:        }
+        -:   98:
+        -:   99:        FilterAnsiotropicDiffusion ansio_flt(sigma_r, 2);
+        -:  100:        FilterIterative iter_flt(&ansio_flt, iterations);
+        -:  101:        imgOut = iter_flt.Process(imgIn, imgOut);
+        -:  102:        return imgOut;
+        -:  103:    }
+        -:  104:
+        -:  105:};
+        -:  106:
+        -:  107:PIC_INLINE FilterAnsiotropicDiffusion::FilterAnsiotropicDiffusion(float k,
+        -:  108:        unsigned int mode)
+        -:  109:{
+        -:  110:    if(k <= 0.0f) {
+        -:  111:        k = 0.11f;
+        -:  112:    }
+        -:  113:
+        -:  114:    if(mode > 2 || mode < 0) {
+        -:  115:        mode = 0;
+        -:  116:    }
+        -:  117:
+        -:  118:    delta_t = 1.0f / 7.0f;
+        -:  119:
+        -:  120:    this->k = k;
+        -:  121:    this->k_sq = k * k;
+        -:  122:
+        -:  123:    this->mode = mode;
+        -:  124:}
+        -:  125:
+    #####:  126:PIC_INLINE void FilterAnsiotropicDiffusion::ProcessBBox(Image *dst, ImageVec src,
+        -:  127:        BBox *box)
+        -:  128:{
+    #####:  129:    Image *img = src[0];
+    %%%%%:  129-block  0
+    #####:  130:    int channels = img->channels;
+        -:  131:
+    #####:  132:    float *gN = new float [channels];
+    %%%%%:  132-block  0
+    %%%%%:  132-block  1
+    %%%%%:  132-block  2
+    #####:  133:    float *gS = new float [channels];
+    #####:  134:    float *gW = new float [channels];
+    #####:  135:    float *gE = new float [channels];
+        -:  136:
+    #####:  137:    for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  137-block  0
+    %%%%%:  137-block  1
+    #####:  138:        for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  138-block  0
+    %%%%%:  138-block  1
+        -:  139:
+    #####:  140:            float *dst_data  = (*dst)(i, j);
+    %%%%%:  140-block  0
+    #####:  141:            float *img_data  = (*img)(i, j);
+    %%%%%:  141-block  0
+        -:  142:
+    #####:  143:            float *img_dataN = (*img)(i + 1, j    );
+    %%%%%:  143-block  0
+    #####:  144:            float *img_dataS = (*img)(i - 1, j    );
+    %%%%%:  144-block  0
+    #####:  145:            float *img_dataW = (*img)(i    , j - 1);
+    %%%%%:  145-block  0
+    #####:  146:            float *img_dataE = (*img)(i    , j + 1);
+    %%%%%:  146-block  0
+        -:  147:
+    #####:  148:            float cN = 0.0f;
+    #####:  149:            float cS = 0.0f;
+    #####:  150:            float cW = 0.0f;
+    #####:  151:            float cE = 0.0f;
+        -:  152:
+    #####:  153:            for(int p = 0; p < channels; p++) {
+    %%%%%:  153-block  0
+    %%%%%:  153-block  1
+    #####:  154:                gN[p] = img_dataN[p] - img_data[p];
+    #####:  155:                gS[p] = img_dataS[p] - img_data[p];
+    #####:  156:                gW[p] = img_dataW[p] - img_data[p];
+    #####:  157:                gE[p] = img_dataE[p] - img_data[p];
+        -:  158:
+    #####:  159:                cN += gN[p] * gN[p];
+    #####:  160:                cS += gS[p] * gS[p];
+    #####:  161:                cW += gW[p] * gW[p];
+    #####:  162:                cE += gE[p] * gE[p];
+    %%%%%:  162-block  0
+        -:  163:            }
+        -:  164:
+    #####:  165:            switch(mode) {
+    %%%%%:  165-block  0
+    #####:  166:                case 1:
+    #####:  167:                {
+    #####:  168:                    cN = 1.0f / (1.0f + cN / k_sq);
+    #####:  169:                    cS = 1.0f / (1.0f + cS / k_sq);
+    #####:  170:                    cW = 1.0f / (1.0f + cW / k_sq);
+    #####:  171:                    cE = 1.0f / (1.0f + cE / k_sq);
+    #####:  172:                } break;
+    %%%%%:  172-block  0
+        -:  173:
+    #####:  174:                case 2:
+    #####:  175:                {
+    #####:  176:                    float t;
+    #####:  177:                    t = 1.0f - expf(-3.315f / powf(cN / k_sq, 8.0f));
+    #####:  178:                    cN = cN > 0.0f ? t : 1.0f;
+    %%%%%:  178-block  0
+        -:  179:
+    #####:  180:                    t = 1.0f - expf(-3.315f / powf(cS / k_sq, 8.0f));
+    #####:  181:                    cS = cS > 0.0f ? t : 1.0f;
+    %%%%%:  181-block  0
+        -:  182:
+    #####:  183:                    t = 1.0f - expf(-3.315f / powf(cW / k_sq, 8.0f));
+    #####:  184:                    cW = cW > 0.0f ? t : 1.0f;
+    %%%%%:  184-block  0
+        -:  185:
+    #####:  186:                    t = 1.0f - expf(-3.315f / powf(cE / k_sq, 8.0f));
+    #####:  187:                    cE = cE > 0.0f ? t : 1.0f;
+    %%%%%:  187-block  0
+        -:  188:                } break;
+        -:  189:
+    #####:  190:                default:
+    #####:  191:                {
+    #####:  192:                    cN = expf(-cN / k_sq);
+    #####:  193:                    cS = expf(-cS / k_sq);
+    #####:  194:                    cW = expf(-cW / k_sq);
+    #####:  195:                    cE = expf(-cE / k_sq);
+    #####:  196:                } break;
+    %%%%%:  196-block  0
+        -:  197:            }
+        -:  198:
+    #####:  199:            for(int p = 0; p < channels; p++) {
+    %%%%%:  199-block  0
+    %%%%%:  199-block  1
+    #####:  200:                dst_data[p] = img_data[p] + delta_t *
+    #####:  201:                        (cN * gN[p] + cS * gS[p] + cW * gW[p] + cE * gE[p]);
+    %%%%%:  201-block  0
+        -:  202:            }
+        -:  203:        }
+        -:  204:    }
+    #####:  205:}
+        -:  206:
+        -:  207:} // end namespace pic
+        -:  208:
+        -:  209:#endif /* PIC_FILTERING_FILTER_ANISOTROPIC_DIFFUSION_HPP */
+        -:  210:

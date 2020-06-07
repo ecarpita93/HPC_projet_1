@@ -1,0 +1,658 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/io/exif.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IO_EXIF
+        -:   19:#define PIC_IO_EXIF
+        -:   20:
+        -:   21:#include <stdio.h>
+        -:   22:#include <string>
+        -:   23:
+        -:   24:#include "../base.hpp"
+        -:   25:
+        -:   26:#include "../util/math.hpp"
+        -:   27:
+        -:   28:namespace pic {
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief twoByteToValue
+        -:   32: * @param data
+        -:   33: * @param bMotorola
+        -:   34: * @return
+        -:   35: */
+     294*:   36:unsigned int twoByteToValue(unsigned char data[2], bool bMotorola)
+        -:   37:{
+    #####:   38:    if(bMotorola) {
+    %%%%%:   38-block  0
+     294*:   39:        return  (data[0] << 8) + (data[1]);
+        7:   39-block  0
+        7:   39-block  1
+        7:   39-block  2
+      203:   39-block  3
+       70:   39-block  4
+    %%%%%:   39-block  5
+        -:   40:    } else {
+    #####:   41:        return  (data[1] << 8) + (data[0]);
+    %%%%%:   41-block  0
+    %%%%%:   41-block  1
+    %%%%%:   41-block  2
+    %%%%%:   41-block  3
+    %%%%%:   41-block  4
+    %%%%%:   41-block  5
+        -:   42:    }
+        -:   43:}
+        -:   44:
+        -:   45:/**
+        -:   46: * @brief fourByteToValue
+        -:   47: * @param data
+        -:   48: * @param bMotorola
+        -:   49: * @return
+        -:   50: */
+     406*:   51:unsigned int fourByteToValue(unsigned char data[4], bool bMotorola)
+        -:   52:{
+    #####:   53:    if(bMotorola) {
+    %%%%%:   53-block  0
+     399*:   54:        return (data[0] << 24) + (data[1] << 16) +
+     399*:   55:               (data[2] << 8) + (data[3]);
+        7:   55-block  0
+        7:   55-block  1
+        7:   55-block  2
+      203:   55-block  3
+       77:   55-block  4
+       49:   55-block  5
+       49:   55-block  6
+    %%%%%:   55-block  7
+        -:   56:    } else {
+       7*:   57:        return (data[3] << 24) + (data[2] << 16) +
+    #####:   58:               (data[1] << 8) + (data[0]);
+    %%%%%:   58-block  0
+    %%%%%:   58-block  1
+    %%%%%:   58-block  2
+    %%%%%:   58-block  3
+    %%%%%:   58-block  4
+    %%%%%:   58-block  5
+    %%%%%:   58-block  6
+    %%%%%:   58-block  7
+        -:   59:    }
+        -:   60:}
+        -:   61:
+        -:   62:/**
+        -:   63: * @brief checkTag
+        -:   64: * @param tag
+        -:   65: * @param tag_r
+        -:   66: * @param bMotorola
+        -:   67: * @return
+        -:   68: */
+    1085*:   69:bool checkTag(unsigned char tag[2], unsigned short tag_r, bool bMotorola)
+        -:   70:{
+    1085*:   71:    unsigned char tag_ref[2];
+    1085*:   72:    tag_ref[0] = (tag_r >> 8) & 0x00ff;
+    1085*:   73:    tag_ref[1] = tag_r & 0x00ff;
+        -:   74:
+    1085*:   75:    bool bRet = false;
+    #####:   76:    if(bMotorola) {
+    %%%%%:   76-block  0
+    1085*:   77:        bRet = (tag[0] == tag_ref[0]) && (tag[1] == tag_ref[1]);
+        7:   77-block  0
+       14:   77-block  1
+        7:   77-block  2
+        7:   77-block  3
+       56:   77-block  4
+       49:   77-block  5
+       56:   77-block  6
+        7:   77-block  7
+      203:   77-block  8
+       14:   77-block  9
+      196:   77-block 10
+        7:   77-block 11
+      189:   77-block 12
+       14:   77-block 13
+      182:   77-block 14
+       70:   77-block 15
+      175:   77-block 16
+       63:   77-block 17
+    %%%%%:   77-block 18
+    %%%%%:   77-block 19
+        -:   78:    } else {
+    #####:   79:        bRet = (tag[1] == tag_ref[0]) && (tag[0] == tag_ref[1]);
+    %%%%%:   79-block  0
+    %%%%%:   79-block  1
+    %%%%%:   79-block  2
+    %%%%%:   79-block  3
+    %%%%%:   79-block  4
+    %%%%%:   79-block  5
+    %%%%%:   79-block  6
+    %%%%%:   79-block  7
+    %%%%%:   79-block  8
+    %%%%%:   79-block  9
+    %%%%%:   79-block 10
+    %%%%%:   79-block 11
+    %%%%%:   79-block 12
+    %%%%%:   79-block 13
+    %%%%%:   79-block 14
+    %%%%%:   79-block 15
+    %%%%%:   79-block 16
+    %%%%%:   79-block 17
+        -:   80:    }
+        -:   81:
+      14*:   82:    return bRet;
+        -:   83:}
+        -:   84:
+        -:   85:/**
+        -:   86: * @brief getTagID
+        -:   87: * @param tag
+        -:   88: * @param bMotorola
+        -:   89: * @return
+        -:   90: */
+      203:   91:int getTagID(unsigned char tag[2], bool bMotorola)
+        -:   92:{
+      203:   93:    if(checkTag(tag, 0x829a, bMotorola)) {
+      203:   93-block  0
+        -:   94:        return 0;
+        -:   95:    }
+        -:   96:
+      196:   97:    if(checkTag(tag, 0x829d, bMotorola)) {
+      196:   97-block  0
+        -:   98:        return 1;
+        -:   99:    }
+        -:  100:
+      189:  101:    if(checkTag(tag, 0x8827, bMotorola)) {
+      189:  101-block  0
+        -:  102:        return 2;
+        -:  103:    }
+        -:  104:
+      182:  105:    if(checkTag(tag, 0x9202, bMotorola)) {
+      182:  105-block  0
+        -:  106:        return 3;
+        -:  107:    }
+        -:  108:
+      175:  109:    if(checkTag(tag, 0x920a, bMotorola)) {
+      175:  109-block  0
+        7:  110:        return 4;
+        7:  110-block  0
+        -:  111:    }
+        -:  112:
+        -:  113:    return -1;
+        -:  114:}
+        -:  115:
+        -:  116:/**
+        -:  117: * @brief getBytesForComponents
+        -:  118: * @param value
+        -:  119: * @return
+        -:  120: */
+     210*:  121:int getBytesForComponents(int value)
+        -:  122:{
+    #####:  123:    switch(value)
+    %%%%%:  123-block  0
+        -:  124:    {
+        -:  125:    case 1: {
+        -:  126:        return 1;
+        -:  127:    } break;
+        -:  128:
+        -:  129:    case 2: {
+        -:  130:        return 1;
+        -:  131:    } break;
+        -:  132:
+        -:  133:    case 3: {
+        -:  134:        return 2;
+        -:  135:    } break;
+        -:  136:
+        -:  137:    case 4: {
+        -:  138:        return 4;
+        -:  139:    } break;
+        -:  140:
+        -:  141:    case 5: {
+        -:  142:        return 8;
+        -:  143:    } break;
+        -:  144:
+        -:  145:    case 6: {
+        -:  146:        return 1;
+        -:  147:    } break;
+        -:  148:
+        -:  149:    case 7: {
+        -:  150:        return 1;
+        -:  151:    } break;
+        -:  152:
+        -:  153:    case 8: {
+        -:  154:        return 2;
+        -:  155:    } break;
+        -:  156:
+        -:  157:    case 9: {
+        -:  158:        return 4;
+        -:  159:    } break;
+        -:  160:
+        -:  161:    case 10: {
+        -:  162:        return 8;
+        -:  163:    } break;
+        -:  164:
+        -:  165:    case 11: {
+        -:  166:        return 4;
+        -:  167:    } break;
+        -:  168:
+        -:  169:    case 12: {
+        -:  170:        return 8;
+        -:  171:    } break;
+        -:  172:
+        -:  173:    default: {
+        -:  174:        return -1;
+        -:  175:    }
+        -:  176:
+        -:  177:    }
+        -:  178:}
+        -:  179:
+        -:  180:/**
+        -:  181: * @brief readString
+        -:  182: * @param file
+        -:  183: * @param length
+        -:  184: * @return
+        -:  185: */
+        7:  186:std::string readString(FILE *file, int length)
+        -:  187:{
+        7:  188:    char *tmp = new char[length];
+        7:  188-block  0
+        7:  189:    fread(tmp, 1, length, file);
+        7:  190:    std::string str(tmp);
+        7:  190-block  0
+        -:  191:
+        7:  192:    delete[] tmp;
+        -:  193:
+        7:  194:    return str;
+        -:  195:}
+        -:  196:
+        -:  197:/**
+        -:  198: * @brief readStringFromUChar
+        -:  199: * @param data
+        -:  200: * @return
+        -:  201: */
+    #####:  202:std::string readStringFromUChar(unsigned char *data, int length)
+        -:  203:{
+    #####:  204:    std::string str;
+    %%%%%:  204-block  0
+        -:  205:
+    #####:  206:    for(int i = 0; i < length; i++) {
+    %%%%%:  206-block  0
+    %%%%%:  206-block  1
+    #####:  207:        str += (char) data[i];
+    %%%%%:  207-block  0
+    %%%%%:  207-block  1
+        -:  208:    }
+        -:  209:
+    #####:  210:    return str;
+    %%%%%:  210-block  0
+        -:  211:}
+        -:  212:
+        -:  213:/**
+        -:  214: * @brief readUnsignedRational
+        -:  215: * @param file
+        -:  216: * @param bMotorola
+        -:  217: * @return
+        -:  218: */
+       49:  219:float readUnsignedRational(FILE *file, bool bMotorola)
+        -:  220:{
+       49:  221:    unsigned char val0[4];
+       49:  222:    fread(val0, 1, 4, file);
+       49:  222-block  0
+        -:  223:
+       49:  224:    unsigned char val1[4];
+       49:  225:    fread(val1, 1, 4, file);
+        -:  226:
+       49:  227:    auto num = fourByteToValue(val0, bMotorola);
+       49:  228:    auto denum = fourByteToValue(val1, bMotorola);
+       49:  228-block  0
+        -:  229:
+       49:  230:    return float(num) / float(denum);
+        -:  231:}
+        -:  232:
+       14:  233:struct EXIFInfo
+        7:  233-block  0
+        7:  233-block  1
+        7:  233-block  2
+    $$$$$:  233-block  3
+    $$$$$:  233-block  4
+        -:  234:{
+        -:  235:    float exposureTime;
+        -:  236:    float fNumber;
+        -:  237:    float aperture;
+        -:  238:    float iso;
+        -:  239:    float focal_length;
+        -:  240:
+        -:  241:    std::string camera_maker;
+        -:  242:};
+        -:  243:
+        -:  244:/**
+        -:  245: * @brief readEXIF
+        -:  246: * @param name
+        -:  247: * @param info
+        -:  248: * @return
+        -:  249: */
+        7:  250:bool readEXIF(std::string name, EXIFInfo &info)
+        -:  251:{
+        7:  252:        FILE *file = fopen(name.c_str(), "rb");
+        7:  252-block  0
+        -:  253:
+        7:  254:        unsigned char buf[2];
+        7:  255:        fread(buf, 1, 2, file);
+        -:  256:
+        7:  257:        if(!checkTag(buf, 0xffd8, true)) {
+        -:  258:            return false;
+        -:  259:        }
+        -:  260:
+        -:  261:        unsigned char buf2[2];
+       14:  262:        int length = 0;
+        -:  263:
+       14:  264:        bool bFound = false;
+       14:  265:        while(!feof(file)) {
+       14:  265-block  0
+       14:  266:            fread(buf2, 1, 2, file);
+       14:  266-block  0
+        -:  267:            //printf("%x%x\n", buf2[0], buf2[1]);
+        -:  268:
+       14:  269:            unsigned char len[2];
+       14:  270:            fread(&len, 1, 2, file);
+        -:  271:
+        -:  272:            //printf("LEN: %x %x\n", len[0], len[1]);
+       14:  273:            length =  (len[0] << 8) + (len[1]);
+        -:  274:
+       14:  275:            if(checkTag(buf2, 0xffe1, true)) {
+        7:  276:                bFound = true;
+        7:  277:                break;
+        -:  278:            }
+        -:  279:
+        7:  280:            fseek(file, length - 2, SEEK_CUR);
+        7:  280-block  0
+        -:  281:        }
+        -:  282:
+       7*:  283:        if(!bFound) {
+    #####:  284:            fclose(file);
+    #####:  285:            return false;
+    %%%%%:  285-block  0
+        -:  286:        }
+        -:  287:
+        -:  288:        //EXIF header
+        -:  289:
+        7:  290:        unsigned char buf6[6];
+        7:  291:        fread(buf6, 1, 6, file);
+        7:  291-block  0
+        -:  292:
+        7:  293:        if(buf6[0] != 0x45 || buf6[1] != 0x78 ||
+        7:  293-block  0
+        7:  294:           buf6[2] != 0x69 || buf6[3] != 0x66 ||
+        7:  294-block  0
+        7:  294-block  1
+        7:  295:           buf6[4] != 0x00 || buf6[5] != 0x00) {
+        7:  295-block  0
+        7:  295-block  1
+    #####:  296:            fclose(file);
+    #####:  297:            return false;
+    %%%%%:  297-block  0
+        -:  298:        }
+        -:  299:
+        -:  300:        //TIFF header
+        7:  301:        fpos_t pos;
+        7:  302:        fgetpos(file, &pos);
+        7:  302-block  0
+        -:  303:
+        -:  304:        //is it Motorala mode?
+        7:  305:        fread(buf2, 1, 2, file);
+        7:  306:        bool bMotorola = (buf2[0] == 0x4d) && (buf2[1] == 0x4d);
+        7:  306-block  0
+        -:  307:
+        7:  308:        fread(buf2, 1, 2, file);
+        7:  308-block  0
+        7:  309:        bool bCheck = false;
+        -:  310:
+       7*:  311:        if(!checkTag(buf2, 0x002a, bMotorola)) {
+    #####:  312:            fclose(file);
+    #####:  313:            return false;
+    %%%%%:  313-block  0
+        -:  314:        }
+        -:  315:
+        7:  316:        unsigned char buf4[4];
+        7:  317:        fread(buf4, 1, 4, file); //this is the offset
+        7:  317-block  0
+        -:  318:
+        7:  319:        if(bMotorola) {
+        7:  320:            bCheck = (buf4[0] == 0x00) && (buf4[1] == 0x00) &&
+        7:  320-block  0
+       14:  321:                     (buf4[2] == 0x00) && (buf4[3] == 0x08);
+        7:  321-block  0
+        7:  321-block  1
+        7:  321-block  2
+        -:  322:        } else {
+    #####:  323:            bCheck = (buf4[0] == 0x08) && (buf4[1] == 0x00) &&
+    %%%%%:  323-block  0
+    #####:  324:                     (buf4[2] == 0x00) && (buf4[3] == 0x00);
+    %%%%%:  324-block  0
+    %%%%%:  324-block  1
+    %%%%%:  324-block  2
+        -:  325:        }
+        -:  326:
+        7:  327:        if(!bCheck) {
+        7:  327-block  0
+    #####:  328:            fclose(file);
+    #####:  329:            return false;
+    %%%%%:  329-block  0
+        -:  330:        }
+        -:  331:
+        -:  332:        //IFD0: Image file directory
+        7:  333:        fread(buf2, 1, 2, file);
+        7:  333-block  0
+        -:  334:
+        7:  335:        int nIFD = twoByteToValue(buf2, bMotorola);
+        -:  336:
+        -:  337:        //printf("nIFD: %d\n", nIFD);
+        -:  338:
+        7:  339:        unsigned int offset = 0;
+       63:  340:        for(int i = 0; i < nIFD; i++) {
+        7:  340-block  0
+       63:  340-block  1
+       56:  341:            unsigned char tag[2];
+       56:  342:            fread(tag, 1, 2, file); //TAG
+       56:  342-block  0
+        -:  343:
+       56:  344:            unsigned char data_format[2];
+       56:  345:            fread(data_format, 1, 2, file); //dataformat
+        -:  346:
+       56:  347:            unsigned char num_components[4];
+       56:  348:            fread(num_components, 1, 4, file); //number of components
+        -:  349:
+       56:  350:            unsigned char data[4];
+       56:  351:            fread(data, 1, 4, file); //data or offset to data
+        -:  352:
+        -:  353:            //maker
+       56:  354:            if(checkTag(tag, 0x010f, bMotorola)) {
+        -:  355:
+        7:  356:                int df = twoByteToValue(data_format, bMotorola);
+        7:  356-block  0
+        7:  357:                int nc = fourByteToValue(num_components, bMotorola);
+        7:  357-block  0
+        -:  358:
+        7:  359:                int total_data_byte = getBytesForComponents(df) * nc;
+        7:  359-block  0
+        -:  360:
+        7:  361:                if(total_data_byte > 4) {
+        7:  361-block  0
+        7:  362:                    int offset = fourByteToValue(data, bMotorola);
+        7:  362-block  0
+        -:  363:
+        7:  364:                    fpos_t tmp_pos;
+        7:  365:                    fgetpos(file, &tmp_pos);
+        7:  365-block  0
+        7:  366:                    fseek(file, offset, SEEK_CUR);
+        7:  367:                    info.camera_maker = readString(file, nc);
+        7:  368:                    fsetpos(file, &tmp_pos);
+        7:  368-block  0
+        -:  369:
+        -:  370:                } else {
+    #####:  371:                    info.camera_maker = readStringFromUChar(data, nc);
+    %%%%%:  371-block  0
+    %%%%%:  371-block  1
+        -:  372:                }
+        -:  373:            }
+        -:  374:
+       56:  375:            if(checkTag(tag, 0x8769, bMotorola)) {
+       56:  375-block  0
+       63:  376:                offset = fourByteToValue(data, bMotorola);
+        7:  376-block  0
+       56:  376-block  1
+        -:  377:            }
+        -:  378:        }
+        -:  379:
+        7:  380:        unsigned char next_IFD[4];
+        7:  381:        fread(next_IFD, 1, 4, file);
+        7:  381-block  0
+        7:  382:        int offset_next_IFD = fourByteToValue(next_IFD, bMotorola);
+        -:  383:        //printf("OFFSET: %d\n", offset_next_IFD);
+        -:  384:
+        7:  385:        if(offset > 0) {
+        7:  386:            fsetpos(file, &pos);
+        7:  386-block  0
+        7:  387:            fseek(file, offset, SEEK_CUR);
+        -:  388:            //NOTE: this works but gives warnings --> fseek(file, pos + offset, SEEK_SET);           
+        -:  389:        }
+        -:  390:
+        -:  391:        //
+        -:  392:        // IFD 1
+        -:  393:        //
+        -:  394:
+        7:  395:        fread(buf2, 1, 2, file);
+        7:  395-block  0
+        -:  396:
+        7:  397:        nIFD = twoByteToValue(buf2, bMotorola);
+        -:  398:
+      210:  399:        for(int i = 0; i < nIFD; i++) {
+        7:  399-block  0
+      210:  399-block  1
+      203:  399-block  2
+      203:  400:            unsigned char tag[2];
+        -:  401:
+      203:  402:            fread(tag, 1, 2, file); //TAG
+      203:  402-block  0
+        -:  403:
+      203:  404:            unsigned char data_format[2];
+      203:  405:            fread(data_format, 1, 2, file); //dataformat
+        -:  406:
+      203:  407:            unsigned char num_components[4];
+      203:  408:            fread(num_components, 1, 4, file); //number of components
+        -:  409:
+      203:  410:            unsigned char data[4];
+      203:  411:            fread(data, 1, 4, file); //data or offset to data
+        -:  412:
+      203:  413:            int df = twoByteToValue(data_format, bMotorola);
+      203:  414:            int nc = fourByteToValue(num_components, bMotorola);
+      203:  414-block  0
+      203:  415:            int total_data_byte = getBytesForComponents(df) * nc;
+      203:  415-block  0
+        -:  416:
+      203:  417:            int id = getTagID(tag, bMotorola);
+        -:  418:
+      203:  419:            float data_value = 0;
+      203:  420:            if(total_data_byte > 4) {
+      203:  420-block  0
+       77:  421:                int offset = fourByteToValue(data, bMotorola);
+       77:  421-block  0
+        -:  422:
+       77:  423:                fpos_t tmp_pos;
+       77:  424:                fgetpos(file, &tmp_pos);
+       77:  424-block  0
+        -:  425:
+       77:  426:                fsetpos(file, &pos);
+       77:  427:                fseek(file, offset, SEEK_CUR);
+        -:  428:                //fseek(file, pos + offset, SEEK_SET);
+        -:  429:
+       77:  430:                switch(df) {
+       49:  431:                case 5: {
+       49:  432:                    data_value = readUnsignedRational(file, bMotorola);
+       49:  432-block  0
+        -:  433:                } break;
+        -:  434:                }
+        -:  435:                //unsigned rational
+        -:  436:
+       77:  437:                fsetpos(file, &tmp_pos);
+       77:  437-block  0
+        -:  438:                //fseek(file, tmp_pos, SEEK_SET);
+        -:  439:            } else {
+      126:  440:                switch(df) {
+      126:  440-block  0
+       70:  441:                case 3: {
+       70:  442:                    data_value = float(twoByteToValue(data, bMotorola));
+       70:  442-block  0
+       70:  443:                } break;
+       70:  443-block  0
+        -:  444:                }
+        -:  445:            }
+        -:  446:
+      203:  447:            switch(id) {
+      203:  447-block  0
+        7:  448:            case 0:
+        7:  449:            {
+        7:  450:                info.exposureTime = data_value;
+        7:  451:            } break;
+        7:  451-block  0
+        -:  452:
+        7:  453:            case 1:
+        7:  454:            {
+        7:  455:                info.fNumber = data_value;
+        -:  456:
+        7:  457:            } break;
+        7:  457-block  0
+        -:  458:
+        7:  459:            case 2:
+        7:  460:            {
+        7:  461:                info.iso = data_value;
+        -:  462:
+        7:  463:            } break;
+        7:  463-block  0
+        -:  464:
+        7:  465:            case 3:
+        7:  466:            {
+        7:  467:                info.aperture = data_value;
+        -:  468:
+        7:  469:            } break;
+        7:  469-block  0
+        -:  470:
+        7:  471:            case 4:
+        7:  472:            {
+        7:  473:                info.focal_length = data_value;
+        7:  474:            } break;
+        7:  474-block  0
+        -:  475:
+        -:  476:            default:
+        -:  477:            {
+        -:  478:
+        -:  479:            } break;
+        -:  480:
+        -:  481:            }
+        -:  482:        }
+        -:  483:
+        -:  484:        #ifdef PIC_DEBUG
+        -:  485:            printf("%f %f %f\n", info.iso, info.exposureTime, info.fNumber);
+        -:  486:        #endif
+        -:  487:
+        7:  488:        fclose(file);
+        7:  488-block  0
+        -:  489:
+        -:  490:        return true;
+        -:  491:}
+        -:  492:
+        -:  493:} // end namespace pic
+        -:  494:
+        -:  495:#endif /* PIC_IO_VOL_HPP */
+        -:  496:

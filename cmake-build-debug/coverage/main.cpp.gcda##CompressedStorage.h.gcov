@@ -1,0 +1,343 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/SparseCore/CompressedStorage.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2008-2014 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5://
+        -:    6:// This Source Code Form is subject to the terms of the Mozilla
+        -:    7:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    8:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:    9:
+        -:   10:#ifndef EIGEN_COMPRESSED_STORAGE_H
+        -:   11:#define EIGEN_COMPRESSED_STORAGE_H
+        -:   12:
+        -:   13:namespace Eigen { 
+        -:   14:
+        -:   15:namespace internal {
+        -:   16:
+        -:   17:/** \internal
+        -:   18:  * Stores a sparse set of values as a list of values and a list of indices.
+        -:   19:  *
+        -:   20:  */
+        -:   21:template<typename _Scalar,typename _StorageIndex>
+        -:   22:class CompressedStorage
+        -:   23:{
+        -:   24:  public:
+        -:   25:
+        -:   26:    typedef _Scalar Scalar;
+        -:   27:    typedef _StorageIndex StorageIndex;
+        -:   28:
+        -:   29:  protected:
+        -:   30:
+        -:   31:    typedef typename NumTraits<Scalar>::Real RealScalar;
+        -:   32:
+        -:   33:  public:
+        -:   34:
+    #####:   35:    CompressedStorage()
+    #####:   36:      : m_values(0), m_indices(0), m_size(0), m_allocatedSize(0)
+    %%%%%:   36-block  0
+    %%%%%:   36-block  1
+    %%%%%:   36-block  2
+        -:   37:    {}
+        -:   38:
+        -:   39:    explicit CompressedStorage(Index size)
+        -:   40:      : m_values(0), m_indices(0), m_size(0), m_allocatedSize(0)
+        -:   41:    {
+        -:   42:      resize(size);
+        -:   43:    }
+        -:   44:
+        -:   45:    CompressedStorage(const CompressedStorage& other)
+        -:   46:      : m_values(0), m_indices(0), m_size(0), m_allocatedSize(0)
+        -:   47:    {
+        -:   48:      *this = other;
+        -:   49:    }
+        -:   50:
+    #####:   51:    CompressedStorage& operator=(const CompressedStorage& other)
+        -:   52:    {
+    #####:   53:      resize(other.size());
+    #####:   54:      if(other.size()>0)
+        -:   55:      {
+    #####:   56:        internal::smart_copy(other.m_values,  other.m_values  + m_size, m_values);
+    %%%%%:   56-block  0
+    #####:   57:        internal::smart_copy(other.m_indices, other.m_indices + m_size, m_indices);
+    %%%%%:   57-block  0
+        -:   58:      }
+    #####:   59:      return *this;
+        -:   60:    }
+        -:   61:
+    #####:   62:    void swap(CompressedStorage& other)
+        -:   63:    {
+    #####:   64:      std::swap(m_values, other.m_values);
+    #####:   65:      std::swap(m_indices, other.m_indices);
+    #####:   66:      std::swap(m_size, other.m_size);
+    #####:   67:      std::swap(m_allocatedSize, other.m_allocatedSize);
+    %%%%%:   67-block  0
+    %%%%%:   67-block  1
+    %%%%%:   67-block  2
+        -:   68:    }
+        -:   69:
+    #####:   70:    ~CompressedStorage()
+        -:   71:    {
+    #####:   72:      delete[] m_values;
+    %%%%%:   72-block  0
+    %%%%%:   72-block  1
+    #####:   73:      delete[] m_indices;
+    %%%%%:   73-block  0
+    %%%%%:   73-block  1
+    #####:   74:    }
+        -:   75:
+    #####:   76:    void reserve(Index size)
+        -:   77:    {
+    #####:   78:      Index newAllocatedSize = m_size + size;
+    #####:   79:      if (newAllocatedSize > m_allocatedSize)
+    %%%%%:   79-block  0
+    %%%%%:   79-block  1
+    #####:   80:        reallocate(newAllocatedSize);
+    %%%%%:   80-block  0
+    %%%%%:   80-block  1
+        -:   81:    }
+        -:   82:
+        -:   83:    void squeeze()
+        -:   84:    {
+        -:   85:      if (m_allocatedSize>m_size)
+        -:   86:        reallocate(m_size);
+        -:   87:    }
+        -:   88:
+    #####:   89:    void resize(Index size, double reserveSizeFactor = 0)
+        -:   90:    {
+    #####:   91:      if (m_allocatedSize<size)
+    %%%%%:   91-block  0
+        -:   92:      {
+    #####:   93:        Index realloc_size = (std::min<Index>)(NumTraits<StorageIndex>::highest(),  size + Index(reserveSizeFactor*double(size)));
+    %%%%%:   93-block  0
+    #####:   94:        if(realloc_size<size)
+    %%%%%:   94-block  0
+    #####:   95:          internal::throw_std_bad_alloc();
+    %%%%%:   95-block  0
+    #####:   96:        reallocate(realloc_size);
+    %%%%%:   96-block  0
+        -:   97:      }
+    #####:   98:      m_size = size;
+    #####:   99:    }
+        -:  100:
+    #####:  101:    void append(const Scalar& v, Index i)
+        -:  102:    {
+    #####:  103:      Index id = m_size;
+    #####:  104:      resize(m_size+1, 1);
+    %%%%%:  104-block  0
+    #####:  105:      m_values[id] = v;
+    #####:  106:      m_indices[id] = internal::convert_index<StorageIndex>(i);
+    #####:  107:    }
+        -:  108:
+    #####:  109:    inline Index size() const { return m_size; }
+    %%%%%:  109-block  0
+    %%%%%:  109-block  1
+    %%%%%:  109-block  2
+    %%%%%:  109-block  3
+        -:  110:    inline Index allocatedSize() const { return m_allocatedSize; }
+    #####:  111:    inline void clear() { m_size = 0; }
+    %%%%%:  111-block  0
+    %%%%%:  111-block  1
+    %%%%%:  111-block  2
+        -:  112:
+    #####:  113:    const Scalar* valuePtr() const { return m_values; }
+    %%%%%:  113-block  0
+    %%%%%:  113-block  1
+    %%%%%:  113-block  2
+    %%%%%:  113-block  3
+    %%%%%:  113-block  4
+    %%%%%:  113-block  5
+    %%%%%:  113-block  6
+    %%%%%:  113-block  7
+    %%%%%:  113-block  8
+    %%%%%:  113-block  9
+    %%%%%:  113-block 10
+    %%%%%:  113-block 11
+    #####:  114:    Scalar* valuePtr() { return m_values; }
+    %%%%%:  114-block  0
+    %%%%%:  114-block  1
+    %%%%%:  114-block  2
+    %%%%%:  114-block  3
+    #####:  115:    const StorageIndex* indexPtr() const { return m_indices; }
+    %%%%%:  115-block  0
+    %%%%%:  115-block  1
+    %%%%%:  115-block  2
+    %%%%%:  115-block  3
+    %%%%%:  115-block  4
+    %%%%%:  115-block  5
+    %%%%%:  115-block  6
+    %%%%%:  115-block  7
+    %%%%%:  115-block  8
+    %%%%%:  115-block  9
+    %%%%%:  115-block 10
+    %%%%%:  115-block 11
+    #####:  116:    StorageIndex* indexPtr() { return m_indices; }
+    %%%%%:  116-block  0
+    %%%%%:  116-block  1
+    %%%%%:  116-block  2
+    %%%%%:  116-block  3
+        -:  117:
+    #####:  118:    inline Scalar& value(Index i) { eigen_internal_assert(m_values!=0); return m_values[i]; }
+    %%%%%:  118-block  0
+    %%%%%:  118-block  1
+    %%%%%:  118-block  2
+    %%%%%:  118-block  3
+        -:  119:    inline const Scalar& value(Index i) const { eigen_internal_assert(m_values!=0); return m_values[i]; }
+        -:  120:
+    #####:  121:    inline StorageIndex& index(Index i) { eigen_internal_assert(m_indices!=0); return m_indices[i]; }
+    %%%%%:  121-block  0
+    %%%%%:  121-block  1
+    %%%%%:  121-block  2
+    %%%%%:  121-block  3
+    %%%%%:  121-block  4
+        -:  122:    inline const StorageIndex& index(Index i) const { eigen_internal_assert(m_indices!=0); return m_indices[i]; }
+        -:  123:
+        -:  124:    /** \returns the largest \c k such that for all \c j in [0,k) index[\c j]\<\a key */
+        -:  125:    inline Index searchLowerIndex(Index key) const
+        -:  126:    {
+        -:  127:      return searchLowerIndex(0, m_size, key);
+        -:  128:    }
+        -:  129:
+        -:  130:    /** \returns the largest \c k in [start,end) such that for all \c j in [start,k) index[\c j]\<\a key */
+        -:  131:    inline Index searchLowerIndex(Index start, Index end, Index key) const
+        -:  132:    {
+        -:  133:      while(end>start)
+        -:  134:      {
+        -:  135:        Index mid = (end+start)>>1;
+        -:  136:        if (m_indices[mid]<key)
+        -:  137:          start = mid+1;
+        -:  138:        else
+        -:  139:          end = mid;
+        -:  140:      }
+        -:  141:      return start;
+        -:  142:    }
+        -:  143:
+        -:  144:    /** \returns the stored value at index \a key
+        -:  145:      * If the value does not exist, then the value \a defaultValue is returned without any insertion. */
+        -:  146:    inline Scalar at(Index key, const Scalar& defaultValue = Scalar(0)) const
+        -:  147:    {
+        -:  148:      if (m_size==0)
+        -:  149:        return defaultValue;
+        -:  150:      else if (key==m_indices[m_size-1])
+        -:  151:        return m_values[m_size-1];
+        -:  152:      // ^^  optimization: let's first check if it is the last coefficient
+        -:  153:      // (very common in high level algorithms)
+        -:  154:      const Index id = searchLowerIndex(0,m_size-1,key);
+        -:  155:      return ((id<m_size) && (m_indices[id]==key)) ? m_values[id] : defaultValue;
+        -:  156:    }
+        -:  157:
+        -:  158:    /** Like at(), but the search is performed in the range [start,end) */
+        -:  159:    inline Scalar atInRange(Index start, Index end, Index key, const Scalar &defaultValue = Scalar(0)) const
+        -:  160:    {
+        -:  161:      if (start>=end)
+        -:  162:        return defaultValue;
+        -:  163:      else if (end>start && key==m_indices[end-1])
+        -:  164:        return m_values[end-1];
+        -:  165:      // ^^  optimization: let's first check if it is the last coefficient
+        -:  166:      // (very common in high level algorithms)
+        -:  167:      const Index id = searchLowerIndex(start,end-1,key);
+        -:  168:      return ((id<end) && (m_indices[id]==key)) ? m_values[id] : defaultValue;
+        -:  169:    }
+        -:  170:
+        -:  171:    /** \returns a reference to the value at index \a key
+        -:  172:      * If the value does not exist, then the value \a defaultValue is inserted
+        -:  173:      * such that the keys are sorted. */
+        -:  174:    inline Scalar& atWithInsertion(Index key, const Scalar& defaultValue = Scalar(0))
+        -:  175:    {
+        -:  176:      Index id = searchLowerIndex(0,m_size,key);
+        -:  177:      if (id>=m_size || m_indices[id]!=key)
+        -:  178:      {
+        -:  179:        if (m_allocatedSize<m_size+1)
+        -:  180:        {
+        -:  181:          m_allocatedSize = 2*(m_size+1);
+        -:  182:          internal::scoped_array<Scalar> newValues(m_allocatedSize);
+        -:  183:          internal::scoped_array<StorageIndex> newIndices(m_allocatedSize);
+        -:  184:
+        -:  185:          // copy first chunk
+        -:  186:          internal::smart_copy(m_values,  m_values +id, newValues.ptr());
+        -:  187:          internal::smart_copy(m_indices, m_indices+id, newIndices.ptr());
+        -:  188:
+        -:  189:          // copy the rest
+        -:  190:          if(m_size>id)
+        -:  191:          {
+        -:  192:            internal::smart_copy(m_values +id,  m_values +m_size, newValues.ptr() +id+1);
+        -:  193:            internal::smart_copy(m_indices+id,  m_indices+m_size, newIndices.ptr()+id+1);
+        -:  194:          }
+        -:  195:          std::swap(m_values,newValues.ptr());
+        -:  196:          std::swap(m_indices,newIndices.ptr());
+        -:  197:        }
+        -:  198:        else if(m_size>id)
+        -:  199:        {
+        -:  200:          internal::smart_memmove(m_values +id, m_values +m_size, m_values +id+1);
+        -:  201:          internal::smart_memmove(m_indices+id, m_indices+m_size, m_indices+id+1);
+        -:  202:        }
+        -:  203:        m_size++;
+        -:  204:        m_indices[id] = internal::convert_index<StorageIndex>(key);
+        -:  205:        m_values[id] = defaultValue;
+        -:  206:      }
+        -:  207:      return m_values[id];
+        -:  208:    }
+        -:  209:
+        -:  210:    void prune(const Scalar& reference, const RealScalar& epsilon = NumTraits<RealScalar>::dummy_precision())
+        -:  211:    {
+        -:  212:      Index k = 0;
+        -:  213:      Index n = size();
+        -:  214:      for (Index i=0; i<n; ++i)
+        -:  215:      {
+        -:  216:        if (!internal::isMuchSmallerThan(value(i), reference, epsilon))
+        -:  217:        {
+        -:  218:          value(k) = value(i);
+        -:  219:          index(k) = index(i);
+        -:  220:          ++k;
+        -:  221:        }
+        -:  222:      }
+        -:  223:      resize(k,0);
+        -:  224:    }
+        -:  225:
+        -:  226:  protected:
+        -:  227:
+    #####:  228:    inline void reallocate(Index size)
+        -:  229:    {
+        -:  230:      #ifdef EIGEN_SPARSE_COMPRESSED_STORAGE_REALLOCATE_PLUGIN
+        -:  231:        EIGEN_SPARSE_COMPRESSED_STORAGE_REALLOCATE_PLUGIN
+        -:  232:      #endif
+        -:  233:      eigen_internal_assert(size!=m_allocatedSize);
+    #####:  234:      internal::scoped_array<Scalar> newValues(size);
+    %%%%%:  234-block  0
+    #####:  235:      internal::scoped_array<StorageIndex> newIndices(size);
+    %%%%%:  235-block  0
+    #####:  236:      Index copySize = (std::min)(size, m_size);
+    %%%%%:  236-block  0
+    #####:  237:      if (copySize>0) {
+    %%%%%:  237-block  0
+    #####:  238:        internal::smart_copy(m_values, m_values+copySize, newValues.ptr());
+    %%%%%:  238-block  0
+    %%%%%:  238-block  1
+    #####:  239:        internal::smart_copy(m_indices, m_indices+copySize, newIndices.ptr());
+    %%%%%:  239-block  0
+    %%%%%:  239-block  1
+        -:  240:      }
+    #####:  241:      std::swap(m_values,newValues.ptr());
+    %%%%%:  241-block  0
+    #####:  242:      std::swap(m_indices,newIndices.ptr());
+    #####:  243:      m_allocatedSize = size;
+    %%%%%:  243-block  0
+    #####:  244:    }
+    %%%%%:  244-block  0
+        -:  245:
+        -:  246:  protected:
+        -:  247:    Scalar* m_values;
+        -:  248:    StorageIndex* m_indices;
+        -:  249:    Index m_size;
+        -:  250:    Index m_allocatedSize;
+        -:  251:
+        -:  252:};
+        -:  253:
+        -:  254:} // end namespace internal
+        -:  255:
+        -:  256:} // end namespace Eigen
+        -:  257:
+        -:  258:#endif // EIGEN_COMPRESSED_STORAGE_H

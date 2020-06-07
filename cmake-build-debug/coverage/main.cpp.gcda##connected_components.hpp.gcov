@@ -1,0 +1,835 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/algorithms/connected_components.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_ALGORITHMS_CONNECTED_COMPONENTS_HPP
+        -:   19:#define PIC_ALGORITHMS_CONNECTED_COMPONENTS_HPP
+        -:   20:
+        -:   21:#include <vector>
+        -:   22:#include <set>
+        -:   23:#include <map>
+        -:   24:#include <utility>
+        -:   25:
+        -:   26:#include "../base.hpp"
+        -:   27:
+        -:   28:#include "../image.hpp"
+        -:   29:
+        -:   30:#include "../util/buffer.hpp"
+        -:   31:
+        -:   32:namespace pic {
+        -:   33:
+        -:   34:struct LabelInfo
+        -:   35:{
+        -:   36:    unsigned int id;
+        -:   37:    unsigned int minLabel;
+        -:   38:
+    #####:   39:    friend bool operator<(LabelInfo const &a, LabelInfo const &b)
+        -:   40:    {
+    #####:   41:        return a.id < b.id;
+    %%%%%:   41-block  0
+    %%%%%:   41-block  1
+    %%%%%:   41-block  2
+    %%%%%:   41-block  3
+    %%%%%:   41-block  4
+    %%%%%:   41-block  5
+    %%%%%:   41-block  6
+    %%%%%:   41-block  7
+    %%%%%:   41-block  8
+    %%%%%:   41-block  9
+    %%%%%:   41-block 10
+    %%%%%:   41-block 11
+        -:   42:    }
+        -:   43:};
+        -:   44:
+        -:   45:class LabelOutput
+        -:   46:{
+        -:   47:public:
+        -:   48:    unsigned int id;
+        -:   49:    std::vector< int > coords;
+        -:   50:    std::set< int > neighbors;
+        -:   51:    bool bValid;
+        -:   52:
+        -:   53:    LabelOutput()
+        -:   54:    {
+        -:   55:        id = 0;
+        -:   56:        bValid = true;
+        -:   57:    }
+        -:   58:
+    #####:   59:    LabelOutput(unsigned int id, int i)
+    #####:   60:    {
+    %%%%%:   60-block  0
+    $$$$$:   60-block  1
+    $$$$$:   60-block  2
+    #####:   61:        this->id = id;
+    #####:   62:        coords.push_back(i);
+    %%%%%:   62-block  0
+    #####:   63:        bValid = true;
+    #####:   64:    }
+    %%%%%:   64-block  0
+        -:   65:
+    #####:   66:    void push_back(int i)
+        -:   67:    {
+    #####:   68:        coords.push_back(i);
+    %%%%%:   68-block  0
+    #####:   69:    }
+    %%%%%:   69-block  0
+        -:   70:
+        -:   71:    friend bool operator<(LabelOutput const &a, LabelOutput const &b)
+        -:   72:    {
+        -:   73:        return a.id < b.id;
+        -:   74:    }
+        -:   75:};
+        -:   76:
+        -:   77:template<class T>
+        -:   78:class ConnectedComponents
+        -:   79:{
+        -:   80:protected:
+        -:   81:    float thr;
+        -:   82:
+        -:   83:    /**
+        -:   84:     * @brief secondPass
+        -:   85:     * @param imgOut
+        -:   86:     * @param labelEq
+        -:   87:     */
+    #####:   88:    void secondPass(unsigned int *imgOut, std::vector<LabelOutput> &ret, std::set<LabelInfo> &labelEq, int n)
+    %%%%%:   88-block  0
+        -:   89:    {
+        -:   90:        //Label Search
+        -:   91:        LabelInfo tmpLI;
+    #####:   92:        std::set<LabelInfo> labelEq_new;
+    %%%%%:   92-block  0
+        -:   93:
+    #####:   94:        for(auto it2 = labelEq.begin() ; it2 != labelEq.end(); it2++) {
+    %%%%%:   94-block  0
+    %%%%%:   94-block  1
+    #####:   95:            auto minVal = it2->minLabel;
+    %%%%%:   95-block  0
+        -:   96:            bool test = true;
+        -:   97:
+    #####:   98:            while(test) {
+    %%%%%:   98-block  0
+    #####:   99:                test = false;
+    #####:  100:                tmpLI.id = minVal;
+    %%%%%:  100-block  0
+    #####:  101:                auto it = labelEq.find(tmpLI);
+    %%%%%:  101-block  0
+        -:  102:
+    #####:  103:                if(it != labelEq.end()) {
+    %%%%%:  103-block  0
+    #####:  104:                    auto tmpMinLabel = (*it).minLabel;
+    %%%%%:  104-block  0
+        -:  105:
+    #####:  106:                    if(minVal > tmpMinLabel) {
+    %%%%%:  106-block  0
+        -:  107:                        minVal = tmpMinLabel;
+        -:  108:                        test = true;
+        -:  109:                    }
+        -:  110:                }
+        -:  111:            }
+        -:  112:
+        -:  113:            LabelInfo tmp_it;
+    #####:  114:            tmp_it.id = it2->id;
+    %%%%%:  114-block  0
+    #####:  115:            tmp_it.minLabel = minVal;
+    %%%%%:  115-block  0
+    #####:  116:            labelEq_new.insert(tmp_it);
+    %%%%%:  116-block  0
+        -:  117:        }
+        -:  118:
+        -:  119:        //Second pass: using tracked neighbors
+        -:  120:        //for assigning the correct labels
+        -:  121:        //TO DO: optimizing outside this loop
+    #####:  122:        std::set<unsigned int> unique;
+    %%%%%:  122-block  0
+        -:  123:        //std::set<unsigned int>::iterator uniqueIt;
+    #####:  124:        std::map<unsigned int, int> mapping;
+        -:  125:
+    #####:  126:        int counter = 0;
+        -:  127:
+    #####:  128:        for(int i = 0; i < n; i++) {
+    %%%%%:  128-block  0
+    %%%%%:  128-block  1
+    %%%%%:  128-block  2
+    #####:  129:            tmpLI.id = imgOut[i];
+    %%%%%:  129-block  0
+    #####:  130:            auto it = labelEq_new.find(tmpLI);
+    %%%%%:  130-block  0
+        -:  131:
+    #####:  132:            if(it != labelEq_new.end()) {
+    %%%%%:  132-block  0
+    #####:  133:                imgOut[i] = it->minLabel;
+    %%%%%:  133-block  0
+        -:  134:            }
+        -:  135:
+        -:  136:            //store coordiantes of the connected components
+    #####:  137:            auto id = imgOut[i];
+    %%%%%:  137-block  0
+    #####:  138:            auto uniqueIt = unique.find(id);
+    %%%%%:  138-block  0
+        -:  139:
+    #####:  140:            if(uniqueIt != unique.end()) {
+    %%%%%:  140-block  0
+    #####:  141:                ret[mapping[id]].push_back(i);
+    %%%%%:  141-block  0
+    %%%%%:  141-block  1
+    %%%%%:  141-block  2
+        -:  142:            } else {
+    #####:  143:                std::pair<unsigned int, int> tmp = std::make_pair(id, counter);
+    %%%%%:  143-block  0
+    #####:  144:                mapping.insert(tmp);
+        -:  145:
+    #####:  146:                LabelOutput tmpRet(id, i);
+    %%%%%:  146-block  0
+    $$$$$:  146-block  1
+    #####:  147:                ret.push_back(tmpRet);
+    %%%%%:  147-block  0
+        -:  148:
+    #####:  149:                unique.insert(id);
+    #####:  150:                counter++;
+    %%%%%:  150-block  0
+        -:  151:            }
+        -:  152:        }
+    #####:  153:    }
+        -:  154:
+    #####:  155:    void track(unsigned int *imgOut, int &label, std::set<LabelInfo> &labelEq,
+    %%%%%:  155-block  0
+        -:  156:               int neighbors[2], int nNeighbors, int ind)
+        -:  157:    {
+    #####:  158:        std::set<LabelInfo>::iterator it;
+        -:  159:        //No neighbors?
+    #####:  160:        if(nNeighbors == 0) {
+    %%%%%:  160-block  0
+    #####:  161:            imgOut[ind] = label;
+    #####:  162:            label++;
+    %%%%%:  162-block  0
+        -:  163:        }
+        -:  164:
+    #####:  165:        if(nNeighbors == 1) {
+    %%%%%:  165-block  0
+    #####:  166:            imgOut[ind] = imgOut[neighbors[0]];
+    %%%%%:  166-block  0
+        -:  167:        }
+        -:  168:
+    #####:  169:        if(nNeighbors == 2) {
+    %%%%%:  169-block  0
+        -:  170:            //Assign the label of neighbors
+        -:  171:            unsigned int minVal, t1, t2;
+    #####:  172:            t1 = imgOut[neighbors[0]];
+    #####:  173:            t2 = imgOut[neighbors[1]];
+    %%%%%:  173-block  0
+        -:  174:            minVal = MIN(t1, t2);
+        -:  175:
+        -:  176:            //Track neighbors
+        -:  177:            LabelInfo tmpLI;
+        -:  178:            bool test = true;
+        -:  179:
+    #####:  180:            while(test) {
+    #####:  181:                test = false;
+    #####:  182:                tmpLI.id = minVal;
+    %%%%%:  182-block  0
+    #####:  183:                it = labelEq.find(tmpLI);
+    %%%%%:  183-block  0
+        -:  184:
+    #####:  185:                if(it != labelEq.end()) {
+    %%%%%:  185-block  0
+    #####:  186:                    float tmpMinLabel = it->minLabel;
+    %%%%%:  186-block  0
+        -:  187:
+    #####:  188:                    if(minVal > tmpMinLabel) {
+    %%%%%:  188-block  0
+    #####:  189:                        minVal = tmpMinLabel;
+    %%%%%:  189-block  0
+        -:  190:                        test = true;
+        -:  191:                    }
+        -:  192:                }
+        -:  193:            }
+        -:  194:
+    #####:  195:            imgOut[ind] = minVal;
+        -:  196:
+        -:  197:            //Track T1
+    #####:  198:            test = true;
+    #####:  199:            tmpLI.id = t1;
+    %%%%%:  199-block  0
+    #####:  200:            it = labelEq.find(tmpLI);
+    %%%%%:  200-block  0
+        -:  201:
+    #####:  202:            if(it != labelEq.end()) {
+    %%%%%:  202-block  0
+        -:  203:                LabelInfo tmp_it;
+    #####:  204:                tmp_it.id = it->id;
+    %%%%%:  204-block  0
+    #####:  205:                tmp_it.minLabel = minVal;
+    %%%%%:  205-block  0
+        -:  206:
+    #####:  207:                labelEq.erase(it);
+    #####:  208:                labelEq.insert(tmp_it);
+    %%%%%:  208-block  0
+        -:  209:            } else {
+        -:  210:                LabelInfo tmpLabelInfo;
+    #####:  211:                tmpLabelInfo.id = t1;
+    #####:  212:                tmpLabelInfo.minLabel = minVal;
+    %%%%%:  212-block  0
+    #####:  213:                labelEq.insert(tmpLabelInfo);
+    %%%%%:  213-block  0
+        -:  214:            }
+        -:  215:
+        -:  216:            //Track T2
+    #####:  217:            tmpLI.id = t2;
+    %%%%%:  217-block  0
+    #####:  218:            it = labelEq.find(tmpLI);
+    %%%%%:  218-block  0
+        -:  219:
+    #####:  220:            if(it != labelEq.end()) {
+    %%%%%:  220-block  0
+        -:  221:                LabelInfo tmp_it;
+    #####:  222:                tmp_it.id = it->id;
+    %%%%%:  222-block  0
+    #####:  223:                tmp_it.minLabel = minVal;
+    %%%%%:  223-block  0
+        -:  224:
+    #####:  225:                labelEq.erase(it);
+    #####:  226:                labelEq.insert(tmp_it);
+    %%%%%:  226-block  0
+        -:  227:            } else {
+        -:  228:                LabelInfo tmpLabelInfo;
+    #####:  229:                tmpLabelInfo.id = t2;
+    #####:  230:                tmpLabelInfo.minLabel = minVal;
+    %%%%%:  230-block  0
+    #####:  231:                labelEq.insert(tmpLabelInfo);
+    %%%%%:  231-block  0
+        -:  232:            }
+        -:  233:        }
+    #####:  234:    }
+    %%%%%:  234-block  0
+        -:  235:
+        -:  236:public:
+        -:  237:
+        -:  238:    /**
+        -:  239:     * @brief ConnectedComponents
+        -:  240:     * @param thr
+        -:  241:     */
+    #####:  242:    ConnectedComponents(float thr = 0.05f)
+        -:  243:    {
+    #####:  244:        this->thr  = thr > 0.0f ? thr : 0.05f;
+    %%%%%:  244-block  0
+        -:  245:    }
+        -:  246:
+        -:  247:    /**
+        -:  248:     * @brief execute
+        -:  249:     * @param imgIn
+        -:  250:     * @param imgOut
+        -:  251:     * @param ret
+        -:  252:     */
+        -:  253:    unsigned int *execute(Image *imgIn, unsigned int *imgOut, std::vector<LabelOutput> &ret)
+        -:  254:    {
+        -:  255:        //Check input paramters
+        -:  256:        if(imgIn == NULL) {
+        -:  257:            return imgOut;
+        -:  258:        }
+        -:  259:
+        -:  260:        float *data  = imgIn->data;
+        -:  261:        int width    = imgIn->width;
+        -:  262:        int height   = imgIn->height;
+        -:  263:        int channels = imgIn->channels;
+        -:  264:
+        -:  265:        int n = width * height;
+        -:  266:
+        -:  267:        if(imgOut == NULL) {
+        -:  268:            imgOut = new unsigned int[n];
+        -:  269:        }
+        -:  270:
+        -:  271:        Buffer<unsigned int>::assign(imgOut, n, 0);
+        -:  272:
+        -:  273:        //First pass:
+        -:  274:        // 1) assign basics labels
+        -:  275:        // 2) generate the list of neighbors
+        -:  276:        int label = 1;
+        -:  277:        std::set<LabelInfo> labelEq;
+        -:  278:        for(int j = 0; j < height; j++) {
+        -:  279:            int indY = j * width;
+        -:  280:
+        -:  281:            for(int i = 0; i < width; i++) {
+        -:  282:                int ind = (indY + i);
+        -:  283:
+        -:  284:                int ind_img = ind * channels;
+        -:  285:
+        -:  286:                //neighbors
+        -:  287:                int neighbors[2];
+        -:  288:                int nNeighbors = 0;
+        -:  289:
+        -:  290:                if((i - 1) > -1) {
+        -:  291:                    int ind_img_prev = ind_img - channels;
+        -:  292:
+        -:  293:                    float n1 = Arrayf::norm(&data[ind_img], channels);
+        -:  294:                    float n2 = Arrayf::norm(&data[ind_img_prev], channels);
+        -:  295:                    float dist = sqrtf(Arrayf::distanceSq(&data[ind_img], &data[ind_img_prev], channels));
+        -:  296:
+        -:  297:                    if(dist <= (thr * MAX(n1, n2))) {
+        -:  298:                        neighbors[0] = ind - 1;
+        -:  299:                        nNeighbors++;
+        -:  300:                    }
+        -:  301:                }
+        -:  302:
+        -:  303:                if((j - 1) > -1) {
+        -:  304:                    int ind_img_prev = ind_img - (width * channels);
+        -:  305:
+        -:  306:                    float n1 = Arrayf::norm(&data[ind_img], channels);
+        -:  307:                    float n2 = Arrayf::norm(&data[ind_img_prev], channels);
+        -:  308:                    float dist = sqrtf(Arrayf::distanceSq(&data[ind_img], &data[ind_img_prev], channels));
+        -:  309:
+        -:  310:                    if(dist <= (thr * MAX(n1, n2))) {
+        -:  311:                        neighbors[nNeighbors] = ind - width;
+        -:  312:                        nNeighbors++;
+        -:  313:                    }
+        -:  314:                }
+        -:  315:
+        -:  316:                track(imgOut, label, labelEq, neighbors, nNeighbors, ind);
+        -:  317:            }
+        -:  318:        }
+        -:  319:
+        -:  320:        secondPass(imgOut, ret, labelEq, n);
+        -:  321:        return imgOut;
+        -:  322:    }
+        -:  323:
+        -:  324:    /**
+        -:  325:     * @brief execute
+        -:  326:     * @param imgIn
+        -:  327:     * @param width
+        -:  328:     * @param height
+        -:  329:     * @param imgOut
+        -:  330:     * @param ret
+        -:  331:     * @return
+        -:  332:     */
+    #####:  333:    unsigned int *execute(T *imgIn, int width, int height, unsigned int *imgOut, std::vector<LabelOutput> &ret)
+        -:  334:    {
+        -:  335:        //Check input paramters
+    #####:  336:        if(imgIn == NULL) {
+    %%%%%:  336-block  0
+        -:  337:            return imgOut;
+        -:  338:        }
+        -:  339:
+    #####:  340:        int n = width * height;
+        -:  341:
+    #####:  342:        if(imgOut == NULL) {
+    %%%%%:  342-block  0
+    #####:  343:            imgOut = new unsigned int[n];
+    %%%%%:  343-block  0
+    %%%%%:  343-block  1
+    %%%%%:  343-block  2
+        -:  344:        }
+        -:  345:
+    #####:  346:        Buffer<unsigned int>::assign(imgOut, n, 0);
+    %%%%%:  346-block  0
+        -:  347:
+    #####:  348:        T *data = imgIn;
+        -:  349:        //First pass:
+        -:  350:        // 1) assign basics labels
+        -:  351:        // 2) generate the list of neighbors
+    #####:  352:        int label = 1;
+    #####:  353:        std::set<LabelInfo> labelEq;
+    %%%%%:  353-block  0
+    #####:  354:        for(int j = 0; j < height; j++) {
+    %%%%%:  354-block  0
+    %%%%%:  354-block  1
+    #####:  355:            int indY = j * width;
+        -:  356:
+    #####:  357:            for(int i = 0; i < width; i++) {
+    %%%%%:  357-block  0
+    %%%%%:  357-block  1
+    %%%%%:  357-block  2
+    #####:  358:                int ind = (indY + i);
+        -:  359:
+        -:  360:                //neighbors
+        -:  361:                int neighbors[2];
+    #####:  362:                int nNeighbors = 0;
+        -:  363:
+    #####:  364:                if((i - 1) > -1) {
+    %%%%%:  364-block  0
+    #####:  365:                    int ind_prev = ind - 1;
+    #####:  366:                    if(data[ind] == data[ind_prev]) {
+    %%%%%:  366-block  0
+    #####:  367:                        neighbors[0] = ind_prev;
+    #####:  368:                        nNeighbors++;
+    %%%%%:  368-block  0
+        -:  369:                    }
+        -:  370:                }
+        -:  371:
+    #####:  372:                if((j - 1) > -1) {
+    %%%%%:  372-block  0
+    #####:  373:                    int ind_prev = ind - width;
+    #####:  374:                    if(data[ind] == data[ind_prev]) {
+    %%%%%:  374-block  0
+    #####:  375:                        neighbors[nNeighbors] = ind_prev;
+    #####:  376:                        nNeighbors++;
+    %%%%%:  376-block  0
+        -:  377:                    }
+        -:  378:                }
+        -:  379:
+    #####:  380:                track(imgOut, label, labelEq, neighbors, nNeighbors, ind);
+    %%%%%:  380-block  0
+        -:  381:            }
+        -:  382:        }
+        -:  383:
+    #####:  384:        secondPass(imgOut, ret, labelEq, n);
+    %%%%%:  384-block  0
+    #####:  385:        return imgOut;
+    %%%%%:  385-block  0
+        -:  386:    }
+        -:  387:
+        -:  388:    /**
+        -:  389:     * @brief reCount
+        -:  390:     * @param imgLabel
+        -:  391:     * @param ret
+        -:  392:     * @return
+        -:  393:     */
+    #####:  394:    static unsigned int *reCount(unsigned int *imgLabel, std::vector<LabelOutput> &labelsList)
+        -:  395:    {
+    #####:  396:        if(imgLabel == NULL) {
+    %%%%%:  396-block  0
+        -:  397:            return NULL;
+        -:  398:        }
+        -:  399:
+        -:  400:        unsigned int c = 0;
+    #####:  401:        for(unsigned int i = 0; i < labelsList.size(); i++) {
+    %%%%%:  401-block  0
+    %%%%%:  401-block  1
+    #####:  402:            if(labelsList[i].bValid) {
+    %%%%%:  402-block  0
+    #####:  403:                labelsList[i].id = c;
+    %%%%%:  403-block  0
+    #####:  404:                IndexedArrayui::assign(imgLabel, labelsList[i].coords, c);
+    %%%%%:  404-block  0
+    #####:  405:                c++;
+    %%%%%:  405-block  0
+        -:  406:            }
+        -:  407:        }
+        -:  408:
+        -:  409:        return imgLabel;
+        -:  410:    }
+        -:  411:
+        -:  412:    /**
+        -:  413:     * @brief convertFromIntegerToImage
+        -:  414:     * @param imgLabel
+        -:  415:     * @param imgOut
+        -:  416:     * @param width
+        -:  417:     * @param height
+        -:  418:     * @return
+        -:  419:     */
+        -:  420:    static Image* convertFromIntegerToImage(unsigned int *imgLabel, Image *imgOut, int width, int height)
+        -:  421:    {
+        -:  422:        if(imgLabel == NULL) {
+        -:  423:            return imgOut;
+        -:  424:        }
+        -:  425:
+        -:  426:        if(imgOut == NULL) {
+        -:  427:            imgOut = new Image(1, width, height, 1);
+        -:  428:        }
+        -:  429:
+        -:  430:        int n = width * height;
+        -:  431:        for(int i = 0; i < n; i++) {
+        -:  432:            imgOut->data[i] = float(imgLabel[i]);
+        -:  433:        }
+        -:  434:
+        -:  435:        return imgOut;
+        -:  436:    }
+        -:  437:
+        -:  438:    /**
+        -:  439:     * @brief computeLabelsList
+        -:  440:     * @param labels
+        -:  441:     * @param n
+        -:  442:     * @param labelsList
+        -:  443:     */
+        -:  444:    static void computeLabelsListFromImageLabels(unsigned int *labels, int n,  std::vector<LabelOutput> &labelsList)
+        -:  445:    {
+        -:  446:        if(labels == NULL || n < 1) {
+        -:  447:            return;
+        -:  448:        }
+        -:  449:
+        -:  450:        labelsList.clear();
+        -:  451:
+        -:  452:        std::set<unsigned int> labels_tracker;
+        -:  453:
+        -:  454:        std::map<unsigned int, int> labels_map;
+        -:  455:
+        -:  456:        int c = 0;
+        -:  457:        for(int i = 0; i < n; i++) {
+        -:  458:            unsigned int j = labels[i];
+        -:  459:            auto search = labels_tracker.find(j);
+        -:  460:            if (search != labels_tracker.end()) {
+        -:  461:                labels_tracker.insert(j);
+        -:  462:                labels_map[j] = c;
+        -:  463:
+        -:  464:                LabelOutput tmp;
+        -:  465:                tmp.id = j;
+        -:  466:                labelsList.push_back(tmp);
+        -:  467:
+        -:  468:                c++;
+        -:  469:            }
+        -:  470:
+        -:  471:            labelsList[labels_map[j]].push_back(i);
+        -:  472:        }
+        -:  473:    }
+        -:  474:
+        -:  475:    /**
+        -:  476:     * @brief computeImageLabelsFromLabelsList
+        -:  477:     * @param labelsList
+        -:  478:     * @param labels
+        -:  479:     * @param n
+        -:  480:     * @return
+        -:  481:     */
+    #####:  482:    static unsigned int *computeImageLabelsFromLabelsList(std::vector<LabelOutput> &labelsList, unsigned int *labels, int n)
+        -:  483:    {
+    #####:  484:        if(n < 1 || labelsList.empty()) {
+    %%%%%:  484-block  0
+    %%%%%:  484-block  1
+        -:  485:            return labels;
+        -:  486:        }
+        -:  487:
+    #####:  488:        if(labels == NULL) {
+    %%%%%:  488-block  0
+    #####:  489:            labels = new unsigned int[n];
+    %%%%%:  489-block  0
+        -:  490:        }
+        -:  491:
+    #####:  492:        for(unsigned int i = 0; i < labelsList.size(); i++) {
+    %%%%%:  492-block  0
+    %%%%%:  492-block  1
+    %%%%%:  492-block  2
+    #####:  493:            if(labelsList[i].bValid) {
+    %%%%%:  493-block  0
+    #####:  494:                for(unsigned int j = 0; j < labelsList[i].coords.size(); j++) {
+    %%%%%:  494-block  0
+    #####:  495:                    int k = labelsList[i].coords[j];
+    %%%%%:  495-block  0
+    #####:  496:                    labels[k] = labelsList[i].id;
+    %%%%%:  496-block  0
+        -:  497:                }
+        -:  498:            }
+        -:  499:        }
+        -:  500:
+        -:  501:        return labels;
+        -:  502:    }
+        -:  503:
+        -:  504:
+        -:  505:    /**
+        -:  506:     * @brief getMappingLabelsList
+        -:  507:     * @param labelsList
+        -:  508:     * @param labels_map
+        -:  509:     */
+    #####:  510:    static void getMappingLabelsList(std::vector<LabelOutput> &labelsList, std::map<unsigned int, int> &labels_map)
+        -:  511:    {
+    #####:  512:        for(unsigned int i = 0; i < labelsList.size(); i++) {
+    %%%%%:  512-block  0
+    %%%%%:  512-block  1
+    #####:  513:            labels_map[labelsList[i].id] = i;
+    %%%%%:  513-block  0
+        -:  514:        }
+    #####:  515:    }
+        -:  516:
+        -:  517:    /**
+        -:  518:     * @brief computeNeighbors
+        -:  519:     * @param labels
+        -:  520:     * @param width
+        -:  521:     * @param height
+        -:  522:     * @param labelsList
+        -:  523:     */
+    #####:  524:    static void computeNeighbors(unsigned int *labels, int width, int height, std::vector<LabelOutput> &labelsList)
+    %%%%%:  524-block  0
+        -:  525:    {
+    #####:  526:        std::map<unsigned int, int> labels_map;
+    #####:  527:        getMappingLabelsList(labelsList, labels_map);
+    %%%%%:  527-block  0
+        -:  528:
+    #####:  529:        int width_m_1 = width - 1;
+    #####:  530:        int height_m_1 = height - 1;
+        -:  531:
+    #####:  532:        for(int i = 0; i < height; i++) {
+    %%%%%:  532-block  0
+    %%%%%:  532-block  1
+    %%%%%:  532-block  2
+    #####:  533:            int shift = i * width;
+        -:  534:
+    #####:  535:            for(int j = 0; j < width; j++) {
+    %%%%%:  535-block  0
+    %%%%%:  535-block  1
+    %%%%%:  535-block  2
+    #####:  536:                int ind = shift + j;
+        -:  537:
+    #####:  538:                unsigned int l_ind = labels[ind];
+    #####:  539:                int ind2 = labels_map[l_ind];
+    %%%%%:  539-block  0
+        -:  540:
+    #####:  541:                if(i > 0) {
+    %%%%%:  541-block  0
+    #####:  542:                    if(l_ind != labels[ind - width]) {
+    %%%%%:  542-block  0
+    #####:  543:                        labelsList[ind2].neighbors.insert(labels[ind - width]);
+    %%%%%:  543-block  0
+    %%%%%:  543-block  1
+        -:  544:                    }
+        -:  545:                }
+        -:  546:
+    #####:  547:                if(j > 0) {
+    %%%%%:  547-block  0
+    #####:  548:                    if(l_ind != labels[ind - 1]) {
+    %%%%%:  548-block  0
+    #####:  549:                        labelsList[ind2].neighbors.insert(labels[ind - 1]);
+    %%%%%:  549-block  0
+    %%%%%:  549-block  1
+        -:  550:                    }
+        -:  551:                }
+        -:  552:
+    #####:  553:                if(i < height_m_1) {
+    %%%%%:  553-block  0
+    #####:  554:                    if(l_ind != labels[ind + width]) {
+    %%%%%:  554-block  0
+    #####:  555:                        labelsList[ind2].neighbors.insert(labels[ind + width]);
+    %%%%%:  555-block  0
+    %%%%%:  555-block  1
+        -:  556:                    }
+        -:  557:                }
+        -:  558:
+    #####:  559:                if(j < width_m_1) {
+    %%%%%:  559-block  0
+    #####:  560:                    if(l_ind != labels[ind + 1]) {
+    %%%%%:  560-block  0
+    #####:  561:                        labelsList[ind2].neighbors.insert(labels[ind + 1]);
+    %%%%%:  561-block  0
+    %%%%%:  561-block  1
+    $$$$$:  561-block  2
+        -:  562:                    }
+        -:  563:                }
+        -:  564:
+        -:  565:            }
+        -:  566:        }
+    #####:  567:    }
+        -:  568:
+        -:  569:    /**
+        -:  570:     * @brief mergeIsolatedAreasWithThreshold
+        -:  571:     * @param labels
+        -:  572:     * @param width
+        -:  573:     * @param height
+        -:  574:     * @param labelsList
+        -:  575:     * @param threshold
+        -:  576:     */
+    #####:  577:    static void mergeIsolatedAreasWithThreshold(unsigned int *labels, int width, int height, std::vector<LabelOutput> &labelsList, int threshold = 1)
+        -:  578:    {
+    #####:  579:        if(threshold < 1 || labels == NULL || labelsList.empty()) {
+    %%%%%:  579-block  0
+    %%%%%:  579-block  1
+    #####:  580:            return;
+    %%%%%:  580-block  0
+        -:  581:        }
+        -:  582:
+    #####:  583:        if(labelsList[0].neighbors.empty()) {
+    %%%%%:  583-block  0
+    #####:  584:            computeNeighbors(labels, width, height, labelsList);
+    %%%%%:  584-block  0
+        -:  585:        }
+        -:  586:
+    #####:  587:        std::map<unsigned int, int> labels_map;
+    #####:  588:        getMappingLabelsList(labelsList, labels_map);
+    %%%%%:  588-block  0
+        -:  589:
+    #####:  590:        for(unsigned int i = 0; i < labelsList.size(); i++) {
+    %%%%%:  590-block  0
+    %%%%%:  590-block  1
+    #####:  591:            if(!labelsList[i].bValid || labelsList[i].neighbors.empty()) {
+    %%%%%:  591-block  0
+    %%%%%:  591-block  1
+    #####:  592:                continue;
+    %%%%%:  592-block  0
+        -:  593:            }
+        -:  594:
+    #####:  595:            if(labelsList[i].neighbors.size() == 1) {
+    %%%%%:  595-block  0
+    #####:  596:                unsigned int id = *labelsList[i].neighbors.begin();
+    %%%%%:  596-block  0
+    #####:  597:                int index = labels_map[id];
+    %%%%%:  597-block  0
+        -:  598:
+    #####:  599:                if(labelsList[index].bValid) {
+    %%%%%:  599-block  0
+        -:  600:
+    #####:  601:                    if(labelsList[i].coords.size() > labelsList[index].coords.size()) {
+    %%%%%:  601-block  0
+    #####:  602:                        labelsList[index].bValid = false;
+    %%%%%:  602-block  0
+        -:  603:
+        -:  604:                        //update coordinates
+    #####:  605:                        labelsList[i].coords.insert(labelsList[i].coords.begin(),
+    #####:  606:                                                    labelsList[index].coords.begin(),
+    %%%%%:  606-block  0
+    #####:  607:                                                    labelsList[index].coords.end());
+    %%%%%:  607-block  0
+        -:  608:
+        -:  609:                        //update neighbors
+    #####:  610:                        if(labelsList[index].neighbors.size() > 1) {
+    %%%%%:  610-block  0
+    #####:  611:                            labelsList[i].neighbors.insert(labelsList[index].neighbors.begin(), labelsList[index].neighbors.end());
+    %%%%%:  611-block  0
+        -:  612:
+        -:  613:                            //update all neighbors removing index and adding i!
+    #####:  614:                            for (auto it = labelsList[index].neighbors.begin(); it != labelsList[index].neighbors.end(); it++) {
+    %%%%%:  614-block  0
+    %%%%%:  614-block  1
+    #####:  615:                                unsigned int id2 = *it;
+    %%%%%:  615-block  0
+    #####:  616:                                int index2 = labels_map[id2];
+    %%%%%:  616-block  0
+        -:  617:
+    #####:  618:                                labelsList[index2].neighbors.erase(index);
+    %%%%%:  618-block  0
+    #####:  619:                                labelsList[index2].neighbors.insert(i);
+    %%%%%:  619-block  0
+    $$$$$:  619-block  1
+        -:  620:                            }
+        -:  621:                        }
+        -:  622:                    } else {
+    #####:  623:                        labelsList[i].bValid = false;
+    %%%%%:  623-block  0
+        -:  624:
+        -:  625:                        //update coordinates
+    #####:  626:                        labelsList[index].coords.insert(labelsList[index].coords.begin(),
+    $$$$$:  626-block  0
+    #####:  627:                                                        labelsList[i].coords.begin(),
+    %%%%%:  627-block  0
+    #####:  628:                                                        labelsList[i].coords.end());
+    %%%%%:  628-block  0
+        -:  629:
+        -:  630:                        //it does not have anymore this neighbor because it has been merged
+    #####:  631:                        labelsList[index].neighbors.erase(i);
+    %%%%%:  631-block  0
+        -:  632:                    }
+        -:  633:                }
+        -:  634:            }
+        -:  635:        }
+        -:  636:
+    #####:  637:        computeImageLabelsFromLabelsList(labelsList, labels, width * height);
+    %%%%%:  637-block  0
+        -:  638:    }
+        -:  639:
+        -:  640:};
+        -:  641:
+        -:  642:
+        -:  643:} // end namespace pic
+        -:  644:
+        -:  645:#endif /* PIC_ALGORITHMS_CONNECTED_COMPONENTS_HPP */
+        -:  646:

@@ -1,0 +1,525 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/products/GeneralMatrixMatrix.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2008-2009 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5://
+        -:    6:// This Source Code Form is subject to the terms of the Mozilla
+        -:    7:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    8:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:    9:
+        -:   10:#ifndef EIGEN_GENERAL_MATRIX_MATRIX_H
+        -:   11:#define EIGEN_GENERAL_MATRIX_MATRIX_H
+        -:   12:
+        -:   13:namespace Eigen {
+        -:   14:
+        -:   15:namespace internal {
+        -:   16:
+        -:   17:template<typename _LhsScalar, typename _RhsScalar> class level3_blocking;
+        -:   18:
+        -:   19:/* Specialization for a row-major destination matrix => simple transposition of the product */
+        -:   20:template<
+        -:   21:  typename Index,
+        -:   22:  typename LhsScalar, int LhsStorageOrder, bool ConjugateLhs,
+        -:   23:  typename RhsScalar, int RhsStorageOrder, bool ConjugateRhs>
+        -:   24:struct general_matrix_matrix_product<Index,LhsScalar,LhsStorageOrder,ConjugateLhs,RhsScalar,RhsStorageOrder,ConjugateRhs,RowMajor>
+        -:   25:{
+        -:   26:  typedef gebp_traits<RhsScalar,LhsScalar> Traits;
+        -:   27:
+        -:   28:  typedef typename ScalarBinaryOpTraits<LhsScalar, RhsScalar>::ReturnType ResScalar;
+        -:   29:  static EIGEN_STRONG_INLINE void run(
+        -:   30:    Index rows, Index cols, Index depth,
+        -:   31:    const LhsScalar* lhs, Index lhsStride,
+        -:   32:    const RhsScalar* rhs, Index rhsStride,
+        -:   33:    ResScalar* res, Index resStride,
+        -:   34:    ResScalar alpha,
+        -:   35:    level3_blocking<RhsScalar,LhsScalar>& blocking,
+        -:   36:    GemmParallelInfo<Index>* info = 0)
+        -:   37:  {
+        -:   38:    // transpose the product such that the result is column major
+        -:   39:    general_matrix_matrix_product<Index,
+        -:   40:      RhsScalar, RhsStorageOrder==RowMajor ? ColMajor : RowMajor, ConjugateRhs,
+        -:   41:      LhsScalar, LhsStorageOrder==RowMajor ? ColMajor : RowMajor, ConjugateLhs,
+        -:   42:      ColMajor>
+        -:   43:    ::run(cols,rows,depth,rhs,rhsStride,lhs,lhsStride,res,resStride,alpha,blocking,info);
+        -:   44:  }
+        -:   45:};
+        -:   46:
+        -:   47:/*  Specialization for a col-major destination matrix
+        -:   48: *    => Blocking algorithm following Goto's paper */
+        -:   49:template<
+        -:   50:  typename Index,
+        -:   51:  typename LhsScalar, int LhsStorageOrder, bool ConjugateLhs,
+        -:   52:  typename RhsScalar, int RhsStorageOrder, bool ConjugateRhs>
+        -:   53:struct general_matrix_matrix_product<Index,LhsScalar,LhsStorageOrder,ConjugateLhs,RhsScalar,RhsStorageOrder,ConjugateRhs,ColMajor>
+        -:   54:{
+        -:   55:
+        -:   56:typedef gebp_traits<LhsScalar,RhsScalar> Traits;
+        -:   57:
+        -:   58:typedef typename ScalarBinaryOpTraits<LhsScalar, RhsScalar>::ReturnType ResScalar;
+        -:   59:static void run(Index rows, Index cols, Index depth,
+        -:   60:  const LhsScalar* _lhs, Index lhsStride,
+        -:   61:  const RhsScalar* _rhs, Index rhsStride,
+        -:   62:  ResScalar* _res, Index resStride,
+        -:   63:  ResScalar alpha,
+        -:   64:  level3_blocking<LhsScalar,RhsScalar>& blocking,
+        -:   65:  GemmParallelInfo<Index>* info = 0)
+        -:   66:{
+        -:   67:  typedef const_blas_data_mapper<LhsScalar, Index, LhsStorageOrder> LhsMapper;
+        -:   68:  typedef const_blas_data_mapper<RhsScalar, Index, RhsStorageOrder> RhsMapper;
+        -:   69:  typedef blas_data_mapper<typename Traits::ResScalar, Index, ColMajor> ResMapper;
+        -:   70:  LhsMapper lhs(_lhs,lhsStride);
+        -:   71:  RhsMapper rhs(_rhs,rhsStride);
+        -:   72:  ResMapper res(_res, resStride);
+        -:   73:
+        -:   74:  Index kc = blocking.kc();                   // cache block size along the K direction
+        -:   75:  Index mc = (std::min)(rows,blocking.mc());  // cache block size along the M direction
+        -:   76:  Index nc = (std::min)(cols,blocking.nc());  // cache block size along the N direction
+        -:   77:
+        -:   78:  gemm_pack_lhs<LhsScalar, Index, LhsMapper, Traits::mr, Traits::LhsProgress, LhsStorageOrder> pack_lhs;
+        -:   79:  gemm_pack_rhs<RhsScalar, Index, RhsMapper, Traits::nr, RhsStorageOrder> pack_rhs;
+        -:   80:  gebp_kernel<LhsScalar, RhsScalar, Index, ResMapper, Traits::mr, Traits::nr, ConjugateLhs, ConjugateRhs> gebp;
+        -:   81:
+        -:   82:#ifdef EIGEN_HAS_OPENMP
+        -:   83:  if(info)
+        -:   84:  {
+        -:   85:    // this is the parallel version!
+        -:   86:    int tid = omp_get_thread_num();
+        -:   87:    int threads = omp_get_num_threads();
+        -:   88:
+        -:   89:    LhsScalar* blockA = blocking.blockA();
+        -:   90:    eigen_internal_assert(blockA!=0);
+        -:   91:
+        -:   92:    std::size_t sizeB = kc*nc;
+        -:   93:    ei_declare_aligned_stack_constructed_variable(RhsScalar, blockB, sizeB, 0);
+        -:   94:
+        -:   95:    // For each horizontal panel of the rhs, and corresponding vertical panel of the lhs...
+        -:   96:    for(Index k=0; k<depth; k+=kc)
+        -:   97:    {
+        -:   98:      const Index actual_kc = (std::min)(k+kc,depth)-k; // => rows of B', and cols of the A'
+        -:   99:
+        -:  100:      // In order to reduce the chance that a thread has to wait for the other,
+        -:  101:      // let's start by packing B'.
+        -:  102:      pack_rhs(blockB, rhs.getSubMapper(k,0), actual_kc, nc);
+        -:  103:
+        -:  104:      // Pack A_k to A' in a parallel fashion:
+        -:  105:      // each thread packs the sub block A_k,i to A'_i where i is the thread id.
+        -:  106:
+        -:  107:      // However, before copying to A'_i, we have to make sure that no other thread is still using it,
+        -:  108:      // i.e., we test that info[tid].users equals 0.
+        -:  109:      // Then, we set info[tid].users to the number of threads to mark that all other threads are going to use it.
+        -:  110:      while(info[tid].users!=0) {}
+        -:  111:      info[tid].users += threads;
+        -:  112:
+        -:  113:      pack_lhs(blockA+info[tid].lhs_start*actual_kc, lhs.getSubMapper(info[tid].lhs_start,k), actual_kc, info[tid].lhs_length);
+        -:  114:
+        -:  115:      // Notify the other threads that the part A'_i is ready to go.
+        -:  116:      info[tid].sync = k;
+        -:  117:
+        -:  118:      // Computes C_i += A' * B' per A'_i
+        -:  119:      for(int shift=0; shift<threads; ++shift)
+        -:  120:      {
+        -:  121:        int i = (tid+shift)%threads;
+        -:  122:
+        -:  123:        // At this point we have to make sure that A'_i has been updated by the thread i,
+        -:  124:        // we use testAndSetOrdered to mimic a volatile access.
+        -:  125:        // However, no need to wait for the B' part which has been updated by the current thread!
+        -:  126:        if (shift>0) {
+        -:  127:          while(info[i].sync!=k) {
+        -:  128:          }
+        -:  129:        }
+        -:  130:
+        -:  131:        gebp(res.getSubMapper(info[i].lhs_start, 0), blockA+info[i].lhs_start*actual_kc, blockB, info[i].lhs_length, actual_kc, nc, alpha);
+        -:  132:      }
+        -:  133:
+        -:  134:      // Then keep going as usual with the remaining B'
+        -:  135:      for(Index j=nc; j<cols; j+=nc)
+        -:  136:      {
+        -:  137:        const Index actual_nc = (std::min)(j+nc,cols)-j;
+        -:  138:
+        -:  139:        // pack B_k,j to B'
+        -:  140:        pack_rhs(blockB, rhs.getSubMapper(k,j), actual_kc, actual_nc);
+        -:  141:
+        -:  142:        // C_j += A' * B'
+        -:  143:        gebp(res.getSubMapper(0, j), blockA, blockB, rows, actual_kc, actual_nc, alpha);
+        -:  144:      }
+        -:  145:
+        -:  146:      // Release all the sub blocks A'_i of A' for the current thread,
+        -:  147:      // i.e., we simply decrement the number of users by 1
+        -:  148:      for(Index i=0; i<threads; ++i)
+        -:  149:        #pragma omp atomic
+        -:  150:        info[i].users -= 1;
+        -:  151:    }
+        -:  152:  }
+        -:  153:  else
+        -:  154:#endif // EIGEN_HAS_OPENMP
+        -:  155:  {
+        -:  156:    EIGEN_UNUSED_VARIABLE(info);
+        -:  157:
+        -:  158:    // this is the sequential version!
+        -:  159:    std::size_t sizeA = kc*mc;
+        -:  160:    std::size_t sizeB = kc*nc;
+        -:  161:
+        -:  162:    ei_declare_aligned_stack_constructed_variable(LhsScalar, blockA, sizeA, blocking.blockA());
+        -:  163:    ei_declare_aligned_stack_constructed_variable(RhsScalar, blockB, sizeB, blocking.blockB());
+        -:  164:
+        -:  165:    const bool pack_rhs_once = mc!=rows && kc==depth && nc==cols;
+        -:  166:
+        -:  167:    // For each horizontal panel of the rhs, and corresponding panel of the lhs...
+        -:  168:    for(Index i2=0; i2<rows; i2+=mc)
+        -:  169:    {
+        -:  170:      const Index actual_mc = (std::min)(i2+mc,rows)-i2;
+        -:  171:
+        -:  172:      for(Index k2=0; k2<depth; k2+=kc)
+        -:  173:      {
+        -:  174:        const Index actual_kc = (std::min)(k2+kc,depth)-k2;
+        -:  175:
+        -:  176:        // OK, here we have selected one horizontal panel of rhs and one vertical panel of lhs.
+        -:  177:        // => Pack lhs's panel into a sequential chunk of memory (L2/L3 caching)
+        -:  178:        // Note that this panel will be read as many times as the number of blocks in the rhs's
+        -:  179:        // horizontal panel which is, in practice, a very low number.
+        -:  180:        pack_lhs(blockA, lhs.getSubMapper(i2,k2), actual_kc, actual_mc);
+        -:  181:
+        -:  182:        // For each kc x nc block of the rhs's horizontal panel...
+        -:  183:        for(Index j2=0; j2<cols; j2+=nc)
+        -:  184:        {
+        -:  185:          const Index actual_nc = (std::min)(j2+nc,cols)-j2;
+        -:  186:
+        -:  187:          // We pack the rhs's block into a sequential chunk of memory (L2 caching)
+        -:  188:          // Note that this block will be read a very high number of times, which is equal to the number of
+        -:  189:          // micro horizontal panel of the large rhs's panel (e.g., rows/12 times).
+        -:  190:          if((!pack_rhs_once) || i2==0)
+        -:  191:            pack_rhs(blockB, rhs.getSubMapper(k2,j2), actual_kc, actual_nc);
+        -:  192:
+        -:  193:          // Everything is packed, we can now call the panel * block kernel:
+        -:  194:          gebp(res.getSubMapper(i2, j2), blockA, blockB, actual_mc, actual_kc, actual_nc, alpha);
+        -:  195:        }
+        -:  196:      }
+        -:  197:    }
+        -:  198:  }
+        -:  199:}
+        -:  200:
+        -:  201:};
+        -:  202:
+        -:  203:/*********************************************************************************
+        -:  204:*  Specialization of generic_product_impl for "large" GEMM, i.e.,
+        -:  205:*  implementation of the high level wrapper to general_matrix_matrix_product
+        -:  206:**********************************************************************************/
+        -:  207:
+        -:  208:template<typename Scalar, typename Index, typename Gemm, typename Lhs, typename Rhs, typename Dest, typename BlockingType>
+        -:  209:struct gemm_functor
+        -:  210:{
+        -:  211:  gemm_functor(const Lhs& lhs, const Rhs& rhs, Dest& dest, const Scalar& actualAlpha, BlockingType& blocking)
+        -:  212:    : m_lhs(lhs), m_rhs(rhs), m_dest(dest), m_actualAlpha(actualAlpha), m_blocking(blocking)
+        -:  213:  {}
+        -:  214:
+        -:  215:  void initParallelSession(Index num_threads) const
+        -:  216:  {
+        -:  217:    m_blocking.initParallel(m_lhs.rows(), m_rhs.cols(), m_lhs.cols(), num_threads);
+        -:  218:    m_blocking.allocateA();
+        -:  219:  }
+        -:  220:
+        -:  221:  void operator() (Index row, Index rows, Index col=0, Index cols=-1, GemmParallelInfo<Index>* info=0) const
+        -:  222:  {
+        -:  223:    if(cols==-1)
+        -:  224:      cols = m_rhs.cols();
+        -:  225:
+        -:  226:    Gemm::run(rows, cols, m_lhs.cols(),
+        -:  227:              &m_lhs.coeffRef(row,0), m_lhs.outerStride(),
+        -:  228:              &m_rhs.coeffRef(0,col), m_rhs.outerStride(),
+        -:  229:              (Scalar*)&(m_dest.coeffRef(row,col)), m_dest.outerStride(),
+        -:  230:              m_actualAlpha, m_blocking, info);
+        -:  231:  }
+        -:  232:
+        -:  233:  typedef typename Gemm::Traits Traits;
+        -:  234:
+        -:  235:  protected:
+        -:  236:    const Lhs& m_lhs;
+        -:  237:    const Rhs& m_rhs;
+        -:  238:    Dest& m_dest;
+        -:  239:    Scalar m_actualAlpha;
+        -:  240:    BlockingType& m_blocking;
+        -:  241:};
+        -:  242:
+        -:  243:template<int StorageOrder, typename LhsScalar, typename RhsScalar, int MaxRows, int MaxCols, int MaxDepth, int KcFactor=1,
+        -:  244:bool FiniteAtCompileTime = MaxRows!=Dynamic && MaxCols!=Dynamic && MaxDepth != Dynamic> class gemm_blocking_space;
+        -:  245:
+        -:  246:template<typename _LhsScalar, typename _RhsScalar>
+        -:  247:class level3_blocking
+        -:  248:{
+        -:  249:    typedef _LhsScalar LhsScalar;
+        -:  250:    typedef _RhsScalar RhsScalar;
+        -:  251:
+        -:  252:  protected:
+        -:  253:    LhsScalar* m_blockA;
+        -:  254:    RhsScalar* m_blockB;
+        -:  255:
+        -:  256:    Index m_mc;
+        -:  257:    Index m_nc;
+        -:  258:    Index m_kc;
+        -:  259:
+        -:  260:  public:
+        -:  261:
+       99:  262:    level3_blocking()
+       99:  263:      : m_blockA(0), m_blockB(0), m_mc(0), m_nc(0), m_kc(0)
+        -:  264:    {}
+        -:  265:
+      99*:  266:    inline Index mc() const { return m_mc; }
+    %%%%%:  266-block  0
+       33:  266-block  1
+       33:  266-block  2
+       33:  266-block  3
+        -:  267:    inline Index nc() const { return m_nc; }
+      99*:  268:    inline Index kc() const { return m_kc; }
+    %%%%%:  268-block  0
+       33:  268-block  1
+       33:  268-block  2
+       33:  268-block  3
+        -:  269:
+     198*:  270:    inline LhsScalar* blockA() { return m_blockA; }
+    %%%%%:  270-block  0
+    %%%%%:  270-block  1
+       33:  270-block  2
+       33:  270-block  3
+       33:  270-block  4
+       33:  270-block  5
+       33:  270-block  6
+       33:  270-block  7
+     198*:  271:    inline RhsScalar* blockB() { return m_blockB; }
+    %%%%%:  271-block  0
+    %%%%%:  271-block  1
+       33:  271-block  2
+       33:  271-block  3
+       33:  271-block  4
+       33:  271-block  5
+       33:  271-block  6
+       33:  271-block  7
+        -:  272:};
+        -:  273:
+        -:  274:template<int StorageOrder, typename _LhsScalar, typename _RhsScalar, int MaxRows, int MaxCols, int MaxDepth, int KcFactor>
+        -:  275:class gemm_blocking_space<StorageOrder,_LhsScalar,_RhsScalar,MaxRows, MaxCols, MaxDepth, KcFactor, true /* == FiniteAtCompileTime */>
+        -:  276:  : public level3_blocking<
+        -:  277:      typename conditional<StorageOrder==RowMajor,_RhsScalar,_LhsScalar>::type,
+        -:  278:      typename conditional<StorageOrder==RowMajor,_LhsScalar,_RhsScalar>::type>
+        -:  279:{
+        -:  280:    enum {
+        -:  281:      Transpose = StorageOrder==RowMajor,
+        -:  282:      ActualRows = Transpose ? MaxCols : MaxRows,
+        -:  283:      ActualCols = Transpose ? MaxRows : MaxCols
+        -:  284:    };
+        -:  285:    typedef typename conditional<Transpose,_RhsScalar,_LhsScalar>::type LhsScalar;
+        -:  286:    typedef typename conditional<Transpose,_LhsScalar,_RhsScalar>::type RhsScalar;
+        -:  287:    typedef gebp_traits<LhsScalar,RhsScalar> Traits;
+        -:  288:    enum {
+        -:  289:      SizeA = ActualRows * MaxDepth,
+        -:  290:      SizeB = ActualCols * MaxDepth
+        -:  291:    };
+        -:  292:
+        -:  293:#if EIGEN_MAX_STATIC_ALIGN_BYTES >= EIGEN_DEFAULT_ALIGN_BYTES
+        -:  294:    EIGEN_ALIGN_MAX LhsScalar m_staticA[SizeA];
+        -:  295:    EIGEN_ALIGN_MAX RhsScalar m_staticB[SizeB];
+        -:  296:#else
+        -:  297:    EIGEN_ALIGN_MAX char m_staticA[SizeA * sizeof(LhsScalar) + EIGEN_DEFAULT_ALIGN_BYTES-1];
+        -:  298:    EIGEN_ALIGN_MAX char m_staticB[SizeB * sizeof(RhsScalar) + EIGEN_DEFAULT_ALIGN_BYTES-1];
+        -:  299:#endif
+        -:  300:
+        -:  301:  public:
+        -:  302:
+        -:  303:    gemm_blocking_space(Index /*rows*/, Index /*cols*/, Index /*depth*/, Index /*num_threads*/, bool /*full_rows = false*/)
+        -:  304:    {
+        -:  305:      this->m_mc = ActualRows;
+        -:  306:      this->m_nc = ActualCols;
+        -:  307:      this->m_kc = MaxDepth;
+        -:  308:#if EIGEN_MAX_STATIC_ALIGN_BYTES >= EIGEN_DEFAULT_ALIGN_BYTES
+        -:  309:      this->m_blockA = m_staticA;
+        -:  310:      this->m_blockB = m_staticB;
+        -:  311:#else
+        -:  312:      this->m_blockA = reinterpret_cast<LhsScalar*>((internal::UIntPtr(m_staticA) + (EIGEN_DEFAULT_ALIGN_BYTES-1)) & ~std::size_t(EIGEN_DEFAULT_ALIGN_BYTES-1));
+        -:  313:      this->m_blockB = reinterpret_cast<RhsScalar*>((internal::UIntPtr(m_staticB) + (EIGEN_DEFAULT_ALIGN_BYTES-1)) & ~std::size_t(EIGEN_DEFAULT_ALIGN_BYTES-1));
+        -:  314:#endif
+        -:  315:    }
+        -:  316:
+        -:  317:    void initParallel(Index, Index, Index, Index)
+        -:  318:    {}
+        -:  319:
+        -:  320:    inline void allocateA() {}
+        -:  321:    inline void allocateB() {}
+        -:  322:    inline void allocateAll() {}
+        -:  323:};
+        -:  324:
+        -:  325:template<int StorageOrder, typename _LhsScalar, typename _RhsScalar, int MaxRows, int MaxCols, int MaxDepth, int KcFactor>
+        -:  326:class gemm_blocking_space<StorageOrder,_LhsScalar,_RhsScalar,MaxRows, MaxCols, MaxDepth, KcFactor, false>
+        -:  327:  : public level3_blocking<
+        -:  328:      typename conditional<StorageOrder==RowMajor,_RhsScalar,_LhsScalar>::type,
+        -:  329:      typename conditional<StorageOrder==RowMajor,_LhsScalar,_RhsScalar>::type>
+        -:  330:{
+        -:  331:    enum {
+        -:  332:      Transpose = StorageOrder==RowMajor
+        -:  333:    };
+        -:  334:    typedef typename conditional<Transpose,_RhsScalar,_LhsScalar>::type LhsScalar;
+        -:  335:    typedef typename conditional<Transpose,_LhsScalar,_RhsScalar>::type RhsScalar;
+        -:  336:    typedef gebp_traits<LhsScalar,RhsScalar> Traits;
+        -:  337:
+        -:  338:    Index m_sizeA;
+        -:  339:    Index m_sizeB;
+        -:  340:
+        -:  341:  public:
+        -:  342:
+       99:  343:    gemm_blocking_space(Index rows, Index cols, Index depth, Index num_threads, bool l3_blocking)
+       99:  344:    {
+       99:  345:      this->m_mc = Transpose ? cols : rows;
+       99:  346:      this->m_nc = Transpose ? rows : cols;
+       99:  347:      this->m_kc = depth;
+        -:  348:
+       99:  349:      if(l3_blocking)
+       99:  349-block  0
+        -:  350:      {
+    #####:  351:        computeProductBlockingSizes<LhsScalar,RhsScalar,KcFactor>(this->m_kc, this->m_mc, this->m_nc, num_threads);
+    %%%%%:  351-block  0
+        -:  352:      }
+        -:  353:      else  // no l3 blocking
+        -:  354:      {
+       99:  355:        Index n = this->m_nc;
+       99:  356:        computeProductBlockingSizes<LhsScalar,RhsScalar,KcFactor>(this->m_kc, this->m_mc, n, num_threads);
+       99:  356-block  0
+        -:  357:      }
+        -:  358:
+       99:  359:      m_sizeA = this->m_mc * this->m_kc;
+       99:  360:      m_sizeB = this->m_kc * this->m_nc;
+       99:  361:    }
+        -:  362:
+        -:  363:    void initParallel(Index rows, Index cols, Index depth, Index num_threads)
+        -:  364:    {
+        -:  365:      this->m_mc = Transpose ? cols : rows;
+        -:  366:      this->m_nc = Transpose ? rows : cols;
+        -:  367:      this->m_kc = depth;
+        -:  368:
+        -:  369:      eigen_internal_assert(this->m_blockA==0 && this->m_blockB==0);
+        -:  370:      Index m = this->m_mc;
+        -:  371:      computeProductBlockingSizes<LhsScalar,RhsScalar,KcFactor>(this->m_kc, m, this->m_nc, num_threads);
+        -:  372:      m_sizeA = this->m_mc * this->m_kc;
+        -:  373:      m_sizeB = this->m_kc * this->m_nc;
+        -:  374:    }
+        -:  375:
+        -:  376:    void allocateA()
+        -:  377:    {
+        -:  378:      if(this->m_blockA==0)
+        -:  379:        this->m_blockA = aligned_new<LhsScalar>(m_sizeA);
+        -:  380:    }
+        -:  381:
+        -:  382:    void allocateB()
+        -:  383:    {
+        -:  384:      if(this->m_blockB==0)
+        -:  385:        this->m_blockB = aligned_new<RhsScalar>(m_sizeB);
+        -:  386:    }
+        -:  387:
+        -:  388:    void allocateAll()
+        -:  389:    {
+        -:  390:      allocateA();
+        -:  391:      allocateB();
+        -:  392:    }
+        -:  393:
+       99:  394:    ~gemm_blocking_space()
+        -:  395:    {
+       99:  396:      aligned_delete(this->m_blockA, m_sizeA);
+       99:  396-block  0
+       99:  397:      aligned_delete(this->m_blockB, m_sizeB);
+       99:  397-block  0
+       99:  398:    }
+        -:  399:};
+        -:  400:
+        -:  401:} // end namespace internal
+        -:  402:
+        -:  403:namespace internal {
+        -:  404:
+        -:  405:template<typename Lhs, typename Rhs>
+        -:  406:struct generic_product_impl<Lhs,Rhs,DenseShape,DenseShape,GemmProduct>
+        -:  407:  : generic_product_impl_base<Lhs,Rhs,generic_product_impl<Lhs,Rhs,DenseShape,DenseShape,GemmProduct> >
+        -:  408:{
+        -:  409:  typedef typename Product<Lhs,Rhs>::Scalar Scalar;
+        -:  410:  typedef typename Lhs::Scalar LhsScalar;
+        -:  411:  typedef typename Rhs::Scalar RhsScalar;
+        -:  412:
+        -:  413:  typedef internal::blas_traits<Lhs> LhsBlasTraits;
+        -:  414:  typedef typename LhsBlasTraits::DirectLinearAccessType ActualLhsType;
+        -:  415:  typedef typename internal::remove_all<ActualLhsType>::type ActualLhsTypeCleaned;
+        -:  416:
+        -:  417:  typedef internal::blas_traits<Rhs> RhsBlasTraits;
+        -:  418:  typedef typename RhsBlasTraits::DirectLinearAccessType ActualRhsType;
+        -:  419:  typedef typename internal::remove_all<ActualRhsType>::type ActualRhsTypeCleaned;
+        -:  420:
+        -:  421:  enum {
+        -:  422:    MaxDepthAtCompileTime = EIGEN_SIZE_MIN_PREFER_FIXED(Lhs::MaxColsAtCompileTime,Rhs::MaxRowsAtCompileTime)
+        -:  423:  };
+        -:  424:
+        -:  425:  typedef generic_product_impl<Lhs,Rhs,DenseShape,DenseShape,CoeffBasedProductMode> lazyproduct;
+        -:  426:
+        -:  427:  template<typename Dst>
+        -:  428:  static void evalTo(Dst& dst, const Lhs& lhs, const Rhs& rhs)
+        -:  429:  {
+        -:  430:    if((rhs.rows()+dst.rows()+dst.cols())<20 && rhs.rows()>0)
+        -:  431:      lazyproduct::evalTo(dst, lhs, rhs);
+        -:  432:    else
+        -:  433:    {
+        -:  434:      dst.setZero();
+        -:  435:      scaleAndAddTo(dst, lhs, rhs, Scalar(1));
+        -:  436:    }
+        -:  437:  }
+        -:  438:
+        -:  439:  template<typename Dst>
+        -:  440:  static void addTo(Dst& dst, const Lhs& lhs, const Rhs& rhs)
+        -:  441:  {
+        -:  442:    if((rhs.rows()+dst.rows()+dst.cols())<20 && rhs.rows()>0)
+        -:  443:      lazyproduct::addTo(dst, lhs, rhs);
+        -:  444:    else
+        -:  445:      scaleAndAddTo(dst,lhs, rhs, Scalar(1));
+        -:  446:  }
+        -:  447:
+        -:  448:  template<typename Dst>
+        -:  449:  static void subTo(Dst& dst, const Lhs& lhs, const Rhs& rhs)
+        -:  450:  {
+        -:  451:    if((rhs.rows()+dst.rows()+dst.cols())<20 && rhs.rows()>0)
+        -:  452:      lazyproduct::subTo(dst, lhs, rhs);
+        -:  453:    else
+        -:  454:      scaleAndAddTo(dst, lhs, rhs, Scalar(-1));
+        -:  455:  }
+        -:  456:
+        -:  457:  template<typename Dest>
+        -:  458:  static void scaleAndAddTo(Dest& dst, const Lhs& a_lhs, const Rhs& a_rhs, const Scalar& alpha)
+        -:  459:  {
+        -:  460:    eigen_assert(dst.rows()==a_lhs.rows() && dst.cols()==a_rhs.cols());
+        -:  461:    if(a_lhs.cols()==0 || a_lhs.rows()==0 || a_rhs.cols()==0)
+        -:  462:      return;
+        -:  463:
+        -:  464:    typename internal::add_const_on_value_type<ActualLhsType>::type lhs = LhsBlasTraits::extract(a_lhs);
+        -:  465:    typename internal::add_const_on_value_type<ActualRhsType>::type rhs = RhsBlasTraits::extract(a_rhs);
+        -:  466:
+        -:  467:    Scalar actualAlpha = alpha * LhsBlasTraits::extractScalarFactor(a_lhs)
+        -:  468:                               * RhsBlasTraits::extractScalarFactor(a_rhs);
+        -:  469:
+        -:  470:    typedef internal::gemm_blocking_space<(Dest::Flags&RowMajorBit) ? RowMajor : ColMajor,LhsScalar,RhsScalar,
+        -:  471:            Dest::MaxRowsAtCompileTime,Dest::MaxColsAtCompileTime,MaxDepthAtCompileTime> BlockingType;
+        -:  472:
+        -:  473:    typedef internal::gemm_functor<
+        -:  474:      Scalar, Index,
+        -:  475:      internal::general_matrix_matrix_product<
+        -:  476:        Index,
+        -:  477:        LhsScalar, (ActualLhsTypeCleaned::Flags&RowMajorBit) ? RowMajor : ColMajor, bool(LhsBlasTraits::NeedToConjugate),
+        -:  478:        RhsScalar, (ActualRhsTypeCleaned::Flags&RowMajorBit) ? RowMajor : ColMajor, bool(RhsBlasTraits::NeedToConjugate),
+        -:  479:        (Dest::Flags&RowMajorBit) ? RowMajor : ColMajor>,
+        -:  480:      ActualLhsTypeCleaned, ActualRhsTypeCleaned, Dest, BlockingType> GemmFunctor;
+        -:  481:
+        -:  482:    BlockingType blocking(dst.rows(), dst.cols(), lhs.cols(), 1, true);
+        -:  483:    internal::parallelize_gemm<(Dest::MaxRowsAtCompileTime>32 || Dest::MaxRowsAtCompileTime==Dynamic)>
+        -:  484:        (GemmFunctor(lhs, rhs, dst, actualAlpha, blocking), a_lhs.rows(), a_rhs.cols(), a_lhs.cols(), Dest::Flags&RowMajorBit);
+        -:  485:  }
+        -:  486:};
+        -:  487:
+        -:  488:} // end namespace internal
+        -:  489:
+        -:  490:} // end namespace Eigen
+        -:  491:
+        -:  492:#endif // EIGEN_GENERAL_MATRIX_MATRIX_H

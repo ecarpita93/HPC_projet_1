@@ -1,0 +1,641 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/string.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_STRING_HPP
+        -:   19:#define PIC_UTIL_STRING_HPP
+        -:   20:
+        -:   21:#include <vector>
+        -:   22:#include <string>
+        -:   23:#include <sstream>
+        -:   24:#include <iostream>
+        -:   25:#include <fstream>
+        -:   26:
+        -:   27:#include "../base.hpp"
+        -:   28:
+        -:   29:
+        -:   30:#ifdef PIC_WIN32
+        -:   31:    #include <direct.h>
+        -:   32:#endif
+        -:   33:
+        -:   34:#ifndef PIC_WIN32
+        -:   35:    #include <unistd.h>
+        -:   36:#endif
+        -:   37:#include <cstring>
+        -:   38:
+        -:   39:namespace pic {
+        -:   40:
+        -:   41:/**
+        -:   42:*@brief MAKE_STRING creates a string from a block.
+        -:   43:*/
+        -:   44:#define MAKE_STRING(input_string) #input_string
+        -:   45:
+        -:   46:/**
+        -:   47: * @brief StringVec is an std::vector of std::string.
+        -:   48: */
+        -:   49:typedef std::vector<std::string > StringVec;
+        -:   50:
+        -:   51:/**
+        -:   52: * @brief stdStringRep replaces strSub in str with strRep just once.
+        -:   53: * @param str is the input string.
+        -:   54: * @param strSub is the substring to find in str.
+        -:   55: * @param strRep is the string for replacing strSub.
+        -:   56: * @return It returns str where strSub is replaced with strRep.
+        -:   57: */
+        -:   58:inline std::string stdStringRep(std::string str, std::string strSub,
+        -:   59:                                std::string strRep)
+        -:   60:{
+        -:   61:    std::string ret = str;
+        -:   62:
+        -:   63:    size_t found = ret.find(strSub);
+        -:   64:
+        -:   65:    if(found != std::string::npos) {
+        -:   66:        ret.replace(found, strRep.length(), strRep);
+        -:   67:    }
+        -:   68:
+        -:   69:    return ret;
+        -:   70:}
+        -:   71:
+        -:   72:/**
+        -:   73: * @brief stdStringRepAll replaces all strSub in str with strRep.
+        -:   74: * @param str
+        -:   75: * @param strSub
+        -:   76: * @param strRep
+        -:   77: * @return
+        -:   78: */
+    #####:   79:inline std::string stdStringRepAll(std::string str, std::string strSub,
+        -:   80:                                   std::string strRep)
+        -:   81:{
+    #####:   82:    auto n_sub = strSub.size();
+    %%%%%:   82-block  0
+    #####:   83:    auto n_rep = strRep.size();
+        -:   84:
+    #####:   85:    std::string ret = str;
+    %%%%%:   85-block  0
+    #####:   86:    std::string::size_type pos = ret.find(strSub);
+        -:   87:
+    #####:   88:    while(pos != std::string::npos) {
+    %%%%%:   88-block  0
+    #####:   89:        ret.replace(pos, n_sub, strRep);
+    %%%%%:   89-block  0
+        -:   90:
+    #####:   91:        pos = ret.find(strSub, pos + 1 - n_sub + n_rep);
+    %%%%%:   91-block  0
+        -:   92:    }
+        -:   93:
+    #####:   94:    return ret;
+    %%%%%:   94-block  0
+        -:   95:}
+        -:   96:
+        -:   97:/**
+        -:   98: * @brief fromNumberToString converts a number into a string.
+        -:   99: * @param num is an input number.
+        -:  100: */
+        -:  101:template<class T>
+       7*:  102:inline std::string fromNumberToString(T num)
+        -:  103:{
+       7*:  104:    std::ostringstream convert;
+       7*:  105:    convert << num;
+       7*:  106:    return convert.str();
+        -:  107:}
+------------------
+_ZN3pic18fromNumberToStringIiEENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEET_:
+        7:  102:inline std::string fromNumberToString(T num)
+        -:  103:{
+        7:  104:    std::ostringstream convert;
+        7:  104-block  0
+    $$$$$:  104-block  1
+        7:  105:    convert << num;
+        7:  106:    return convert.str();
+        7:  106-block  0
+        -:  107:}
+------------------
+_ZN3pic18fromNumberToStringIfEENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEET_:
+    #####:  102:inline std::string fromNumberToString(T num)
+        -:  103:{
+    #####:  104:    std::ostringstream convert;
+    %%%%%:  104-block  0
+    $$$$$:  104-block  1
+    #####:  105:    convert << num;
+    %%%%%:  105-block  0
+    #####:  106:    return convert.str();
+    %%%%%:  106-block  0
+        -:  107:}
+------------------
+        -:  108:
+        -:  109:/**
+        -:  110: * @brief getSeparatorChar returns the folder separator in path as a char.
+        -:  111: * @param path
+        -:  112: * @return
+        -:  113: */
+    #####:  114:inline char getSeparatorChar(std::string path)
+        -:  115:{
+    #####:  116:    if(path.find("/") != std::string::npos) {
+    %%%%%:  116-block  0
+        -:  117:        return '/';
+        -:  118:    } else {
+    #####:  119:        if(path.find("\\") != std::string::npos) {
+    %%%%%:  119-block  0
+        -:  120:            return '\\';
+        -:  121:        } else {
+    #####:  122:            return '/';
+    %%%%%:  122-block  0
+        -:  123:        }
+        -:  124:    }
+        -:  125:}
+        -:  126:
+        -:  127:/**
+        -:  128: * @brief RemoveExtension removes the extension of a string.
+        -:  129: * @param name
+        -:  130: * @return
+        -:  131: */
+        -:  132:inline std::string removeExtension(std::string name)
+        -:  133:{
+        -:  134:    std::string tmp(name);
+        -:  135:    std::reverse(tmp.begin(), tmp.end());
+        -:  136:
+        -:  137:    size_t pos = tmp.find(".");
+        -:  138:
+        -:  139:    if(pos != std::string::npos) {
+        -:  140:        name.erase(name.end() - pos - 1, name.end());
+        -:  141:    }
+        -:  142:
+        -:  143:    return name;
+        -:  144:}
+        -:  145:
+        -:  146:/**
+        -:  147: * @brief removeLocalPath removes the local path of a string.
+        -:  148: * @param name
+        -:  149: * @return
+        -:  150: */
+        -:  151:inline std::string removeLocalPath(std::string name)
+        -:  152:{
+        -:  153:    std::string toFind(1, getSeparatorChar(name));
+        -:  154:
+        -:  155:    if(toFind.empty()) {
+        -:  156:        return name;
+        -:  157:    } else {
+        -:  158:        size_t oldPos;
+        -:  159:        size_t pos = 0;
+        -:  160:        do{
+        -:  161:            oldPos = pos;
+        -:  162:            pos = name.find(toFind, pos + 1);
+        -:  163:        } while(pos != std::string::npos);
+        -:  164:
+        -:  165:        name.erase(0, oldPos + 1);
+        -:  166:    }
+        -:  167:
+        -:  168:    return name;
+        -:  169:}
+        -:  170:
+        -:  171:/**
+        -:  172: * @brief getFileNameOnly
+        -:  173: * @param name
+        -:  174: * @return
+        -:  175: */
+        -:  176:inline std::string getFileNameOnly(std::string name)
+        -:  177:{
+        -:  178:    return removeLocalPath(removeExtension(name));
+        -:  179:}
+        -:  180:
+        -:  181:/**
+        -:  182: * @brief getExtension gets the extension of a file name.
+        -:  183: * @param name
+        -:  184: * @return
+        -:  185: */
+        -:  186:inline std::string getExtension(std::string name)
+        -:  187:{
+        -:  188:    std::string tmp(name);
+        -:  189:    std::reverse(tmp.begin(), tmp.end());
+        -:  190:
+        -:  191:    size_t pos = tmp.find(".");
+        -:  192:    std::string ext = "";
+        -:  193:
+        -:  194:    if(pos != std::string::npos) {
+        -:  195:        auto n = name.length() - pos;
+        -:  196:        ext = name.substr(n, n);
+        -:  197:    }
+        -:  198:
+        -:  199:    return ext;
+        -:  200:}
+        -:  201:
+        -:  202:/**
+        -:  203: * @brief addSuffix adds a suffix to a file name.
+        -:  204: * @param name
+        -:  205: * @param suffix
+        -:  206: * @return
+        -:  207: */
+        -:  208:inline std::string addSuffix(std::string name, std::string suffix)
+        -:  209:{
+        -:  210:    std::string tmp = removeExtension(name);
+        -:  211:    std::string tmpExt = getExtension(name);
+        -:  212:    return tmp + suffix + "." + tmpExt;
+        -:  213:}
+        -:  214:
+        -:  215:/**
+        -:  216: * @brief replaceExtension changes .format in a file name.
+        -:  217: * @param nameOut
+        -:  218: * @param fmtIn
+        -:  219: * @param fmtOut
+        -:  220: * @return
+        -:  221: */
+        -:  222:inline std::string replaceExtension(std::string nameOut, std::string fmtIn,
+        -:  223:                                std::string fmtOut)
+        -:  224:{
+        -:  225:    size_t found = nameOut.find(fmtIn);
+        -:  226:
+        -:  227:    if(found != std::string::npos) {
+        -:  228:        nameOut.replace(nameOut.begin() + found, nameOut.end(), fmtOut);
+        -:  229:    }
+        -:  230:
+        -:  231:    return nameOut;
+        -:  232:}
+        -:  233:
+        -:  234:/**
+        -:  235: * @brief countSubString counts how many subStr are in str.
+        -:  236: * @param str is the input string.
+        -:  237: * @param subStr is the substring to count in str.
+        -:  238: * @return the number of times subStr appears in str.
+        -:  239: */
+        -:  240:inline int countSubString(std::string str, std::string subStr)
+        -:  241:{
+        -:  242:    int count = 0;
+        -:  243:
+        -:  244:    std::string::size_type pos = str.find(subStr);
+        -:  245:
+        -:  246:    while(pos != std::string::npos) {
+        -:  247:        count++;
+        -:  248:        pos = str.find(subStr, pos + 1);
+        -:  249:    }
+        -:  250:
+        -:  251:    return count;
+        -:  252:}
+        -:  253:
+        -:  254:/**
+        -:  255: * @brief getLocaDirectory gets local path.
+        -:  256: * @param path
+        -:  257: * @return
+        -:  258: */
+        -:  259:inline std::string getLocaDirectory(std::string path)
+        -:  260:{
+        -:  261:    std::string ret = path;
+        -:  262:
+        -:  263:    std::string toFind(1, getSeparatorChar(path));
+        -:  264:
+        -:  265:    if(toFind.empty()) {
+        -:  266:        return ret;
+        -:  267:    }
+        -:  268:
+        -:  269:    size_t pos1 = path.rfind(toFind);
+        -:  270:
+        -:  271:    if(pos1 != std::string::npos) {
+        -:  272:        ret = path.substr(0, pos1);
+        -:  273:        size_t pos2 = ret.rfind(toFind);
+        -:  274:
+        -:  275:        if(pos2 != std::string::npos) {
+        -:  276:            return ret.substr(pos2 + 1, ret.length());
+        -:  277:        }
+        -:  278:    }
+        -:  279:
+        -:  280:    return ret;
+        -:  281:}
+        -:  282:
+        -:  283:/**
+        -:  284: * @brief getSeparator returns the folder separator in path as a string
+        -:  285: * @param path
+        -:  286: * @return
+        -:  287: */
+    #####:  288:inline std::string getSeparator(std::string path)
+        -:  289:{
+    #####:  290:    char sepChar = getSeparatorChar(path);
+    %%%%%:  290-block  0
+    #####:  291:    std::string strOut;
+    %%%%%:  291-block  0
+    #####:  292:    return strOut + sepChar;
+    %%%%%:  292-block  0
+    %%%%%:  292-block  1
+        -:  293:}
+        -:  294:
+        -:  295:/**
+        -:  296: * @brief getFolderName gets the folder name from the path.
+        -:  297: * @param path
+        -:  298: * @return
+        -:  299: */
+        -:  300:inline std::string getFolderName(std::string path)
+        -:  301:{
+        -:  302:    size_t found = path.find_last_of(getSeparator(path));
+        -:  303:
+        -:  304:    if(found != std::string::npos) {
+        -:  305:        return path.substr(0, found);
+        -:  306:    } else {
+        -:  307:        return "./";
+        -:  308:    }
+        -:  309:}
+        -:  310:
+        -:  311:/**
+        -:  312: * @brief getFileName gets the file name.
+        -:  313: * @param path
+        -:  314: * @return
+        -:  315: */
+        -:  316:inline std::string getFileName(std::string path)
+        -:  317:{
+        -:  318:    std::string toFind;
+        -:  319:    std::string ret = path;
+        -:  320:
+        -:  321:    if(path.find("/") != std::string::npos) {
+        -:  322:        toFind = "/";
+        -:  323:    } else {
+        -:  324:        if(path.find("\\") != std::string::npos) {
+        -:  325:            toFind = "\\";
+        -:  326:        } else {
+        -:  327:            return ret;
+        -:  328:        }
+        -:  329:    }
+        -:  330:
+        -:  331:    size_t pos = path.rfind(toFind);
+        -:  332:
+        -:  333:    if(pos != std::string::npos) {
+        -:  334:        ret = path.substr(pos + 1, path.length());
+        -:  335:        return ret;
+        -:  336:    }
+        -:  337:
+        -:  338:    return ret;
+        -:  339:}
+        -:  340:
+        -:  341:/**
+        -:  342: * @brief parseStringToStdVector
+        -:  343: * @param str
+        -:  344: * @param delim
+        -:  345: * @param str_vec
+        -:  346: */
+        -:  347:inline void parseStringToStdVector(std::string str, char delim,
+        -:  348:                                   StringVec *str_vec)
+        -:  349:{
+        -:  350:    std::stringstream ss(str);
+        -:  351:
+        -:  352:    while(!ss.eof()) {
+        -:  353:        std::string tmpStr;
+        -:  354:        std::getline(ss, tmpStr, delim);
+        -:  355:        str_vec->push_back(tmpStr);
+        -:  356:    }
+        -:  357:}
+        -:  358:
+        -:  359:/**
+        -:  360: * @brief genBilString
+        -:  361: * @param type
+        -:  362: * @param sigma_s
+        -:  363: * @param sigma_r
+        -:  364: * @return
+        -:  365: */
+    #####:  366:inline std::string genBilString(std::string type, float sigma_s,
+        -:  367:                                    float sigma_r)
+        -:  368:{
+    #####:  369:    std::string ret = type +
+    %%%%%:  369-block  0
+    %%%%%:  369-block  1
+    $$$$$:  369-block  2
+    #####:  370:            "_Ss_" + fromNumberToString(sigma_s) +
+    %%%%%:  370-block  0
+    %%%%%:  370-block  1
+    %%%%%:  370-block  2
+    %%%%%:  370-block  3
+    %%%%%:  370-block  4
+    $$$$$:  370-block  5
+    $$$$$:  370-block  6
+    $$$$$:  370-block  7
+    #####:  371:            "_Sr_" + fromNumberToString(sigma_r);
+    %%%%%:  371-block  0
+    %%%%%:  371-block  1
+    #####:  372:    return ret;
+    %%%%%:  372-block  0
+        -:  373:}
+        -:  374:
+        -:  375:/**
+        -:  376: * @brief fromFileToStdString writes a file into a std::string.
+        -:  377: * @param nameFile
+        -:  378: * @return
+        -:  379: */
+        -:  380:inline std::string fromFileToStdString(std::string nameFile)
+        -:  381:{
+        -:  382:    std::ifstream infile;
+        -:  383:    infile.open(nameFile.c_str(), std::ios::in);
+        -:  384:
+        -:  385:    std::string ret;
+        -:  386:
+        -:  387:    if((!infile.is_open()) || (!infile.good())) {
+        -:  388:        return ret;
+        -:  389:    }
+        -:  390:
+        -:  391:    int c = infile.get();
+        -:  392:    while (infile.good()) {
+        -:  393:        ret += c;
+        -:  394:        c = infile.get();
+        -:  395:    }
+        -:  396:
+        -:  397:    infile.close();
+        -:  398:
+        -:  399:    return ret;
+        -:  400:}
+        -:  401:
+        -:  402:/**
+        -:  403: * @brief checkAbsolutePath checks if the path is absolute or not.
+        -:  404: * @param path
+        -:  405: * @return
+        -:  406: */
+    #####:  407:inline bool checkAbsolutePath(std::string path)
+        -:  408:{
+        -:  409:    //win32 absolute path
+    #####:  410:    if(path.find(":\\") != std::string::npos) {
+    %%%%%:  410-block  0
+        -:  411:        return true;
+        -:  412:    }
+        -:  413:
+    #####:  414:    if(path.find(":/") != std::string::npos) {
+    %%%%%:  414-block  0
+        -:  415:        return true;
+        -:  416:    }
+        -:  417:
+    #####:  418:    if(path.find("\\\\\"") != std::string::npos) {
+    %%%%%:  418-block  0
+        -:  419:        return true;
+        -:  420:    }
+        -:  421:
+        -:  422:    //unix/mac path
+    #####:  423:    return (path.at(0) == '/');
+    %%%%%:  423-block  0
+    %%%%%:  423-block  1
+        -:  424:}
+        -:  425:
+        -:  426:/**
+        -:  427: * @brief fromStdStringToChar converts from a std::string to a char*.
+        -:  428: * @param str
+        -:  429: * @return
+        -:  430: */
+        -:  431:inline char *fromStdStringToChar(std::string str)
+        -:  432:{
+        -:  433:    char *cstr = new char [str.size() + 1];
+        -:  434:    strcpy (cstr, str.c_str());
+        -:  435:    return cstr;
+        -:  436:}
+        -:  437:
+        -:  438:/**
+        -:  439: * @brief checkPath
+        -:  440: * @param name
+        -:  441: * @return
+        -:  442: */
+    #####:  443:inline std::string checkPath(std::string name)
+        -:  444:{
+    #####:  445:    if(name.length() < 3) {
+    %%%%%:  445-block  0
+    #####:  446:        return "";
+    %%%%%:  446-block  0
+        -:  447:    }
+        -:  448:
+    #####:  449:    if((name.at(0) == '.') && (name.at(0) == '.')) {
+    %%%%%:  449-block  0
+        -:  450:        #ifdef PIC_WIN32
+        -:  451:            char *path = _getcwd(NULL, 0);
+        -:  452:        #endif
+        -:  453:
+        -:  454:        #ifndef PIC_WIN32
+    #####:  455:            char *path = getcwd(NULL, 0);
+    %%%%%:  455-block  0
+        -:  456:        #endif
+        -:  457:
+    #####:  458:        std::string dsepName = getSeparator(name);
+    %%%%%:  458-block  0
+    #####:  459:        std::string dsepPath = getSeparator(path);
+    %%%%%:  459-block  0
+    %%%%%:  459-block  1
+    %%%%%:  459-block  2
+    $$$$$:  459-block  3
+    $$$$$:  459-block  4
+        -:  460:
+    #####:  461:        name = stdStringRepAll(name, dsepName, dsepPath);
+    %%%%%:  461-block  0
+    %%%%%:  461-block  1
+    %%%%%:  461-block  2
+    %%%%%:  461-block  3
+    %%%%%:  461-block  4
+    %%%%%:  461-block  5
+    %%%%%:  461-block  6
+    %%%%%:  461-block  7
+    $$$$$:  461-block  8
+    $$$$$:  461-block  9
+    $$$$$:  461-block 10
+    $$$$$:  461-block 11
+    $$$$$:  461-block 12
+    #####:  462:        if(name.at(2) == '\\' || name.at(2) == '/') {
+    %%%%%:  462-block  0
+    %%%%%:  462-block  1
+    %%%%%:  462-block  2
+    #####:  463:            name = name.substr(3);
+    %%%%%:  463-block  0
+    %%%%%:  463-block  1
+    %%%%%:  463-block  2
+        -:  464:        } else {
+    #####:  465:            name = name.substr(2);
+    %%%%%:  465-block  0
+    %%%%%:  465-block  1
+    %%%%%:  465-block  2
+        -:  466:        }
+        -:  467:
+    #####:  468:        std::string newPath  = path + dsepPath + name;
+    %%%%%:  468-block  0
+    %%%%%:  468-block  1
+    %%%%%:  468-block  2
+    $$$$$:  468-block  3
+    #####:  469:        return newPath;
+    %%%%%:  469-block  0
+    %%%%%:  469-block  1
+        -:  470:    } else {
+    #####:  471:        return "";
+    %%%%%:  471-block  0
+        -:  472:    }
+        -:  473:}
+        -:  474:
+        -:  475:/**
+        -:  476: * @brief adjustPath modifies the path if it is not global.
+        -:  477: * @param nameFile
+        -:  478: * @param pathFolder
+        -:  479: * @return
+        -:  480: */
+    #####:  481:std::string adjustPath(std::string nameFile, std::string pathFolder)
+        -:  482:{
+    #####:  483:    if(!checkAbsolutePath(nameFile)) {
+    %%%%%:  483-block  0
+    %%%%%:  483-block  1
+    %%%%%:  483-block  2
+    $$$$$:  483-block  3
+    #####:  484:        std::string fullPath = checkPath(nameFile);
+    %%%%%:  484-block  0
+    %%%%%:  484-block  1
+        -:  485:
+    #####:  486:        if(fullPath.empty()) {
+    %%%%%:  486-block  0
+    #####:  487:            std::string ret = pathFolder + getSeparator(pathFolder) + nameFile;
+    %%%%%:  487-block  0
+    %%%%%:  487-block  1
+    %%%%%:  487-block  2
+    %%%%%:  487-block  3
+    %%%%%:  487-block  4
+    %%%%%:  487-block  5
+    %%%%%:  487-block  6
+    $$$$$:  487-block  7
+    $$$$$:  487-block  8
+    $$$$$:  487-block  9
+    #####:  488:            return ret;
+    %%%%%:  488-block  0
+    %%%%%:  488-block  1
+        -:  489:        } else {
+    #####:  490:            return fullPath;
+    %%%%%:  490-block  0
+    %%%%%:  490-block  1
+        -:  491:        }
+        -:  492:    } else {
+    #####:  493:        return nameFile;
+    %%%%%:  493-block  0
+    %%%%%:  493-block  1
+        -:  494:    }
+        -:  495:}
+        -:  496:
+        -:  497:/**
+        -:  498: * @brief removeInitialSpaces removes spaces at the beginning of a string.
+        -:  499: * @param name
+        -:  500: * @return
+        -:  501: */
+        -:  502:inline std::string removeInitialSpaces(char name[])
+        -:  503:{
+        -:  504:    size_t pos;
+        -:  505:    std::string ret = name;
+        -:  506:
+        -:  507:    pos = ret.find(' ');
+        -:  508:    ret.erase(pos, 1);
+        -:  509:
+        -:  510:    pos = ret.find('\n');
+        -:  511:    ret.erase(pos, 1);
+        -:  512:
+        -:  513:    return ret;
+        -:  514:}
+        -:  515:
+        -:  516:} // end namespace pic
+        -:  517:
+        -:  518:#endif /* PIC_UTIL_STRING_HPP */
+        -:  519:

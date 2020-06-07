@@ -1,0 +1,239 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/raman_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_RAMAN_TMO_HPP
+        -:   19:#define PIC_TONE_MAPPING_RAMAN_TMO_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:#include "../util/std_util.hpp"
+        -:   23:
+        -:   24:#include "../filtering/filter_luminance.hpp"
+        -:   25:#include "../filtering/filter_bilateral_2dg.hpp"
+        -:   26:
+        -:   27:#include "../tone_mapping/get_all_exposures.hpp"
+        -:   28:#include "../tone_mapping/tone_mapping_operator.hpp"
+        -:   29:
+        -:   30:namespace pic {
+        -:   31:
+        -:   32:/**
+        -:   33: * @brief The RamanTMO class
+        -:   34: */
+        -:   35:class RamanTMO: public ToneMappingOperator
+        -:   36:{
+        -:   37:protected:
+        -:   38:    FilterLuminance flt_lum;
+        -:   39:
+        -:   40:    /**
+        -:   41:     * @brief ProcessAux
+        -:   42:     * @param imgIn
+        -:   43:     * @param imgOut
+        -:   44:     * @return
+        -:   45:     */
+    #####:   46:    Image *ProcessAux(ImageVec imgIn, Image *imgOut)
+        -:   47:    {
+    #####:   48:        if(imgIn.size() > 1) {
+    %%%%%:   48-block  0
+    #####:   49:            return ProcessAuxStack(imgIn, imgOut);
+    %%%%%:   49-block  0
+    %%%%%:   49-block  1
+    %%%%%:   49-block  2
+    $$$$$:   49-block  3
+        -:   50:        } else {
+        -:   51:
+    #####:   52:            std::vector<float> fstops = getAllExposuresUniform(imgIn[0]);
+    %%%%%:   52-block  0
+    %%%%%:   52-block  1
+    #####:   53:            ImageVec stack = getAllExposuresImages(imgIn[0], fstops);
+    %%%%%:   53-block  0
+    $$$$$:   53-block  1
+        -:   54:            //pic::ImageVec stack = getAllExposures(imgIn[0]);
+        -:   55:
+    #####:   56:            imgOut = ProcessAuxStack(stack, imgOut);
+    %%%%%:   56-block  0
+    %%%%%:   56-block  1
+    %%%%%:   56-block  2
+    $$$$$:   56-block  3
+    $$$$$:   56-block  4
+        -:   57:
+    #####:   58:            stdVectorClear<Image>(stack);
+    %%%%%:   58-block  0
+        -:   59:
+    #####:   60:            return imgOut;
+        -:   61:        }
+        -:   62:    }
+        -:   63:
+        -:   64:    /**
+        -:   65:     * @brief ramanFunction
+        -:   66:     * @param x
+        -:   67:     * @param param
+        -:   68:     * @return
+        -:   69:     */
+    #####:   70:    static float ramanFunction(float x, std::vector<float>& param)
+        -:   71:    {
+    #####:   72:        return fabsf(x) + param[0];
+        -:   73:    }
+        -:   74:
+        -:   75:    /**
+        -:   76:     * @brief ProcessAuxStack
+        -:   77:     * @param imgIn
+        -:   78:     * @param imgOut
+        -:   79:     * @return
+        -:   80:     */
+    #####:   81:    Image *ProcessAuxStack(ImageVec imgIn, Image *imgOut)
+        -:   82:    {
+    #####:   83:        int n = int(imgIn.size());
+    %%%%%:   83-block  0
+        -:   84:
+    #####:   85:        if(n < 2 || !ImageVecCheck(imgIn, -1)) {
+    %%%%%:   85-block  0
+    %%%%%:   85-block  1
+        -:   86:            return imgOut;
+        -:   87:        }
+        -:   88:
+        -:   89:        //As reported in Raman and Chaudhuri Eurographics 2009 short paper
+    #####:   90:        float K1 = 1.0f;
+    #####:   91:        float K2 = 0.1f;
+    #####:   92:        float C = 70.0f / 255.0f;
+        -:   93:
+    #####:   94:        int width  = imgIn[0]->width;
+    %%%%%:   94-block  0
+    #####:   95:        int height = imgIn[0]->height;
+        -:   96:
+    #####:   97:        float sigma_s = K1 * MIN(width, height);
+    %%%%%:   97-block  0
+    %%%%%:   97-block  1
+    %%%%%:   97-block  2
+        -:   98:
+    #####:   99:        updateImage(imgIn[0]);
+    %%%%%:   99-block  0
+        -:  100:
+    #####:  101:        std::vector<float> param;
+    %%%%%:  101-block  0
+    #####:  102:        param.push_back(C);
+        -:  103:
+    #####:  104:        if(images[2] == NULL) {
+    %%%%%:  104-block  0
+        -:  105:            //images[2] --> acc
+    #####:  106:            images[2] = new Image(1, width, height, 1);
+    %%%%%:  106-block  0
+    %%%%%:  106-block  1
+    %%%%%:  106-block  2
+    $$$$$:  106-block  3
+        -:  107:        }
+        -:  108:
+    #####:  109:        images[2]->setZero();
+    %%%%%:  109-block  0
+        -:  110:
+        -:  111:        //accumulate into a Pyramid
+        -:  112:        #ifdef PIC_DEBUG
+        -:  113:            printf("Blending...");
+        -:  114:        #endif
+        -:  115:
+    #####:  116:        imgOut->setZero();
+    %%%%%:  116-block  0
+        -:  117:
+    #####:  118:        for(int j = 0; j < n; j++) {
+    %%%%%:  118-block  0
+    #####:  119:            images[0] = flt_lum.Process(Single(imgIn[j]), images[0]);
+    %%%%%:  119-block  0
+    %%%%%:  119-block  1
+    %%%%%:  119-block  2
+    $$$$$:  119-block  3
+    $$$$$:  119-block  4
+        -:  120:
+    #####:  121:            float min, max;
+        -:  122:
+    #####:  123:            images[0]->getMinVal(NULL, &min);
+    %%%%%:  123-block  0
+    #####:  124:            images[0]->getMaxVal(NULL, &max);
+    %%%%%:  124-block  0
+    #####:  125:            float sigma_r = K2 * (max - min);
+        -:  126:
+    #####:  127:            images[1] = FilterBilateral2DG::execute(images[0], images[1], sigma_s, sigma_r);
+    %%%%%:  127-block  0
+    #####:  128:            *images[1] -= *images[0];
+    %%%%%:  128-block  0
+    #####:  129:            images[1]->applyFunctionParam(ramanFunction, param);
+        -:  130:
+    #####:  131:            *images[2] += *images[1];
+        -:  132:
+        -:  133:            //normalization
+    #####:  134:            auto tmp = imgIn[j]->clone();
+    #####:  135:            *tmp *= *images[1];
+    %%%%%:  135-block  0
+        -:  136:
+    #####:  137:            *imgOut += *tmp;
+        -:  138:        }
+        -:  139:
+    #####:  140:        *imgOut /= *images[2];
+    %%%%%:  140-block  0
+        -:  141:
+        -:  142:        #ifdef PIC_DEBUG
+        -:  143:            printf(" ok\n");
+        -:  144:        #endif
+        -:  145:
+    #####:  146:        return imgOut;
+        -:  147:    }
+        -:  148:
+        -:  149:public:
+        -:  150:
+        -:  151:    /**
+        -:  152:     * @brief RamanTMO
+        -:  153:     */
+        -:  154:    RamanTMO()
+        -:  155:    {
+        -:  156:        setToANullVector<Image>(images, 3);
+        -:  157:    }
+        -:  158:
+        -:  159:    ~RamanTMO()
+        -:  160:    {
+        -:  161:        release();
+        -:  162:    }
+        -:  163:
+        -:  164:    /**
+        -:  165:     * @brief execute
+        -:  166:     * @param imgIn
+        -:  167:     * @param imgOut
+        -:  168:     * @return
+        -:  169:     */
+        -:  170:    static Image* execute(Image *imgIn, Image *imgOut)
+        -:  171:    {
+        -:  172:        RamanTMO rtmo;
+        -:  173:        return rtmo.Process(Single(imgIn), imgOut);
+        -:  174:    }
+        -:  175:
+        -:  176:    /**
+        -:  177:     * @brief executeStack
+        -:  178:     * @param imgIn
+        -:  179:     * @param imgOut
+        -:  180:     * @return
+        -:  181:     */
+        -:  182:    static Image* executeStack(ImageVec imgIn, Image *imgOut)
+        -:  183:    {
+        -:  184:        RamanTMO rtmo;
+        -:  185:        return rtmo.Process(imgIn, imgOut);
+        -:  186:    }
+        -:  187:};
+        -:  188:
+        -:  189:} // end namespace pic
+        -:  190:
+        -:  191:#endif /* PIC_TONE_MAPPING_RAMAN_TMO_HPP */
+        -:  192:

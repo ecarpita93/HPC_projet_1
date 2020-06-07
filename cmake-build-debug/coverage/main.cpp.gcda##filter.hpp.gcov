@@ -1,0 +1,522 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_HPP
+        -:   19:#define PIC_FILTERING_FILTER_HPP
+        -:   20:
+        -:   21:#ifndef PIC_DISABLE_THREAD
+        -:   22:#include <thread>
+        -:   23:#endif
+        -:   24:
+        -:   25:#include <functional>
+        -:   26:
+        -:   27:#include "../image.hpp"
+        -:   28:#include "../image_vec.hpp"
+        -:   29:#include "../util/tile_list.hpp"
+        -:   30:#include "../util/string.hpp"
+        -:   31:
+        -:   32:namespace pic {
+        -:   33:
+        -:   34://NOTE: This depends on the architecture!
+        -:   35:#define TILE_SIZE 64
+        -:   36:
+    #####:   37:struct FilterFData
+    %%%%%:   37-block  0
+    $$$$$:   37-block  1
+        -:   38:{
+        -:   39:    int x, y, z;
+        -:   40:    float *out;
+        -:   41:
+        -:   42:    Image *dst;
+        -:   43:    ImageVec src;
+        -:   44:    int nSrc;
+        -:   45:};
+        -:   46:
+        -:   47:/**
+        -:   48: * @brief The Filter class
+        -:   49: */
+        -:   50:class Filter
+        -:   51:{
+        -:   52:protected:
+        -:   53:    float scale;
+        -:   54:    std::vector< float > param_f;
+        -:   55:
+        -:   56:    int minInputImages;
+        -:   57:
+        -:   58:    /**
+        -:   59:     * @brief checkInput
+        -:   60:     * @param imgIn
+        -:   61:     * @return
+        -:   62:     */
+        -:   63:    bool checkInput(ImageVec &imgIn);
+        -:   64:
+        -:   65:    /**
+        -:   66:     * @brief f
+        -:   67:     * @param data
+        -:   68:     */
+    #####:   69:    virtual void f(FilterFData *data)
+        -:   70:    {
+        -:   71:
+    #####:   72:    }
+        -:   73:
+        -:   74:    /**
+        -:   75:     * @brief ProcessBBox
+        -:   76:     * @param dst
+        -:   77:     * @param src
+        -:   78:     * @param box
+        -:   79:     */
+    #####:   80:    virtual void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   81:    {
+    #####:   82:        FilterFData f_data;
+    %%%%%:   82-block  0
+    #####:   83:        f_data.src = src;
+    %%%%%:   83-block  0
+    #####:   84:        f_data.dst = dst;
+    #####:   85:        f_data.nSrc = int(src.size());
+    %%%%%:   85-block  0
+        -:   86:
+    #####:   87:        for(int k = box->z0; k < box->z1; k++) {
+    %%%%%:   87-block  0
+    %%%%%:   87-block  1
+    %%%%%:   87-block  2
+    #####:   88:            f_data.z = k;
+        -:   89:
+    #####:   90:            for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   90-block  0
+    %%%%%:   90-block  1
+    %%%%%:   90-block  2
+    #####:   91:                f_data.y = j;
+        -:   92:
+    #####:   93:                for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   93-block  0
+    %%%%%:   93-block  1
+    %%%%%:   93-block  2
+    #####:   94:                    f_data.x = i;
+    #####:   95:                    f_data.out = (*dst)(i, j);
+    %%%%%:   95-block  0
+        -:   96:
+    #####:   97:                    f(&f_data);
+    %%%%%:   97-block  0
+        -:   98:                }
+        -:   99:            }
+        -:  100:        }
+    #####:  101:    }
+    %%%%%:  101-block  0
+        -:  102:
+        -:  103:    /**
+        -:  104:     * @brief ProcessP
+        -:  105:     * @param imgIn
+        -:  106:     * @param imgOut
+        -:  107:     * @return
+        -:  108:     */
+        -:  109:    Image *ProcessP(ImageVec imgIn, Image *imgOut);
+        -:  110:
+        -:  111:    /**
+        -:  112:     * @brief setupAux
+        -:  113:     * @param imgIn
+        -:  114:     * @param imgOut
+        -:  115:     * @return
+        -:  116:     */
+        -:  117:    virtual Image *setupAux(ImageVec imgIn, Image *imgOut);
+        -:  118:
+        -:  119:public:
+        -:  120:    bool cachedOnly, bDelete;
+        -:  121:    std::vector<Filter *> filters;
+        -:  122:
+        -:  123:    /**
+        -:  124:     * @brief Filter
+        -:  125:     */
+       2*:  126:    Filter()
+       1*:  127:    {
+    %%%%%:  127-block  0
+    %%%%%:  127-block  1
+    %%%%%:  127-block  2
+    %%%%%:  127-block  3
+    %%%%%:  127-block  4
+    %%%%%:  127-block  5
+    %%%%%:  127-block  6
+    %%%%%:  127-block  7
+    %%%%%:  127-block  8
+    %%%%%:  127-block  9
+       2*:  128:        bDelete = false;
+       2*:  129:        minInputImages = 1;
+       2*:  130:        cachedOnly = false;
+       2*:  131:        scale = 1.0f;
+        1:  131-block  0
+    %%%%%:  131-block  1
+    %%%%%:  131-block  2
+    %%%%%:  131-block  3
+    %%%%%:  131-block  4
+    %%%%%:  131-block  5
+    %%%%%:  131-block  6
+    %%%%%:  131-block  7
+    %%%%%:  131-block  8
+    %%%%%:  131-block  9
+    %%%%%:  131-block 10
+        -:  132:    }
+        -:  133:
+        4:  134:    ~Filter()
+        4:  135:    {
+        4:  135-block  0
+        4:  136:        release();
+        4:  137:    }
+        -:  138:
+        -:  139:    /**
+        -:  140:     * @brief release
+        -:  141:     */
+       4*:  142:    virtual void release()
+    %%%%%:  142-block  0
+        4:  142-block  1
+        -:  143:    {
+        -:  144:
+    #####:  145:    }
+        -:  146:
+        -:  147:    /**
+        -:  148:     * @brief changePass changes the pass direction.
+        -:  149:     * @param pass
+        -:  150:     * @param tPass
+        -:  151:     */
+    #####:  152:    virtual void changePass(int pass, int tPass) {}
+        -:  153:
+        -:  154:    /**
+        -:  155:     * @brief signature returns the signature for the filter.
+        -:  156:     * @return
+        -:  157:     */
+    #####:  158:    virtual std::string signature()
+        -:  159:    {
+    #####:  160:        return "FLT";
+    %%%%%:  160-block  0
+        -:  161:    }
+        -:  162:
+        -:  163:    /**
+        -:  164:     * @brief checkHalfSize
+        -:  165:     * @param size
+        -:  166:     * @return
+        -:  167:     */
+        -:  168:    int checkHalfSize(int size){
+        -:  169:        if(size > 1)
+        -:  170:        {
+        -:  171:            return size >> 1;
+        -:  172:        } else {
+        -:  173:            return 1;
+        -:  174:        }
+        -:  175:    }
+        -:  176:
+        -:  177:    /**
+        -:  178:     * @brief getOutPutName
+        -:  179:     * @param nameIn
+        -:  180:     * @return
+        -:  181:     */
+        -:  182:    std::string getOutPutName(std::string nameIn);
+        -:  183:
+        -:  184:    /**
+        -:  185:     * @brief CachedProcess
+        -:  186:     * @param imgIn
+        -:  187:     * @param imgOut
+        -:  188:     * @param nameIn
+        -:  189:     * @return
+        -:  190:     */
+        -:  191:    Image *cachedProcess(ImageVec imgIn, Image *imgOut,
+        -:  192:                            std::string nameIn);
+        -:  193:
+        -:  194:    /**
+        -:  195:     * @brief OutputSize
+        -:  196:     * @param imgIn
+        -:  197:     * @param width
+        -:  198:     * @param height
+        -:  199:     * @param channels
+        -:  200:     * @param frames
+        -:  201:     */
+        1:  202:    virtual void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  203:    {
+        1:  204:        width       = imgIn[0]->width;
+        1:  205:        height      = imgIn[0]->height;
+        1:  206:        channels    = imgIn[0]->channels;
+        1:  207:        frames      = imgIn[0]->frames;
+        1:  208:    }
+        -:  209:
+        -:  210:    /**
+        -:  211:     * @brief allocateOutputMemory
+        -:  212:     * @param imgIn
+        -:  213:     * @param imgOut
+        -:  214:     * @param bDelete
+        -:  215:     * @return
+        -:  216:     */
+        3:  217:    Image *allocateOutputMemory(ImageVec imgIn, Image *imgOut, bool bDelete)
+        -:  218:    {
+        3:  219:        int w, h, c, f;
+        3:  220:        OutputSize(imgIn, w, h, c, f);
+        3:  220-block  0
+    $$$$$:  220-block  1
+        -:  221:
+        3:  222:        if(imgOut == NULL) {            
+        3:  222-block  0
+        3:  223:            imgOut = new Image(f, w, h, c);
+        3:  223-block  0
+    $$$$$:  223-block  1
+        -:  224:        } else {
+       3*:  225:            bool bSame = (imgOut->width == w) &&
+    #####:  226:                         (imgOut->height == h) &&
+    %%%%%:  226-block  0
+    #####:  227:                         (imgOut->channels == c) &&
+    %%%%%:  227-block  0
+    %%%%%:  227-block  1
+    #####:  228:                         (imgOut->frames == f);
+    %%%%%:  228-block  0
+        -:  229:
+    #####:  230:            if(!bSame) {
+    #####:  231:                if(bDelete) {
+    %%%%%:  231-block  0
+    #####:  232:                    delete imgOut;
+    %%%%%:  232-block  0
+        -:  233:                }
+        -:  234:
+    #####:  235:                imgOut = new Image(f, w, h, c);
+    %%%%%:  235-block  0
+    $$$$$:  235-block  1
+        -:  236:            }
+        -:  237:        }
+        -:  238:
+        3:  239:        return imgOut;
+        3:  239-block  0
+        -:  240:    }
+        -:  241:
+        -:  242:    /**
+        -:  243:     * @brief insertFilter
+        -:  244:     * @param flt
+        -:  245:     */
+    #####:  246:    void insertFilter(Filter *flt, bool asSingle = false)
+        -:  247:    {
+    #####:  248:        if(flt == NULL) {
+    %%%%%:  248-block  0
+        -:  249:            return;
+        -:  250:        }
+        -:  251:
+    #####:  252:        if(asSingle || flt->filters.empty()) {
+    %%%%%:  252-block  0
+    %%%%%:  252-block  1
+    #####:  253:            filters.push_back(flt);
+    %%%%%:  253-block  0
+        -:  254:        } else {
+    #####:  255:            for(unsigned int i = 0; i < flt->filters.size(); i++) {
+    %%%%%:  255-block  0
+    #####:  256:                insertFilter(flt->filters[i]);
+    %%%%%:  256-block  0
+        -:  257:            }
+        -:  258:        }
+        -:  259:    }
+        -:  260:
+        -:  261:    /**
+        -:  262:     * @brief setFloatParameters sets float parameters.
+        -:  263:     * @param param_f
+        -:  264:     */
+        -:  265:    void setFloatParameters(std::vector< float > param_f)
+        -:  266:    {
+        -:  267:        this->param_f.insert(this->param_f.begin(), param_f.begin(), param_f.end());
+        -:  268:    }
+        -:  269:
+        -:  270:    /**
+        -:  271:     * @brief ProcessAux
+        -:  272:     * @param imgIn
+        -:  273:     * @param imgOut
+        -:  274:     * @param tiles
+        -:  275:     */
+        -:  276:    virtual void ProcessAux(ImageVec imgIn, Image *imgOut,
+        -:  277:                             TileList *tiles);
+        -:  278:
+        -:  279:    /**
+        -:  280:     * @brief Process
+        -:  281:     * @param imgIn
+        -:  282:     * @param imgOut
+        -:  283:     * @return
+        -:  284:     */
+        -:  285:    virtual Image *Process(ImageVec imgIn, Image *imgOut);
+        -:  286:};
+        -:  287:
+        3:  288:PIC_INLINE Image *Filter::setupAux(ImageVec imgIn, Image *imgOut)
+        -:  289:{
+        6:  290:    return allocateOutputMemory(imgIn, imgOut, bDelete);
+        3:  290-block  0
+        3:  290-block  1
+        3:  290-block  2
+        -:  291:}
+        -:  292:
+        -:  293:PIC_INLINE std::string Filter::getOutPutName(std::string nameIn)
+        -:  294:{
+        -:  295:    std::string outputName = nameIn;
+        -:  296:
+        -:  297:    size_t found = outputName.find(".");
+        -:  298:
+        -:  299:    if(found != std::string::npos) {
+        -:  300:        outputName.erase(outputName.end() - 4, outputName.end());
+        -:  301:    }
+        -:  302:
+        -:  303:    outputName += "_filtered_";
+        -:  304:    outputName += signature().c_str();
+        -:  305:    outputName += ".pfm";
+        -:  306:    return outputName;
+        -:  307:}
+        -:  308:
+        -:  309:PIC_INLINE Image *Filter::cachedProcess(ImageVec imgIn, Image *imgOut,
+        -:  310:        std::string nameIn)
+        -:  311:{
+        -:  312:    std::string outputName = getOutPutName(nameIn);
+        -:  313:
+        -:  314:    //check if it is chaced
+        -:  315:    Image *imgOut2 = new Image(outputName);
+        -:  316:
+        -:  317:    if(imgOut2->data == NULL) {
+        -:  318:        if(!cachedOnly) {
+        -:  319:            imgOut = Process(imgIn, imgOut);
+        -:  320:            imgOut->Write(outputName);
+        -:  321:            return imgOut;
+        -:  322:        } else {
+        -:  323:            return NULL;
+        -:  324:        }
+        -:  325:    } else {
+        -:  326:        if(imgOut != NULL) {
+        -:  327:            imgOut->assign(imgOut2);
+        -:  328:            return imgOut;
+        -:  329:        } else {
+        -:  330:            return imgOut2;
+        -:  331:        }
+        -:  332:    }
+        -:  333:}
+        -:  334:
+       24:  335:PIC_INLINE void Filter::ProcessAux(ImageVec imgIn, Image *imgOut,
+        -:  336:                                    TileList *tiles)
+        -:  337:{
+       24:  338:    bool state = true;
+       24:  338-block  0
+      258:  339:    while(state) {
+      234:  340:        unsigned int currentTile = tiles->getNext();
+      234:  340-block  0
+        -:  341:
+      234:  342:        if(currentTile < tiles->tiles.size()) {
+      234:  342-block  0
+      210:  343:            BBox box = tiles->getBBox(currentTile);
+      210:  343-block  0
+      210:  344:            box.z0 = 0;
+      210:  345:            box.z1 = imgOut->frames;
+      420:  346:            ProcessBBox(imgOut, imgIn, &box);
+      210:  346-block  0
+      210:  346-block  1
+        -:  347:        } else {
+        -:  348:            state = false;
+        -:  349:        }
+        -:  350:    }
+       24:  351:}
+       24:  351-block  0
+        -:  352:
+        3:  353:PIC_INLINE Image *Filter::ProcessP(ImageVec imgIn, Image *imgOut)
+        -:  354:{
+       3*:  355:    if((imgOut->width  < TILE_SIZE) &&
+        3:  355-block  0
+    #####:  356:       (imgOut->height < TILE_SIZE)) {
+    %%%%%:  356-block  0
+    #####:  357:        BBox box(imgOut->width, imgOut->height, imgOut->frames);
+    %%%%%:  357-block  0
+        -:  358:
+    #####:  359:        ProcessBBox(imgOut, imgIn, &box);
+    %%%%%:  359-block  0
+    $$$$$:  359-block  1
+    #####:  360:        return imgOut;
+    %%%%%:  360-block  0
+        -:  361:    }
+        -:  362:
+        -:  363:    //create threads
+        3:  364:    int numCores = std::thread::hardware_concurrency();
+        3:  364-block  0
+        -:  365:
+       3*:  366:    std::thread **thrd = new std::thread*[numCores];
+        3:  366-block  0
+    %%%%%:  366-block  1
+        3:  367:    TileList lst(TILE_SIZE, imgOut->width, imgOut->height);
+    $$$$$:  367-block  0
+        -:  368:
+       27:  369:    for(int i = 0; i < numCores; i++) {
+       27:  369-block  0
+       24:  370:        thrd[i] = new std::thread(
+       24:  370-block  0
+       48:  371:            std::bind(&Filter::ProcessAux, this, imgIn, imgOut, &lst));
+       24:  371-block  0
+       24:  371-block  1
+       24:  371-block  2
+       24:  371-block  3
+    $$$$$:  371-block  4
+    $$$$$:  371-block  5
+    $$$$$:  371-block  6
+        -:  372:    }
+        -:  373:
+        -:  374:    //join threads
+       27:  375:    for(int i = 0; i < numCores; i++) {
+       27:  375-block  0
+       24:  375-block  1
+       24:  376:        thrd[i]->join();
+       24:  376-block  0
+       48:  377:        delete thrd[i];
+       24:  377-block  0
+       24:  377-block  1
+        -:  378:    }
+        -:  379:
+        3:  380:    delete[] thrd;
+        3:  380-block  0
+        -:  381:
+        3:  382:    return imgOut;
+        -:  383:}
+        -:  384:
+       3*:  385:PIC_INLINE bool Filter::checkInput(ImageVec &imgIn)
+        -:  386:{
+    #####:  387:    return ImageVecCheck(imgIn, minInputImages);
+    %%%%%:  387-block  0
+    %%%%%:  387-block  1
+    %%%%%:  387-block  2
+    %%%%%:  387-block  3
+    %%%%%:  387-block  4
+        -:  388:}
+        -:  389:
+        3:  390:PIC_INLINE Image *Filter::Process(ImageVec imgIn, Image *imgOut)
+        -:  391:{
+        3:  392:    if(!checkInput(imgIn)) {
+        3:  392-block  0
+        -:  393:        return imgOut;
+        -:  394:    }
+        -:  395:
+        3:  396:    imgOut = setupAux(imgIn, imgOut);
+        3:  396-block  0
+        3:  396-block  1
+    $$$$$:  396-block  2
+        -:  397:
+        3:  398:    if(imgOut == NULL) {
+        3:  398-block  0
+        -:  399:        return imgOut;
+        -:  400:    }
+        -:  401:
+        6:  402:    return ProcessP(imgIn, imgOut);
+        3:  402-block  0
+        3:  402-block  1
+        3:  402-block  2
+        -:  403:}
+        -:  404:
+        -:  405:} // end namespace pic
+        -:  406:
+        -:  407:#endif /* PIC_FILTERING_FILTER_HPP */
+        -:  408:

@@ -1,0 +1,144 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_threshold.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_THRESHOLD_HPP
+        -:   19:#define PIC_FILTERING_FILTER_THRESHOLD_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterThreshold class
+        -:   27: */
+        -:   28:class FilterThreshold: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:    float threshold;
+        -:   32:    bool bAdaptive;
+        -:   33:
+        -:   34:    /**
+        -:   35:     * @brief ProcessBBox
+        -:   36:     * @param dst
+        -:   37:     * @param src
+        -:   38:     * @param box
+        -:   39:     */
+    #####:   40:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   41:    {
+    #####:   42:        Image* img = src[0];
+    %%%%%:   42-block  0
+        -:   43:
+    #####:   44:        if(bAdaptive) {
+    %%%%%:   44-block  0
+    #####:   45:            if(src.size() < 2) {
+    %%%%%:   45-block  0
+        -:   46:                return;
+        -:   47:            }
+        -:   48:
+    #####:   49:            Image* img_ada = src[1];
+    %%%%%:   49-block  0
+        -:   50:
+    #####:   51:            for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   51-block  0
+    %%%%%:   51-block  1
+    %%%%%:   51-block  2
+        -:   52:
+    #####:   53:                for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   53-block  0
+    %%%%%:   53-block  1
+    #####:   54:                    float *dst_val = (*dst)(i, j);
+    %%%%%:   54-block  0
+    #####:   55:                    float *img_val = (*img)(i, j);
+    %%%%%:   55-block  0
+    #####:   56:                    float *img_ada_val = (*img_ada)(i, j);
+    %%%%%:   56-block  0
+        -:   57:
+    #####:   58:                    dst_val[0] = img_val[0] > img_ada_val[0] ? 1.0f : 0.0f;
+    %%%%%:   58-block  0
+    %%%%%:   58-block  1
+        -:   59:                }
+        -:   60:            }
+        -:   61:        } else {
+    #####:   62:            for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   62-block  0
+    %%%%%:   62-block  1
+    %%%%%:   62-block  2
+        -:   63:
+    #####:   64:                for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   64-block  0
+    %%%%%:   64-block  1
+    #####:   65:                    float *dst_val = (*dst)(i, j);
+    %%%%%:   65-block  0
+    #####:   66:                    float *img_val = (*img)(i, j);
+    %%%%%:   66-block  0
+        -:   67:
+    #####:   68:                    dst_val[0] = img_val[0] > threshold ? 1.0f : 0.0f;
+    %%%%%:   68-block  0
+    %%%%%:   68-block  1
+        -:   69:                }
+        -:   70:            }
+        -:   71:        }
+        -:   72:    }
+        -:   73:
+        -:   74:public:
+        -:   75:
+        -:   76:    /**
+        -:   77:     * @brief FilterThreshold
+        -:   78:     * @param threshold
+        -:   79:     * @param bAdaptive
+        -:   80:     */
+        -:   81:    FilterThreshold(float threshold = 0.5f, bool bAdaptive = false) : Filter()
+        -:   82:    {
+        -:   83:        update(threshold, bAdaptive);
+        -:   84:    }
+        -:   85:
+        -:   86:    /**
+        -:   87:     * @brief update
+        -:   88:     * @param threshold
+        -:   89:     * @param bAdaptive
+        -:   90:     */
+        -:   91:    void update(float threshold, bool bAdaptive)
+        -:   92:    {
+        -:   93:        this->threshold = threshold;
+        -:   94:        this->bAdaptive = bAdaptive;
+        -:   95:    }
+        -:   96:
+        -:   97:    /**
+        -:   98:     * @brief OutputSize
+        -:   99:     * @param imgIn
+        -:  100:     * @param width
+        -:  101:     * @param height
+        -:  102:     * @param channels
+        -:  103:     * @param frames
+        -:  104:     */
+    #####:  105:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  106:    {
+    #####:  107:        width       = imgIn[0]->width;
+    #####:  108:        height      = imgIn[0]->height;
+    #####:  109:        channels    = 1;
+    #####:  110:        frames      = imgIn[0]->frames;
+    #####:  111:    }
+        -:  112:};
+        -:  113:
+        -:  114:} // end namespace pic
+        -:  115:
+        -:  116:#endif /* PIC_FILTERING_FILTER_THRESHOLD_HPP */
+        -:  117:

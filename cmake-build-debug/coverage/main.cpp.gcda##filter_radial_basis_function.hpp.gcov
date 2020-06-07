@@ -1,0 +1,122 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_radial_basis_function.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_RADIAL_BASIS_FUNCTION
+        -:   19:#define PIC_FILTERING_FILTER_RADIAL_BASIS_FUNCTION
+        -:   20:
+        -:   21:namespace pic {
+        -:   22:
+        -:   23:#include "../algorithms/radial_basis_function.hpp"
+        -:   24:
+        -:   25:#include "../filtering/filter.hpp"
+        -:   26:
+        -:   27:/**
+        -:   28: * @brief The FilterRadialBasisFunction class
+        -:   29: */
+        -:   30:class FilterRadialBasisFunction: public Filter
+        -:   31:{
+        -:   32:protected:
+        -:   33:
+        -:   34:    RadialBasisFunction *rbf;
+        -:   35:
+        -:   36:    /**
+        -:   37:     * @brief ProcessBBox
+        -:   38:     * @param dst
+        -:   39:     * @param src
+        -:   40:     * @param box
+        -:   41:     */
+    #####:   42:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   43:    {
+    #####:   44:        if(rbf == NULL) {
+    %%%%%:   44-block  0
+        -:   45:            return;
+        -:   46:        }
+        -:   47:
+    #####:   48:        int channels = src[0]->channels;
+    %%%%%:   48-block  0
+        -:   49:
+    #####:   50:        if(rbf->nDim != channels) {
+    %%%%%:   50-block  0
+        -:   51:            return;
+        -:   52:        }
+        -:   53:
+    #####:   54:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   54-block  0
+    %%%%%:   54-block  1
+    %%%%%:   54-block  2
+        -:   55:
+    #####:   56:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   56-block  0
+    %%%%%:   56-block  1
+        -:   57:
+    #####:   58:                float *dataIn  = (*src[0]) (i, j);
+    %%%%%:   58-block  0
+    #####:   59:                float *dataOut = (*dst)    (i, j);
+    %%%%%:   59-block  0
+        -:   60:
+    #####:   61:                dataOut[0] = rbf->eval(dataIn);
+    %%%%%:   61-block  0
+        -:   62:            }
+        -:   63:        }
+        -:   64:    }
+        -:   65:
+        -:   66:public:
+        -:   67:
+        -:   68:    /**
+        -:   69:     * @brief FilterRadialBasisFunction
+        -:   70:     */
+        -:   71:    FilterRadialBasisFunction() : Filter()
+        -:   72:    {
+        -:   73:        rbf = NULL;
+        -:   74:    }
+        -:   75:
+        -:   76:    /**
+        -:   77:     * @brief OutputSize
+        -:   78:     * @param imgIn
+        -:   79:     * @param width
+        -:   80:     * @param height
+        -:   81:     * @param channels
+        -:   82:     * @param frames
+        -:   83:     */
+    #####:   84:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:   85:    {
+    #####:   86:        width    = imgIn[0]->width;
+    #####:   87:        height   = imgIn[0]->height;
+    #####:   88:        channels = 1;
+    #####:   89:        frames   = imgIn[0]->frames;
+    #####:   90:    }
+        -:   91:
+        -:   92:    /**
+        -:   93:      * @brief update
+        -:   94:      * @param rbf
+        -:   95:      */
+        -:   96:    void update(RadialBasisFunction *rbf)
+        -:   97:    {
+        -:   98:        if(rbf != NULL) {
+        -:   99:            this->rbf = rbf;
+        -:  100:        }
+        -:  101:    }
+        -:  102:};
+        -:  103:
+        -:  104:} // end namespace pic
+        -:  105:
+        -:  106:#endif /* PIC_FILTERING_FILTER_RADIAL_BASIS_FUNCTION */
+        -:  107:

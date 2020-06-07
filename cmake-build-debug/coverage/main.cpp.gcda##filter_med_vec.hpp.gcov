@@ -1,0 +1,171 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_med_vec.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_MED_VEC_HPP
+        -:   19:#define PIC_FILTERING_FILTER_MED_VEC_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:#include "../util/array.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The FilterMedVec class
+        -:   28: */
+        -:   29:class FilterMedVec: public Filter
+        -:   30:{
+        -:   31:protected:
+        -:   32:    int halfSize, areaKernel, midValue;
+        -:   33:
+        -:   34:    /**
+        -:   35:     * @brief ProcessBBox
+        -:   36:     * @param dst
+        -:   37:     * @param src
+        -:   38:     * @param box
+        -:   39:     */
+    #####:   40:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   41:    {
+    #####:   42:        Image *in = src[0];
+    %%%%%:   42-block  0
+    #####:   43:        float *values = new float[areaKernel * in->channels];
+    %%%%%:   43-block  0
+    %%%%%:   43-block  1
+    %%%%%:   43-block  2
+        -:   44:
+    #####:   45:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   45-block  0
+    %%%%%:   45-block  1
+    #####:   46:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   46-block  0
+    %%%%%:   46-block  1
+    %%%%%:   46-block  2
+        -:   47:
+    #####:   48:                int c = 0;
+    #####:   49:                for(int k = -halfSize; k <= halfSize; k++) {
+    %%%%%:   49-block  0
+    %%%%%:   49-block  1
+    %%%%%:   49-block  2
+    #####:   50:                    for(int l = -halfSize; l <= halfSize; l++) {
+    %%%%%:   50-block  0
+        -:   51:
+    #####:   52:                        float *color = (*in)(i + l, j + k);
+    %%%%%:   52-block  0
+        -:   53:
+    #####:   54:                        for(int ch = 0; ch < in->channels; ch++) {
+    %%%%%:   54-block  0
+    %%%%%:   54-block  1
+    #####:   55:                            values[c * in->channels + ch] = color[ch];
+    %%%%%:   55-block  0
+        -:   56:                        }
+        -:   57:
+    #####:   58:                        c++;
+    %%%%%:   58-block  0
+        -:   59:                    }
+        -:   60:                }
+        -:   61:
+        -:   62:                //compute distances
+        -:   63:                int best = -1;
+        -:   64:                float distBest = FLT_MAX;
+        -:   65:
+    #####:   66:                for(int k = 0; k < areaKernel; k++) {
+    %%%%%:   66-block  0
+    %%%%%:   66-block  1
+    #####:   67:                    int index_k = k * in->channels;
+    #####:   68:                    float dist = 0.0f;
+        -:   69:
+    #####:   70:                    for(int l = 0; l < areaKernel; l++) {
+    %%%%%:   70-block  0
+    %%%%%:   70-block  1
+    #####:   71:                        int index_l = l * in->channels;
+    #####:   72:                        float d_sq = Arrayf::distanceSq(&values[index_k], &values[index_l], in->channels);
+    %%%%%:   72-block  0
+    #####:   73:                        dist += sqrtf(d_sq);
+    %%%%%:   73-block  0
+        -:   74:                    }
+        -:   75:
+    #####:   76:                    if(dist < distBest) {
+    %%%%%:   76-block  0
+    #####:   77:                        distBest = dist;
+    #####:   78:                        best = k;
+    %%%%%:   78-block  0
+        -:   79:                    }
+        -:   80:                }
+        -:   81:
+    #####:   82:                float *out = (*dst) (i, j);
+    %%%%%:   82-block  0
+        -:   83:
+    #####:   84:                int index = best * in->channels;
+        -:   85:
+    #####:   86:                for(int ch = 0; ch < in->channels; ch++) {
+    %%%%%:   86-block  0
+    %%%%%:   86-block  1
+    #####:   87:                    out[ch] = values[index + ch];
+    %%%%%:   87-block  0
+        -:   88:                }
+        -:   89:            }
+        -:   90:        }
+        -:   91:
+    #####:   92:        delete[] values;
+    %%%%%:   92-block  0
+    #####:   93:    }
+        -:   94:
+        -:   95:public:
+        -:   96:    /**
+        -:   97:     * @brief FilterMedVec
+        -:   98:     * @param size
+        -:   99:     */
+        -:  100:    FilterMedVec(int size) : Filter()
+        -:  101:    {
+        -:  102:        update(size);
+        -:  103:    }
+        -:  104:
+        -:  105:    /**
+        -:  106:     * @brief update
+        -:  107:     * @param size
+        -:  108:     */
+        -:  109:    void update(int size)
+        -:  110:    {
+        -:  111:        this->halfSize = checkHalfSize(size);
+        -:  112:
+        -:  113:        int kernelSize = (halfSize << 1) + 1;
+        -:  114:        this->areaKernel = kernelSize * kernelSize;
+        -:  115:
+        -:  116:        this->midValue = areaKernel >> 1;
+        -:  117:    }
+        -:  118:
+        -:  119:    /**
+        -:  120:     * @brief execute
+        -:  121:     * @param imgIn
+        -:  122:     * @param imgOut
+        -:  123:     * @param size
+        -:  124:     * @return
+        -:  125:     */
+        -:  126:    static Image *execute(Image *imgIn, Image *imgOut, int size)
+        -:  127:    {
+        -:  128:        FilterMedVec filter(size);
+        -:  129:        return filter.Process(Single(imgIn), imgOut);
+        -:  130:    }
+        -:  131:};
+        -:  132:
+        -:  133:} // end namespace pic
+        -:  134:
+        -:  135:#endif /* PIC_FILTERING_FILTER_MED_VEC_HPP */
+        -:  136:

@@ -1,0 +1,61 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/metrics/pu_encode.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_METRICS_PU_ENCODE_HPP
+        -:   19:#define PIC_METRICS_PU_ENCODE_HPP
+        -:   20:
+        -:   21:#include <math.h>
+        -:   22:
+        -:   23:#include "../base.hpp"
+        -:   24:#include "../image.hpp"
+        -:   25:#include "../util/array.hpp"
+        -:   26:
+        -:   27:#include "../metrics/pu_encode_data.hpp"
+        -:   28:
+        -:   29:namespace pic {
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief PUEncode encodes luminance values in a perceptually uniform space.
+        -:   33: * @param L is a luminance value in cd/m^2; it works for values
+        -:   34: * in the range [10^-6, 10^10] cd/m^2
+        -:   35: * @return it returns a perceptually uniform value
+        -:   36: */
+    #####:   37:float PUEncode(float L)
+        -:   38:{
+    #####:   39:    return Arrayf::interp(C_PU_x, C_PU_y, 256, log10f(L + 1e-7f));
+    %%%%%:   39-block  0
+        -:   40:}
+        -:   41:
+        -:   42:/**
+        -:   43: * @brief PUDecode decodes perceptually uniform values into luminance values.
+        -:   44: * @param p is a perceptually uniform luminance value
+        -:   45: * @return it returns a luminance value in the range [10^-6, 10^10] cd/m^2
+        -:   46: */
+    #####:   47:float PUDecode(float p)
+        -:   48:{
+    #####:   49:    return powf(10.0f, Arrayf::interp(C_PU_y, C_PU_x, 256, p));
+    %%%%%:   49-block  0
+        -:   50:}
+        -:   51:
+        -:   52:} // end namespace pic
+        -:   53:
+        -:   54:#endif /* PIC_METRICS_PU_ENCODE_HPP */
+        -:   55:

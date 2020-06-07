@@ -1,0 +1,1428 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/MapBase.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2007-2010 Benoit Jacob <jacob.benoit.1@gmail.com>
+        -:    5:// Copyright (C) 2008 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    6://
+        -:    7:// This Source Code Form is subject to the terms of the Mozilla
+        -:    8:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    9:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   10:
+        -:   11:#ifndef EIGEN_MAPBASE_H
+        -:   12:#define EIGEN_MAPBASE_H
+        -:   13:
+        -:   14:#define EIGEN_STATIC_ASSERT_INDEX_BASED_ACCESS(Derived) \
+        -:   15:      EIGEN_STATIC_ASSERT((int(internal::evaluator<Derived>::Flags) & LinearAccessBit) || Derived::IsVectorAtCompileTime, \
+        -:   16:                          YOU_ARE_TRYING_TO_USE_AN_INDEX_BASED_ACCESSOR_ON_AN_EXPRESSION_THAT_DOES_NOT_SUPPORT_THAT)
+        -:   17:
+        -:   18:namespace Eigen { 
+        -:   19:
+        -:   20:/** \ingroup Core_Module
+        -:   21:  *
+        -:   22:  * \brief Base class for dense Map and Block expression with direct access
+        -:   23:  *
+        -:   24:  * This base class provides the const low-level accessors (e.g. coeff, coeffRef) of dense
+        -:   25:  * Map and Block objects with direct access.
+        -:   26:  * Typical users do not have to directly deal with this class.
+        -:   27:  *
+        -:   28:  * This class can be extended by through the macro plugin \c EIGEN_MAPBASE_PLUGIN.
+        -:   29:  * See \link TopicCustomizing_Plugins customizing Eigen \endlink for details.
+        -:   30:  *
+        -:   31:  * The \c Derived class has to provide the following two methods describing the memory layout:
+        -:   32:  *  \code Index innerStride() const; \endcode
+        -:   33:  *  \code Index outerStride() const; \endcode
+        -:   34:  *
+        -:   35:  * \sa class Map, class Block
+        -:   36:  */
+  200700*:   37:template<typename Derived> class MapBase<Derived, ReadOnlyAccessors>
+    %%%%%:   37-block  0
+    30240:   37-block  1
+    %%%%%:   37-block  2
+    %%%%%:   37-block  3
+    %%%%%:   37-block  4
+    %%%%%:   37-block  5
+    %%%%%:   37-block  6
+    35328:   37-block  7
+    %%%%%:   37-block  8
+    %%%%%:   37-block  9
+        3:   37-block 10
+     1503:   37-block 11
+     1503:   37-block 12
+     1530:   37-block 13
+    %%%%%:   37-block 14
+    %%%%%:   37-block 15
+    %%%%%:   37-block 16
+     1536:   37-block 17
+        -:   38:  : public internal::dense_xpr_base<Derived>::type
+        -:   39:{
+        -:   40:  public:
+        -:   41:
+        -:   42:    typedef typename internal::dense_xpr_base<Derived>::type Base;
+        -:   43:    enum {
+        -:   44:      RowsAtCompileTime = internal::traits<Derived>::RowsAtCompileTime,
+        -:   45:      ColsAtCompileTime = internal::traits<Derived>::ColsAtCompileTime,
+        -:   46:      SizeAtCompileTime = Base::SizeAtCompileTime
+        -:   47:    };
+        -:   48:
+        -:   49:    typedef typename internal::traits<Derived>::StorageKind StorageKind;
+        -:   50:    typedef typename internal::traits<Derived>::Scalar Scalar;
+        -:   51:    typedef typename internal::packet_traits<Scalar>::type PacketScalar;
+        -:   52:    typedef typename NumTraits<Scalar>::Real RealScalar;
+        -:   53:    typedef typename internal::conditional<
+        -:   54:                         bool(internal::is_lvalue<Derived>::value),
+        -:   55:                         Scalar *,
+        -:   56:                         const Scalar *>::type
+        -:   57:                     PointerType;
+        -:   58:
+        -:   59:    using Base::derived;
+        -:   60://    using Base::RowsAtCompileTime;
+        -:   61://    using Base::ColsAtCompileTime;
+        -:   62://    using Base::SizeAtCompileTime;
+        -:   63:    using Base::MaxRowsAtCompileTime;
+        -:   64:    using Base::MaxColsAtCompileTime;
+        -:   65:    using Base::MaxSizeAtCompileTime;
+        -:   66:    using Base::IsVectorAtCompileTime;
+        -:   67:    using Base::Flags;
+        -:   68:    using Base::IsRowMajor;
+        -:   69:
+        -:   70:    using Base::rows;
+        -:   71:    using Base::cols;
+        -:   72:    using Base::size;
+        -:   73:    using Base::coeff;
+        -:   74:    using Base::coeffRef;
+        -:   75:    using Base::lazyAssign;
+        -:   76:    using Base::eval;
+        -:   77:
+        -:   78:    using Base::innerStride;
+        -:   79:    using Base::outerStride;
+        -:   80:    using Base::rowStride;
+        -:   81:    using Base::colStride;
+        -:   82:
+        -:   83:    // bug 217 - compile error on ICC 11.1
+        -:   84:    using Base::operator=;
+        -:   85:
+        -:   86:    typedef typename Base::CoeffReturnType CoeffReturnType;
+        -:   87:
+        -:   88:    /** \copydoc DenseBase::rows() */
+10819813*:   89:    EIGEN_DEVICE_FUNC inline Index rows() const { return m_rows.value(); }
+    35328:   89-block  0
+    35328:   89-block  1
+    35328:   89-block  2
+    35328:   89-block  3
+    %%%%%:   89-block  4
+    %%%%%:   89-block  5
+    30240:   89-block  6
+     1503:   89-block  7
+     1503:   89-block  8
+     1503:   89-block  9
+    30240:   89-block 10
+    30240:   89-block 11
+    30240:   89-block 12
+    %%%%%:   89-block 13
+     1503:   89-block 14
+    %%%%%:   89-block 15
+    %%%%%:   89-block 16
+     1530:   89-block 17
+    30240:   89-block 18
+    30240:   89-block 19
+    30240:   89-block 20
+    %%%%%:   89-block 21
+    %%%%%:   89-block 22
+    %%%%%:   89-block 23
+    %%%%%:   89-block 24
+    %%%%%:   89-block 25
+   392445:   89-block 26
+     1530:   89-block 27
+    %%%%%:   89-block 28
+     1530:   89-block 29
+    %%%%%:   89-block 30
+    %%%%%:   89-block 31
+    %%%%%:   89-block 32
+    %%%%%:   89-block 33
+    %%%%%:   89-block 34
+   392445:   89-block 35
+    %%%%%:   89-block 36
+    %%%%%:   89-block 37
+    %%%%%:   89-block 38
+     1530:   89-block 39
+        6:   89-block 40
+       33:   89-block 41
+       33:   89-block 42
+    %%%%%:   89-block 43
+    %%%%%:   89-block 44
+    %%%%%:   89-block 45
+     1503:   89-block 46
+     1503:   89-block 47
+    35328:   89-block 48
+    %%%%%:   89-block 49
+   392445:   89-block 50
+        6:   89-block 51
+    %%%%%:   89-block 52
+        6:   89-block 53
+     1503:   89-block 54
+     1503:   89-block 55
+    %%%%%:   89-block 56
+    %%%%%:   89-block 57
+    %%%%%:   89-block 58
+    %%%%%:   89-block 59
+    %%%%%:   89-block 60
+    %%%%%:   89-block 61
+    35328:   89-block 62
+    %%%%%:   89-block 63
+    %%%%%:   89-block 64
+    %%%%%:   89-block 65
+     1530:   89-block 66
+     1530:   89-block 67
+    %%%%%:   89-block 68
+       33:   89-block 69
+     1503:   89-block 70
+    %%%%%:   89-block 71
+     1503:   89-block 72
+    %%%%%:   89-block 73
+    %%%%%:   89-block 74
+    %%%%%:   89-block 75
+    35328:   89-block 76
+    %%%%%:   89-block 77
+    %%%%%:   89-block 78
+    %%%%%:   89-block 79
+     1530:   89-block 80
+    %%%%%:   89-block 81
+     1530:   89-block 82
+    %%%%%:   89-block 83
+    %%%%%:   89-block 84
+    %%%%%:   89-block 85
+        3:   89-block 86
+    %%%%%:   89-block 87
+    %%%%%:   89-block 88
+    %%%%%:   89-block 89
+    %%%%%:   89-block 90
+     1530:   89-block 91
+     1530:   89-block 92
+    %%%%%:   89-block 93
+     1503:   89-block 94
+    %%%%%:   89-block 95
+    %%%%%:   89-block 96
+    %%%%%:   89-block 97
+    %%%%%:   89-block 98
+    %%%%%:   89-block 99
+     1530:   89-block 100
+     1530:   89-block 101
+     1530:   89-block 102
+     1530:   89-block 103
+     1536:   89-block 104
+      761:   89-block 105
+     1503:   89-block 106
+     4509:   89-block 107
+    %%%%%:   89-block 108
+    %%%%%:   89-block 109
+    %%%%%:   89-block 110
+    %%%%%:   89-block 111
+    %%%%%:   89-block 112
+    %%%%%:   89-block 113
+    %%%%%:   89-block 114
+     1536:   89-block 115
+     1536:   89-block 116
+    %%%%%:   89-block 117
+        3:   89-block 118
+        3:   89-block 119
+     4428:   89-block 120
+      761:   89-block 121
+    %%%%%:   89-block 122
+      761:   89-block 123
+     1503:   89-block 124
+     1503:   89-block 125
+     1503:   89-block 126
+     1503:   89-block 127
+    %%%%%:   89-block 128
+    %%%%%:   89-block 129
+    %%%%%:   89-block 130
+     1530:   89-block 131
+     1536:   89-block 132
+     1536:   89-block 133
+    %%%%%:   89-block 134
+    %%%%%:   89-block 135
+     4428:   89-block 136
+        3:   89-block 137
+        3:   89-block 138
+       33:   89-block 139
+     3039:   89-block 140
+    %%%%%:   89-block 141
+    %%%%%:   89-block 142
+    %%%%%:   89-block 143
+    %%%%%:   89-block 144
+    %%%%%:   89-block 145
+     1530:   89-block 146
+     3060:   89-block 147
+     1530:   89-block 148
+     1536:   89-block 149
+     1536:   89-block 150
+     3072:   89-block 151
+    %%%%%:   89-block 152
+    %%%%%:   89-block 153
+    %%%%%:   89-block 154
+    %%%%%:   89-block 155
+       33:   89-block 156
+     1536:   89-block 157
+     1503:   89-block 158
+    %%%%%:   89-block 159
+     1530:   89-block 160
+     1536:   89-block 161
+     1536:   89-block 162
+    %%%%%:   89-block 163
+    %%%%%:   89-block 164
+    %%%%%:   89-block 165
+    %%%%%:   89-block 166
+     1536:   89-block 167
+     1530:   89-block 168
+     1536:   89-block 169
+  1650897:   89-block 170
+  4952691:   89-block 171
+  4952691:   89-block 172
+  1650897:   89-block 173
+  1650897:   89-block 174
+    %%%%%:   89-block 175
+   392448:   89-block 176
+    24667:   89-block 177
+     4428:   89-block 178
+   393981:   89-block 179
+        -:   90:    /** \copydoc DenseBase::cols() */
+10329082*:   91:    EIGEN_DEVICE_FUNC inline Index cols() const { return m_cols.value(); }
+    35328:   91-block  0
+    35328:   91-block  1
+    35328:   91-block  2
+    35328:   91-block  3
+    30240:   91-block  4
+     1503:   91-block  5
+    30240:   91-block  6
+     1503:   91-block  7
+     1503:   91-block  8
+    30240:   91-block  9
+    30240:   91-block 10
+     1503:   91-block 11
+    %%%%%:   91-block 12
+     1503:   91-block 13
+    %%%%%:   91-block 14
+    %%%%%:   91-block 15
+     1530:   91-block 16
+    30240:   91-block 17
+    %%%%%:   91-block 18
+    %%%%%:   91-block 19
+    %%%%%:   91-block 20
+    %%%%%:   91-block 21
+   392445:   91-block 22
+     1530:   91-block 23
+     1530:   91-block 24
+    %%%%%:   91-block 25
+     1530:   91-block 26
+    %%%%%:   91-block 27
+    %%%%%:   91-block 28
+    %%%%%:   91-block 29
+    %%%%%:   91-block 30
+    %%%%%:   91-block 31
+   392445:   91-block 32
+    %%%%%:   91-block 33
+    %%%%%:   91-block 34
+        6:   91-block 35
+       33:   91-block 36
+       33:   91-block 37
+    %%%%%:   91-block 38
+    %%%%%:   91-block 39
+    %%%%%:   91-block 40
+     1503:   91-block 41
+     1503:   91-block 42
+        6:   91-block 43
+     1503:   91-block 44
+     1503:   91-block 45
+    %%%%%:   91-block 46
+    %%%%%:   91-block 47
+    %%%%%:   91-block 48
+    %%%%%:   91-block 49
+    %%%%%:   91-block 50
+    %%%%%:   91-block 51
+    35328:   91-block 52
+    %%%%%:   91-block 53
+    %%%%%:   91-block 54
+    %%%%%:   91-block 55
+     1530:   91-block 56
+     1530:   91-block 57
+    %%%%%:   91-block 58
+       33:   91-block 59
+     1503:   91-block 60
+    %%%%%:   91-block 61
+     1503:   91-block 62
+    %%%%%:   91-block 63
+    35328:   91-block 64
+    35328:   91-block 65
+   392445:   91-block 66
+    %%%%%:   91-block 67
+     1530:   91-block 68
+     1530:   91-block 69
+    %%%%%:   91-block 70
+        3:   91-block 71
+    %%%%%:   91-block 72
+    %%%%%:   91-block 73
+    %%%%%:   91-block 74
+    %%%%%:   91-block 75
+     1530:   91-block 76
+     1530:   91-block 77
+    %%%%%:   91-block 78
+    %%%%%:   91-block 79
+    %%%%%:   91-block 80
+    %%%%%:   91-block 81
+    %%%%%:   91-block 82
+    %%%%%:   91-block 83
+     1530:   91-block 84
+     1530:   91-block 85
+     1530:   91-block 86
+     1530:   91-block 87
+     1536:   91-block 88
+      761:   91-block 89
+     1503:   91-block 90
+     4509:   91-block 91
+    %%%%%:   91-block 92
+    %%%%%:   91-block 93
+    %%%%%:   91-block 94
+    %%%%%:   91-block 95
+    %%%%%:   91-block 96
+    %%%%%:   91-block 97
+     3060:   91-block 98
+     1536:   91-block 99
+     1536:   91-block 100
+    %%%%%:   91-block 101
+        3:   91-block 102
+        3:   91-block 103
+     4428:   91-block 104
+      761:   91-block 105
+      761:   91-block 106
+       33:   91-block 107
+       33:   91-block 108
+     1503:   91-block 109
+     1503:   91-block 110
+     1503:   91-block 111
+     1503:   91-block 112
+    %%%%%:   91-block 113
+    %%%%%:   91-block 114
+    %%%%%:   91-block 115
+     1530:   91-block 116
+     1536:   91-block 117
+     1536:   91-block 118
+    %%%%%:   91-block 119
+     4428:   91-block 120
+        3:   91-block 121
+        3:   91-block 122
+       33:   91-block 123
+     3039:   91-block 124
+    %%%%%:   91-block 125
+    %%%%%:   91-block 126
+    %%%%%:   91-block 127
+    %%%%%:   91-block 128
+    %%%%%:   91-block 129
+     1530:   91-block 130
+     1536:   91-block 131
+     1536:   91-block 132
+     3072:   91-block 133
+    %%%%%:   91-block 134
+    %%%%%:   91-block 135
+    %%%%%:   91-block 136
+       33:   91-block 137
+     1503:   91-block 138
+    %%%%%:   91-block 139
+     1530:   91-block 140
+     1536:   91-block 141
+     1536:   91-block 142
+       33:   91-block 143
+    %%%%%:   91-block 144
+    %%%%%:   91-block 145
+    %%%%%:   91-block 146
+    %%%%%:   91-block 147
+     1530:   91-block 148
+     1530:   91-block 149
+     1536:   91-block 150
+  1650897:   91-block 151
+  4952691:   91-block 152
+  4952691:   91-block 153
+  1650897:   91-block 154
+  1650897:   91-block 155
+    %%%%%:   91-block 156
+   393984:   91-block 157
+     4428:   91-block 158
+     1533:   91-block 159
+        -:   92:
+        -:   93:    /** Returns a pointer to the first coefficient of the matrix or vector.
+        -:   94:      *
+        -:   95:      * \note When addressing this data, make sure to honor the strides returned by innerStride() and outerStride().
+        -:   96:      *
+        -:   97:      * \sa innerStride(), outerStride()
+        -:   98:      */
+  234528*:   99:    EIGEN_DEVICE_FUNC inline const Scalar* data() const { return m_data; }
+    %%%%%:   99-block  0
+    35328:   99-block  1
+    30240:   99-block  2
+    30240:   99-block  3
+    %%%%%:   99-block  4
+    %%%%%:   99-block  5
+    30240:   99-block  6
+    30240:   99-block  7
+    %%%%%:   99-block  8
+    %%%%%:   99-block  9
+    %%%%%:   99-block 10
+    %%%%%:   99-block 11
+    35328:   99-block 12
+     1503:   99-block 13
+     1503:   99-block 14
+     1503:   99-block 15
+    35328:   99-block 16
+        3:   99-block 17
+    %%%%%:   99-block 18
+    %%%%%:   99-block 19
+     1530:   99-block 20
+        3:   99-block 21
+     1503:   99-block 22
+    %%%%%:   99-block 23
+    %%%%%:   99-block 24
+    %%%%%:   99-block 25
+    %%%%%:   99-block 26
+     1536:   99-block 27
+    %%%%%:   99-block 28
+    %%%%%:   99-block 29
+        -:  100:
+        -:  101:    /** \copydoc PlainObjectBase::coeff(Index,Index) const */
+        -:  102:    EIGEN_DEVICE_FUNC
+    #####:  103:    inline const Scalar& coeff(Index rowId, Index colId) const
+        -:  104:    {
+    #####:  105:      return m_data[colId * colStride() + rowId * rowStride()];
+    %%%%%:  105-block  0
+        -:  106:    }
+        -:  107:
+        -:  108:    /** \copydoc PlainObjectBase::coeff(Index) const */
+        -:  109:    EIGEN_DEVICE_FUNC
+    70656:  110:    inline const Scalar& coeff(Index index) const
+        -:  111:    {
+        -:  112:      EIGEN_STATIC_ASSERT_INDEX_BASED_ACCESS(Derived)
+    70656:  113:      return m_data[index * innerStride()];
+    35328:  113-block  0
+        -:  114:    }
+        -:  115:
+        -:  116:    /** \copydoc PlainObjectBase::coeffRef(Index,Index) const */
+        -:  117:    EIGEN_DEVICE_FUNC
+    8739*:  118:    inline const Scalar& coeffRef(Index rowId, Index colId) const
+        -:  119:    {
+    8739*:  120:      return this->m_data[colId * colStride() + rowId * rowStride()];
+     3585:  120-block  0
+     5088:  120-block  1
+    %%%%%:  120-block  2
+        -:  121:    }
+        -:  122:
+        -:  123:    /** \copydoc PlainObjectBase::coeffRef(Index) const */
+        -:  124:    EIGEN_DEVICE_FUNC
+     8673:  125:    inline const Scalar& coeffRef(Index index) const
+        -:  126:    {
+        -:  127:      EIGEN_STATIC_ASSERT_INDEX_BASED_ACCESS(Derived)
+     8673:  128:      return this->m_data[index * innerStride()];
+     3585:  128-block  0
+     5088:  128-block  1
+        -:  129:    }
+        -:  130:
+        -:  131:    /** \internal */
+        -:  132:    template<int LoadMode>
+        -:  133:    inline PacketScalar packet(Index rowId, Index colId) const
+        -:  134:    {
+        -:  135:      return internal::ploadt<PacketScalar, LoadMode>
+        -:  136:               (m_data + (colId * colStride() + rowId * rowStride()));
+        -:  137:    }
+        -:  138:
+        -:  139:    /** \internal */
+        -:  140:    template<int LoadMode>
+        -:  141:    inline PacketScalar packet(Index index) const
+        -:  142:    {
+        -:  143:      EIGEN_STATIC_ASSERT_INDEX_BASED_ACCESS(Derived)
+        -:  144:      return internal::ploadt<PacketScalar, LoadMode>(m_data + index * innerStride());
+        -:  145:    }
+        -:  146:
+        -:  147:    /** \internal Constructor for fixed size matrices or vectors */
+        -:  148:    EIGEN_DEVICE_FUNC
+        -:  149:    explicit inline MapBase(PointerType dataPtr) : m_data(dataPtr), m_rows(RowsAtCompileTime), m_cols(ColsAtCompileTime)
+        -:  150:    {
+        -:  151:      EIGEN_STATIC_ASSERT_FIXED_SIZE(Derived)
+        -:  152:      checkSanity<Derived>();
+        -:  153:    }
+        -:  154:
+        -:  155:    /** \internal Constructor for dynamically sized vectors */
+        -:  156:    EIGEN_DEVICE_FUNC
+    3006*:  157:    inline MapBase(PointerType dataPtr, Index vecSize)
+    %%%%%:  157-block  0
+    %%%%%:  157-block  1
+        -:  158:            : m_data(dataPtr),
+        -:  159:              m_rows(RowsAtCompileTime == Dynamic ? vecSize : Index(RowsAtCompileTime)),
+    4536*:  160:              m_cols(ColsAtCompileTime == Dynamic ? vecSize : Index(ColsAtCompileTime))
+    %%%%%:  160-block  0
+    %%%%%:  160-block  1
+    %%%%%:  160-block  2
+    %%%%%:  160-block  3
+     1530:  160-block  4
+        -:  161:    {
+        -:  162:      EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
+    6039*:  163:      eigen_assert(vecSize >= 0);
+    %%%%%:  163-block  0
+     1503:  163-block  1
+    %%%%%:  163-block  2
+    %%%%%:  163-block  3
+    %%%%%:  163-block  4
+    %%%%%:  163-block  5
+    %%%%%:  163-block  6
+    %%%%%:  163-block  7
+    %%%%%:  163-block  8
+    %%%%%:  163-block  9
+    %%%%%:  163-block 10
+    %%%%%:  163-block 11
+    %%%%%:  163-block 12
+    %%%%%:  163-block 13
+     1530:  163-block 14
+    %%%%%:  163-block 15
+    %%%%%:  163-block 16
+    #####:  164:      eigen_assert(dataPtr == 0 || SizeAtCompileTime == Dynamic || SizeAtCompileTime == vecSize);
+    %%%%%:  164-block  0
+    %%%%%:  164-block  1
+    7542*:  165:      checkSanity<Derived>();
+    #####:  166:    }
+        -:  167:
+        -:  168:    /** \internal Constructor for dynamically sized matrices */
+        -:  169:    EIGEN_DEVICE_FUNC
+17148124*:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    %%%%%:  170-block  0
+    %%%%%:  170-block  1
+    %%%%%:  170-block  2
+    %%%%%:  170-block  3
+17148124*:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    %%%%%:  171-block  0
+    %%%%%:  171-block  1
+    %%%%%:  171-block  2
+    %%%%%:  171-block  3
+        -:  172:    {
+13846330*:  173:      eigen_assert( (dataPtr == 0)
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+17148124*:  176:      checkSanity<Derived>();
+17148124*:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS_6MatrixIfLin1ELi1ELi0ELin1ELi1EEELin1ELi1ELb0EEELi0EEC2EPKfll:
+       36:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+       36:  170-block  0
+       36:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+       36:  171-block  0
+        -:  172:    {
+      36*:  173:      eigen_assert( (dataPtr == 0)
+       36:  173-block  0
+       36:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+       36:  176:      checkSanity<Derived>();
+       36:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb1EEELi0EEC2EPKfll:
+        6:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+        6:  170-block  0
+        6:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+        6:  171-block  0
+        -:  172:    {
+       6*:  173:      eigen_assert( (dataPtr == 0)
+        6:  173-block  0
+        6:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+        6:  176:      checkSanity<Derived>();
+        6:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS1_INS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEELin1ELin1ELb0EEELi0EEC2EPKfll:
+     1503:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1503:  170-block  0
+     1503:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1503:  171-block  0
+        -:  172:    {
+    1503*:  173:      eigen_assert( (dataPtr == 0)
+     1503:  173-block  0
+     1503:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1503:  176:      checkSanity<Derived>();
+     1503:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS1_INS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEELin1ELi1ELb1EEELi0EEC2EPKfll:
+     1503:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1503:  170-block  0
+     1503:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1503:  171-block  0
+        -:  172:    {
+    1503*:  173:      eigen_assert( (dataPtr == 0)
+     1503:  173-block  0
+     1503:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1503:  176:      checkSanity<Derived>();
+     1503:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS1_INS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEELin1ELi1ELb1EEELi0EEC2EPfll:
+    #####:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    %%%%%:  170-block  0
+    #####:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    %%%%%:  171-block  0
+        -:  172:    {
+    #####:  173:      eigen_assert( (dataPtr == 0)
+    %%%%%:  173-block  0
+    %%%%%:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    #####:  176:      checkSanity<Derived>();
+    #####:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS1_INS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEELi1ELin1ELb0EEELi0EEC2EPfll:
+     3060:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     3060:  170-block  0
+     3060:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     3060:  171-block  0
+     3060:  171-block  1
+        -:  172:    {
+    3060*:  173:      eigen_assert( (dataPtr == 0)
+     3060:  173-block  0
+     3060:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     3060:  176:      checkSanity<Derived>();
+     3060:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS1_INS1_INS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELi1ELb1EEELin1ELi1ELb0EEELin1ELi1ELb0EEELi0EEC2EPKfll:
+     1536:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1536:  170-block  0
+     1536:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1536:  171-block  0
+        -:  172:    {
+    1536*:  173:      eigen_assert( (dataPtr == 0)
+     1536:  173-block  0
+     1536:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1536:  176:      checkSanity<Derived>();
+     1536:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS1_INS1_INS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELi1ELb1EEELin1ELi1ELb0EEELin1ELi1ELb0EEELi0EEC2EPfll:
+     1536:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1536:  170-block  0
+     1536:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1536:  171-block  0
+        -:  172:    {
+    1536*:  173:      eigen_assert( (dataPtr == 0)
+     1536:  173-block  0
+     1536:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1536:  176:      checkSanity<Derived>();
+     1536:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS1_INS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELi1ELb1EEELin1ELi1ELb0EEELi0EEC2EPfll:
+     3072:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     3072:  170-block  0
+     3072:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     3072:  171-block  0
+        -:  172:    {
+    3072*:  173:      eigen_assert( (dataPtr == 0)
+     3072:  173-block  0
+     3072:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     3072:  176:      checkSanity<Derived>();
+     3072:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIfLi1ELin1ELi1ELi1ELin1EEELi1ELin1ELb0EEELi0EEC2EPfll:
+     1536:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1536:  170-block  0
+     1536:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1536:  171-block  0
+     1536:  171-block  1
+        -:  172:    {
+    1536*:  173:      eigen_assert( (dataPtr == 0)
+     1536:  173-block  0
+     1536:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1536:  176:      checkSanity<Derived>();
+     1536:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_3MapIKNS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELi0ENS_11OuterStrideILin1EEEEELi0EEC2EPKfll:
+     1503:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1503:  170-block  0
+     1503:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1503:  171-block  0
+        -:  172:    {
+    1503*:  173:      eigen_assert( (dataPtr == 0)
+     1503:  173-block  0
+     1503:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1503:  176:      checkSanity<Derived>();
+     1503:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELi1ELb0EEELi0EEC2EPKfll:
+    #####:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    %%%%%:  170-block  0
+    #####:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    %%%%%:  171-block  0
+        -:  172:    {
+    #####:  173:      eigen_assert( (dataPtr == 0)
+    %%%%%:  173-block  0
+    %%%%%:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    #####:  176:      checkSanity<Derived>();
+    #####:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS1_INS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEELin1ELin1ELb0EEELi0EEC2EPfll:
+     1530:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1530:  170-block  0
+     1530:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1530:  171-block  0
+        -:  172:    {
+    1530*:  173:      eigen_assert( (dataPtr == 0)
+     1530:  173-block  0
+     1530:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1530:  176:      checkSanity<Derived>();
+     1530:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIfLi2ELi2ELi0ELi2ELi2EEELi1ELi2ELb0EEELi0EEC2EPfll:
+  3301794:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+  3301794:  170-block  0
+  3301794:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+  3301794:  171-block  0
+  3301794:  171-block  1
+        -:  172:    {
+        -:  173:      eigen_assert( (dataPtr == 0)
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+  3301794:  176:      checkSanity<Derived>();
+  3301794:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIfLin1ELi1ELi0ELin1ELi1EEELin1ELi1ELb0EEELi0EEC2EPfll:
+     1533:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1533:  170-block  0
+     1533:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1533:  171-block  0
+        -:  172:    {
+    1533*:  173:      eigen_assert( (dataPtr == 0)
+     1533:  173-block  0
+     1533:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1533:  176:      checkSanity<Derived>();
+     1533:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELi1ELin1ELb0EEELi0EEC2EPfll:
+  3301794:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+  3301794:  170-block  0
+  3301794:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+  3301794:  171-block  0
+  3301794:  171-block  1
+        -:  172:    {
+ 3301794*:  173:      eigen_assert( (dataPtr == 0)
+  3301794:  173-block  0
+  3301794:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+  3301794:  176:      checkSanity<Derived>();
+  3301794:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEELi0EEC2EPfll:
+     1602:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1602:  170-block  0
+     1602:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1602:  171-block  0
+        -:  172:    {
+    1602*:  173:      eigen_assert( (dataPtr == 0)
+     1602:  173-block  0
+     1602:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1602:  176:      checkSanity<Derived>();
+     1602:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELi1ELb1EEELi0EEC2EPfll:
+  9920368:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+  9920368:  170-block  0
+  9920368:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+  9920368:  171-block  0
+        -:  172:    {
+ 9920368*:  173:      eigen_assert( (dataPtr == 0)
+  9920368:  173-block  0
+  9920368:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+  9920368:  176:      checkSanity<Derived>();
+  9920368:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEELi0EEC2EPKfll:
+        3:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+        3:  170-block  0
+        3:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+        3:  171-block  0
+        -:  172:    {
+       3*:  173:      eigen_assert( (dataPtr == 0)
+        3:  173-block  0
+        3:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+        3:  176:      checkSanity<Derived>();
+        3:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS1_INS_6MatrixIfLin1ELi1ELi0ELin1ELi1EEELin1ELi1ELb0EEELi1ELi1ELb0EEELi0EEC2EPfll:
+    #####:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    %%%%%:  170-block  0
+    #####:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    %%%%%:  171-block  0
+    %%%%%:  171-block  1
+        -:  172:    {
+        -:  173:      eigen_assert( (dataPtr == 0)
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    #####:  176:      checkSanity<Derived>();
+    #####:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS_3MapIKNS_6MatrixIfLin1ELi1ELi0ELin1ELi1EEELi0ENS_6StrideILi0ELi0EEEEELin1ELi1ELb0EEELi0EEC2EPKfll:
+    30240:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    30240:  170-block  0
+    30240:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    30240:  171-block  0
+        -:  172:    {
+   30240*:  173:      eigen_assert( (dataPtr == 0)
+    30240:  173-block  0
+    30240:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    30240:  176:      checkSanity<Derived>();
+    30240:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS1_IKNS_3MapIKNS_6MatrixIfLin1ELin1ELi1ELin1ELin1EEELi0ENS_11OuterStrideILin1EEEEELi1ELin1ELb1EEELi1ELin1ELb0EEELi0EEC2EPKfll:
+    30240:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    30240:  170-block  0
+    30240:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    30240:  171-block  0
+    30240:  171-block  1
+        -:  172:    {
+   30240*:  173:      eigen_assert( (dataPtr == 0)
+    30240:  173-block  0
+    30240:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    30240:  176:      checkSanity<Derived>();
+    30240:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS_3MapIKNS_6MatrixIfLin1ELin1ELi1ELin1ELin1EEELi0ENS_11OuterStrideILin1EEEEELi1ELin1ELb1EEELi0EEC2EPKfll:
+    30240:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    30240:  170-block  0
+    30240:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    30240:  171-block  0
+    30240:  171-block  1
+        -:  172:    {
+   30240*:  173:      eigen_assert( (dataPtr == 0)
+    30240:  173-block  0
+    30240:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    30240:  176:      checkSanity<Derived>();
+    30240:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIdLin1ELi1ELi0ELin1ELi1EEELi1ELi1ELb0EEELi0EEC2EPdll:
+    #####:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    %%%%%:  170-block  0
+    #####:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    %%%%%:  171-block  0
+    %%%%%:  171-block  1
+        -:  172:    {
+        -:  173:      eigen_assert( (dataPtr == 0)
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    #####:  176:      checkSanity<Derived>();
+    #####:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIfLin1ELi1ELi0ELin1ELi1EEELin1ELi1ELb1EEELi0EEC2EPfll:
+        3:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+        3:  170-block  0
+        3:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+        3:  171-block  0
+        -:  172:    {
+       3*:  173:      eigen_assert( (dataPtr == 0)
+        3:  173-block  0
+        3:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+        3:  176:      checkSanity<Derived>();
+        3:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_9TransposeINS_3MapINS_6MatrixIfLi1ELin1ELi1ELi1ELin1EEELi0ENS_6StrideILi0ELi0EEEEEEELin1ELi1ELb1EEELi0EEC2EPfll:
+     1530:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1530:  170-block  0
+     1530:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1530:  171-block  0
+        -:  172:    {
+    1530*:  173:      eigen_assert( (dataPtr == 0)
+     1530:  173-block  0
+     1530:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1530:  176:      checkSanity<Derived>();
+     1530:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_3MapIKNS_6MatrixIfLin1ELin1ELi1ELin1ELin1EEELi0ENS_11OuterStrideILin1EEEEELi0EEC2EPKfll:
+     1503:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1503:  170-block  0
+     1503:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1503:  171-block  0
+        -:  172:    {
+    1503*:  173:      eigen_assert( (dataPtr == 0)
+     1503:  173-block  0
+     1503:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1503:  176:      checkSanity<Derived>();
+     1503:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS1_IKNS_3MapIKNS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELi0ENS_11OuterStrideILin1EEEEELin1ELi1ELb1EEELin1ELi1ELb0EEELi0EEC2EPKfll:
+    35328:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    35328:  170-block  0
+    35328:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    35328:  171-block  0
+        -:  172:    {
+   35328*:  173:      eigen_assert( (dataPtr == 0)
+    35328:  173-block  0
+    35328:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    35328:  176:      checkSanity<Derived>();
+    35328:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_3MapINS_6MatrixIfLin1ELi1ELi0ELin1ELi1EEELi0ENS_6StrideILi0ELi0EEEEELin1ELi1ELb0EEELi0EEC2EPfll:
+    35328:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    35328:  170-block  0
+    35328:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    35328:  171-block  0
+        -:  172:    {
+   35328*:  173:      eigen_assert( (dataPtr == 0)
+    35328:  173-block  0
+    35328:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    35328:  176:      checkSanity<Derived>();
+    35328:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS1_INS1_INS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEELin1ELin1ELb0EEELin1ELi1ELb1EEELi0EEC2EPfll:
+   392445:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+   392445:  170-block  0
+   392445:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+   392445:  171-block  0
+        -:  172:    {
+  392445*:  173:      eigen_assert( (dataPtr == 0)
+   392445:  173-block  0
+   392445:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+   392445:  176:      checkSanity<Derived>();
+   392445:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS_3MapIKNS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELi0ENS_11OuterStrideILin1EEEEELin1ELi1ELb1EEELi0EEC2EPKfll:
+    35328:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    35328:  170-block  0
+    35328:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    35328:  171-block  0
+        -:  172:    {
+   35328*:  173:      eigen_assert( (dataPtr == 0)
+    35328:  173-block  0
+    35328:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    35328:  176:      checkSanity<Derived>();
+    35328:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS1_INS_6MatrixIfLin1ELi1ELi0ELin1ELi1EEELin1ELi1ELb0EEELin1ELi1ELb0EEELi0EEC2EPfll:
+    #####:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    %%%%%:  170-block  0
+    #####:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    %%%%%:  171-block  0
+        -:  172:    {
+    #####:  173:      eigen_assert( (dataPtr == 0)
+    %%%%%:  173-block  0
+    %%%%%:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    #####:  176:      checkSanity<Derived>();
+    #####:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS1_INS_6MatrixIfLin1ELin1ELi1ELin1ELin1EEELi1ELin1ELb1EEELi1ELin1ELb0EEELi0EEC2EPfll:
+     4509:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     4509:  170-block  0
+     4509:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     4509:  171-block  0
+     4509:  171-block  1
+        -:  172:    {
+    4509*:  173:      eigen_assert( (dataPtr == 0)
+     4509:  173-block  0
+     4509:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     4509:  176:      checkSanity<Derived>();
+     4509:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIfLin1ELin1ELi1ELin1ELin1EEELin1ELin1ELb0EEELi0EEC2EPfll:
+     1503:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1503:  170-block  0
+     1503:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1503:  171-block  0
+        -:  172:    {
+    1503*:  173:      eigen_assert( (dataPtr == 0)
+     1503:  173-block  0
+     1503:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1503:  176:      checkSanity<Derived>();
+     1503:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockIKNS1_IKNS1_INS_6MatrixIfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEELin1ELi1ELb1EEELin1ELi1ELb0EEELi0EEC2EPKfll:
+     1503:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     1503:  170-block  0
+     1503:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     1503:  171-block  0
+        -:  172:    {
+    1503*:  173:      eigen_assert( (dataPtr == 0)
+     1503:  173-block  0
+     1503:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     1503:  176:      checkSanity<Derived>();
+     1503:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIfLin1ELin1ELi1ELin1ELin1EEELi1ELin1ELb1EEELi0EEC2EPfll:
+     4509:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+     4509:  170-block  0
+     4509:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+     4509:  171-block  0
+     4509:  171-block  1
+        -:  172:    {
+    4509*:  173:      eigen_assert( (dataPtr == 0)
+     4509:  173-block  0
+     4509:  173-block  1
+    %%%%%:  173-block  2
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+     4509:  176:      checkSanity<Derived>();
+     4509:  177:    }
+------------------
+_ZN5Eigen7MapBaseINS_5BlockINS_6MatrixIfLin1ELi1ELi0ELin1ELi1EEELi1ELi1ELb0EEELi0EEC2EPfll:
+    #####:  170:    inline MapBase(PointerType dataPtr, Index rows, Index cols)
+    %%%%%:  170-block  0
+    #####:  171:            : m_data(dataPtr), m_rows(rows), m_cols(cols)
+    %%%%%:  171-block  0
+    %%%%%:  171-block  1
+        -:  172:    {
+        -:  173:      eigen_assert( (dataPtr == 0)
+        -:  174:              || (   rows >= 0 && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:  175:                  && cols >= 0 && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols)));
+    #####:  176:      checkSanity<Derived>();
+    #####:  177:    }
+------------------
+        -:  178:
+        -:  179:    #ifdef EIGEN_MAPBASE_PLUGIN
+        -:  180:    #include EIGEN_MAPBASE_PLUGIN
+        -:  181:    #endif
+        -:  182:
+        -:  183:  protected:
+        -:  184:
+        -:  185:    template<typename T>
+        -:  186:    EIGEN_DEVICE_FUNC
+        -:  187:    void checkSanity(typename internal::enable_if<(internal::traits<T>::Alignment>0),void*>::type = 0) const
+        -:  188:    {
+        -:  189:#if EIGEN_MAX_ALIGN_BYTES>0
+        -:  190:      eigen_assert((   ((internal::UIntPtr(m_data) % internal::traits<Derived>::Alignment) == 0)
+        -:  191:                    || (cols() * rows() * innerStride() * sizeof(Scalar)) < internal::traits<Derived>::Alignment ) && "data is not aligned");
+        -:  192:#endif
+        -:  193:    }
+        -:  194:
+        -:  195:    template<typename T>
+        -:  196:    EIGEN_DEVICE_FUNC
+    3006*:  197:    void checkSanity(typename internal::enable_if<internal::traits<T>::Alignment==0,void*>::type = 0) const
+    %%%%%:  197-block  0
+     1503:  197-block  1
+    %%%%%:  197-block  2
+    %%%%%:  197-block  3
+    %%%%%:  197-block  4
+     1503:  197-block  5
+    %%%%%:  197-block  6
+        -:  198:    {}
+        -:  199:
+        -:  200:    PointerType m_data;
+        -:  201:    const internal::variable_if_dynamic<Index, RowsAtCompileTime> m_rows;
+        -:  202:    const internal::variable_if_dynamic<Index, ColsAtCompileTime> m_cols;
+        -:  203:};
+        -:  204:
+        -:  205:/** \ingroup Core_Module
+        -:  206:  *
+        -:  207:  * \brief Base class for non-const dense Map and Block expression with direct access
+        -:  208:  *
+        -:  209:  * This base class provides the non-const low-level accessors (e.g. coeff and coeffRef) of
+        -:  210:  * dense Map and Block objects with direct access.
+        -:  211:  * It inherits MapBase<Derived, ReadOnlyAccessors> which defines the const variant for reading specific entries.
+        -:  212:  *
+        -:  213:  * \sa class Map, class Block
+        -:  214:  */
+   68066*:  215:template<typename Derived> class MapBase<Derived, WriteAccessors>
+    %%%%%:  215-block  0
+     1503:  215-block  1
+     1503:  215-block  2
+    %%%%%:  215-block  3
+    %%%%%:  215-block  4
+    %%%%%:  215-block  5
+     1503:  215-block  6
+    %%%%%:  215-block  7
+    %%%%%:  215-block  8
+     1530:  215-block  9
+     1530:  215-block 10
+     1503:  215-block 11
+     1530:  215-block 12
+     1530:  215-block 13
+     1530:  215-block 14
+     1536:  215-block 15
+    %%%%%:  215-block 16
+     1536:  215-block 17
+        -:  216:  : public MapBase<Derived, ReadOnlyAccessors>
+        -:  217:{
+        -:  218:    typedef MapBase<Derived, ReadOnlyAccessors> ReadOnlyMapBase;
+        -:  219:  public:
+        -:  220:
+        -:  221:    typedef MapBase<Derived, ReadOnlyAccessors> Base;
+        -:  222:
+        -:  223:    typedef typename Base::Scalar Scalar;
+        -:  224:    typedef typename Base::PacketScalar PacketScalar;
+        -:  225:    typedef typename Base::StorageIndex StorageIndex;
+        -:  226:    typedef typename Base::PointerType PointerType;
+        -:  227:
+        -:  228:    using Base::derived;
+        -:  229:    using Base::rows;
+        -:  230:    using Base::cols;
+        -:  231:    using Base::size;
+        -:  232:    using Base::coeff;
+        -:  233:    using Base::coeffRef;
+        -:  234:
+        -:  235:    using Base::innerStride;
+        -:  236:    using Base::outerStride;
+        -:  237:    using Base::rowStride;
+        -:  238:    using Base::colStride;
+        -:  239:
+        -:  240:    typedef typename internal::conditional<
+        -:  241:                    internal::is_lvalue<Derived>::value,
+        -:  242:                    Scalar,
+        -:  243:                    const Scalar
+        -:  244:                  >::type ScalarWithConstIfNotLvalue;
+        -:  245:
+        -:  246:    EIGEN_DEVICE_FUNC
+  460400*:  247:    inline const Scalar* data() const { return this->m_data; }
+    35328:  247-block  0
+    %%%%%:  247-block  1
+     1503:  247-block  2
+     1503:  247-block  3
+    %%%%%:  247-block  4
+    %%%%%:  247-block  5
+    %%%%%:  247-block  6
+     1530:  247-block  7
+    %%%%%:  247-block  8
+    %%%%%:  247-block  9
+   392445:  247-block 10
+     1530:  247-block 11
+    %%%%%:  247-block 12
+    %%%%%:  247-block 13
+        6:  247-block 14
+     1530:  247-block 15
+     1530:  247-block 16
+     1503:  247-block 17
+    %%%%%:  247-block 18
+     1530:  247-block 19
+    %%%%%:  247-block 20
+     1503:  247-block 21
+     1503:  247-block 22
+    %%%%%:  247-block 23
+    %%%%%:  247-block 24
+    %%%%%:  247-block 25
+    %%%%%:  247-block 26
+    %%%%%:  247-block 27
+     1530:  247-block 28
+     1530:  247-block 29
+     1530:  247-block 30
+     1530:  247-block 31
+     1530:  247-block 32
+     1530:  247-block 33
+     1530:  247-block 34
+     1536:  247-block 35
+      761:  247-block 36
+      761:  247-block 37
+    %%%%%:  247-block 38
+     1536:  247-block 39
+     4428:  247-block 40
+     4428:  247-block 41
+     1536:  247-block 42
+        -:  248:    EIGEN_DEVICE_FUNC
+  885077*:  249:    inline ScalarWithConstIfNotLvalue* data() { return this->m_data; } // no const-cast here so non-const-correct code will give a compile error
+    35328:  249-block  0
+    35328:  249-block  1
+     1503:  249-block  2
+    %%%%%:  249-block  3
+    %%%%%:  249-block  4
+     1530:  249-block  5
+   392445:  249-block  6
+     1530:  249-block  7
+    %%%%%:  249-block  8
+    %%%%%:  249-block  9
+        6:  249-block 10
+     1503:  249-block 11
+    %%%%%:  249-block 12
+   392445:  249-block 13
+     1503:  249-block 14
+    %%%%%:  249-block 15
+    %%%%%:  249-block 16
+     1530:  249-block 17
+    %%%%%:  249-block 18
+     4509:  249-block 19
+    %%%%%:  249-block 20
+    %%%%%:  249-block 21
+    %%%%%:  249-block 22
+      761:  249-block 23
+    %%%%%:  249-block 24
+    %%%%%:  249-block 25
+    %%%%%:  249-block 26
+     3060:  249-block 27
+     1536:  249-block 28
+     3072:  249-block 29
+     4428:  249-block 30
+     1530:  249-block 31
+        -:  250:
+        -:  251:    EIGEN_DEVICE_FUNC
+      33*:  252:    inline ScalarWithConstIfNotLvalue& coeffRef(Index row, Index col)
+        -:  253:    {
+      33*:  254:      return this->m_data[col * colStride() + row * rowStride()];
+        -:  255:    }
+        -:  256:
+        -:  257:    EIGEN_DEVICE_FUNC
+  8328726:  258:    inline ScalarWithConstIfNotLvalue& coeffRef(Index index)
+        -:  259:    {
+        -:  260:      EIGEN_STATIC_ASSERT_INDEX_BASED_ACCESS(Derived)
+  8298486:  261:      return this->m_data[index * innerStride()];
+     3585:  261-block  0
+    30240:  261-block  1
+    35328:  261-block  2
+     5088:  261-block  3
+  1650897:  261-block  4
+  4952691:  261-block  5
+  1650897:  261-block  6
+        -:  262:    }
+        -:  263:
+        -:  264:    template<int StoreMode>
+        -:  265:    inline void writePacket(Index row, Index col, const PacketScalar& val)
+        -:  266:    {
+        -:  267:      internal::pstoret<Scalar, PacketScalar, StoreMode>
+        -:  268:               (this->m_data + (col * colStride() + row * rowStride()), val);
+        -:  269:    }
+        -:  270:
+        -:  271:    template<int StoreMode>
+        -:  272:    inline void writePacket(Index index, const PacketScalar& val)
+        -:  273:    {
+        -:  274:      EIGEN_STATIC_ASSERT_INDEX_BASED_ACCESS(Derived)
+        -:  275:      internal::pstoret<Scalar, PacketScalar, StoreMode>
+        -:  276:                (this->m_data + index * innerStride(), val);
+        -:  277:    }
+        -:  278:
+        -:  279:    EIGEN_DEVICE_FUNC explicit inline MapBase(PointerType dataPtr) : Base(dataPtr) {}
+    4536*:  280:    EIGEN_DEVICE_FUNC inline MapBase(PointerType dataPtr, Index vecSize) : Base(dataPtr, vecSize) {}
+     1503:  280-block  0
+     1503:  280-block  1
+     1503:  280-block  2
+    %%%%%:  280-block  3
+    %%%%%:  280-block  4
+    %%%%%:  280-block  5
+    %%%%%:  280-block  6
+    %%%%%:  280-block  7
+    %%%%%:  280-block  8
+     1530:  280-block  9
+     1530:  280-block 10
+    %%%%%:  280-block 11
+16977652*:  281:    EIGEN_DEVICE_FUNC inline MapBase(PointerType dataPtr, Index rows, Index cols) : Base(dataPtr, rows, cols) {}
+    35328:  281-block  0
+        3:  281-block  1
+     1530:  281-block  2
+    %%%%%:  281-block  3
+    %%%%%:  281-block  4
+   392445:  281-block  5
+    %%%%%:  281-block  6
+     4509:  281-block  7
+     4509:  281-block  8
+    %%%%%:  281-block  9
+     3060:  281-block 10
+     1536:  281-block 11
+     3072:  281-block 12
+     1536:  281-block 13
+     1503:  281-block 14
+    %%%%%:  281-block 15
+     1530:  281-block 16
+     1533:  281-block 17
+  9920368:  281-block 18
+  3301794:  281-block 19
+  3301794:  281-block 20
+     1602:  281-block 21
+        -:  282:
+        -:  283:    EIGEN_DEVICE_FUNC
+    #####:  284:    Derived& operator=(const MapBase& other)
+        -:  285:    {
+    #####:  286:      ReadOnlyMapBase::Base::operator=(other);
+    #####:  287:      return derived();
+        -:  288:    }
+        -:  289:
+        -:  290:    // In theory we could simply refer to Base:Base::operator=, but MSVC does not like Base::Base,
+        -:  291:    // see bugs 821 and 920.
+        -:  292:    using ReadOnlyMapBase::Base::operator=;
+        -:  293:};
+        -:  294:
+        -:  295:#undef EIGEN_STATIC_ASSERT_INDEX_BASED_ACCESS
+        -:  296:
+        -:  297:} // end namespace Eigen
+        -:  298:
+        -:  299:#endif // EIGEN_MAPBASE_H

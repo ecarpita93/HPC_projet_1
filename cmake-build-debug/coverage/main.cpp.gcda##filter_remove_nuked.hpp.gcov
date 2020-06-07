@@ -1,0 +1,140 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_remove_nuked.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_REMOVE_NUKED_HPP
+        -:   19:#define PIC_FILTERING_FILTER_REMOVE_NUKED_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterRemoveNuked class
+        -:   27: */
+        -:   28:class FilterRemoveNuked: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:    float threshold_nuked;
+        -:   32:
+        -:   33:    /**
+        -:   34:     * @brief ProcessBBox
+        -:   35:     * @param dst
+        -:   36:     * @param src
+        -:   37:     * @param box
+        -:   38:     */
+    #####:   39:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   40:    {
+    #####:   41:        float maxVal;
+    #####:   42:        float values[9];
+        -:   43:
+    #####:   44:        int channels = dst->channels;
+        -:   45:
+    #####:   46:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   46-block  0
+    %%%%%:   46-block  1
+    %%%%%:   46-block  2
+    #####:   47:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   47-block  0
+    %%%%%:   47-block  1
+    %%%%%:   47-block  2
+        -:   48:
+    #####:   49:                float *tmp_data = (*src[0])(i, j);
+    %%%%%:   49-block  0
+    #####:   50:                float *tmp_dst  = (*dst   )(i, j);
+    %%%%%:   50-block  0
+        -:   51:            
+    #####:   52:                for(int ch = 0; ch < channels; ch++) {
+    %%%%%:   52-block  0
+    %%%%%:   52-block  1
+    %%%%%:   52-block  2
+        -:   53:
+    #####:   54:                    maxVal = -FLT_MAX;
+    #####:   55:                    int c2 = 0;
+    #####:   56:                    int nuked = 0;
+    #####:   57:                    float val = tmp_data[ch];
+        -:   58:
+    #####:   59:                    for(int k = -1; k <= 1; k++) {
+    %%%%%:   59-block  0
+    %%%%%:   59-block  1
+    %%%%%:   59-block  2
+    #####:   60:                        for(int l = -1; l <= 1; l++) {
+    %%%%%:   60-block  0
+        -:   61:
+    #####:   62:                            float *tmp_val = (*src[0])(i + l, j + k);
+    %%%%%:   62-block  0
+    #####:   63:                            values[c2] = tmp_val[ch];
+        -:   64:
+    #####:   65:                            float t_new = threshold_nuked * tmp_val[ch];
+    #####:   66:                            if(fabsf(tmp_val[ch] - tmp_data[ch]) > t_new) {
+    %%%%%:   66-block  0
+    #####:   67:                                nuked++;
+    %%%%%:   67-block  0
+        -:   68:                            }
+        -:   69:
+    #####:   70:                            c2++;
+    %%%%%:   70-block  0
+        -:   71:                        }
+        -:   72:                    }
+        -:   73:
+    #####:   74:                    if(nuked > 5) {//are nuked pixels the majority?
+    %%%%%:   74-block  0
+    #####:   75:                        std::sort(values, values + 9);
+    %%%%%:   75-block  0
+    #####:   76:                        tmp_dst[ch] = values[5];
+        -:   77:                    } else {
+    #####:   78:                        tmp_dst[ch] = val;
+    %%%%%:   78-block  0
+        -:   79:                    }
+        -:   80:                }
+        -:   81:            }
+        -:   82:        }
+    #####:   83:    }
+        -:   84:     
+        -:   85:
+        -:   86:public:
+        -:   87:    /**
+        -:   88:     * @brief FilterRemoveNuked
+        -:   89:     * @param threshold_nuked
+        -:   90:     */
+        -:   91:    FilterRemoveNuked(float threshold_nuked = 1e4f)
+        -:   92:    {
+        -:   93:        this->threshold_nuked = threshold_nuked;
+        -:   94:    }
+        -:   95:
+        -:   96:    /**
+        -:   97:     * @brief execute
+        -:   98:     * @param imgIn
+        -:   99:     * @param imgOut
+        -:  100:     * @param threshold_nuked
+        -:  101:     * @return
+        -:  102:     */
+        -:  103:    static Image* execute(Image *imgIn, Image *imgOut, float threshold_nuked = 1e4)
+        -:  104:    {
+        -:  105:        FilterRemoveNuked filter(threshold_nuked);
+        -:  106:        imgOut = filter.Process(Single(imgIn), imgOut);
+        -:  107:        return imgOut;
+        -:  108:    }
+        -:  109:};
+        -:  110:
+        -:  111:} // end namespace pic
+        -:  112:
+        -:  113:#endif /* PIC_FILTERING_FILTER_REMOVE_NUKED_HPP */
+        -:  114:

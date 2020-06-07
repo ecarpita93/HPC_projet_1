@@ -1,0 +1,416 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/matrix_3_x_3.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_MATRIX_3_X_3_HPP
+        -:   19:#define PIC_UTIL_MATRIX_3_X_3_HPP
+        -:   20:
+        -:   21:#include <math.h>
+        -:   22:#include <algorithm>
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The Matrix3x3 class provides methods for managing a 3 by 3 matrix.
+        -:   28: */
+        -:   29:class Matrix3x3
+        -:   30:{
+        -:   31:public:
+        -:   32:    /*
+        -:   33:     * 0 1 2
+        -:   34:     * 3 4 5
+        -:   35:     * 6 7 8
+        -:   36:    */
+        -:   37:    float data[9];
+        -:   38:
+        -:   39:    /**
+        -:   40:     * @brief Matrix3x3
+        -:   41:     */
+    #####:   42:    Matrix3x3()
+    #####:   43:    {
+    #####:   44:        for(int i = 0; i < 9; i++) {
+    %%%%%:   44-block  0
+    %%%%%:   44-block  1
+    %%%%%:   44-block  2
+    %%%%%:   44-block  3
+    #####:   45:            data[i] = 0.0f;
+    %%%%%:   45-block  0
+    %%%%%:   45-block  1
+    %%%%%:   45-block  2
+        -:   46:        }
+        -:   47:    }
+        -:   48:
+        -:   49:    /**
+        -:   50:     * @brief Matrix3x3
+        -:   51:     * @param data
+        -:   52:     */
+        -:   53:    Matrix3x3(float *data)
+        -:   54:    {
+        -:   55:        set(data);
+        -:   56:    }
+        -:   57:
+        -:   58:    /**
+        -:   59:     * @brief clone clones the matrix.
+        -:   60:     * @return it returns the cloned matrix.
+        -:   61:     */
+        -:   62:    Matrix3x3 clone()
+        -:   63:    {
+        -:   64:        Matrix3x3 ret(data);
+        -:   65:
+        -:   66:        return ret;
+        -:   67:    }
+        -:   68:
+        -:   69:    /**
+        -:   70:     * @brief set sets the matrix up.
+        -:   71:     * @param data input data, they are assumed to be 9 floats.
+        -:   72:     * The matrix is stored by rows.
+        -:   73:     */
+        -:   74:    void set(float *data)
+        -:   75:    {
+        -:   76:        if(data != NULL) {
+        -:   77:            memcpy(this->data, data, 9 * sizeof(float));
+        -:   78:        }
+        -:   79:    }
+        -:   80:
+        -:   81:    /**
+        -:   82:     * @brief set sets the matrix up.
+        -:   83:     * @param data input data, they are assumed to be 9 floats.
+        -:   84:     * The matrix is stored by rows.
+        -:   85:     */
+        -:   86:    void set(Matrix3x3 *mtx)
+        -:   87:    {
+        -:   88:        if(mtx != NULL) {
+        -:   89:            this->set(mtx->data);
+        -:   90:        }
+        -:   91:    }
+        -:   92:
+        -:   93:    /**
+        -:   94:     * @brief getIdentity sets the matrix as an identity matrix; diag(1, 1, 1);
+        -:   95:     */
+        -:   96:    void getIdentity()
+        -:   97:    {
+        -:   98:        data[0] = 1.0f;
+        -:   99:        data[1] = 0.0f;
+        -:  100:        data[2] = 0.0f;
+        -:  101:
+        -:  102:        data[3] = 0.0f;
+        -:  103:        data[4] = 1.0f;
+        -:  104:        data[5] = 0.0f;
+        -:  105:
+        -:  106:        data[6] = 0.0f;
+        -:  107:        data[7] = 0.0f;
+        -:  108:        data[8] = 1.0f;
+        -:  109:    }
+        -:  110:
+        -:  111:    /**
+        -:  112:     * @brief mul
+        -:  113:     * @param mtx
+        -:  114:     * @return
+        -:  115:     */
+        -:  116:    Matrix3x3 mul(const Matrix3x3 &mtx)
+        -:  117:    {
+        -:  118:        Matrix3x3 ret;
+        -:  119:        ret.data[0] = data[0] * mtx.data[0] +  data[1] * mtx.data[3] + data[2] * mtx.data[6];
+        -:  120:        ret.data[1] = data[0] * mtx.data[1] +  data[1] * mtx.data[4] + data[2] * mtx.data[7];
+        -:  121:        ret.data[2] = data[0] * mtx.data[2] +  data[1] * mtx.data[6] + data[2] * mtx.data[8];
+        -:  122:
+        -:  123:        ret.data[3] = data[3] * mtx.data[0] +  data[4] * mtx.data[3] + data[5] * mtx.data[6];
+        -:  124:        ret.data[4] = data[3] * mtx.data[1] +  data[4] * mtx.data[4] + data[5] * mtx.data[7];
+        -:  125:        ret.data[5] = data[3] * mtx.data[2] +  data[4] * mtx.data[6] + data[5] * mtx.data[8];
+        -:  126:
+        -:  127:        ret.data[6] = data[6] * mtx.data[0] +  data[7] * mtx.data[3] + data[8] * mtx.data[6];
+        -:  128:        ret.data[7] = data[6] * mtx.data[1] +  data[7] * mtx.data[4] + data[8] * mtx.data[7];
+        -:  129:        ret.data[8] = data[6] * mtx.data[2] +  data[7] * mtx.data[6] + data[8] * mtx.data[8];
+        -:  130:
+        -:  131:        return ret;
+        -:  132:    }
+        -:  133:
+        -:  134:    /**
+        -:  135:     * @brief mul
+        -:  136:     * @param vec
+        -:  137:     * @param ret
+        -:  138:     * @return
+        -:  139:     */
+    #####:  140:    float *mul(float *vec, float *ret)
+        -:  141:    {
+    #####:  142:        if(vec == NULL) {
+    %%%%%:  142-block  0
+        -:  143:            return ret;
+        -:  144:        }
+        -:  145:
+    #####:  146:        if(ret == NULL) {
+    %%%%%:  146-block  0
+    #####:  147:            ret = new float[3];
+    %%%%%:  147-block  0
+        -:  148:        }
+        -:  149:
+    #####:  150:        ret[0] = data[0] * vec[0] + data[1] * vec[1] + data[2] * vec[2];
+    #####:  151:        ret[1] = data[3] * vec[0] + data[4] * vec[1] + data[5] * vec[2];
+    #####:  152:        ret[2] = data[6] * vec[0] + data[7] * vec[1] + data[8] * vec[2];
+        -:  153:
+    #####:  154:        return ret;
+    %%%%%:  154-block  0
+        -:  155:    }
+        -:  156:
+        -:  157:    /**
+        -:  158:     * @brief MulH
+        -:  159:     * @param vec
+        -:  160:     * @param ret
+        -:  161:     * @return
+        -:  162:     */
+        -:  163:    float *mulH(float *vec, float *ret)
+        -:  164:    {
+        -:  165:        if(vec == NULL) {
+        -:  166:            return ret;
+        -:  167:        }
+        -:  168:
+        -:  169:        if(ret == NULL) {
+        -:  170:            ret = new float[3];
+        -:  171:        }
+        -:  172:
+        -:  173:        ret[0] = data[0] * vec[0] + data[1] * vec[1] + data[2] * vec[2];
+        -:  174:        ret[1] = data[3] * vec[0] + data[4] * vec[1] + data[5] * vec[2];
+        -:  175:        ret[2] = data[6] * vec[0] + data[7] * vec[1] + data[8] * vec[2];
+        -:  176:
+        -:  177:        return ret;
+        -:  178:    }
+        -:  179:
+        -:  180:    /**
+        -:  181:     * @brief projection
+        -:  182:     * @param vec
+        -:  183:     * @param ret
+        -:  184:     * @return
+        -:  185:     */
+    #####:  186:    float *projection(float *vec, float *ret) {
+    #####:  187:        if(vec == NULL) {
+    %%%%%:  187-block  0
+        -:  188:            return ret;
+        -:  189:        }
+        -:  190:
+    #####:  191:        if(ret == NULL) {
+    %%%%%:  191-block  0
+    #####:  192:            ret = new float[2];
+    %%%%%:  192-block  0
+        -:  193:        }
+        -:  194:
+    #####:  195:        ret[0]      = data[0] * vec[0] + data[1] * vec[1] + data[2];
+    #####:  196:        ret[1]      = data[3] * vec[0] + data[4] * vec[1] + data[5];
+    #####:  197:        float ret_2 = data[6] * vec[0] + data[7] * vec[1] + data[8];
+        -:  198:
+    #####:  199:        if(ret_2 > 0.0f) {
+    %%%%%:  199-block  0
+    #####:  200:            ret[0] /= ret_2;
+    #####:  201:            ret[1] /= ret_2;
+    %%%%%:  201-block  0
+        -:  202:        }
+        -:  203:
+        -:  204:        return ret;
+        -:  205:    }
+        -:  206:
+        -:  207:    /**
+        -:  208:     * @brief crossProduct computes the cross product matrix
+        -:  209:     * @param t is a three value array.
+        -:  210:     */
+        -:  211:    void crossProduct(float *t)
+        -:  212:    {
+        -:  213:        if(t == NULL) {
+        -:  214:            return;
+        -:  215:        }
+        -:  216:
+        -:  217:        data[0] =  0.0f;
+        -:  218:        data[1] = -t[2];
+        -:  219:        data[2] =  t[1];
+        -:  220:
+        -:  221:        data[3] =  t[2];
+        -:  222:        data[4] =  0.0f;
+        -:  223:        data[5] = -t[0];
+        -:  224:
+        -:  225:        data[6] = -t[1];
+        -:  226:        data[7] =  t[0];
+        -:  227:        data[8] =  0.0f;
+        -:  228:    }
+        -:  229:
+        -:  230:    /**
+        -:  231:     * @brief Add adds a value to the diagonal.
+        -:  232:     * @param value is the value to be added.
+        -:  233:     */
+    #####:  234:    void add(float value)
+        -:  235:    {
+    #####:  236:        data[0] += value;
+    #####:  237:        data[4] += value;
+    #####:  238:        data[8] += value;
+        -:  239:    }
+        -:  240:
+        -:  241:    /**
+        -:  242:     * @brief determinant computes the determinant of the matrix.
+        -:  243:     * @return
+        -:  244:     */
+    #####:  245:    float determinant()
+        -:  246:    {
+    #####:  247:        return	 data[0] * (data[4] * data[8] - data[5] * data[7]) -
+    #####:  248:                 data[1] * (data[8] * data[3] - data[5] * data[6]) +
+    #####:  249:                 data[2] * (data[3] * data[7] - data[4] * data[6]);
+        -:  250:    }
+        -:  251:
+        -:  252:    /**
+        -:  253:     * @brief inverse computes the inverse of the matrix.
+        -:  254:     * @param ret
+        -:  255:     * @return
+        -:  256:     */
+    #####:  257:    Matrix3x3 *inverse(Matrix3x3 *ret)
+        -:  258:    {
+    #####:  259:        if(ret == NULL) {
+    %%%%%:  259-block  0
+    #####:  260:            ret = new Matrix3x3();
+    %%%%%:  260-block  0
+        -:  261:        }
+        -:  262:
+    #####:  263:        float det = determinant();
+        -:  264:
+    #####:  265:        if(fabsf(det) <= 1e-9f) {
+    %%%%%:  265-block  0
+    #####:  266:            printf("Error: Negative determinant\n");
+    %%%%%:  266-block  0
+    #####:  267:            return ret;
+    %%%%%:  267-block  0
+        -:  268:        }
+        -:  269:
+    #####:  270:        ret->data[0] =  (data[4] * data[8] - data[5] * data[7]) / det;
+    #####:  271:        ret->data[1] = -(data[1] * data[8] - data[2] * data[7]) / det;
+    #####:  272:        ret->data[2] =  (data[1] * data[5] - data[2] * data[4]) / det;
+        -:  273:
+    #####:  274:        ret->data[3] = -(data[3] * data[8] - data[5] * data[6]) / det;
+    #####:  275:        ret->data[4] =  (data[0] * data[8] - data[2] * data[6]) / det;
+    #####:  276:        ret->data[5] = -(data[0] * data[5] - data[2] * data[3]) / det;
+        -:  277:
+    #####:  278:        ret->data[6] =  (data[3] * data[7] - data[4] * data[6]) / det;
+    #####:  279:        ret->data[7] = -(data[0] * data[7] - data[1] * data[6]) / det;
+    #####:  280:        ret->data[8] =  (data[0] * data[4] - data[1] * data[3]) / det;
+        -:  281:
+    #####:  282:        return ret;
+    %%%%%:  282-block  0
+        -:  283:    }
+        -:  284:
+        -:  285:    /**
+        -:  286:     * @brief transpose computes the transposed matrix.
+        -:  287:     */
+        -:  288:    Matrix3x3 * transpose(Matrix3x3 *ret)
+        -:  289:    {
+        -:  290:        if(ret == NULL) {
+        -:  291:            ret = new Matrix3x3();
+        -:  292:        }
+        -:  293:
+        -:  294:        ret->set(ret);
+        -:  295:
+        -:  296:        std::swap(ret->data[1], data[3]);
+        -:  297:        std::swap(data[5], data[7]);
+        -:  298:        std::swap(data[2], data[6]);
+        -:  299:
+        -:  300:        return ret;
+        -:  301:    }
+        -:  302:
+        -:  303:    /**
+        -:  304:     * @brief setTranslationMatrix sets the matrix as a translation matrix.
+        -:  305:     * @param tx
+        -:  306:     * @param ty
+        -:  307:     */
+        -:  308:    void setTranslationMatrix(float tx, float ty) {
+        -:  309:        data[0] = 1.0f;
+        -:  310:        data[1] = 0.0f;
+        -:  311:        data[2] = tx;
+        -:  312:
+        -:  313:        data[3] = 0.0f;
+        -:  314:        data[4] = 1.0f;
+        -:  315:        data[5] = ty;
+        -:  316:
+        -:  317:        data[6] = 0.0f;
+        -:  318:        data[7] = 0.0f;
+        -:  319:        data[8] = 1.0f;
+        -:  320:    }
+        -:  321:
+        -:  322:    /**
+        -:  323:     * @brief setRotationMatrix sets the matrix as a rotation matrix
+        -:  324:     * @param ang
+        -:  325:     */
+        -:  326:    void setRotationMatrix(float ang) {
+        -:  327:        float cosAng = cosf(ang);
+        -:  328:        float sinAng = sinf(ang);
+        -:  329:
+        -:  330:        data[0] = cosAng;
+        -:  331:        data[1] = -sinAng;
+        -:  332:        data[2] = 0.0f;
+        -:  333:
+        -:  334:        data[3] = sinAng;
+        -:  335:        data[4] = cosAng;
+        -:  336:        data[5] = 0.0f;
+        -:  337:
+        -:  338:        data[6] = 0.0f;
+        -:  339:        data[7] = 0.0f;
+        -:  340:        data[8] = 1.0f;
+        -:  341:    }
+        -:  342:
+        -:  343:    /**
+        -:  344:     * @brief SetShearMatrix sets the matrix as a shear matrix.
+        -:  345:     * @param horizontal_shear
+        -:  346:     * @param vertical_shear
+        -:  347:     */
+        -:  348:    void setShearMatrix(float horizontal_shear, float vertical_shear)
+        -:  349:    {
+        -:  350:        getIdentity();
+        -:  351:
+        -:  352:        data[1] = vertical_shear;
+        -:  353:        data[3] = horizontal_shear;
+        -:  354:    }
+        -:  355:
+        -:  356:    /**
+        -:  357:     * @brief SetScaleMatrix set the matrix as a scaling matrix.
+        -:  358:     * @param x_scale
+        -:  359:     * @param y_scale
+        -:  360:     */
+        -:  361:    void setScaleMatrix(float x_scale, float y_scale)
+        -:  362:    {
+        -:  363:        if(x_scale <= 0.0f) {
+        -:  364:            x_scale = 1.0f;
+        -:  365:        }
+        -:  366:
+        -:  367:        if(y_scale <= 0.0f) {
+        -:  368:            y_scale = 1.0f;
+        -:  369:        }
+        -:  370:
+        -:  371:        getIdentity();
+        -:  372:
+        -:  373:        data[0] = x_scale;
+        -:  374:        data[4] = y_scale;
+        -:  375:    }
+        -:  376:
+        -:  377:    /**
+        -:  378:     * @brief print
+        -:  379:     */
+        -:  380:    void print(){
+        -:  381:        printf("\n");
+        -:  382:        printf("%.9f %.9f %.9f\n", data[0], data[1], data[2]);
+        -:  383:        printf("%.9f %.9f %.9f\n", data[3], data[4], data[5]);
+        -:  384:        printf("%.9f %.9f %.9f\n", data[6], data[7], data[8]);
+        -:  385:    }
+        -:  386:};
+        -:  387:
+        -:  388:} // end namespace pic
+        -:  389:
+        -:  390:#endif // PIC_UTIL_MATRIX_3_X_3_HPP

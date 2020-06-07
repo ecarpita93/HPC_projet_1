@@ -1,0 +1,315 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/reinhard_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_REINHARD_TMO_HPP
+        -:   19:#define PIC_TONE_MAPPING_REINHARD_TMO_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:#include "../util/string.hpp"
+        -:   23:#include "../util/math.hpp"
+        -:   24:#include "../filtering/filter.hpp"
+        -:   25:#include "../filtering/filter_bilateral_2ds.hpp"
+        -:   26:#include "../filtering/filter_luminance.hpp"
+        -:   27:#include "../filtering/filter_sigmoid_tmo.hpp"
+        -:   28:#include "../tone_mapping/tone_mapping_operator.hpp"
+        -:   29:
+        -:   30:namespace pic {
+        -:   31:
+        -:   32:/**
+        -:   33: * @brief The ReinhardTMO class
+        -:   34: */
+        -:   35:class ReinhardTMO : public ToneMappingOperator
+        -:   36:{
+        -:   37:protected:
+        -:   38:
+        -:   39:    /**
+        -:   40:     * @brief sigmoidParam
+        -:   41:     * @param x
+        -:   42:     * @param param
+        -:   43:     * @return
+        -:   44:     */
+    #####:   45:    static float sigmoidParam(float x, std::vector< float > &param)
+        -:   46:    {
+    #####:   47:        float x_s = x * param[0];
+        -:   48:
+    #####:   49:        return x_s / (x_s + param[1]);
+        -:   50:    }
+        -:   51:
+        -:   52:    /**
+        -:   53:     * @brief sigmoidInvParam
+        -:   54:     * @param y
+        -:   55:     * @param param
+        -:   56:     * @return
+        -:   57:     */
+    #####:   58:    static float sigmoidInvParam(float y, std::vector< float > &param)
+        -:   59:    {
+    #####:   60:        float x_s = y *  param[1] / (1.0f -  y);
+        -:   61:
+    #####:   62:        return x_s / param[0];
+        -:   63:    }
+        -:   64:
+        -:   65:    /**
+        -:   66:     * @brief ProcessAux
+        -:   67:     * @param imgIn
+        -:   68:     * @param imgOut
+        -:   69:     * @return
+        -:   70:     */
+        1:   71:    Image *ProcessAux(ImageVec imgIn, Image *imgOut)
+        -:   72:    {
+        -:   73:        //luminance image
+        1:   74:        images[0] = flt_lum.Process(imgIn, images[0]);
+        1:   74-block  0
+        1:   74-block  1
+    $$$$$:   74-block  2
+        -:   75:
+        1:   76:        float LMin, LMax, LogAverage;
+        1:   77:        images[0]->getMaxVal(NULL, &LMax);
+        1:   77-block  0
+        1:   78:        images[0]->getMinVal(NULL, &LMin);
+        1:   79:        images[0]->getLogMeanVal(NULL, &LogAverage);
+        -:   80:
+        1:   81:        bool bUpdate = false;
+        -:   82:
+        1:   83:        if(alpha <= 0.0f) {
+        1:   84:            alpha = estimateAlpha(LMin, LMax, LogAverage);
+        1:   85:            bUpdate = true;
+        1:   85-block  0
+        -:   86:        }
+        -:   87:
+        1:   88:        if(whitePoint <= 0.0f) {
+        1:   88-block  0
+        1:   89:            whitePoint = estimateWhitePoint(LMin, LMax);
+        1:   90:            bUpdate = true;
+        -:   91:        }
+        -:   92:
+       1*:   93:        if(bUpdate) {
+        1:   93-block  0
+    %%%%%:   93-block  1
+        1:   94:            flt_sigmoid.update(this->sig_mode, this->alpha, this->whitePoint, -1.0f, false);
+        1:   94-block  0
+        -:   95:        }
+        -:   96:
+        -:   97:        //filter luminance in the sigmoid-space
+        1:   98:        if(phi > 0.0f) {
+        1:   98-block  0
+    #####:   99:            float s_max = 8.0f;
+    #####:  100:            float value = powf(2.0f, phi) * alpha / (s_max * s_max);
+        -:  101:
+    #####:  102:            std::vector<float> param;
+    %%%%%:  102-block  0
+    %%%%%:  102-block  1
+    $$$$$:  102-block  2
+    #####:  103:            param.push_back(alpha / LogAverage);
+    %%%%%:  103-block  0
+    #####:  104:            param.push_back(value);
+    %%%%%:  104-block  0
+        -:  105:
+    #####:  106:            float pEpsilon = 0.05f; //threshold
+    #####:  107:            images[0]->applyFunctionParam(sigmoidParam, param);//applyFunction(&sigmoid);
+    %%%%%:  107-block  0
+        -:  108:
+        -:  109:
+    #####:  110:            flt_bilateral.update(1.6f, pEpsilon / 2.0f);
+        -:  111:
+    #####:  112:            images[1] = flt_bilateral.Process(Single(images[0]), images[1]);
+    %%%%%:  112-block  0
+    %%%%%:  112-block  1
+    %%%%%:  112-block  2
+    $$$$$:  112-block  3
+        -:  113:
+    #####:  114:            images[0]->applyFunctionParam(sigmoidInvParam, param);
+    %%%%%:  114-block  0
+    #####:  115:            images[1]->applyFunctionParam(sigmoidInvParam, param);
+        -:  116:
+    #####:  117:            images[2] = flt_sigmoid.Process(Double(images[0], images[1]), images[2]);
+    %%%%%:  117-block  0
+    %%%%%:  117-block  1
+    %%%%%:  117-block  2
+    $$$$$:  117-block  3
+    $$$$$:  117-block  4
+        -:  118:        } else {
+        2:  119:            images[2] = flt_sigmoid.Process(Single(images[0]), images[2]);
+        1:  119-block  0
+        1:  119-block  1
+        1:  119-block  2
+        -:  120:        }
+        -:  121:
+        -:  122:        //remove HDR luminance and replacing it with LDR one
+        1:  123:        *imgOut = *imgIn[0];
+        1:  123-block  0
+        1:  124:        *imgOut /= *images[0];
+        1:  125:        *imgOut *= *images[2];
+        -:  126:
+        1:  127:        imgOut->removeSpecials();
+        -:  128:
+        1:  129:        return imgOut;
+        -:  130:    }
+        -:  131:
+        -:  132:    SIGMOID_MODE sig_mode;
+        -:  133:    float alpha, whitePoint, phi;
+        -:  134:    FilterSigmoidTMO flt_sigmoid;
+        -:  135:    FilterBilateral2DS flt_bilateral;
+        -:  136:    FilterLuminance flt_lum;
+        -:  137:
+        -:  138:public:
+        -:  139:
+        -:  140:    /**
+        -:  141:     * @brief ReinhardTMO
+        -:  142:     * @param alpha
+        -:  143:     * @param whitePoint
+        -:  144:     * @param phi
+        -:  145:     * @param sig_mode
+        -:  146:     */
+        1:  147:    ReinhardTMO(float alpha = 0.18f, float whitePoint = -1.0f, float phi = 8.0f, SIGMOID_MODE sig_mode = SIG_TMO)
+        1:  148:    {
+        1:  148-block  0
+    $$$$$:  148-block  1
+    $$$$$:  148-block  2
+    $$$$$:  148-block  3
+        1:  149:        images.push_back(NULL);
+        1:  149-block  0
+        1:  150:        images.push_back(NULL);
+        1:  150-block  0
+        1:  151:        images.push_back(NULL);
+        1:  151-block  0
+    $$$$$:  151-block  1
+        1:  152:        update(alpha, whitePoint, phi, sig_mode);
+        1:  153:    }
+        1:  153-block  0
+        -:  154:
+        1:  155:    ~ReinhardTMO()
+        1:  156:    {
+        1:  157:        release();
+        1:  157-block  0
+        1:  158:    }
+        -:  159:
+        -:  160:    /**
+        -:  161:     * @brief estimateAlpha
+        -:  162:     * @param LMin
+        -:  163:     * @param LMax
+        -:  164:     * @param logAverage
+        -:  165:     * @return
+        -:  166:     */
+        1:  167:    static float estimateAlpha(float LMin, float LMax, float logAverage)
+        -:  168:    {
+        1:  169:        float log2f       = logf(2.0f);
+        1:  170:        float log2Max     = logf(LMax       + 1e-9f) / log2f;
+        1:  171:        float log2Min     = logf(LMin       + 1e-9f) / log2f;
+        1:  172:        float log2Average = logf(logAverage + 1e-9f) / log2f;
+        -:  173:
+        1:  174:        float tmp = (2.0f * log2Average - log2Min - log2Max) / (log2Max - log2Min);
+        -:  175:
+        1:  176:        return 0.18f * powf(4.0f, tmp);
+        -:  177:    }
+        -:  178:
+        -:  179:    /**
+        -:  180:     * @brief estimateWhitePoint
+        -:  181:     * @param LMin
+        -:  182:     * @param LMax
+        -:  183:     * @return
+        -:  184:     */
+        1:  185:    static float estimateWhitePoint(float LMin, float LMax)
+        -:  186:    {
+        1:  187:        float log2f       = logf(2.0f);
+        1:  188:        float log2Max     = logf(LMax + 1e-9f) / log2f;
+        1:  189:        float log2Min     = logf(LMin + 1e-9f) / log2f;
+        -:  190:
+        1:  191:        return 1.5f * powf(2.0f, (log2Max - log2Min - 5.0f));
+        -:  192:    }
+        -:  193:
+        -:  194:    /**
+        -:  195:     * @brief update
+        -:  196:     * @param alpha
+        -:  197:     * @param whitePoint
+        -:  198:     * @param phi
+        -:  199:     * @param sig_mode
+        -:  200:     */
+        1:  201:    void update(float alpha = 0.18f, float whitePoint = 1e6f, float phi = 8.0f, SIGMOID_MODE sig_mode = SIG_TMO)
+        -:  202:    {
+        1:  203:        this->alpha = alpha;
+        1:  204:        this->whitePoint = whitePoint;
+        1:  205:        this->phi = phi;
+        1:  206:        this->sig_mode = sig_mode;
+        -:  207:
+        1:  208:        flt_sigmoid.update(SIG_TMO, this->alpha, this->whitePoint, -1.0f, false);
+        1:  208-block  0
+        -:  209:    }
+        -:  210:
+        -:  211:    /**
+        -:  212:     * @brief executeGlobal1
+        -:  213:     * @param imgIn
+        -:  214:     * @param imgOut
+        -:  215:     * @return
+        -:  216:     */
+        1:  217:    static Image* executeGlobal1(Image *imgIn, Image *imgOut)
+        -:  218:    {
+        1:  219:        ReinhardTMO rtmo(-1.0f, -1.0f, -8.0f, SIG_TMO);
+        1:  219-block  0
+        2:  220:        return rtmo.Process(Single(imgIn), imgOut);
+        1:  220-block  0
+        1:  220-block  1
+        1:  220-block  2
+    $$$$$:  220-block  3
+    $$$$$:  220-block  4
+        -:  221:    }
+        -:  222:
+        -:  223:    /**
+        -:  224:     * @brief executeGlobal2
+        -:  225:     * @param imgIn
+        -:  226:     * @param imgOut
+        -:  227:     * @return
+        -:  228:     */
+        -:  229:    static Image* executeGlobal2(Image *imgIn, Image *imgOut)
+        -:  230:    {
+        -:  231:        ReinhardTMO rtmo(-1.0f, -1.0f, -8.0f, SIG_TMO_WP);
+        -:  232:        return rtmo.Process(Single(imgIn), imgOut);
+        -:  233:    }
+        -:  234:
+        -:  235:    /**
+        -:  236:     * @brief executeLocal1
+        -:  237:     * @param imgIn
+        -:  238:     * @param imgOut
+        -:  239:     * @return
+        -:  240:     */
+        -:  241:    static Image* executeLocal1(Image *imgIn, Image *imgOut)
+        -:  242:    {
+        -:  243:        ReinhardTMO rtmo(-1.0f, -1.0f, 8.0f, SIG_TMO);
+        -:  244:        return rtmo.Process(Single(imgIn), imgOut);
+        -:  245:    }
+        -:  246:
+        -:  247:    /**
+        -:  248:     * @brief executeLocal2
+        -:  249:     * @param imgIn
+        -:  250:     * @param imgOut
+        -:  251:     * @return
+        -:  252:     */
+        -:  253:    static Image* executeLocal2(Image *imgIn, Image *imgOut)
+        -:  254:    {
+        -:  255:        ReinhardTMO rtmo(-1.0f, -1.0f, 8.0f, SIG_TMO_WP);
+        -:  256:        return rtmo.Process(Single(imgIn), imgOut);
+        -:  257:    }
+        -:  258:};
+        -:  259:
+        -:  260:
+        -:  261:} // end namespace pic
+        -:  262:
+        -:  263:#endif /* PIC_TONE_MAPPING_REINHARD_TMO_HPP */
+        -:  264:

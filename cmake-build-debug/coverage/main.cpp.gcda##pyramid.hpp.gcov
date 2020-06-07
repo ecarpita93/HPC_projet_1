@@ -1,0 +1,497 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/algorithms/pyramid.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_ALGORITHMS_PYRAMID_HPP
+        -:   19:#define PIC_ALGORITHMS_PYRAMID_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:#include "../image.hpp"
+        -:   23:#include "../image_vec.hpp"
+        -:   24:#include "../util/std_util.hpp"
+        -:   25:#include "../filtering/filter.hpp"
+        -:   26:#include "../filtering/filter_gaussian_2d.hpp"
+        -:   27:#include "../filtering/filter_sampler_2d.hpp"
+        -:   28:#include "../filtering/filter_sampler_2dsub.hpp"
+        -:   29:#include "../filtering/filter_sampler_2dadd.hpp"
+        -:   30:
+        -:   31:namespace pic {
+        -:   32:
+        -:   33:/**
+        -:   34: * @brief The Pyramid class
+        -:   35: */
+        -:   36:class Pyramid
+        -:   37:{
+        -:   38:protected:
+        -:   39:    bool lapGauss, bCreated;
+        -:   40:    int limitLevel;
+        -:   41:
+        -:   42:    FilterGaussian2D *flt_gauss;
+        -:   43:    FilterSampler2D *flt_sampler;
+        -:   44:    FilterSampler2DSub *flt_sub;
+        -:   45:    FilterSampler2DAdd *flt_add;
+        -:   46:    std::vector< Filter* > filters;
+        -:   47:
+        -:   48:    ImageVec trackerRec, trackerUp;
+        -:   49:
+        -:   50:    /**
+        -:   51:     * @brief initFilters
+        -:   52:     */
+        -:   53:    void initFilters();
+        -:   54:
+        -:   55:    /**
+        -:   56:     * @brief create
+        -:   57:     * @param img
+        -:   58:     * @param width
+        -:   59:     * @param height
+        -:   60:     * @param channels
+        -:   61:     * @param lapGauss
+        -:   62:     * @param limitLevel
+        -:   63:     */
+        -:   64:    void create(Image *img, bool lapGauss, int limitLevel);
+        -:   65:
+        -:   66:    /**
+        -:   67:     * @brief release
+        -:   68:     */
+    #####:   69:    void release()
+        -:   70:    {
+    #####:   71:        stdVectorClear<Image>(trackerUp);
+    %%%%%:   71-block  0
+    #####:   72:        stdVectorClear<Image>(trackerRec);
+    #####:   73:        stdVectorClear<Image>(stack);
+    #####:   74:        stdVectorClear<Filter>(filters);
+    #####:   75:    }
+        -:   76:
+        -:   77:public:
+        -:   78:
+        -:   79:    ImageVec stack;
+        -:   80:
+        -:   81:    /**
+        -:   82:     * @brief Pyramid
+        -:   83:     * @param img
+        -:   84:     * @param lapGauss is a boolean parameter. If it is true, a Laplacian pyramid
+        -:   85:     * will be created, otherwise a Gaussian one.
+        -:   86:     * @param limitLevel
+        -:   87:     */
+        -:   88:    Pyramid(Image *img, bool lapGauss, int limitLevel);
+        -:   89:
+        -:   90:    /**
+        -:   91:     * @brief Pyramid
+        -:   92:     * @param width
+        -:   93:     * @param height
+        -:   94:     * @param channels
+        -:   95:     * @param lapGauss is a boolean parameter. If it is true, a Laplacian pyramid
+        -:   96:     * will be created, otherwise a Gaussian one.
+        -:   97:     * @param limitLevel
+        -:   98:     */
+        -:   99:    Pyramid(int width, int height, int channels, bool lapGauss, int limitLevel);
+        -:  100:
+        -:  101:    ~Pyramid();
+        -:  102:
+        -:  103:    /**
+        -:  104:     * @brief setLapGauss
+        -:  105:     * @param lapGauss is a boolean parameter. If it is true, a Laplacian pyramid
+        -:  106:     * will be created, otherwise a Gaussian one.
+        -:  107:     */
+        -:  108:    void setLapGauss(bool lapGauss)
+        -:  109:    {
+        -:  110:        this->lapGauss = lapGauss;
+        -:  111:    }
+        -:  112:
+        -:  113:    /**
+        -:  114:     * @brief update recomputes the pyramid given a compatible image, img.
+        -:  115:     * @param img
+        -:  116:     */
+        -:  117:    void update(Image *img);
+        -:  118:
+        -:  119:    /**
+        -:  120:     * @brief SetValue
+        -:  121:     * @param value
+        -:  122:     */
+        -:  123:    void setValue(float value);
+        -:  124:
+        -:  125:    /**
+        -:  126:     * @brief mul is the mul operator ( *= ) between pyramids.
+        -:  127:     * @param pyr
+        -:  128:     */
+        -:  129:    void mul(const Pyramid *pyr);
+        -:  130:
+        -:  131:    /**
+        -:  132:     * @brief add is the add operator ( += ) between pyramids.
+        -:  133:     * @param pyr
+        -:  134:     */
+        -:  135:    void add(const Pyramid *pyr);
+        -:  136:
+        -:  137:    /**
+        -:  138:     * @brief reconstruct evaluates a Gaussian/Laplacian pyramid.
+        -:  139:     * @param imgOut
+        -:  140:     * @return
+        -:  141:     */
+        -:  142:    Image *reconstruct(Image *imgOut);
+        -:  143:
+        -:  144:    /**
+        -:  145:     * @brief blend
+        -:  146:     * @param pyr
+        -:  147:     * @param weight
+        -:  148:     */
+        -:  149:    void blend(Pyramid *pyr, Pyramid *weight);
+        -:  150:
+        -:  151:    /**
+        -:  152:     * @brief size
+        -:  153:     * @return
+        -:  154:     */
+        -:  155:    int size()
+        -:  156:    {
+        -:  157:        return int(stack.size());
+        -:  158:    }
+        -:  159:
+        -:  160:    /**
+        -:  161:     * @brief get
+        -:  162:     * @param index
+        -:  163:     * @return
+        -:  164:     */
+        -:  165:    Image *get(int index)
+        -:  166:    {
+        -:  167:        return stack[index % stack.size()];
+        -:  168:    }
+        -:  169:
+        -:  170:    /**
+        -:  171:     * @brief setNULL
+        -:  172:     */
+    #####:  173:    void setNULL()
+        -:  174:    {
+    #####:  175:        release();
+        -:  176:
+    #####:  177:        flt_gauss = NULL;
+    #####:  178:        flt_sampler = NULL;
+    #####:  179:        flt_sub = NULL;
+    #####:  180:        flt_add = NULL;
+        -:  181:
+    #####:  182:        bCreated = false;
+        -:  183:    }
+        -:  184:};
+        -:  185:
+        -:  186:PIC_INLINE Pyramid::Pyramid(Image *img, bool lapGauss, int limitLevel = 1)
+        -:  187:{
+        -:  188:    setNULL();
+        -:  189:
+        -:  190:    create(img, lapGauss, limitLevel);
+        -:  191:}
+        -:  192:
+    #####:  193:PIC_INLINE Pyramid::Pyramid(int width, int height, int channels, bool lapGauss, int limitLevel = 1)
+    %%%%%:  193-block  0
+    $$$$$:  193-block  1
+    $$$$$:  193-block  2
+    $$$$$:  193-block  3
+    $$$$$:  193-block  4
+    $$$$$:  193-block  5
+    $$$$$:  193-block  6
+    $$$$$:  193-block  7
+        -:  194:{
+    #####:  195:    setNULL();
+    %%%%%:  195-block  0
+        -:  196:
+    #####:  197:    Image *img = new Image(1, width, height, channels);
+    %%%%%:  197-block  0
+    $$$$$:  197-block  1
+    #####:  198:    *img = 0.0f;
+    %%%%%:  198-block  0
+        -:  199:
+    #####:  200:    create(img, lapGauss, limitLevel);
+    %%%%%:  200-block  0
+        -:  201:
+    #####:  202:    delete img;
+    %%%%%:  202-block  0
+    #####:  203:}
+        -:  204:
+    #####:  205:PIC_INLINE Pyramid::~Pyramid()
+    %%%%%:  205-block  0
+    %%%%%:  205-block  1
+    %%%%%:  205-block  2
+        -:  206:{
+    #####:  207:    release();
+    %%%%%:  207-block  0
+    #####:  208:}
+        -:  209:
+    #####:  210:PIC_INLINE void Pyramid::initFilters()
+        -:  211:{
+    #####:  212:    if(!bCreated) {
+    %%%%%:  212-block  0
+    #####:  213:        flt_gauss = new FilterGaussian2D(1.0f);
+    %%%%%:  213-block  0
+    $$$$$:  213-block  1
+    #####:  214:        filters.push_back(flt_gauss);
+    %%%%%:  214-block  0
+        -:  215:
+    #####:  216:        flt_sampler = new FilterSampler2D(0.5f);
+    $$$$$:  216-block  0
+    #####:  217:        filters.push_back(flt_sampler);
+    %%%%%:  217-block  0
+        -:  218:
+    #####:  219:        flt_sub = new FilterSampler2DSub(NULL);
+    #####:  220:        filters.push_back(flt_sub);
+        -:  221:
+    #####:  222:        flt_add = new FilterSampler2DAdd(NULL);
+    #####:  223:        filters.push_back(flt_add);
+        -:  224:
+    #####:  225:        bCreated = true;
+        -:  226:    }
+    #####:  227:}
+    %%%%%:  227-block  0
+        -:  228:
+    #####:  229:PIC_INLINE void Pyramid::create(Image *img, bool lapGauss, int limitLevel = 1)
+        -:  230:{
+    #####:  231:    if(img == NULL) {
+    %%%%%:  231-block  0
+    #####:  232:        return;
+        -:  233:    }
+        -:  234:
+    #####:  235:    if(!img->isValid()) {
+    %%%%%:  235-block  0
+    %%%%%:  235-block  1
+        -:  236:        return;
+        -:  237:    }
+        -:  238:
+    #####:  239:    limitLevel = MAX(limitLevel, 0);
+        -:  240:
+    #####:  241:    this->limitLevel = limitLevel;
+    #####:  242:    this->lapGauss  = lapGauss;
+        -:  243:
+    #####:  244:    initFilters();
+    %%%%%:  244-block  0
+        -:  245:
+    #####:  246:    int levels = log2(MIN(img->width, img->height)) - limitLevel;
+        -:  247:
+    #####:  248:    Image *tmpImg = img;
+    #####:  249:    Image *tmpG = NULL;
+    #####:  250:    Image *tmpD = NULL;
+        -:  251:
+    #####:  252:    for(int i = 0; i < levels; i++) {
+    %%%%%:  252-block  0
+    %%%%%:  252-block  1
+    #####:  253:        tmpG = flt_gauss->Process(Single(tmpImg), NULL);
+    %%%%%:  253-block  0
+    %%%%%:  253-block  1
+    $$$$$:  253-block  2
+    #####:  254:        tmpD = flt_sampler->Process(Single(tmpG), NULL);
+    %%%%%:  254-block  0
+    %%%%%:  254-block  1
+    $$$$$:  254-block  2
+        -:  255:
+    #####:  256:        if(lapGauss) { //Laplacian Pyramid
+    %%%%%:  256-block  0
+    #####:  257:            flt_sub->Process(Double(tmpImg, tmpD), tmpG);
+    %%%%%:  257-block  0
+    #####:  258:            stack.push_back(tmpG);
+    %%%%%:  258-block  0
+        -:  259:        } else { //Gaussian Pyramid
+    #####:  260:            *tmpG = *tmpImg;
+    %%%%%:  260-block  0
+    #####:  261:            stack.push_back(tmpG);
+        -:  262:        }
+        -:  263:
+    #####:  264:        if(i < (levels - 1)) {
+    %%%%%:  264-block  0
+    #####:  265:            trackerUp.push_back(tmpD);
+    %%%%%:  265-block  0
+        -:  266:        }
+        -:  267:
+    #####:  268:        tmpImg = tmpD;
+    %%%%%:  268-block  0
+        -:  269:    }
+        -:  270:
+    #####:  271:    if(tmpD != NULL) {
+    %%%%%:  271-block  0
+    #####:  272:        stack.push_back(tmpD);
+    %%%%%:  272-block  0
+        -:  273:    }
+        -:  274:
+        -:  275:#ifdef PIC_DEBUG
+        -:  276:    printf("Pyramid size: %zu\n", stack.size());
+        -:  277:#endif
+        -:  278:}
+        -:  279:
+    #####:  280:PIC_INLINE void Pyramid::update(Image *img)
+        -:  281:{
+    #####:  282:    if(img == NULL) {
+    %%%%%:  282-block  0
+        -:  283:        return;
+        -:  284:    }
+        -:  285:
+    #####:  286:    if(stack.empty() || !img->isValid()) {
+    %%%%%:  286-block  0
+        -:  287:        return;
+        -:  288:    }
+        -:  289:
+    #####:  290:    if(!stack[0]->isSimilarType(img)) {
+    %%%%%:  290-block  0
+    %%%%%:  290-block  1
+        -:  291:        return;
+        -:  292:    }
+        -:  293:
+    #####:  294:    Image *tmpG = NULL;
+    #####:  295:    Image *tmpD = NULL;
+    #####:  296:    Image *tmpImg = img;
+        -:  297:
+    #####:  298:    int levels = MAX(log2(MIN(img->width, img->height)) - limitLevel, 1);
+    %%%%%:  298-block  0
+    %%%%%:  298-block  1
+    %%%%%:  298-block  2
+        -:  299:
+    #####:  300:    for(int i = 0; i < levels; i++) {
+    %%%%%:  300-block  0
+    %%%%%:  300-block  1
+        -:  301:
+    #####:  302:        tmpG = flt_gauss->Process(Single(tmpImg), stack[i]);
+    %%%%%:  302-block  0
+    %%%%%:  302-block  1
+    $$$$$:  302-block  2
+        -:  303:
+    #####:  304:        if(i == (levels - 1)) {
+    %%%%%:  304-block  0
+    #####:  305:            tmpD = flt_sampler->Process(Double(tmpG, stack[i + 1]), stack[i + 1]);
+    %%%%%:  305-block  0
+    %%%%%:  305-block  1
+    %%%%%:  305-block  2
+    $$$$$:  305-block  3
+        -:  306:        } else {
+    #####:  307:            tmpD = flt_sampler->Process(Double(tmpG, trackerUp[i]), trackerUp[i]);
+    %%%%%:  307-block  0
+    %%%%%:  307-block  1
+    %%%%%:  307-block  2
+    $$$$$:  307-block  3
+        -:  308:        }
+        -:  309:
+    #####:  310:        if(lapGauss) {	//Laplacian Pyramid
+    %%%%%:  310-block  0
+    #####:  311:            flt_sub->Process(Double(tmpImg, tmpD), tmpG);
+    %%%%%:  311-block  0
+    %%%%%:  311-block  1
+        -:  312:        } else { //Gaussian Pyramid
+    #####:  313:            *tmpG = *tmpImg;
+    %%%%%:  313-block  0
+        -:  314:        }
+        -:  315:
+    #####:  316:        tmpImg = tmpD;
+    %%%%%:  316-block  0
+        -:  317:    }
+        -:  318:}
+        -:  319:
+    #####:  320:PIC_INLINE Image *Pyramid::reconstruct(Image *imgOut = NULL)
+        -:  321:{
+    #####:  322:    if(stack.size() < 2) {
+    %%%%%:  322-block  0
+        -:  323:        return imgOut;
+        -:  324:    }
+        -:  325:
+    #####:  326:    int n = int(stack.size()) - 1;
+    %%%%%:  326-block  0
+    #####:  327:    Image *tmp = stack[n];
+    %%%%%:  327-block  0
+        -:  328:
+    #####:  329:    if(trackerRec.empty()) {
+    %%%%%:  329-block  0
+    #####:  330:        for(int i = n; i >= 2; i--) {
+    %%%%%:  330-block  0
+    #####:  331:            Image *tmp2 = flt_add->Process(Double(stack[i - 1], tmp), NULL);
+    %%%%%:  331-block  0
+    %%%%%:  331-block  1
+    $$$$$:  331-block  2
+    #####:  332:            trackerRec.push_back(tmp2);
+    %%%%%:  332-block  0
+    #####:  333:            tmp = tmp2;
+        -:  334:        }
+        -:  335:    } else {
+        -:  336:        int c = 0;
+        -:  337:
+    #####:  338:        for(int i = n; i >= 2; i--) {
+    %%%%%:  338-block  0
+    #####:  339:            flt_add->Process(Double(stack[i - 1], tmp), trackerRec[c]);
+    %%%%%:  339-block  0
+    $$$$$:  339-block  1
+    #####:  340:            tmp = trackerRec[c];
+    %%%%%:  340-block  0
+    #####:  341:            c++;
+    %%%%%:  341-block  0
+        -:  342:        }
+        -:  343:    }    
+        -:  344:
+    #####:  345:    imgOut = flt_add->Process(Double(stack[0], tmp), imgOut);
+    %%%%%:  345-block  0
+    %%%%%:  345-block  1
+        -:  346:
+    #####:  347:    return imgOut;
+    %%%%%:  347-block  0
+        -:  348:}
+        -:  349:
+    #####:  350:PIC_INLINE void Pyramid::setValue(float value)
+        -:  351:{
+    #####:  352:    for(unsigned int i = 0; i < stack.size(); i++) {
+    %%%%%:  352-block  0
+    %%%%%:  352-block  1
+    #####:  353:        *stack[i] = value;
+    %%%%%:  353-block  0
+        -:  354:    }
+    #####:  355:}
+        -:  356:
+    #####:  357:PIC_INLINE void Pyramid::mul(const Pyramid *pyr)
+        -:  358:{
+    #####:  359:    if(stack.size() != pyr->stack.size()) {
+    %%%%%:  359-block  0
+        -:  360:        return;
+        -:  361:    }
+        -:  362:
+    #####:  363:    for(unsigned int i = 0; i < stack.size(); i++) {
+    %%%%%:  363-block  0
+    #####:  364:        *stack[i] *= *pyr->stack[i];
+    %%%%%:  364-block  0
+        -:  365:    }
+        -:  366:}
+        -:  367:
+    #####:  368:PIC_INLINE void Pyramid::add(const Pyramid *pyr)
+        -:  369:{
+    #####:  370:    if(stack.size() != pyr->stack.size()) {
+    %%%%%:  370-block  0
+        -:  371:        return;
+        -:  372:    }
+        -:  373:
+    #####:  374:    for(unsigned int i = 0; i < stack.size(); i++) {
+    %%%%%:  374-block  0
+    #####:  375:        *stack[i] += *pyr->stack[i];
+    %%%%%:  375-block  0
+        -:  376:    }
+        -:  377:}
+        -:  378:
+        -:  379:PIC_INLINE void Pyramid::blend(Pyramid *pyr, Pyramid *weight)
+        -:  380:{
+        -:  381:    if(stack.size() != pyr->stack.size() ||
+        -:  382:       stack.size() != weight->stack.size()) {
+        -:  383:        return;
+        -:  384:    }
+        -:  385:
+        -:  386:    for(unsigned int i = 0; i < stack.size(); i++) {
+        -:  387:        stack[i]->blend(pyr->stack[i], weight->stack[i]);
+        -:  388:    }
+        -:  389:}
+        -:  390:
+        -:  391:} // end namespace pic
+        -:  392:
+        -:  393:#endif /* PIC_ALGORITHMS_PYRAMID_HPP */
+        -:  394:

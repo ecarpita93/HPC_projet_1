@@ -1,0 +1,282 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_conv_1d.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_CONV_1D_HPP
+        -:   19:#define PIC_FILTERING_FILTER_CONV_1D_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:#include "../util/std_util.hpp"
+        -:   23:#include "../util/array.hpp"
+        -:   24:#include "../filtering/filter.hpp"
+        -:   25:#include "../util/precomputed_gaussian.hpp"
+        -:   26:
+        -:   27:namespace pic {
+        -:   28:
+        -:   29:/**
+        -:   30: * @brief The FilterConv1D class
+        -:   31: */
+        -:   32:class FilterConv1D: public Filter
+        -:   33:{
+        -:   34:protected:
+        -:   35:    int dirs[3];
+        -:   36:    float *data; //NOTE: this an external pointer; NEVER release it!
+        -:   37:    int kernelSize, halfKernelSize;
+        -:   38:
+        -:   39:    /**
+        -:   40:     * @brief ProcessBBox
+        -:   41:     * @param dst
+        -:   42:     * @param src
+        -:   43:     * @param box
+        -:   44:     */
+        -:   45:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   46:
+        -:   47:public:
+        -:   48:
+        -:   49:    /**
+        -:   50:     * @brief FilterConv1D
+        -:   51:     */
+        -:   52:    FilterConv1D();
+        -:   53:
+        -:   54:    /**
+        -:   55:     * @brief FilterConv1D
+        -:   56:     * @param data
+        -:   57:     * @param n
+        -:   58:     * @param direction
+        -:   59:     */
+        -:   60:    FilterConv1D(float *data, int kernelSize, int direction);
+        -:   61:
+        -:   62:    ~FilterConv1D();
+        -:   63:
+        -:   64:    /**
+        -:   65:     * @brief update
+        -:   66:     * @param data
+        -:   67:     * @param n
+        -:   68:     * @param direction
+        -:   69:     */
+        -:   70:    void update(float *data, int kernelSize, int direction);
+        -:   71:
+        -:   72:    /**
+        -:   73:     * @brief changePass
+        -:   74:     * @param pass
+        -:   75:     * @param tPass
+        -:   76:     */
+        -:   77:    void changePass(int pass, int tPass);
+        -:   78:
+        -:   79:    /**
+        -:   80:     * @brief ChangePass
+        -:   81:     * @param x
+        -:   82:     * @param y
+        -:   83:     * @param z
+        -:   84:     */
+        -:   85:    void changePass(int x, int y, int z);
+        -:   86:
+        -:   87:    /**
+        -:   88:     * @brief execute
+        -:   89:     * @param imgIn
+        -:   90:     * @param imgOut
+        -:   91:     * @param data
+        -:   92:     * @param n
+        -:   93:     * @param XorY
+        -:   94:     * @return
+        -:   95:     */
+        -:   96:    static Image *execute(Image *imgIn, Image *imgOut, float *data, int n,
+        -:   97:                             bool XorY = true)
+        -:   98:    {
+        -:   99:        FilterConv1D filter(data, n, 0);
+        -:  100:
+        -:  101:        if(XorY) {
+        -:  102:            filter.changePass(1, 0, 0);
+        -:  103:        } else {
+        -:  104:            filter.changePass(0, 1, 0);
+        -:  105:        }
+        -:  106:
+        -:  107:        return filter.Process(Single(imgIn), imgOut);
+        -:  108:    }
+        -:  109:
+        -:  110:    /**
+        -:  111:     * @brief getKernelMean creates an 1D mean kernel.
+        -:  112:     * @param kernelSize
+        -:  113:     * @return
+        -:  114:     */
+        -:  115:    static float *getKernelMean(int kernelSize)
+        -:  116:    {
+        -:  117:        if(kernelSize < 3) {
+        -:  118:            kernelSize = 3;
+        -:  119:        }
+        -:  120:        
+        -:  121:        if((kernelSize % 2) == 0) {
+        -:  122:            kernelSize++;
+        -:  123:        }
+        -:  124:        
+        -:  125:        float *kernel = new float[kernelSize];
+        -:  126:
+        -:  127:        float val = 1.0f / float(kernelSize);
+        -:  128:
+        -:  129:        for(int i = 0; i < kernelSize; i++) {
+        -:  130:            kernel[i] = val;
+        -:  131:        }
+        -:  132:
+        -:  133:        return kernel;
+        -:  134:    }
+        -:  135:};
+        -:  136:
+    #####:  137:PIC_INLINE FilterConv1D::FilterConv1D()
+    %%%%%:  137-block  0
+        -:  138:{
+    #####:  139:    kernelSize = 0;
+    #####:  140:    halfKernelSize = 0;
+    #####:  141:    data = NULL;
+        -:  142:
+    #####:  143:    dirs[0] = 0;
+    #####:  144:    dirs[1] = 0;
+    #####:  145:    dirs[2] = 0;
+    %%%%%:  145-block  0
+        -:  146:}
+        -:  147:
+        -:  148:PIC_INLINE FilterConv1D::FilterConv1D(float *data, int kernelSize, int direction = 0)
+        -:  149:{
+        -:  150:    update(data, kernelSize, direction);
+        -:  151:}
+        -:  152:
+    #####:  153:PIC_INLINE FilterConv1D::~FilterConv1D()
+        -:  154:{
+    #####:  155:    data = NULL;
+    #####:  156:    kernelSize = -1;
+    #####:  157:    halfKernelSize = -1;
+    %%%%%:  157-block  0
+    $$$$$:  157-block  1
+        -:  158:}
+        -:  159:
+    #####:  160:PIC_INLINE void FilterConv1D::update(float *data, int kernelSize, int direction)
+        -:  161:{
+    #####:  162:    if(data == NULL || kernelSize < 1) {
+    %%%%%:  162-block  0
+        -:  163:        return;
+        -:  164:    }
+        -:  165:
+    #####:  166:    this->data = data;
+    #####:  167:    this->kernelSize = kernelSize;
+        -:  168:
+    #####:  169:    this->halfKernelSize = kernelSize >> 1;
+        -:  170:
+    #####:  171:    if(direction > 0) {
+    %%%%%:  171-block  0
+    #####:  172:        dirs[ direction      % 3] = 1;
+    #####:  173:        dirs[(direction + 1) % 3] = 0;
+    #####:  174:        dirs[(direction + 2) % 3] = 0;
+    %%%%%:  174-block  0
+        -:  175:    }
+        -:  176:}
+        -:  177:
+    #####:  178:PIC_INLINE void FilterConv1D::changePass(int pass, int tPass)
+        -:  179:{
+    #####:  180:    int tMod;
+        -:  181:
+    #####:  182:    if(tPass > 1) {
+    %%%%%:  182-block  0
+        -:  183:        tMod = 3;
+        -:  184:    } else {
+    #####:  185:        if(tPass == 1) {
+    %%%%%:  185-block  0
+        -:  186:            tMod = 2;
+        -:  187:        } else {
+    #####:  188:            printf("ERROR: FilterConv1D::ChangePass");
+    %%%%%:  188-block  0
+    #####:  189:            return;
+    %%%%%:  189-block  0
+        -:  190:        }
+        -:  191:    }
+        -:  192:
+    #####:  193:    dirs[pass % tMod] = 1;
+        -:  194:
+    #####:  195:    for(int i = 1; i < tMod; i++) {
+    %%%%%:  195-block  0
+    %%%%%:  195-block  1
+    #####:  196:        dirs[(pass + i) % tMod] = 0;
+    %%%%%:  196-block  0
+        -:  197:    }
+        -:  198:    
+        -:  199:    #ifdef PIC_DEBUG
+        -:  200:        printf("%d %d %d\n",dirs[0],dirs[1],dirs[2]);
+        -:  201:    #endif
+        -:  202:}
+        -:  203:
+        -:  204:PIC_INLINE void FilterConv1D::changePass(int x, int y, int z)
+        -:  205:{
+        -:  206:    dirs[0] = y;
+        -:  207:    dirs[1] = x;
+        -:  208:    dirs[2] = z;
+        -:  209:}
+        -:  210:
+    #####:  211:PIC_INLINE void FilterConv1D::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:  212:{
+    #####:  213:    Image *source = src[0];
+    %%%%%:  213-block  0
+        -:  214:
+    #####:  215:    for(int m = box->z0; m < box->z1; m++) {
+    %%%%%:  215-block  0
+    %%%%%:  215-block  1
+    %%%%%:  215-block  2
+        -:  216:
+    #####:  217:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  217-block  0
+    %%%%%:  217-block  1
+    %%%%%:  217-block  2
+        -:  218:
+    #####:  219:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  219-block  0
+    %%%%%:  219-block  1
+    %%%%%:  219-block  2
+    #####:  220:                float *dst_data = (*dst)(i, j, m);
+        -:  221:
+    #####:  222:                Arrayf::assign(0.0f, dst_data, dst->channels);
+    %%%%%:  222-block  0
+        -:  223:
+    #####:  224:                for(int k = 0; k < kernelSize; k++) { //1D Filtering
+    %%%%%:  224-block  0
+    %%%%%:  224-block  1
+    #####:  225:                    int tmpCoord = k - halfKernelSize;
+        -:  226:
+        -:  227:                    //Address cj
+    #####:  228:                    int cj = j + tmpCoord * dirs[0];
+        -:  229:                    //Address ci
+    #####:  230:                    int ci = i + tmpCoord * dirs[1];
+        -:  231:                    //Address cm
+    #####:  232:                    int cm = m + tmpCoord * dirs[2];
+        -:  233:
+    #####:  234:                    float *tmpSource = (*source)(ci, cj, cm);
+        -:  235:
+    #####:  236:                    for(int l = 0; l < dst->channels; l++) {
+    %%%%%:  236-block  0
+    %%%%%:  236-block  1
+    #####:  237:                        dst_data[l] += tmpSource[l] * data[k];
+    %%%%%:  237-block  0
+        -:  238:                    }
+        -:  239:                }
+        -:  240:            }
+        -:  241:        }
+        -:  242:    }
+    #####:  243:}
+        -:  244:
+        -:  245:} // end namespace pic
+        -:  246:
+        -:  247:#endif /* PIC_FILTERING_FILTER_CONV_1D_HPP */
+        -:  248:

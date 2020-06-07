@@ -1,0 +1,308 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/std_util.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_STD_UTIL_HPP
+        -:   19:#define PIC_UTIL_STD_UTIL_HPP
+        -:   20:
+        -:   21:#include <vector>
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief filterInliers
+        -:   27: * @param vec
+        -:   28: * @param inliers
+        -:   29: * @param vecOut
+        -:   30: */
+        -:   31:template<class T>
+        -:   32:inline void filterInliers(std::vector< T > &vec, std::vector< unsigned int > &inliers, std::vector< T > &vecOut)
+        -:   33:{
+        -:   34:    vecOut.clear();
+        -:   35:
+        -:   36:    if(!inliers.empty()) {
+        -:   37:        for(unsigned int i = 0; i < inliers.size(); i++) {
+        -:   38:            vecOut.push_back(vec[inliers[i]]);
+        -:   39:        }
+        -:   40:    } else {
+        -:   41:        vecOut.assign(vec.begin(), vec.end());
+        -:   42:    }
+        -:   43:}
+        -:   44:
+        -:   45:/**
+        -:   46: * @brief stdVectorClear
+        -:   47: * @param vec
+        -:   48: */
+        -:   49:template<class T>
+       3*:   50:inline void stdVectorClear(std::vector<T *> &vec)
+        -:   51:{
+      13*:   52:    for(unsigned int i = 0; i < vec.size(); i++) {
+      10*:   53:        T *tmp = vec[i];
+        -:   54:
+      10*:   55:        if(tmp != NULL) {
+       9*:   56:            delete tmp;
+        -:   57:        }
+        -:   58:
+      10*:   59:        vec[i] = NULL;
+        -:   60:    }
+        -:   61:
+       3*:   62:    vec.clear();
+       3*:   63:}
+------------------
+_ZN3pic14stdVectorClearINS_6FilterEEEvRSt6vectorIPT_SaIS4_EE:
+    #####:   50:inline void stdVectorClear(std::vector<T *> &vec)
+        -:   51:{
+    #####:   52:    for(unsigned int i = 0; i < vec.size(); i++) {
+    %%%%%:   52-block  0
+    %%%%%:   52-block  1
+    %%%%%:   52-block  2
+    #####:   53:        T *tmp = vec[i];
+    %%%%%:   53-block  0
+        -:   54:
+    #####:   55:        if(tmp != NULL) {
+    %%%%%:   55-block  0
+    #####:   56:            delete tmp;
+    %%%%%:   56-block  0
+        -:   57:        }
+        -:   58:
+    #####:   59:        vec[i] = NULL;
+    %%%%%:   59-block  0
+        -:   60:    }
+        -:   61:
+    #####:   62:    vec.clear();
+    #####:   63:}
+------------------
+_ZN3pic14stdVectorClearINS_5ImageEEEvRSt6vectorIPT_SaIS4_EE:
+        3:   50:inline void stdVectorClear(std::vector<T *> &vec)
+        -:   51:{
+       13:   52:    for(unsigned int i = 0; i < vec.size(); i++) {
+        3:   52-block  0
+       13:   52-block  1
+       10:   52-block  2
+       10:   53:        T *tmp = vec[i];
+       10:   53-block  0
+        -:   54:
+       10:   55:        if(tmp != NULL) {
+       10:   55-block  0
+        9:   56:            delete tmp;
+        9:   56-block  0
+        -:   57:        }
+        -:   58:
+       10:   59:        vec[i] = NULL;
+       10:   59-block  0
+        -:   60:    }
+        -:   61:
+        3:   62:    vec.clear();
+        3:   63:}
+------------------
+        -:   64:
+        -:   65:
+        -:   66:/**
+        -:   67: * @brief stdVectorArrayClear
+        -:   68: * @param vec
+        -:   69: */
+        -:   70:template<class T>
+        -:   71:inline void stdVectorArrayClear(std::vector<T *> &vec)
+        -:   72:{
+        -:   73:    for(unsigned int i = 0; i < vec.size(); i++) {
+        -:   74:        T *tmp = vec[i];
+        -:   75:
+        -:   76:        if(tmp != NULL) {
+        -:   77:            delete[] tmp;
+        -:   78:        }
+        -:   79:    }
+        -:   80:
+        -:   81:    vec.clear();
+        -:   82:}
+        -:   83:
+        -:   84:/**
+        -:   85: * @brief setToANullVector
+        -:   86: * @param vec
+        -:   87: * @param n
+        -:   88: */
+        -:   89:template<class T>
+    #####:   90:inline void setToANullVector(std::vector< T* > &vec, unsigned int n)
+    %%%%%:   90-block  0
+        -:   91:{
+    #####:   92:    if(!vec.empty()) {
+    %%%%%:   92-block  0
+        -:   93:        return;
+        -:   94:    }
+        -:   95:
+    #####:   96:    for(unsigned int i = 0; i < n; i++) {
+    %%%%%:   96-block  0
+    %%%%%:   96-block  1
+    #####:   97:        vec.push_back(NULL);
+    %%%%%:   97-block  0
+    %%%%%:   97-block  1
+        -:   98:    }
+        -:   99:}
+        -:  100:
+        -:  101:/**
+        -:  102: * @brief release
+        -:  103: * @param data
+        -:  104: * @return
+        -:  105: */
+        -:  106:template<class T>
+        -:  107:inline T* releasePtr(T *data)
+        -:  108:{
+        -:  109:    if(data != NULL) {
+        -:  110:        delete data;
+        -:  111:        data = NULL;
+        -:  112:    }
+        -:  113:
+        -:  114:    return data;
+        -:  115:}
+        -:  116:
+        -:  117:/**
+        -:  118: * @brief delete_s
+        -:  119: * @param data
+        -:  120: * @return
+        -:  121: */
+        -:  122:template<class T>
+      10*:  123:inline T* delete_s(T *data)
+        -:  124:{
+       9*:  125:    if(data != NULL) {
+    %%%%%:  125-block  0
+    %%%%%:  125-block  1
+    %%%%%:  125-block  2
+    %%%%%:  125-block  3
+    %%%%%:  125-block  4
+        1:  125-block  5
+        1:  125-block  6
+        1:  125-block  7
+        1:  125-block  8
+    %%%%%:  125-block  9
+    %%%%%:  125-block 10
+    %%%%%:  125-block 11
+    %%%%%:  125-block 12
+        1:  125-block 13
+        1:  125-block 14
+        1:  125-block 15
+        1:  125-block 16
+    #####:  126:        delete data;
+    %%%%%:  126-block  0
+    %%%%%:  126-block  1
+    %%%%%:  126-block  2
+    %%%%%:  126-block  3
+    %%%%%:  126-block  4
+    %%%%%:  126-block  5
+    %%%%%:  126-block  6
+    %%%%%:  126-block  7
+    %%%%%:  126-block  8
+    %%%%%:  126-block  9
+    %%%%%:  126-block 10
+    %%%%%:  126-block 11
+       3*:  127:        data = NULL;
+    %%%%%:  127-block  0
+    %%%%%:  127-block  1
+        1:  127-block  2
+        1:  127-block  3
+    %%%%%:  127-block  4
+    %%%%%:  127-block  5
+    %%%%%:  127-block  6
+        1:  127-block  7
+    %%%%%:  127-block  8
+    %%%%%:  127-block  9
+        -:  128:    }
+       1*:  129:    return data;
+        -:  130:}
+------------------
+_ZN3pic8delete_sINS_14FilterGradientEEEPT_S3_:
+    #####:  123:inline T* delete_s(T *data)
+        -:  124:{
+    #####:  125:    if(data != NULL) {
+    %%%%%:  125-block  0
+    #####:  126:        delete data;
+    #####:  127:        data = NULL;
+        -:  128:    }
+    #####:  129:    return data;
+        -:  130:}
+------------------
+_ZN3pic8delete_sINS_15FilterSampler2DEEEPT_S3_:
+    #####:  123:inline T* delete_s(T *data)
+        -:  124:{
+    #####:  125:    if(data != NULL) {
+    %%%%%:  125-block  0
+    #####:  126:        delete data;
+    #####:  127:        data = NULL;
+        -:  128:    }
+    #####:  129:    return data;
+        -:  130:}
+------------------
+_ZN3pic8delete_sINS_19PrecomputedGaussianEEEPT_S3_:
+        1:  123:inline T* delete_s(T *data)
+        -:  124:{
+        1:  125:    if(data != NULL) {
+        1:  125-block  0
+    #####:  126:        delete data;
+    #####:  127:        data = NULL;
+    %%%%%:  127-block  0
+        -:  128:    }
+        1:  129:    return data;
+        -:  130:}
+------------------
+        -:  131:
+        -:  132:/**
+        -:  133: * @brief delete_vec_s
+        -:  134: * @param data
+        -:  135: * @return
+        -:  136: */
+        -:  137:template<class T>
+     201*:  138:inline T* delete_vec_s(T *data)
+        -:  139:{
+     135*:  140:    if(data != NULL) {
+    %%%%%:  140-block  0
+    %%%%%:  140-block  1
+    %%%%%:  140-block  2
+       42:  140-block  3
+       42:  140-block  4
+       42:  140-block  5
+       42:  140-block  6
+       11:  140-block  7
+       11:  140-block  8
+       11:  140-block  9
+    %%%%%:  140-block 10
+    %%%%%:  140-block 11
+    %%%%%:  140-block 12
+    #####:  141:        delete[] data;
+    %%%%%:  141-block  0
+      82*:  142:        data = NULL;
+    %%%%%:  142-block  0
+    %%%%%:  142-block  1
+    %%%%%:  142-block  2
+       21:  142-block  3
+       21:  142-block  4
+       21:  142-block  5
+    %%%%%:  142-block  6
+       11:  142-block  7
+        8:  142-block  8
+    %%%%%:  142-block  9
+    %%%%%:  142-block 10
+    %%%%%:  142-block 11
+    %%%%%:  142-block 12
+        -:  143:    }
+        -:  144:    return data;
+        -:  145:}
+        -:  146:
+        -:  147:
+        -:  148:} // end namespace pic
+        -:  149:
+        -:  150:#endif // PIC_UTIL_STD_UTIL_HPP

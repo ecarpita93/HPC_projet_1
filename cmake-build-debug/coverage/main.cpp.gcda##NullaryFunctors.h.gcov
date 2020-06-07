@@ -1,0 +1,332 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/functors/NullaryFunctors.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2008-2016 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5://
+        -:    6:// This Source Code Form is subject to the terms of the Mozilla
+        -:    7:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    8:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:    9:
+        -:   10:#ifndef EIGEN_NULLARY_FUNCTORS_H
+        -:   11:#define EIGEN_NULLARY_FUNCTORS_H
+        -:   12:
+        -:   13:namespace Eigen {
+        -:   14:
+        -:   15:namespace internal {
+        -:   16:
+        -:   17:template<typename Scalar>
+        -:   18:struct scalar_constant_op {
+  919845*:   19:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE scalar_constant_op(const scalar_constant_op& other) : m_other(other.m_other) { }
+    %%%%%:   19-block  0
+    35328:   19-block  1
+     1503:   19-block  2
+    %%%%%:   19-block  3
+    %%%%%:   19-block  4
+     1503:   19-block  5
+    %%%%%:   19-block  6
+    %%%%%:   19-block  7
+     1530:   19-block  8
+    %%%%%:   19-block  9
+    %%%%%:   19-block 10
+   392445:   19-block 11
+     1530:   19-block 12
+    %%%%%:   19-block 13
+    %%%%%:   19-block 14
+    %%%%%:   19-block 15
+     4536:   19-block 16
+        6:   19-block 17
+     1503:   19-block 18
+    %%%%%:   19-block 19
+    %%%%%:   19-block 20
+    35328:   19-block 21
+     1530:   19-block 22
+    %%%%%:   19-block 23
+    %%%%%:   19-block 24
+    %%%%%:   19-block 25
+    %%%%%:   19-block 26
+     1530:   19-block 27
+    %%%%%:   19-block 28
+    %%%%%:   19-block 29
+        3:   19-block 30
+     1503:   19-block 31
+     1503:   19-block 32
+     1530:   19-block 33
+    %%%%%:   19-block 34
+    %%%%%:   19-block 35
+        3:   19-block 36
+    %%%%%:   19-block 37
+     1530:   19-block 38
+   430833:   19-block 39
+     3033:   19-block 40
+       72:   19-block 41
+        9:   19-block 42
+    %%%%%:   19-block 43
+    %%%%%:   19-block 44
+        3:   19-block 45
+       18:   19-block 46
+        3:   19-block 47
+       6*:   20:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE scalar_constant_op(const Scalar& other) : m_other(other) { }
+    %%%%%:   20-block  0
+    %%%%%:   20-block  1
+    %%%%%:   20-block  2
+        3:   20-block  3
+ 3296664*:   21:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Scalar operator() () const { return m_other; }
+       66:   21-block  0
+       33:   21-block  1
+       66:   21-block  2
+       33:   21-block  3
+       66:   21-block  4
+       33:   21-block  5
+       66:   21-block  6
+       33:   21-block  7
+       66:   21-block  8
+       33:   21-block  9
+       66:   21-block 10
+       33:   21-block 11
+       66:   21-block 12
+       33:   21-block 13
+   115584:   21-block 14
+     5376:   21-block 15
+       66:   21-block 16
+     5376:   21-block 17
+       33:   21-block 18
+     5376:   21-block 19
+    %%%%%:   21-block 20
+    %%%%%:   21-block 21
+    %%%%%:   21-block 22
+     5373:   21-block 23
+    %%%%%:   21-block 24
+    %%%%%:   21-block 25
+    %%%%%:   21-block 26
+  1373178:   21-block 27
+  1376256:   21-block 28
+     5367:   21-block 29
+    %%%%%:   21-block 30
+    %%%%%:   21-block 31
+    %%%%%:   21-block 32
+    %%%%%:   21-block 33
+       12:   21-block 34
+       21:   21-block 35
+    %%%%%:   21-block 36
+    %%%%%:   21-block 37
+    %%%%%:   21-block 38
+     6132:   21-block 39
+     5355:   21-block 40
+    %%%%%:   21-block 41
+    %%%%%:   21-block 42
+    %%%%%:   21-block 43
+    %%%%%:   21-block 44
+    %%%%%:   21-block 45
+    %%%%%:   21-block 46
+    %%%%%:   21-block 47
+   392445:   21-block 48
+    %%%%%:   21-block 49
+    %%%%%:   21-block 50
+    %%%%%:   21-block 51
+    %%%%%:   21-block 52
+    %%%%%:   21-block 53
+    %%%%%:   21-block 54
+    %%%%%:   21-block 55
+    %%%%%:   21-block 56
+       21:   21-block 57
+        -:   22:  template<typename PacketType>
+93613821*:   23:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const PacketType packetOp() const { return internal::pset1<PacketType>(m_other); }
+     3744:   23-block  0
+     2112:   23-block  1
+     3744:   23-block  2
+     1056:   23-block  3
+     3744:   23-block  4
+    %%%%%:   23-block  5
+    %%%%%:   23-block  6
+    48384:   23-block  7
+    %%%%%:   23-block  8
+    %%%%%:   23-block  9
+ 91782912:   23-block 10
+   342336:   23-block 11
+    %%%%%:   23-block 12
+    %%%%%:   23-block 13
+     1149:   23-block 14
+    %%%%%:   23-block 15
+   341571:   23-block 16
+    %%%%%:   23-block 17
+    %%%%%:   23-block 18
+    %%%%%:   23-block 19
+    %%%%%:   23-block 20
+    %%%%%:   23-block 21
+   393408:   23-block 22
+    %%%%%:   23-block 23
+      192:   23-block 24
+   688320:   23-block 25
+     1149:   23-block 26
+        -:   24:  const Scalar m_other;
+        -:   25:};
+        -:   26:template<typename Scalar>
+        -:   27:struct functor_traits<scalar_constant_op<Scalar> >
+        -:   28:{ enum { Cost = 0 /* as the constant value should be loaded in register only once for the whole expression */,
+        -:   29:         PacketAccess = packet_traits<Scalar>::Vectorizable, IsRepeatable = true }; };
+        -:   30:
+        -:   31:template<typename Scalar> struct scalar_identity_op {
+        6:   32:  EIGEN_EMPTY_STRUCT_CTOR(scalar_identity_op)
+        3:   32-block  0
+        3:   32-block  1
+        -:   33:  template<typename IndexType>
+  3147264:   34:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Scalar operator() (IndexType row, IndexType col) const { return row==col ? Scalar(1) : Scalar(0); }
+  3147264:   34-block  0
+        -:   35:};
+        -:   36:template<typename Scalar>
+        -:   37:struct functor_traits<scalar_identity_op<Scalar> >
+        -:   38:{ enum { Cost = NumTraits<Scalar>::AddCost, PacketAccess = false, IsRepeatable = true }; };
+        -:   39:
+        -:   40:template <typename Scalar, typename Packet, bool IsInteger> struct linspaced_op_impl;
+        -:   41:
+        -:   42:template <typename Scalar, typename Packet>
+        -:   43:struct linspaced_op_impl<Scalar,Packet,/*IsInteger*/false>
+        -:   44:{
+        -:   45:  linspaced_op_impl(const Scalar& low, const Scalar& high, Index num_steps) :
+        -:   46:    m_low(low), m_high(high), m_size1(num_steps==1 ? 1 : num_steps-1), m_step(num_steps==1 ? Scalar() : (high-low)/Scalar(num_steps-1)),
+        -:   47:    m_flip(numext::abs(high)<numext::abs(low))
+        -:   48:  {}
+        -:   49:
+        -:   50:  template<typename IndexType>
+        -:   51:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Scalar operator() (IndexType i) const {
+        -:   52:    typedef typename NumTraits<Scalar>::Real RealScalar;
+        -:   53:    if(m_flip)
+        -:   54:      return (i==0)? m_low : (m_high - RealScalar(m_size1-i)*m_step);
+        -:   55:    else
+        -:   56:      return (i==m_size1)? m_high : (m_low + RealScalar(i)*m_step);
+        -:   57:  }
+        -:   58:
+        -:   59:  template<typename IndexType>
+        -:   60:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Packet packetOp(IndexType i) const
+        -:   61:  {
+        -:   62:    // Principle:
+        -:   63:    // [low, ..., low] + ( [step, ..., step] * ( [i, ..., i] + [0, ..., size] ) )
+        -:   64:    if(m_flip)
+        -:   65:    {
+        -:   66:      Packet pi = plset<Packet>(Scalar(i-m_size1));
+        -:   67:      Packet res = padd(pset1<Packet>(m_high), pmul(pset1<Packet>(m_step), pi));
+        -:   68:      if(i==0)
+        -:   69:        res = pinsertfirst(res, m_low);
+        -:   70:      return res;
+        -:   71:    }
+        -:   72:    else
+        -:   73:    {
+        -:   74:      Packet pi = plset<Packet>(Scalar(i));
+        -:   75:      Packet res = padd(pset1<Packet>(m_low), pmul(pset1<Packet>(m_step), pi));
+        -:   76:      if(i==m_size1-unpacket_traits<Packet>::size+1)
+        -:   77:        res = pinsertlast(res, m_high);
+        -:   78:      return res;
+        -:   79:    }
+        -:   80:  }
+        -:   81:
+        -:   82:  const Scalar m_low;
+        -:   83:  const Scalar m_high;
+        -:   84:  const Index m_size1;
+        -:   85:  const Scalar m_step;
+        -:   86:  const bool m_flip;
+        -:   87:};
+        -:   88:
+        -:   89:template <typename Scalar, typename Packet>
+        -:   90:struct linspaced_op_impl<Scalar,Packet,/*IsInteger*/true>
+        -:   91:{
+        -:   92:  linspaced_op_impl(const Scalar& low, const Scalar& high, Index num_steps) :
+        -:   93:    m_low(low),
+        -:   94:    m_multiplier((high-low)/convert_index<Scalar>(num_steps<=1 ? 1 : num_steps-1)),
+        -:   95:    m_divisor(convert_index<Scalar>((high>=low?num_steps:-num_steps)+(high-low))/((numext::abs(high-low)+1)==0?1:(numext::abs(high-low)+1))),
+        -:   96:    m_use_divisor(num_steps>1 && (numext::abs(high-low)+1)<num_steps)
+        -:   97:  {}
+        -:   98:
+        -:   99:  template<typename IndexType>
+        -:  100:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+        -:  101:  const Scalar operator() (IndexType i) const
+        -:  102:  {
+        -:  103:    if(m_use_divisor) return m_low + convert_index<Scalar>(i)/m_divisor;
+        -:  104:    else              return m_low + convert_index<Scalar>(i)*m_multiplier;
+        -:  105:  }
+        -:  106:
+        -:  107:  const Scalar m_low;
+        -:  108:  const Scalar m_multiplier;
+        -:  109:  const Scalar m_divisor;
+        -:  110:  const bool m_use_divisor;
+        -:  111:};
+        -:  112:
+        -:  113:// ----- Linspace functor ----------------------------------------------------------------
+        -:  114:
+        -:  115:// Forward declaration (we default to random access which does not really give
+        -:  116:// us a speed gain when using packet access but it allows to use the functor in
+        -:  117:// nested expressions).
+        -:  118:template <typename Scalar, typename PacketType> struct linspaced_op;
+        -:  119:template <typename Scalar, typename PacketType> struct functor_traits< linspaced_op<Scalar,PacketType> >
+        -:  120:{
+        -:  121:  enum
+        -:  122:  {
+        -:  123:    Cost = 1,
+        -:  124:    PacketAccess =   (!NumTraits<Scalar>::IsInteger) && packet_traits<Scalar>::HasSetLinear && packet_traits<Scalar>::HasBlend,
+        -:  125:                  /*&& ((!NumTraits<Scalar>::IsInteger) || packet_traits<Scalar>::HasDiv),*/ // <- vectorization for integer is currently disabled
+        -:  126:    IsRepeatable = true
+        -:  127:  };
+        -:  128:};
+        -:  129:template <typename Scalar, typename PacketType> struct linspaced_op
+        -:  130:{
+        -:  131:  linspaced_op(const Scalar& low, const Scalar& high, Index num_steps)
+        -:  132:    : impl((num_steps==1 ? high : low),high,num_steps)
+        -:  133:  {}
+        -:  134:
+        -:  135:  template<typename IndexType>
+        -:  136:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Scalar operator() (IndexType i) const { return impl(i); }
+        -:  137:
+        -:  138:  template<typename Packet,typename IndexType>
+        -:  139:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Packet packetOp(IndexType i) const { return impl.packetOp(i); }
+        -:  140:
+        -:  141:  // This proxy object handles the actual required temporaries and the different
+        -:  142:  // implementations (integer vs. floating point).
+        -:  143:  const linspaced_op_impl<Scalar,PacketType,NumTraits<Scalar>::IsInteger> impl;
+        -:  144:};
+        -:  145:
+        -:  146:// Linear access is automatically determined from the operator() prototypes available for the given functor.
+        -:  147:// If it exposes an operator()(i,j), then we assume the i and j coefficients are required independently
+        -:  148:// and linear access is not possible. In all other cases, linear access is enabled.
+        -:  149:// Users should not have to deal with this structure.
+        -:  150:template<typename Functor> struct functor_has_linear_access { enum { ret = !has_binary_operator<Functor>::value }; };
+        -:  151:
+        -:  152:// For unreliable compilers, let's specialize the has_*ary_operator
+        -:  153:// helpers so that at least built-in nullary functors work fine.
+        -:  154:#if !( (EIGEN_COMP_MSVC>1600) || (EIGEN_GNUC_AT_LEAST(4,8)) || (EIGEN_COMP_ICC>=1600))
+        -:  155:template<typename Scalar,typename IndexType>
+        -:  156:struct has_nullary_operator<scalar_constant_op<Scalar>,IndexType> { enum { value = 1}; };
+        -:  157:template<typename Scalar,typename IndexType>
+        -:  158:struct has_unary_operator<scalar_constant_op<Scalar>,IndexType> { enum { value = 0}; };
+        -:  159:template<typename Scalar,typename IndexType>
+        -:  160:struct has_binary_operator<scalar_constant_op<Scalar>,IndexType> { enum { value = 0}; };
+        -:  161:
+        -:  162:template<typename Scalar,typename IndexType>
+        -:  163:struct has_nullary_operator<scalar_identity_op<Scalar>,IndexType> { enum { value = 0}; };
+        -:  164:template<typename Scalar,typename IndexType>
+        -:  165:struct has_unary_operator<scalar_identity_op<Scalar>,IndexType> { enum { value = 0}; };
+        -:  166:template<typename Scalar,typename IndexType>
+        -:  167:struct has_binary_operator<scalar_identity_op<Scalar>,IndexType> { enum { value = 1}; };
+        -:  168:
+        -:  169:template<typename Scalar, typename PacketType,typename IndexType>
+        -:  170:struct has_nullary_operator<linspaced_op<Scalar,PacketType>,IndexType> { enum { value = 0}; };
+        -:  171:template<typename Scalar, typename PacketType,typename IndexType>
+        -:  172:struct has_unary_operator<linspaced_op<Scalar,PacketType>,IndexType> { enum { value = 1}; };
+        -:  173:template<typename Scalar, typename PacketType,typename IndexType>
+        -:  174:struct has_binary_operator<linspaced_op<Scalar,PacketType>,IndexType> { enum { value = 0}; };
+        -:  175:
+        -:  176:template<typename Scalar,typename IndexType>
+        -:  177:struct has_nullary_operator<scalar_random_op<Scalar>,IndexType> { enum { value = 1}; };
+        -:  178:template<typename Scalar,typename IndexType>
+        -:  179:struct has_unary_operator<scalar_random_op<Scalar>,IndexType> { enum { value = 0}; };
+        -:  180:template<typename Scalar,typename IndexType>
+        -:  181:struct has_binary_operator<scalar_random_op<Scalar>,IndexType> { enum { value = 0}; };
+        -:  182:#endif
+        -:  183:
+        -:  184:} // end namespace internal
+        -:  185:
+        -:  186:} // end namespace Eigen
+        -:  187:
+        -:  188:#endif // EIGEN_NULLARY_FUNCTORS_H

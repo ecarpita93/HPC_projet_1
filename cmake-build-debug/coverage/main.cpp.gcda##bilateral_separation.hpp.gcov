@@ -1,0 +1,112 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/algorithms/bilateral_separation.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_ALGORITHMS_BILATERAL_SEPARATION_HPP
+        -:   19:#define PIC_ALGORITHMS_BILATERAL_SEPARATION_HPP
+        -:   20:
+        -:   21:#include "../image.hpp"
+        -:   22:#include "../filtering/filter_bilateral_2ds.hpp"
+        -:   23:#include "../util/math.hpp"
+        -:   24:
+        -:   25:namespace pic {
+        -:   26:
+        -:   27:/**
+        -:   28: * @brief bilateralSeparation
+        -:   29: * @param imgIn
+        -:   30: * @param out
+        -:   31: * @param sigma_s
+        -:   32: * @param sigma_r
+        -:   33: * @param bLogDomain
+        -:   34: */
+    #####:   35:PIC_INLINE void bilateralSeparation(Image *imgIn, ImageVec &out,
+        -:   36:                                         float sigma_s = -1.0f,
+        -:   37:                                         float sigma_r = 0.4f,
+        -:   38:                                         bool bLogDomain = false)
+        -:   39:{
+    #####:   40:    if(imgIn == NULL) {
+    %%%%%:   40-block  0
+        -:   41:        return;
+        -:   42:    }
+        -:   43:
+    #####:   44:    if(!imgIn->isValid()) {
+    %%%%%:   44-block  0
+    %%%%%:   44-block  1
+        -:   45:        return;
+        -:   46:    }
+        -:   47:
+    #####:   48:    if(out.size() < 2) {
+    %%%%%:   48-block  0
+    #####:   49:        out.push_back(NULL);
+    %%%%%:   49-block  0
+    #####:   50:        out.push_back(NULL);
+        -:   51:    }
+        -:   52:
+    #####:   53:    if(sigma_s <= 0.0f) {
+    %%%%%:   53-block  0
+    #####:   54:        sigma_s = MAX(imgIn->widthf, imgIn->heightf) * 0.02f;
+    %%%%%:   54-block  0
+    %%%%%:   54-block  1
+    %%%%%:   54-block  2
+        -:   55:    }
+        -:   56:
+    #####:   57:    if(sigma_r <= 0.0f) {
+    %%%%%:   57-block  0
+    #####:   58:        sigma_r = 0.4f;
+    %%%%%:   58-block  0
+        -:   59:    }
+        -:   60:
+    #####:   61:    Image *img_tmp = imgIn->clone();
+    %%%%%:   61-block  0
+        -:   62:
+    #####:   63:    img_tmp->applyFunction(log10fPlusEpsilon);
+        -:   64:
+    #####:   65:    Image *img_flt = FilterBilateral2DS::execute(img_tmp, NULL, sigma_s, sigma_r);
+        -:   66:
+    #####:   67:    if(!bLogDomain) {
+    #####:   68:        img_flt->applyFunction(powf10fMinusEpsilon);
+    %%%%%:   68-block  0
+        -:   69:    }
+        -:   70:
+    #####:   71:    Image *img_detail = img_tmp;
+        -:   72:
+    #####:   73:    if(bLogDomain) {
+    %%%%%:   73-block  0
+    #####:   74:        *img_detail -= *img_flt;
+    %%%%%:   74-block  0
+        -:   75:    } else {
+    #####:   76:        *img_detail = imgIn;
+    %%%%%:   76-block  0
+    %%%%%:   76-block  1
+    $$$$$:   76-block  2
+    #####:   77:        *img_detail /= *img_flt;
+    #####:   78:        img_detail->removeSpecials();
+        -:   79:    }
+        -:   80:
+    #####:   81:    out[0] = img_flt;
+    %%%%%:   81-block  0
+    #####:   82:    out[1] = img_detail;
+    %%%%%:   82-block  0
+        -:   83:}
+        -:   84:
+        -:   85:} // end namespace pic
+        -:   86:
+        -:   87:#endif /* PIC_ALGORITHMS_BILATERAL_SEPARATION_HPP */
+        -:   88:

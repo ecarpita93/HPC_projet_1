@@ -1,0 +1,522 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/point_samplers/sampler_random.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_POINT_SAMPLERS_SAMPLER_RANDOM_HPP
+        -:   19:#define PIC_POINT_SAMPLERS_SAMPLER_RANDOM_HPP
+        -:   20:
+        -:   21:#include <vector>
+        -:   22:#include <set>
+        -:   23:
+        -:   24:#include <iostream>
+        -:   25:#include <fstream>
+        -:   26:#include <random>
+        -:   27:
+        -:   28:#include "../base.hpp"
+        -:   29:#include "../image.hpp"
+        -:   30:#include "../util/math.hpp"
+        -:   31:#include "../util/point_samplers.hpp"
+        -:   32:
+        -:   33:#include "../point_samplers/sampler_monte_carlo.hpp"
+        -:   34:#include "../point_samplers/sampler_dart_throwing.hpp"
+        -:   35:#include "../point_samplers/sampler_bridson.hpp"
+        -:   36:
+        -:   37:namespace pic {
+        -:   38:
+        -:   39:/**
+        -:   40: * @brief The RandomSampler class
+        -:   41: */
+        -:   42:template <unsigned int N>
+        -:   43:class RandomSampler
+        -:   44:{
+        -:   45:protected:
+        -:   46:    SAMPLER_TYPE type;
+        -:   47:    std::mt19937 *m;
+        -:   48:    std::set<int> track;
+        -:   49:
+        -:   50:public:
+        -:   51:    //Samples
+        -:   52:    std::vector<float>	samples;
+        -:   53:    std::vector<int>	samplesR;
+        -:   54:
+        -:   55:    //Boundaries for each level
+        -:   56:    std::vector<int>	levels;
+        -:   57:    std::vector<int>	levelsR;
+        -:   58:
+        -:   59:    Vec<N, int> window;
+        -:   60:    int nSamples;
+        -:   61:
+        -:   62:    /**
+        -:   63:     * @brief RandomSampler
+        -:   64:     */
+        -:   65:    RandomSampler()
+        -:   66:    {
+        -:   67:
+        -:   68:    }
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief RandomSampler
+        -:   72:     * @param type
+        -:   73:     * @param window
+        -:   74:     * @param nSamples
+        -:   75:     * @param nLevels
+        -:   76:     */
+        -:   77:    RandomSampler(SAMPLER_TYPE type, Vec<N, int> window, int nSamples, int nLevels, unsigned int seed);
+        -:   78:
+        -:   79:    /**
+        -:   80:     * @brief update
+        -:   81:     * @param type
+        -:   82:     * @param window
+        -:   83:     * @param nSamples
+        -:   84:     * @param nLevels
+        -:   85:     */
+        -:   86:    void update(SAMPLER_TYPE type, Vec<N, int> window, int nSamples, int nLevels);
+        -:   87:
+        -:   88:    /**
+        -:   89:     * @brief render2Int
+        -:   90:     */
+        -:   91:    void render2Int();
+        -:   92:
+        -:   93:    /**
+        -:   94:     * @brief wrap
+        -:   95:     * @param alpha
+        -:   96:     */
+        -:   97:    void wrap(float alpha);
+        -:   98:
+        -:   99:    /**
+        -:  100:     * @brief cutRescale
+        -:  101:     * @param cutDim
+        -:  102:     */
+        -:  103:    void cutRescale(unsigned int cutDim);
+        -:  104:
+        -:  105:    /**
+        -:  106:     * @brief getSamplesPerLevel
+        -:  107:     * @param level
+        -:  108:     * @return
+        -:  109:     */
+        -:  110:    int getSamplesPerLevel(int level);
+        -:  111:
+        -:  112:    /**
+        -:  113:     * @brief getSampleAt
+        -:  114:     * @param level
+        -:  115:     * @param i
+        -:  116:     * @param x
+        -:  117:     * @param y
+        -:  118:     */
+        -:  119:    void getSampleAt(int level, int i, int &x, int &y);
+        -:  120:
+        -:  121:    /**
+        -:  122:     * @brief Write
+        -:  123:     * @param name
+        -:  124:     * @param level
+        -:  125:     */
+        -:  126:    void Write(std::string name, int level);
+        -:  127:
+        -:  128:    /**
+        -:  129:     * @brief generateFigureRS
+        -:  130:     * @param nameOut
+        -:  131:     * @param type
+        -:  132:     * @param window
+        -:  133:     * @param nSamples
+        -:  134:     * @param nLevels
+        -:  135:     */
+        -:  136:    static void generateFigureRS(std::string nameOut, SAMPLER_TYPE type, int window,
+        -:  137:                                 int nSamples, int nLevels)
+        -:  138:    {
+        -:  139:        Vec<2, int> w = Vec<2, int>(window, window);
+        -:  140:        RandomSampler<2> *p2Ds = new RandomSampler<2>(type, w, nSamples, nLevels, 0);
+        -:  141:
+        -:  142:        for(int i = 0; i < p2Ds->levelsR.size(); i++) {
+        -:  143:            std::string str = nameOut;
+        -:  144:            std::stringstream sstr;
+        -:  145:            sstr << i;
+        -:  146:            str = str + sstr.str() + ".pfm";
+        -:  147:            p2Ds->Write(str, i);
+        -:  148:        }
+        -:  149:    }
+        -:  150:
+        -:  151:    /**
+        -:  152:     * @brief Generate
+        -:  153:     * @param type
+        -:  154:     * @param window
+        -:  155:     */
+        -:  156:    static void Generate(SAMPLER_TYPE type, int window)
+        -:  157:    {
+        -:  158:        int c = 1;
+        -:  159:
+        -:  160:        for(int i = 1; i <= 5; i++) {
+        -:  161:            RandomSampler<N> *p2Ds = new RandomSampler<N>(type, window * c, window * c,
+        -:  162:                    1); //2*c,1);
+        -:  163:            printf("Samples expected: %d \t Real Samples: %d\n", (window * 2)*c,
+        -:  164:                   p2Ds->samplesR.size() / N);
+        -:  165:            std::string str = "test_poisson_sampler_";
+        -:  166:            std::stringstream sstr;
+        -:  167:            sstr << i;
+        -:  168:            str = str + sstr.str() + ".pfm";
+        -:  169:            p2Ds->Write(str, 0);
+        -:  170:            c *= 2;
+        -:  171:        }
+        -:  172:    }
+        -:  173:};
+        -:  174:
+    #####:  175:template <unsigned int N> PIC_INLINE RandomSampler<N>::RandomSampler(
+    #####:  176:    SAMPLER_TYPE type, Vec<N, int> window, int nSamples, int nLevels, unsigned int seed)
+    %%%%%:  176-block  0
+    $$$$$:  176-block  1
+    $$$$$:  176-block  2
+    $$$$$:  176-block  3
+    $$$$$:  176-block  4
+    $$$$$:  176-block  5
+    $$$$$:  176-block  6
+    $$$$$:  176-block  7
+    $$$$$:  176-block  8
+    $$$$$:  176-block  9
+        -:  177:{
+    #####:  178:    m = new std::mt19937(seed);
+    %%%%%:  178-block  0
+    %%%%%:  178-block  1
+    #####:  179:    update(type, window, nSamples, nLevels);
+    %%%%%:  179-block  0
+    #####:  180:}
+    %%%%%:  180-block  0
+        -:  181:
+    #####:  182:template <unsigned int N> PIC_INLINE void RandomSampler<N>::cutRescale(
+        -:  183:    unsigned int cutDim)
+        -:  184:{
+        -:  185:    if(cutDim >= N) {
+        -:  186:#ifdef PIC_DEBUG
+        -:  187:        printf("cutRescale: not cuts.\n");
+        -:  188:#endif
+        -:  189:        return;
+        -:  190:    }
+        -:  191:
+        -:  192:    float cutValue = float(window[cutDim]) / float(window[0]);
+        -:  193:
+        -:  194:#ifdef PIC_DEBUG
+        -:  195:    printf("CutSize: %f\n", cutValue);
+        -:  196:#endif
+        -:  197:
+        -:  198:    std::vector<float> tmpCutSamples;
+        -:  199:    std::vector<int> tmpCutLevels;
+        -:  200:
+        -:  201:    int prevCutSamples = 0;
+        -:  202:
+        -:  203:    for(unsigned int i = 0; i < levels.size(); i++) {
+        -:  204:        int start, end;
+        -:  205:
+        -:  206:        if(i == 0) {
+        -:  207:            start = 0;
+        -:  208:        } else {
+        -:  209:            start = levels[i - 1];
+        -:  210:        }
+        -:  211:
+        -:  212:        end = levels[i];
+        -:  213:
+        -:  214:        for(int j = start; j < end; j += N) {
+        -:  215:            //cut
+        -:  216:            if(fabsf(samples[j + cutDim]) <= cutValue) {
+        -:  217:                //rescale
+        -:  218:                samples[j + cutDim] /= cutValue;
+        -:  219:
+        -:  220:                for(unsigned int k = 0; k < N; k++) {
+        -:  221:                    tmpCutSamples.push_back(samples[j + k]);
+        -:  222:                }
+        -:  223:            }
+        -:  224:        }
+        -:  225:
+        -:  226:        int tmpCutSamples_size = int(tmpCutSamples.size());
+        -:  227:        if(prevCutSamples != tmpCutSamples_size) {
+        -:  228:            tmpCutLevels.push_back(int(tmpCutSamples.size()));
+        -:  229:            prevCutSamples = int(tmpCutSamples.size());
+        -:  230:        }
+        -:  231:    }
+        -:  232:
+        -:  233:    samples.clear();
+        -:  234:    levels.clear();
+        -:  235:
+        -:  236:    samples.insert(samples.begin(), tmpCutSamples.begin(), tmpCutSamples.end());
+        -:  237:    levels.insert(levels.begin(), tmpCutLevels.begin(), tmpCutLevels.end());
+        -:  238:}
+        -:  239:
+        -:  240:template <unsigned int N> PIC_INLINE void RandomSampler<N>::wrap(float alpha)
+        -:  241:{
+        -:  242:    float x, y, ang, r, r2;
+        -:  243:
+        -:  244:    for(int i = 0; i < samples.size(); i += 2) {
+        -:  245:        x = samples[i];
+        -:  246:        y = samples[i + 1];
+        -:  247:        ang = atan2f(y, x);
+        -:  248:        r = sqrtf(x * x + y * y);
+        -:  249:        r2 = powf(r, alpha);
+        -:  250:        samples[i]   = (r2 * cosf(ang));
+        -:  251:        samples[i + 1] = (r2 * sinf(ang));
+        -:  252:    }
+        -:  253:}
+        -:  254:
+    #####:  255:template <unsigned int N> PIC_INLINE void RandomSampler<N>::update(
+        -:  256:    SAMPLER_TYPE type, Vec<N, int> window, int nSamples, int nLevels)
+        -:  257:{
+        -:  258:    //Resetting vectors
+    #####:  259:    samples.clear();
+    %%%%%:  259-block  0
+    #####:  260:    samplesR.clear();
+    %%%%%:  260-block  0
+    #####:  261:    levels.clear();
+    %%%%%:  261-block  0
+    #####:  262:    levelsR.clear();
+    %%%%%:  262-block  0
+        -:  263:
+    #####:  264:    nSamples = MAX(nSamples, 1);
+        -:  265:
+    #####:  266:    this->type = type;
+    #####:  267:    this->window = window;
+    %%%%%:  267-block  0
+    #####:  268:    this->nSamples = nSamples;
+    %%%%%:  268-block  0
+        -:  269:
+    #####:  270:    float radius = PoissonRadius(nSamples);
+        -:  271:
+    #####:  272:    for(int i = 0; i < nLevels; i++) {
+    %%%%%:  272-block  0
+    %%%%%:  272-block  1
+    #####:  273:        float factor = powf(2.0f, float(i));
+    #####:  274:        float tmpRadius = radius * factor;
+        -:  275:
+    #####:  276:        switch(type) {
+    %%%%%:  276-block  0
+    #####:  277:        case ST_BRIDSON:
+    #####:  278:            getBridsonSamples< N >(m, tmpRadius, samples);
+    %%%%%:  278-block  0
+    #####:  279:            break;
+        -:  280:
+    #####:  281:        case ST_DARTTHROWING:
+    #####:  282:            getDartThrowingSamples< N >(m, tmpRadius * tmpRadius, nSamples, samples);
+    %%%%%:  282-block  0
+    #####:  283:            break;
+        -:  284:
+    #####:  285:        case ST_MONTECARLO:
+    #####:  286:            getMonteCarloSamples< N >(m, nSamples, samples);
+    %%%%%:  286-block  0
+    #####:  287:            break;
+        -:  288:
+    #####:  289:        case ST_MONTECARLO_S:
+    #####:  290:            getMonteCarloStratifiedSamples< N >(m, nSamples, samples);
+    %%%%%:  290-block  0
+    #####:  291:            break;
+        -:  292:
+    #####:  293:        case ST_PATTERN:
+    #####:  294:            getPatternMethodSamples< N >(nSamples, samples);
+    %%%%%:  294-block  0
+    #####:  295:            break;
+        -:  296:        }
+        -:  297:
+    #####:  298:        levels.push_back(int(samples.size()));
+    %%%%%:  298-block  0
+        -:  299:    }
+        -:  300:
+        -:  301:    //generate integer addresses
+    #####:  302:    cutRescale(2);
+    #####:  303:    render2Int();
+    %%%%%:  303-block  0
+    #####:  304:}
+        -:  305:
+    #####:  306:template <unsigned int N>  PIC_INLINE void RandomSampler<N>::render2Int()
+        -:  307:{
+    #####:  308:    if(samplesR.size() > 0 || samples.size() > 0) {
+    %%%%%:  308-block  0
+    %%%%%:  308-block  1
+    #####:  309:        samplesR.clear();
+    %%%%%:  309-block  0
+    #####:  310:        levelsR.clear();
+    %%%%%:  310-block  0
+    #####:  311:        track.clear();
+    %%%%%:  311-block  0
+    %%%%%:  311-block  1
+        -:  312:    }
+        -:  313:
+    #####:  314:    Vec<N, float> window_f;
+        -:  315:
+    #####:  316:    for(unsigned int i = 0; i < N; i++) {
+    %%%%%:  316-block  0
+    %%%%%:  316-block  1
+    #####:  317:        window_f[i] = float(window[i]);
+    %%%%%:  317-block  0
+        -:  318:    }
+        -:  319:
+        -:  320:    int x, coord;
+        -:  321:
+        -:  322:    //int prevSamplesR = 0;
+    #####:  323:    for(uint i = 0; i < levels.size(); i++) {
+    %%%%%:  323-block  0
+        -:  324:        int start, end;
+        -:  325:
+    #####:  326:        if(i == 0) {
+    %%%%%:  326-block  0
+        -:  327:            start = 0;
+        -:  328:        } else {
+    #####:  329:            start = levels[i - 1];
+    %%%%%:  329-block  0
+        -:  330:        }
+        -:  331:
+    #####:  332:        end = levels[i];
+    %%%%%:  332-block  0
+        -:  333:
+    #####:  334:        for(int j = start; j < end; j += N) {
+    %%%%%:  334-block  0
+    %%%%%:  334-block  1
+    %%%%%:  334-block  2
+    #####:  335:            coord = 0;//rounding
+        -:  336:
+    #####:  337:            for(unsigned int k = 0; k < N; k++) {
+    %%%%%:  337-block  0
+    %%%%%:  337-block  1
+    #####:  338:                x = int(lround(samples[j + k] * window_f[k]));
+    %%%%%:  338-block  0
+    #####:  339:                coord += x * powint(window[k], k);
+    %%%%%:  339-block  0
+    %%%%%:  339-block  1
+        -:  340:            }
+        -:  341:
+        -:  342:            //Is the value in the track list?
+    #####:  343:            if(track.find(coord) == track.end()) {
+    %%%%%:  343-block  0
+    %%%%%:  343-block  1
+    #####:  344:                track.insert(coord);
+    %%%%%:  344-block  0
+        -:  345:
+    #####:  346:                for(unsigned int k = 0; k < N; k++) { //final rounding
+    %%%%%:  346-block  0
+    #####:  347:                    x = int(lround(samples[j + k] * window_f[k]));
+    %%%%%:  347-block  0
+    #####:  348:                    samplesR.push_back(x);
+    %%%%%:  348-block  0
+        -:  349:                }
+        -:  350:            }
+        -:  351:        }
+        -:  352:
+    #####:  353:        levelsR.push_back(int(samplesR.size()));
+    %%%%%:  353-block  0
+        -:  354:    }
+        -:  355:
+        -:  356:#ifdef PIC_DEBUG
+        -:  357:    printf("render2Int: Original: %d \t Rendered: %d\n", int(samples.size() / N),
+        -:  358:           int(track.size()));
+        -:  359:#endif
+    #####:  360:}
+        -:  361:
+        -:  362:template <unsigned int N>PIC_INLINE void RandomSampler<N>::Write(
+        -:  363:    std::string name, int level)
+        -:  364:{
+        -:  365:    Image img(1, window[0] * 2 + 1, window[1] * 2 + 1, 1);
+        -:  366:    img.setZero();
+        -:  367:
+        -:  368:    int start, end;
+        -:  369:
+        -:  370:    if(level == 0) {
+        -:  371:        start = 0;
+        -:  372:    } else {
+        -:  373:        start = levelsR[level - 1];
+        -:  374:    }
+        -:  375:
+        -:  376:    end = levelsR[level];
+        -:  377:
+        -:  378:    int x, y;
+        -:  379:
+        -:  380:    for(int i = start; i < end; i += N) {
+        -:  381:        x = samplesR[i    ] + window[0];
+        -:  382:        y = samplesR[i + 1] + window[1];
+        -:  383:        img.data[y * img.width + x] += 1.0;
+        -:  384:    }
+        -:  385:
+        -:  386:    img.Write(name);
+        -:  387:}
+        -:  388:
+    #####:  389:template <unsigned int N> PIC_INLINE int RandomSampler<N>::getSamplesPerLevel(int level)
+        -:  390:{
+        -:  391:    if(level<0) {
+        -:  392:        return -1;
+        -:  393:    }
+        -:  394:
+        -:  395:    if(level == 0) {
+    #####:  396:        return (levelsR[level] / N);
+    %%%%%:  396-block  0
+        -:  397:    } else {
+        -:  398:        return ( levelsR[level] - levelsR[level - 1]) / N;
+        -:  399:    }
+        -:  400:}
+        -:  401:
+    #####:  402:template <unsigned int N> PIC_INLINE void RandomSampler<N>::getSampleAt(int level, int i, int &x, int &y)
+        -:  403:{
+        -:  404:    int start, end;
+        -:  405:
+    #####:  406:    if(level == 0) {
+    %%%%%:  406-block  0
+        -:  407:        start = 0;
+        -:  408:    } else {
+    #####:  409:        start = levelsR[level - 1];
+    %%%%%:  409-block  0
+        -:  410:    }
+        -:  411:
+    #####:  412:    end = levelsR[level];
+    %%%%%:  412-block  0
+        -:  413:
+    #####:  414:    i *= int(N);
+    #####:  415:    i = CLAMPi(i + start, start, end-1);
+    %%%%%:  415-block  0
+    %%%%%:  415-block  1
+    %%%%%:  415-block  2
+        -:  416:
+    #####:  417:    x = samplesR[i    ] + window[0];
+    #####:  418:    y = samplesR[i + 1] + window[1];
+    #####:  419:}
+        -:  420:
+        -:  421:template <unsigned int N>
+        -:  422:PIC_INLINE void ConvertVectorToPlus1(std::vector<RandomSampler<N> > &rsVec,
+        -:  423:                                     RandomSampler < N + 1 > &rsOut)
+        -:  424:{
+        -:  425:    //Copy data
+        -:  426:    int halfSize = rsVec.size() / 2;
+        -:  427:
+        -:  428:    for(int i = -halfSize; i <= halfSize; i++) {
+        -:  429:        for(int k = 0; k < rsVec[i].samplesR.size(); k += N) {
+        -:  430:            for(int l = 0; l < N; l++) {
+        -:  431:                rsOut.samplesR.push_back(rsVec[i].samplesR[k + l]);
+        -:  432:            }
+        -:  433:
+        -:  434:            rsOut.samplesR.push_back(i);
+        -:  435:        }
+        -:  436:    }
+        -:  437:
+        -:  438:    //Window assignment
+        -:  439:    Vec < N + 1, int > window;
+        -:  440:
+        -:  441:    for(int i = 0; i < N; i++) {
+        -:  442:        window[i] = rsVec[0].window[i];
+        -:  443:    }
+        -:  444:
+        -:  445:    window[N] = halfSize;
+        -:  446:    rsOut.window = window;
+        -:  447:}
+        -:  448:
+        -:  449:
+        -:  450:
+        -:  451:} // end namespace pic
+        -:  452:
+        -:  453:#endif /* PIC_POINT_SAMPLERS_SAMPLER_RANDOM_HPP */

@@ -1,0 +1,625 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/math.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_MATH_HPP
+        -:   19:#define PIC_UTIL_MATH_HPP
+        -:   20:
+        -:   21:#include <math.h>
+        -:   22:#include <cmath>
+        -:   23:#include <random>
+        -:   24:#include <stdlib.h>
+        -:   25:#include <set>
+        -:   26:#include <limits>
+        -:   27:
+        -:   28:#include "../base.hpp"
+        -:   29:
+        -:   30:namespace pic {
+        -:   31:
+        -:   32://Natural logarithm of 2
+        -:   33:const float C_LOG_NAT_2         = 0.69314718055994530941723212145818f;
+        -:   34:
+        -:   35://Reciprocal natural logarithm of 2
+        -:   36:const float  C_INV_LOG_NAT_2    = 1.4426950408889634073599246810019f;
+        -:   37:const double C_INV_LOG_NAT_2_D  = 1.4426950408889634073599246810019;
+        -:   38:
+        -:   39://Epsilon
+        -:   40:const float C_EPSILON           = 1e-6f;
+        -:   41:
+        -:   42://Square root of 2
+        -:   43:const float C_SQRT_2            = 1.4142135623730950488016887242097f;
+        -:   44:
+        -:   45://PI/4
+        -:   46:const float C_PI_025            = 0.78539816339744830961566084581988f;
+        -:   47://PI/2
+        -:   48:const float C_PI_05             = 1.5707963267948966192313216916398f;
+        -:   49://PI
+        -:   50:const float C_PI                = 3.1415926535897932384626433832795f;
+        -:   51://(PI *2)
+        -:   52:const float C_PI_2              = 6.283185307179586476925286766559f;
+        -:   53:// 1 / (PI *2)
+        -:   54:const float C_INV_PI_2          = 0.159154943091895335768883763f;
+        -:   55://PI times 4
+        -:   56:const float C_PI_4              = 12.566370614359172953850573533118f;
+        -:   57://One over PI times 4
+        -:   58:const float C_INV_PI_4          = 0.07957747154594766788444188168626f;
+        -:   59://PI*PI*2
+        -:   60:const float C_PI_2_2            = 19.739208802178717237668981999752f;
+        -:   61:// 1/PI
+        -:   62:const float C_INV_PI            = 0.31830988618379067153776526745f;
+        -:   63:// 180/PI
+        -:   64:const float C_ONE_80_OVER_PI    = 57.295779513082320876798154814105f;
+        -:   65:// PI/180
+        -:   66:const float C_PI_OVER_ONE_80    = 0.017453292519943295769236907685f;
+        -:   67:
+        -:   68:#ifndef MIN
+        -:   69:    #define MIN(a, b)           (a < b ? a : b)
+        -:   70:#endif
+        -:   71:
+        -:   72:#ifndef MAX
+        -:   73:    #define MAX(a, b)           (a > b ? a : b)
+        -:   74:#endif
+        -:   75:
+        -:   76:#ifndef CLAMP
+        -:   77:    #define CLAMP(x, a)         (x >= a ? (a - 1) : (x < 0 ? 0 : x))
+        -:   78:#endif
+        -:   79:
+        -:   80:#ifndef CLAMPi
+        -:   81:    #define CLAMPi(x, a, b)     (x <  a ? a : (x > b ? b : x))
+        -:   82:#endif
+        -:   83:
+        -:   84:
+        -:   85:#ifndef isnan
+        -:   86:
+        -:   87:/**
+        -:   88: * @brief isnan is it a NaN?
+        -:   89: * @param value
+        -:   90: * @return
+        -:   91: */
+        -:   92:template< typename T >
+    #####:   93:PIC_INLINE bool isnan(T value)
+        -:   94:{
+        -:   95:    return value != value ;
+        -:   96:}
+        -:   97:
+        -:   98:/**
+        -:   99: * @brief isinf is it a Inf value?
+        -:  100: * @param value
+        -:  101: * @return
+        -:  102: */
+    #####:  103:template< typename T > PIC_INLINE bool isinf(T value)
+        -:  104:{
+        -:  105:    return std::numeric_limits<T>::has_infinity &&
+    #####:  106:           (value ==  std::numeric_limits<T>::infinity() ||
+    #####:  107:            value == -std::numeric_limits<T>::infinity());
+    %%%%%:  107-block  0
+    %%%%%:  107-block  1
+        -:  108:}
+        -:  109:
+        -:  110:#endif
+        -:  111:
+        -:  112:/**
+        -:  113: * @brief equalf checks if two float values are the same or not.
+        -:  114: * @param a is the first value to be checked.
+        -:  115: * @param b is the second value to be checked.
+        -:  116: * @return This function returns true if a and b are similar,
+        -:  117: * false otherwise.
+        -:  118: */
+        -:  119:PIC_INLINE bool equalf(float a, float b)
+        -:  120:{
+        -:  121:    return ( fabsf(a - b) < C_EPSILON);
+        -:  122:}
+        -:  123:
+        -:  124:/**
+        -:  125: * @brief Randombase returns a number in [0, 1] based on rand().
+        -:  126: * @return It returns a random number in [0, 1].
+        -:  127: */
+        -:  128:PIC_INLINE float getRandombase()
+        -:  129:{
+        -:  130:    return float(rand() % RAND_MAX) / float(RAND_MAX);
+        -:  131:}
+        -:  132:
+        -:  133:/**
+        -:  134: * @brief Random returns a number in [0, 2^32 - 1] to a float in [0, 1].
+        -:  135: * @param n is a 32-bit unsigned integer number.
+        -:  136: * @return It returns n as a normalized float in [0, 1].
+        -:  137: */
+    #####:  138:PIC_INLINE float getRandom(unsigned int n)
+        -:  139:{
+    #####:  140:    return float(n) / 4294967295.0f;
+        -:  141:}
+        -:  142:
+        -:  143:/**
+        -:  144: * @brief getRandomInt
+        -:  145: * @param n
+        -:  146: * @param a
+        -:  147: * @param b
+        -:  148: * @return
+        -:  149: */
+        -:  150:PIC_INLINE int getRandomInt(int n, int a, int b)
+        -:  151:{
+        -:  152:    if(a < b) {
+        -:  153:        return n % (b - a);
+        -:  154:    } else {
+        -:  155:        return 0;
+        -:  156:    }
+        -:  157:}
+        -:  158:
+        -:  159:/**
+        -:  160: * @brief sFunction evaluates a cubic s-function.
+        -:  161: * @param x is a value in [0.0, 1.0]
+        -:  162: * @return it returns 3 x^2 - 2 x^3
+        -:  163: */
+        -:  164:PIC_INLINE float sFunction(float x)
+        -:  165:{
+        -:  166:    float x2 = x * x;
+        -:  167:    return 3.0f * x2 - 2.0f * x2 * x;
+        -:  168:}
+        -:  169:
+        -:  170:/**
+        -:  171: * @brief sCurve5 evaluates a quintic S-Shape: 6x^5-15x^4+10x^3
+        -:  172: * @param x is a value in [0.0, 1.0]
+        -:  173: * @return
+        -:  174: */
+        -:  175:PIC_INLINE float sCurve5(float x)
+        -:  176:{
+        -:  177:    float x2 = x * x;
+        -:  178:    float x4 = x2 * x2;
+        -:  179:
+        -:  180:    return (6.0f * x - 15.0f) * x4 + 10.0f * x2 * x;
+        -:  181:}
+        -:  182:
+        -:  183:/**
+        -:  184: * @brief Square applies square function to a value.
+        -:  185: * @param x a value.
+        -:  186: * @return It return x^2.
+        -:  187: */
+    #####:  188:PIC_INLINE float square(float x)
+        -:  189:{
+    #####:  190:    return x * x;
+        -:  191:}
+        -:  192:
+        -:  193:/**
+        -:  194: * @brief sqrtf_s
+        -:  195: * @param x
+        -:  196: * @return
+        -:  197: */
+    #####:  198:PIC_INLINE float sqrtf_s(float x)
+        -:  199:{
+    #####:  200:    return sqrtf(MAX(x, 0.0f));
+    %%%%%:  200-block  0
+        -:  201:}
+        -:  202:
+        -:  203:/**
+        -:  204: * @brief Clamp clamps a value, x, in the bound [a,b].
+        -:  205: * @param x
+        -:  206: * @param a
+        -:  207: * @param b
+        -:  208: * @return
+        -:  209: */
+        -:  210:template< class T >
+        -:  211:PIC_INLINE T Clamp(T x, T a, T b)
+        -:  212:{
+        -:  213:    if(x > b) {
+        -:  214:        return b;
+        -:  215:    }
+        -:  216:
+        -:  217:    if(x < a) {
+        -:  218:        return a;
+        -:  219:    }
+        -:  220:
+        -:  221:    return x;
+        -:  222:}
+        -:  223:
+        -:  224:/**
+        -:  225: * @brief lround rounds double numbers properly.
+        -:  226: * @param x is a scalar.
+        -:  227: * @return
+        -:  228: */
+        -:  229:PIC_INLINE long lround(double x)
+        -:  230:{
+        -:  231:    if(x > 0.0) {
+        -:  232:        return (x - floor(x) <  0.5) ? (long)floor(x) : (long)ceil(x);
+        -:  233:    } else {
+        -:  234:        return (x - floor(x) <= 0.5) ? (long)floor(x) : (long)ceil(x);
+        -:  235:    }
+        -:  236:}
+        -:  237:
+        -:  238:/**
+        -:  239: * @brief lround rounds float numbers properly.
+        -:  240: * @param x is a scalar.
+        -:  241: * @return
+        -:  242: */
+   819840:  243:PIC_INLINE float lround(float x)
+        -:  244:{
+   819840:  245:    if(x > 0.0f) {
+   819840:  245-block  0
+   819840:  246:        return (x - floorf(x) < 0.5f)  ? floorf(x) : ceilf(x);
+   819840:  246-block  0
+   410179:  246-block  1
+   819840:  246-block  2
+        -:  247:    } else {
+    #####:  248:        return (x - floorf(x) <= 0.5f) ? floorf(x) : ceilf(x);
+    %%%%%:  248-block  0
+    %%%%%:  248-block  1
+    %%%%%:  248-block  2
+        -:  249:    }
+        -:  250:}
+        -:  251:
+        -:  252:/**
+        -:  253: * @brief lerp evaluates linear interpolation
+        -:  254: * @param t is a value in [0.0, 1.0].
+        -:  255: * @param x0 is the min value.
+        -:  256: * @param x1 is the max value.
+        -:  257: * @return it returns x0 + t * (x1 - x0)
+        -:  258: */
+        -:  259:PIC_INLINE float lerp(float t, float x0, float x1)
+        -:  260:{
+        -:  261:    return x0 + t * (x1 - x0);
+        -:  262:}
+        -:  263:
+        -:  264:/**
+        -:  265: * @brief SmoothStep smoothes a value from a to b using a cube S-Shape.
+        -:  266: * @param a is the min value.
+        -:  267: * @param b is the max value.
+        -:  268: * @param value is a value in [0.0, 1.0].
+        -:  269: * @return It returns - 2 x^3 + 3 x^2.
+        -:  270: */
+        -:  271:PIC_INLINE float SmoothStep(float a, float b, float value)
+        -:  272:{
+        -:  273:    float x = Clamp<float>((value - a) / (b - a), 0.0f, 1.0f);
+        -:  274:    return  x * x * (-2.0f * x + 3.0f);
+        -:  275:}
+        -:  276:
+        -:  277:/**
+        -:  278: * @brief Deg2Rad converts angles expressed in degrees into angles expressed in radians.
+        -:  279: * @param deg is a value of an angle expressed in degrees.
+        -:  280: * @return It returns an ang expressed in radians.
+        -:  281: */
+        -:  282:inline float Deg2Rad(float deg)
+        -:  283:{
+        -:  284:    return deg * C_PI_OVER_ONE_80;
+        -:  285:}
+        -:  286:
+        -:  287:/**
+        -:  288: * @brief Rad2Deg converts angles expressed in radians into angles expressed in degrees.
+        -:  289: * @param rad is a value of an angle expressed in radians.
+        -:  290: * @return It returns an ang expressed in degrees.
+        -:  291: */
+        -:  292:PIC_INLINE float Rad2Deg(float rad)
+        -:  293:{
+        -:  294:    return rad * C_ONE_80_OVER_PI;
+        -:  295:}
+        -:  296:
+        -:  297:/**
+        -:  298: * @brief log2 computes logarithm in base 2 for integers.
+        -:  299: * @param n is an integer value.
+        -:  300: * @return It returns log2 of n.
+        -:  301: */
+    #####:  302:PIC_INLINE int log2(int n)
+        -:  303:{
+    #####:  304:    int val = 1;
+    #####:  305:    int lg  = 0;
+    %%%%%:  305-block  0
+        -:  306:
+    #####:  307:    while(val < n) {
+    %%%%%:  307-block  0
+    %%%%%:  307-block  1
+    %%%%%:  307-block  2
+    %%%%%:  307-block  3
+    %%%%%:  307-block  4
+    #####:  308:        val = val << 1;
+    #####:  309:        lg++;
+    %%%%%:  309-block  0
+    %%%%%:  309-block  1
+    %%%%%:  309-block  2
+    %%%%%:  309-block  3
+    %%%%%:  309-block  4
+        -:  310:    }
+        -:  311:
+    #####:  312:    if(val != n) {
+    %%%%%:  312-block  0
+    %%%%%:  312-block  1
+    %%%%%:  312-block  2
+    %%%%%:  312-block  3
+    %%%%%:  312-block  4
+    #####:  313:        lg--;
+    %%%%%:  313-block  0
+    %%%%%:  313-block  1
+    %%%%%:  313-block  2
+    %%%%%:  313-block  3
+    %%%%%:  313-block  4
+        -:  314:    }
+        -:  315:
+    #####:  316:    return lg;
+    %%%%%:  316-block  0
+    %%%%%:  316-block  1
+    %%%%%:  316-block  2
+    %%%%%:  316-block  3
+    %%%%%:  316-block  4
+        -:  317:}
+        -:  318:
+        -:  319:/**
+        -:  320: * @brief pow2 computes 2^n.
+        -:  321: * @param n is a positive exponent.
+        -:  322: * @return It returns 2^n.
+        -:  323: */
+        -:  324:PIC_INLINE int pow2(int n)
+        -:  325:{
+        -:  326:    return 1 << n;
+        -:  327:}
+        -:  328:
+        -:  329:/**
+        -:  330: * @brief logf10PlusOne computes log10 of a value plus 1.
+        -:  331: * @param x is a value for which the log10 needs to be computed.
+        -:  332: * @return It returns log10(x + 1).
+        -:  333: */
+        -:  334:PIC_INLINE float log10PlusOne(float x)
+        -:  335:{
+        -:  336:    return log10f(x + 1.0f);
+        -:  337:}
+        -:  338:
+        -:  339:/**
+        -:  340: * @brief expMinusOne
+        -:  341: * @param x
+        -:  342: * @return
+        -:  343: */
+        -:  344:PIC_INLINE float expfMinusOne(float x)
+        -:  345:{
+        -:  346:    float tmp = powf(10.0f, x) - 1.0f;
+        -:  347:    return MAX(tmp, 0.0f);
+        -:  348:}
+        -:  349:
+        -:  350:/**
+        -:  351: * @brief log10fPlusEpsilon
+        -:  352: * @param x
+        -:  353: * @return
+        -:  354: */
+    #####:  355:PIC_INLINE float log10fPlusEpsilon(float x)
+        -:  356:{
+    #####:  357:    return log10f(x + 1e-7f);
+        -:  358:}
+        -:  359:
+        -:  360:/**
+        -:  361: * @brief powf10fMinusEpsilon
+        -:  362: * @param x
+        -:  363: * @return
+        -:  364: */
+    #####:  365:PIC_INLINE float powf10fMinusEpsilon(float x)
+        -:  366:{
+    #####:  367:    return MAX(powf(10.0f, x) - 1e-7f, 0.0f);
+    %%%%%:  367-block  0
+    %%%%%:  367-block  1
+        -:  368:}
+        -:  369:
+        -:  370:/**
+        -:  371: * @brief log2f logarithm in base 2 for floating point
+        -:  372: * @param x
+        -:  373: * @return
+        -:  374: */
+    #####:  375:PIC_INLINE float log2f(float x)
+        -:  376:{
+    #####:  377:    return logf(x) * C_INV_LOG_NAT_2;
+        -:  378:}
+        -:  379:
+        -:  380:/**
+        -:  381: * @brief log2
+        -:  382: * @param x
+        -:  383: * @return
+        -:  384: */
+        -:  385:PIC_INLINE double log2(double x)
+        -:  386:{
+        -:  387:    return log(x) * C_INV_LOG_NAT_2_D;
+        -:  388:}
+        -:  389:
+        -:  390:/**
+        -:  391: * @brief log2fPlusEpsilon
+        -:  392: * @param x
+        -:  393: * @return
+        -:  394: */
+    #####:  395:PIC_INLINE float log2fPlusEpsilon(float x)
+        -:  396:{
+    #####:  397:    return logf(x + 1e-6f) * C_INV_LOG_NAT_2;
+    %%%%%:  397-block  0
+    %%%%%:  397-block  1
+        -:  398:}
+        -:  399:
+        -:  400:/**
+        -:  401: * @brief pow2f
+        -:  402: * @param x
+        -:  403: * @return
+        -:  404: */
+    #####:  405:PIC_INLINE float pow2f(float x)
+        -:  406:{
+    #####:  407:    return powf(2.0f, x);
+        -:  408:}
+        -:  409:
+        -:  410:/**
+        -:  411: * @brief powint computes power function for integer values.
+        -:  412: * @param x is the base.
+        -:  413: * @param b is the exponent.
+        -:  414: * @return it returns x^b.
+        -:  415: */
+    #####:  416:PIC_INLINE int powint(int x, int b)
+    %%%%%:  416-block  0
+        -:  417:{
+        -:  418:    int ret = 1;
+        -:  419:    
+    #####:  420:    for(int i = 0; i < b; i++) {
+    %%%%%:  420-block  0
+    #####:  421:        ret *= x;
+    %%%%%:  421-block  0
+        -:  422:    }
+        -:  423:
+    #####:  424:    return ret;
+    %%%%%:  424-block  0
+        -:  425:}
+        -:  426:
+        -:  427:/**
+        -:  428: * @brief getRandomPermutation computes a random permutation.
+        -:  429: * @param m is a Mersenne Twister random number generator.
+        -:  430: * @param perm is the array where to store the permutation.
+        -:  431: * @param nPerm is the size of perm.
+        -:  432: * @param n is the number of object to permutate.
+        -:  433: */
+        -:  434:PIC_INLINE void getRandomPermutation(std::mt19937 &m, unsigned int *perm, unsigned int nPerm, unsigned int n)
+        -:  435:{
+        -:  436:    std::set< unsigned int > checker;
+        -:  437:
+        -:  438:    unsigned int tmp = m() % n;
+        -:  439:    checker.insert(tmp);
+        -:  440:    perm[0] = tmp;
+        -:  441:    unsigned int index = 1;
+        -:  442:
+        -:  443:    while(index < nPerm) {
+        -:  444:        tmp = m() % n;
+        -:  445:
+        -:  446:        if(checker.find(tmp) == checker.end()) {
+        -:  447:            perm[index] = tmp;
+        -:  448:            index++;
+        -:  449:        }
+        -:  450:    }
+        -:  451:}
+        -:  452:
+        -:  453:/**
+        -:  454: * @brief normalDistribution
+        -:  455: * @param x
+        -:  456: * @param mu
+        -:  457: * @param sigma
+        -:  458: * @return
+        -:  459: */
+        -:  460:PIC_INLINE float normalDistribution(float x, float mu = 0.0f, float sigma = 1.0f)
+        -:  461:{
+        -:  462:    float ret;
+        -:  463:
+        -:  464:    float sigma_sq_2 = sigma * sigma * 2.0f;
+        -:  465:    float d = x - mu;
+        -:  466:    ret = exp(-(d * d) / sigma_sq_2) / sqrtf(sigma_sq_2 * C_PI);
+        -:  467:
+        -:  468:    return ret;
+        -:  469:}
+        -:  470:
+        -:  471:/**
+        -:  472: * @brief normalCDF
+        -:  473: * @param x
+        -:  474: * @param mu
+        -:  475: * @param sigma
+        -:  476: * @return
+        -:  477: */
+    #####:  478:float normalCDF(float x, float mu, float sigma)
+        -:  479:{
+    #####:  480:    float t = (x - mu) / (sigma * C_SQRT_2);
+    #####:  481:    return (1.0f + std::erf(t)) * 0.5f;
+    %%%%%:  481-block  0
+    %%%%%:  481-block  1
+        -:  482:}
+        -:  483:
+        -:  484:/**
+        -:  485: * @brief betaFunction
+        -:  486: * @param A
+        -:  487: * @param B
+        -:  488: * @return
+        -:  489: */
+        -:  490:PIC_INLINE float betaFunction(float A, float B, float step = 1e-4)
+        -:  491:{
+        -:  492:    if(step <= 0.0f || step >= 1.0f) {
+        -:  493:        step = 1e-4f;
+        -:  494:    }
+        -:  495:
+        -:  496:    float A1 = A - 1.0f;
+        -:  497:    float B1 = B - 1.0f;
+        -:  498:
+        -:  499:    float ret = 0.0f;
+        -:  500:
+        -:  501:    int tot = 0;
+        -:  502:    for(float x = 0.0f; x <= 1.0f; x += step) {
+        -:  503:        ret += powf(x, A1) * powf(1.0f - x, B1);
+        -:  504:        tot++;
+        -:  505:    }
+        -:  506:
+        -:  507:    return ret / float(tot);
+        -:  508:}
+        -:  509:
+        -:  510:/**
+        -:  511: * @brief betaPDFwithBeta
+        -:  512: * @param x
+        -:  513: * @param A
+        -:  514: * @param B
+        -:  515: * @param betaAB
+        -:  516: * @return
+        -:  517: */
+        -:  518:PIC_INLINE float betaPDFwithBeta(float x, float A, float B, float betaAB)
+        -:  519:{
+        -:  520:    if(x < 0.0f || x > 1.0f) {
+        -:  521:        return -1.0f;
+        -:  522:    }
+        -:  523:
+        -:  524:    float ret = powf(x, A - 1.0f) * powf(1.0f - x, B - 1.0f);
+        -:  525:
+        -:  526:    return ret / betaAB;
+        -:  527:}
+        -:  528:
+        -:  529:/**
+        -:  530: * @brief betaPDF
+        -:  531: * @param x
+        -:  532: * @param A
+        -:  533: * @param B
+        -:  534: * @return
+        -:  535: */
+        -:  536:PIC_INLINE float betaPDF(float x, float A, float B)
+        -:  537:{
+        -:  538:    return betaPDFwithBeta(x, A, B, betaFunction(A, B));
+        -:  539:}
+        -:  540:
+        -:  541:/**
+        -:  542: * @brief sigmoid
+        -:  543: * @param x
+        -:  544: * @return
+        -:  545: */
+        -:  546:PIC_INLINE float sigmoid(float x)
+        -:  547:{
+        -:  548:    return x / (x + 1.0f);
+        -:  549:}
+        -:  550:
+        -:  551:/**
+        -:  552: * @brief sigmoidInv
+        -:  553: * @param x
+        -:  554: * @return
+        -:  555: */
+        -:  556:PIC_INLINE float sigmoidInv(float x)
+        -:  557:{
+        -:  558:    return x / (1.0f - x);
+        -:  559:}
+        -:  560:
+        -:  561:/**
+        -:  562: * @brief simple8bitWithGamma
+        -:  563: * @param x
+        -:  564: * @return
+        -:  565: */
+        -:  566:PIC_INLINE float simple8bitWithGamma(float x)
+        -:  567:{
+        -:  568:    float t0 = powf(x, 1.0f / 2.2f) * 255.0f;
+        -:  569:    float t1 = CLAMPi(t0, 0.0f, 255.0f);
+        -:  570:    return float(int(t1));
+        -:  571:}
+        -:  572:
+        -:  573:} // end namespace pic
+        -:  574:
+        -:  575:#endif

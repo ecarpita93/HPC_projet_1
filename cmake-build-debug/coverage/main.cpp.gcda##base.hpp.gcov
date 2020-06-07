@@ -1,0 +1,67 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/metrics/base.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_METRICS_BASE_HPP
+        -:   19:#define PIC_METRICS_BASE_HPP
+        -:   20:
+        -:   21:#include "../util/math.hpp"
+        -:   22:#include "../metrics/pu_encode.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:const double C_SINGULARITY = 1e-6;
+        -:   27:const double C_LARGE_DIFFERENCES = 1e6;
+        -:   28:const float  C_LARGE_DIFFERENCESf = 1e6f;
+        -:   29:
+        -:   30:enum METRICS_DOMAIN{MD_LIN, MD_LOG10, MD_PU};
+        -:   31:
+        -:   32:/**
+        -:   33: * @brief changeDomain
+        -:   34: * @param x
+        -:   35: * @param type
+        -:   36: * @return
+        -:   37: */
+    #####:   38:float changeDomain(float x, METRICS_DOMAIN type = MD_LIN)
+        -:   39:{
+    #####:   40:    switch(type){
+    %%%%%:   40-block  0
+        -:   41:    case MD_LIN: {
+        -:   42:        return x;
+    #####:   43:    } break;
+        -:   44:
+    #####:   45:    case MD_LOG10: {
+    #####:   46:        return log10f(x);
+    %%%%%:   46-block  0
+    #####:   47:    } break;
+        -:   48:
+    #####:   49:    case MD_PU: {
+    #####:   50:        return PUEncode(x);
+    %%%%%:   50-block  0
+        -:   51:    } break;
+        -:   52:    }
+        -:   53:
+        -:   54:    return x;
+        -:   55:}
+        -:   56:
+        -:   57:} // end namespace pic
+        -:   58:
+        -:   59:#endif /* PIC_METRICS_BASE_HPP */
+        -:   60:

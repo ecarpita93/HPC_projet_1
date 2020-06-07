@@ -1,0 +1,256 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_downsampler_2d.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_DOWNSAMPLER_2D_HPP
+        -:   19:#define PIC_FILTERING_FILTER_DOWNSAMPLER_2D_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter_npasses.hpp"
+        -:   22:#include "../filtering/filter_sampler_1d.hpp"
+        -:   23:#include "../image_samplers/image_sampler_nearest.hpp"
+        -:   24:#include "../image_samplers/image_sampler_gaussian.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:/**
+        -:   29: * @brief The FilterDownSampler2D class
+        -:   30: */
+        -:   31:class FilterDownSampler2D: public FilterNPasses
+        -:   32:{
+        -:   33:protected:
+        -:   34:    ImageSamplerGaussian *isg[2];
+        -:   35:    FilterSampler1D *flt[2];
+        -:   36:
+        -:   37:    bool swh;
+        -:   38:    float scale[2];
+        -:   39:    int width, height;
+        -:   40:
+        -:   41:    /**
+        -:   42:     * @brief allocate
+        -:   43:     */
+    #####:   44:    void allocate()
+        -:   45:    {
+    #####:   46:        for(int i = 0; i < 2; i++) {
+    %%%%%:   46-block  0
+    %%%%%:   46-block  1
+    #####:   47:            if(isg[i] == NULL) {
+    %%%%%:   47-block  0
+    #####:   48:                isg[i] = new ImageSamplerGaussian();
+    %%%%%:   48-block  0
+        -:   49:            }
+        -:   50:
+    #####:   51:            if(flt[i] == NULL) {
+    %%%%%:   51-block  0
+    #####:   52:                flt[i] = new FilterSampler1D(scale[i], i, isg[i]);
+    %%%%%:   52-block  0
+    %%%%%:   52-block  1
+        -:   53:            } else {
+    #####:   54:                flt[i]->update(scale[i], i, isg[i]);
+    %%%%%:   54-block  0
+        -:   55:            }
+        -:   56:
+    #####:   57:            insertFilter(flt[i]);
+    %%%%%:   57-block  0
+        -:   58:        }
+    #####:   59:    }
+        -:   60:
+        -:   61:public:
+        -:   62:
+        -:   63:    /**
+        -:   64:     * @brief FilterDownSampler2D
+        -:   65:     * @param scaleX
+        -:   66:     * @param scaleY
+        -:   67:     */
+        -:   68:    FilterDownSampler2D(float scaleX, float scaleY);
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief FilterDownSampler2D
+        -:   72:     * @param width
+        -:   73:     * @param height
+        -:   74:     */
+        -:   75:    FilterDownSampler2D(int width, int height);
+        -:   76:
+        -:   77:    ~FilterDownSampler2D();
+        -:   78:
+        -:   79:    /**
+        -:   80:     * @brief release
+        -:   81:     */
+        -:   82:    void release();
+        -:   83:    
+        -:   84:    /**
+        -:   85:     * @brief PreProcess
+        -:   86:     * @param imgIn
+        -:   87:     * @param imgOut
+        -:   88:     */
+        -:   89:    void PreProcess(ImageVec imgIn, Image *imgOut);
+        -:   90:
+        -:   91:    /**
+        -:   92:     * @brief execute
+        -:   93:     * @param imgIn
+        -:   94:     * @param imgOut
+        -:   95:     * @param width
+        -:   96:     * @param height
+        -:   97:     * @return
+        -:   98:     */
+        -:   99:    static Image *execute(Image *imgIn, Image *imgOut, int width,
+        -:  100:                             int height)
+        -:  101:    {
+        -:  102:        FilterDownSampler2D flt(width, height);
+        -:  103:        return flt.Process(Single(imgIn), imgOut);
+        -:  104:    }
+        -:  105:
+        -:  106:    /**
+        -:  107:     * @brief execute
+        -:  108:     * @param imgIn
+        -:  109:     * @param imgOut
+        -:  110:     * @param scaleX
+        -:  111:     * @param scaleY
+        -:  112:     * @return
+        -:  113:     */
+        -:  114:    static Image *execute(Image *imgIn, Image *imgOut, float scaleX,
+        -:  115:                             float scaleY)
+        -:  116:    {
+        -:  117:        FilterDownSampler2D flt(scaleX, scaleY);
+        -:  118:        return flt.Process(Single(imgIn), imgOut);
+        -:  119:    }
+        -:  120:
+        -:  121:    /**
+        -:  122:     * @brief execute
+        -:  123:     * @param imgIn
+        -:  124:     * @param imgOut
+        -:  125:     * @param scaleXY
+        -:  126:     * @return
+        -:  127:     */
+    #####:  128:    static Image *execute(Image *imgIn, Image *imgOut, float scaleXY)
+        -:  129:    {
+    #####:  130:        FilterDownSampler2D flt(scaleXY, scaleXY);
+    %%%%%:  130-block  0
+    #####:  131:        return flt.Process(Single(imgIn), imgOut);
+    %%%%%:  131-block  0
+    %%%%%:  131-block  1
+    $$$$$:  131-block  2
+        -:  132:    }
+        -:  133:};
+        -:  134:
+    #####:  135:PIC_INLINE FilterDownSampler2D::FilterDownSampler2D(float scaleX, float scaleY = -1.0f) : FilterNPasses()
+    %%%%%:  135-block  0
+    $$$$$:  135-block  1
+        -:  136:{
+    #####:  137:    for(int i = 0; i < 2; i++) {
+    %%%%%:  137-block  0
+    %%%%%:  137-block  1
+    #####:  138:        this->isg[i] = NULL;
+    #####:  139:        this->flt[i] = NULL;
+    #####:  140:        this->scale[i] = 1.0f;
+    %%%%%:  140-block  0
+        -:  141:    }
+        -:  142:
+    #####:  143:    if(scaleX > 0.0f) {
+    %%%%%:  143-block  0
+    #####:  144:        this->scale[0] = scaleX;
+    #####:  145:        this->scale[1] = scaleY > 0.0f ? scaleY : scaleX;
+    %%%%%:  145-block  0
+    %%%%%:  145-block  1
+        -:  146:    }
+        -:  147:
+    #####:  148:    width  = -1;
+    #####:  149:    height = -1;
+        -:  150:
+    #####:  151:    allocate();
+    %%%%%:  151-block  0
+        -:  152:
+    #####:  153:    swh = true;
+    #####:  154:}
+    %%%%%:  154-block  0
+        -:  155:
+        -:  156:PIC_INLINE FilterDownSampler2D::FilterDownSampler2D(int width, int height) : FilterNPasses()
+        -:  157:{
+        -:  158:    for(int i = 0; i < 2; i++) {
+        -:  159:        this->isg[i] = NULL;
+        -:  160:        this->flt[i] = NULL;
+        -:  161:        this->scale[i] = 1.0f;
+        -:  162:    }
+        -:  163:
+        -:  164:    if(width > 0) {
+        -:  165:        this->width  = width;
+        -:  166:    }
+        -:  167:
+        -:  168:    if(height > 0) {
+        -:  169:        this->height = height;
+        -:  170:    }
+        -:  171:
+        -:  172:    allocate();
+        -:  173:
+        -:  174:    swh = (width < 1 ||  height < 1);
+        -:  175:}
+        -:  176:
+    #####:  177:PIC_INLINE FilterDownSampler2D::~FilterDownSampler2D()
+        -:  178:{
+    #####:  179:    release();
+    %%%%%:  179-block  0
+    $$$$$:  179-block  1
+        -:  180:}
+        -:  181:
+    #####:  182:PIC_INLINE void FilterDownSampler2D::release()
+        -:  183:{
+    #####:  184:    for (int i = 0; i < 2; i++) {
+    %%%%%:  184-block  0
+    %%%%%:  184-block  1
+    %%%%%:  184-block  2
+    #####:  185:        if (flt[i] != NULL) {
+    %%%%%:  185-block  0
+    #####:  186:            delete flt[i];
+    %%%%%:  186-block  0
+    #####:  187:            flt[i] = NULL;
+        -:  188:        }
+        -:  189:
+    #####:  190:        if (isg[i] != NULL) {
+    %%%%%:  190-block  0
+    #####:  191:            delete isg[i];
+    %%%%%:  191-block  0
+    #####:  192:            isg[i] = NULL;
+        -:  193:        }
+        -:  194:    }
+    #####:  195:}
+        -:  196:
+    #####:  197:PIC_INLINE void FilterDownSampler2D::PreProcess(ImageVec imgIn,
+        -:  198:        Image *imgOut)
+        -:  199:{
+    #####:  200:    if(!swh) {
+    %%%%%:  200-block  0
+    #####:  201:        scale[0] = float(width)  / imgIn[0]->widthf;
+    %%%%%:  201-block  0
+    #####:  202:        scale[1] = float(height) / imgIn[0]->heightf;
+    %%%%%:  202-block  0
+        -:  203:    }
+        -:  204:
+    #####:  205:    for(int i = 0; i < 2; i++) {
+    #####:  206:        isg[i]->update(1.0f / (5.0f * scale[i]), i);
+    %%%%%:  206-block  0
+    #####:  207:        flt[i]->update(scale[i], i, isg[i]);
+    %%%%%:  207-block  0
+        -:  208:    }
+        -:  209:
+    #####:  210:}
+        -:  211:
+        -:  212:} // end namespace pic
+        -:  213:
+        -:  214:#endif /* PIC_FILTERING_FILTER_DOWNSAMPLER_2D_HPP */
+        -:  215:

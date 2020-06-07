@@ -1,0 +1,298 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_sigmoid_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_SIGMOID_TMO_HPP
+        -:   19:#define PIC_FILTERING_FILTER_SIGMOID_TMO_HPP
+        -:   20:
+        -:   21:#include "../util/array.hpp"
+        -:   22:#include "../util/std_util.hpp"
+        -:   23:
+        -:   24:#include "../filtering/filter.hpp"
+        -:   25:#include "../filtering/filter_luminance.hpp"
+        -:   26:
+        -:   27:namespace pic {
+        -:   28:
+        -:   29:enum SIGMOID_MODE {SIG_TMO, SIG_TMO_WP, SIG_SDM};
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief The FilterSigmoidTMO class
+        -:   33: */
+        -:   34:class FilterSigmoidTMO: public Filter
+        -:   35:{
+        -:   36:protected:
+        -:   37:    bool temporal;
+        -:   38:    float *lum_weights, *lum_weights_flt;
+        -:   39:    float c, alpha, epsilon, wp, wp_sq;
+        -:   40:    SIGMOID_MODE type;
+        -:   41:
+        -:   42:    /**
+        -:   43:     * @brief calculateEpsilon
+        -:   44:     * @param imgIn
+        -:   45:     * @return
+        -:   46:     */
+        -:   47:    float calculateEpsilon(ImageVec imgIn);
+        -:   48:
+        -:   49:    /**
+        -:   50:     * @brief ProcessBBox
+        -:   51:     * @param dst
+        -:   52:     * @param src
+        -:   53:     * @param box
+        -:   54:     */
+        -:   55:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   56:
+        -:   57:public:
+        -:   58:\
+        -:   59:    /**
+        -:   60:     * @brief FilterSigmoidTMO
+        -:   61:     */
+        -:   62:    FilterSigmoidTMO();
+        -:   63:
+        -:   64:    /**
+        -:   65:     * @brief FilterSigmoidTMO
+        -:   66:     * @param type
+        -:   67:     * @param alpha
+        -:   68:     * @param wp
+        -:   69:     * @param epsilon
+        -:   70:     * @param temporal
+        -:   71:     */
+        -:   72:    FilterSigmoidTMO(SIGMOID_MODE type, float alpha, float wp, float epsilon,
+        -:   73:                     bool temporal);
+        -:   74:
+        1:   75:    ~FilterSigmoidTMO()
+        3:   76:    {
+        1:   77:        delete_s(lum_weights);
+        1:   77-block  0
+        2:   78:        delete_s(lum_weights_flt);
+        1:   78-block  0
+        1:   78-block  1
+        1:   79:    }
+        -:   80:
+        -:   81:    /**
+        -:   82:     * @brief update
+        -:   83:     * @param type
+        -:   84:     * @param alpha
+        -:   85:     * @param wp
+        -:   86:     * @param epsilon
+        -:   87:     * @param temporal
+        -:   88:     */
+        -:   89:    void update(SIGMOID_MODE type, float alpha, float wp, float epsilon,
+        -:   90:                     bool temporal);
+        -:   91:
+        -:   92:    /**
+        -:   93:     * @brief OutputSize
+        -:   94:     * @param imgIn
+        -:   95:     * @param width
+        -:   96:     * @param height
+        -:   97:     * @param channels
+        -:   98:     * @param frames
+        -:   99:     */
+        1:  100:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  101:    {
+       1*:  102:        if(epsilon <= 0.0f || temporal) {
+        1:  102-block  0
+    %%%%%:  102-block  1
+        2:  103:            epsilon = calculateEpsilon(imgIn);
+        1:  103-block  0
+        1:  103-block  1
+        1:  103-block  2
+        -:  104:        }
+        -:  105:
+        1:  106:        lum_weights = delete_s(lum_weights);
+        1:  106-block  0
+        1:  107:        lum_weights_flt = delete_s(lum_weights_flt);
+        1:  107-block  0
+        -:  108:
+        1:  109:        lum_weights = FilterLuminance::computeWeights(LT_CIE_LUMINANCE, imgIn[0]->channels, NULL);
+        1:  109-block  0
+        -:  110:
+        1:  111:        int whichImage = (imgIn.size() > 1) ? 1 : 0;
+        1:  112:        lum_weights_flt = FilterLuminance::computeWeights(LT_CIE_LUMINANCE, imgIn[whichImage]->channels, NULL);
+        1:  112-block  0
+        -:  113:
+        1:  114:        width       = imgIn[0]->width;
+        1:  115:        height      = imgIn[0]->height;
+        1:  116:        channels    = imgIn[0]->channels;
+        1:  117:        frames      = imgIn[0]->frames;
+        1:  118:    }
+        -:  119:
+        -:  120:    /**
+        -:  121:     * @brief execute
+        -:  122:     * @param imgIn
+        -:  123:     * @param imgOut
+        -:  124:     * @return
+        -:  125:     */
+        -:  126:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  127:    {
+        -:  128:        FilterSigmoidTMO filter(SIG_TMO, 0.18f, 1e9f, -1.0f, false);
+        -:  129:        return filter.Process(Single(imgIn), imgOut);
+        -:  130:    }
+        -:  131:};
+        -:  132:
+       1*:  133:PIC_INLINE FilterSigmoidTMO::FilterSigmoidTMO() : Filter()
+        1:  133-block  0
+        -:  134:{
+       1*:  135:    lum_weights = NULL;
+       1*:  136:    lum_weights_flt = NULL;
+       1*:  137:    update(SIG_TMO, 0.18f, 1e6f, -1.0f, false);
+        -:  138:}
+        -:  139:
+        -:  140:PIC_INLINE FilterSigmoidTMO::FilterSigmoidTMO(SIGMOID_MODE type, float alpha,
+        -:  141:                                   float wp, float epsilon, bool temporal) : Filter()
+        -:  142:{
+        -:  143:    lum_weights = NULL;
+        -:  144:    lum_weights_flt = NULL;
+        -:  145:    update(type, alpha, wp, epsilon, temporal);
+        -:  146:}
+        -:  147:
+       3*:  148:PIC_INLINE void FilterSigmoidTMO::update(SIGMOID_MODE type, float alpha,
+        -:  149:                                   float wp = 1e9f, float epsilon = -1.0f, bool temporal = false)
+        -:  150:{
+       3*:  151:    this->type = type;
+       3*:  152:    this->alpha = alpha;
+       3*:  153:    this->wp = wp;
+       3*:  154:    this->wp_sq = wp * wp;
+        -:  155:
+       3*:  156:    this->epsilon = epsilon;
+       2*:  157:    this->temporal = temporal;
+        1:  157-block  0
+        1:  157-block  1
+        1:  158:}
+        1:  158-block  0
+        -:  159:
+        1:  160:PIC_INLINE float FilterSigmoidTMO::calculateEpsilon(ImageVec imgIn)
+        -:  161:{
+        1:  162:    float tmpEpsilon, retEpsilon;
+        -:  163:
+        1:  164:    switch(type) {
+        1:  164-block  0
+        1:  165:    case SIG_TMO:
+        1:  166:        imgIn[0]->getLogMeanVal(NULL, &tmpEpsilon);
+        1:  166-block  0
+        -:  167:        break;
+        -:  168:
+    #####:  169:    case SIG_TMO_WP:
+    #####:  170:        imgIn[0]->getLogMeanVal(NULL, &tmpEpsilon);
+    %%%%%:  170-block  0
+        -:  171:        break;
+        -:  172:
+    #####:  173:    case SIG_SDM:
+    #####:  174:        tmpEpsilon = 1.0f;
+    #####:  175:        break;
+    %%%%%:  175-block  0
+        -:  176:
+    #####:  177:    default:
+    #####:  178:        tmpEpsilon = 1.0f;
+    %%%%%:  178-block  0
+        -:  179:    }
+        -:  180:
+        1:  181:    if(temporal) {
+        1:  181-block  0
+    #####:  182:        if(epsilon > 0.0f) {
+    %%%%%:  182-block  0
+    #####:  183:            retEpsilon = (epsilon + tmpEpsilon) / 2.0f;
+    %%%%%:  183-block  0
+        -:  184:        } else {
+    #####:  185:            retEpsilon = tmpEpsilon;
+    %%%%%:  185-block  0
+        -:  186:        }
+        -:  187:    } else {
+        1:  188:        retEpsilon = tmpEpsilon;
+        1:  188-block  0
+        -:  189:    }
+        -:  190:
+        1:  191:    return retEpsilon;
+        -:  192:}
+        -:  193:
+       70:  194:PIC_INLINE void FilterSigmoidTMO::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:  195:{
+        -:  196:
+       70:  197:    Image *img, *img_flt;
+        -:  198:
+       70:  199:    img = src[0];
+       70:  199-block  0
+        -:  200:
+       70:  201:    if(src.size() > 1) {
+       70:  201-block  0
+    #####:  202:        img_flt = src[1];
+    %%%%%:  202-block  0
+        -:  203:    } else {
+       70:  204:        img_flt = src[0];
+        -:  205:    }
+        -:  206:
+       70:  207:    float alpha_over_epsilon = alpha / epsilon;
+        -:  208:
+     4340:  209:    for(int j = box->y0; j < box->y1; j++) {
+       70:  209-block  0
+     4340:  209-block  1
+     4270:  209-block  2
+        -:  210:
+   277550:  211:        for(int i = box->x0; i < box->x1; i++) {
+     4270:  211-block  0
+   277550:  211-block  1
+        -:  212:
+   273280:  213:            float *p = (*img)(i, j);
+   273280:  213-block  0
+   273280:  214:            float *p_flt = (*img_flt)(i, j);
+   273280:  214-block  0
+        -:  215:
+   273280:  216:            float *dstOut = (*dst)(i, j);
+   273280:  216-block  0
+        -:  217:
+   273280:  218:            float L = Arrayf::dot(p, lum_weights, img->channels);
+   273280:  218-block  0
+        -:  219:
+   273280:  220:            if(L > 0.0f) {
+   273280:  220-block  0
+   273280:  221:                float L_flt = Arrayf::dot(p_flt, lum_weights_flt, img_flt->channels);
+   273280:  221-block  0
+        -:  222:
+   273280:  223:                float Lm = L * alpha_over_epsilon;
+   273280:  224:                float Lm_flt = L_flt * alpha_over_epsilon;
+   273280:  225:                float Ld;
+        -:  226:
+   273280:  227:                if(type == SIG_TMO_WP) {
+   273280:  227-block  0
+    #####:  228:                    Ld = L * (1.0f + L / wp_sq) / (1.0f + Lm_flt);
+    %%%%%:  228-block  0
+        -:  229:                } else {
+   273280:  230:                    Ld = Lm / (1.0f + Lm_flt);
+   273280:  230-block  0
+        -:  231:                }
+        -:  232:
+   546560:  233:                for(int k = 0; k < dst->channels; k++) {
+   273280:  233-block  0
+   546560:  233-block  1
+   273280:  234:                    dstOut[k] = (p[k] * Ld) / L;
+   273280:  234-block  0
+        -:  235:                }
+        -:  236:            } else {
+  273280*:  237:                Arrayf::assign(0.0f, dstOut, dst->channels);
+    %%%%%:  237-block  0
+   273280:  237-block  1
+        -:  238:            }
+        -:  239:        }
+        -:  240:    }
+       70:  241:}
+        -:  242:
+        -:  243:} // end namespace pic
+        -:  244:
+        -:  245:#endif /* PIC_FILTERING_FILTER_SIGMOID_TMO_HPP */
+        -:  246:

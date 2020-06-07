@@ -1,0 +1,137 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/colors/color_conv_xyz_to_cielab.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_COLORS_COLOR_CONV_XYZ_TO_CIELAB_HPP
+        -:   19:#define PIC_COLORS_COLOR_CONV_XYZ_TO_CIELAB_HPP
+        -:   20:
+        -:   21:#include "../colors/color_conv.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:const float C_SIX_OVER_TWENTY_NINE          = 0.20689655172413793103448275862069f;
+        -:   26:const float C_SIX_OVER_TWENTY_NINE_CUBIC    = 0.00885645167903563081717167575546f;
+        -:   27:// (29/6)^2 / 3
+        -:   28:const float C_CIELAB_C1                     = 7.787037037037037037037037037037f;
+        -:   29:// (6/29)^2 * 3
+        -:   30:const float C_CIELAB_C1_INV                 = 0.12841854934601664684898929845422f;
+        -:   31:const float C_FOUR_OVER_TWENTY_NINE         = 0.13793103448275862068965517241379f;
+        -:   32:
+        -:   33:/**
+        -:   34: * @brief The ColorConvXYZtoCIELAB class
+        -:   35: */
+        -:   36:class ColorConvXYZtoCIELAB: public ColorConv
+        -:   37:{
+        -:   38:protected:
+        -:   39:
+        -:   40:    float white_point[3];
+        -:   41:
+        -:   42:public:
+        -:   43:
+        -:   44:    /**
+        -:   45:     * @brief ColorConvXYZtoCIELAB
+        -:   46:     */
+        -:   47:    ColorConvXYZtoCIELAB()
+        -:   48:    {
+        -:   49:        white_point[0] = 1.0f;
+        -:   50:        white_point[1] = 1.0f;
+        -:   51:        white_point[2] = 1.0f;
+        -:   52:    }
+        -:   53:
+        -:   54:    /**
+        -:   55:     * @brief direct
+        -:   56:     * @param colIn
+        -:   57:     * @param colOut
+        -:   58:     */
+    #####:   59:    void direct(float *colIn, float *colOut)
+        -:   60:    {
+    #####:   61:        float fY_Yn = f(colIn[1] / white_point[1]);
+        -:   62:
+    #####:   63:        colOut[0] = 116.0f * fY_Yn - 16.0f;
+    #####:   64:        colOut[1] = 500.0f * (f(colIn[0] / white_point[0]) - fY_Yn);
+    #####:   65:        colOut[2] = 200.0f * (fY_Yn - f(colIn[2] / white_point[2]));
+    #####:   66:    }
+        -:   67:
+        -:   68:    /**
+        -:   69:     * @brief inverse
+        -:   70:     * @param colIn
+        -:   71:     * @param colOut
+        -:   72:     */
+    #####:   73:    void inverse(float *colIn, float *colOut)
+        -:   74:    {
+    #####:   75:        float tmp = (colIn[0] + 16.0f) / 116.0f;
+        -:   76:
+    #####:   77:        colOut[1] = white_point[1] * f_inv(tmp);
+    #####:   78:        colOut[0] = white_point[0] * f_inv(tmp + colIn[1] / 500.0f);
+    #####:   79:        colOut[2] = white_point[2] * f_inv(tmp - colIn[2] / 200.0f);
+    #####:   80:    }
+        -:   81:
+        -:   82:    /**
+        -:   83:     * @brief f
+        -:   84:     * @param t
+        -:   85:     * @return
+        -:   86:     */
+    #####:   87:    static float f(float t)
+        -:   88:    {
+    #####:   89:        if(t > C_SIX_OVER_TWENTY_NINE_CUBIC) {
+    %%%%%:   89-block  0
+    %%%%%:   89-block  1
+    %%%%%:   89-block  2
+    #####:   90:            return powf(t, 1.0f / 3.0f);
+    %%%%%:   90-block  0
+    %%%%%:   90-block  1
+    %%%%%:   90-block  2
+        -:   91:        } else {
+    #####:   92:            return C_CIELAB_C1 * t +
+    #####:   93:                   C_FOUR_OVER_TWENTY_NINE;
+    %%%%%:   93-block  0
+    %%%%%:   93-block  1
+    %%%%%:   93-block  2
+        -:   94:        }
+        -:   95:    }
+        -:   96:
+        -:   97:    /**
+        -:   98:     * @brief f_inv
+        -:   99:     * @param t
+        -:  100:     * @return
+        -:  101:     */
+    #####:  102:    static float f_inv(float t)
+        -:  103:    {
+    #####:  104:        if(t > C_SIX_OVER_TWENTY_NINE ) {
+    %%%%%:  104-block  0
+    %%%%%:  104-block  1
+    %%%%%:  104-block  2
+    #####:  105:            return powf(t, 3.0f);
+    %%%%%:  105-block  0
+    %%%%%:  105-block  1
+    %%%%%:  105-block  2
+        -:  106:        } else {
+    #####:  107:            return (t - C_FOUR_OVER_TWENTY_NINE) * C_CIELAB_C1_INV;
+    %%%%%:  107-block  0
+    %%%%%:  107-block  1
+    %%%%%:  107-block  2
+        -:  108:        }
+        -:  109:    }
+        -:  110:};
+        -:  111:
+        -:  112:} // end namespace pic
+        -:  113:
+        -:  114:#endif /* PIC_COLORS_COLOR_SPACE_CIELAB_HPP */
+        -:  115:

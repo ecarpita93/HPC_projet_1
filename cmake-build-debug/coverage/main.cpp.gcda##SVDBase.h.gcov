@@ -1,0 +1,374 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/SVD/SVDBase.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2009-2010 Benoit Jacob <jacob.benoit.1@gmail.com>
+        -:    5:// Copyright (C) 2014 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    6://
+        -:    7:// Copyright (C) 2013 Gauthier Brun <brun.gauthier@gmail.com>
+        -:    8:// Copyright (C) 2013 Nicolas Carre <nicolas.carre@ensimag.fr>
+        -:    9:// Copyright (C) 2013 Jean Ceccato <jean.ceccato@ensimag.fr>
+        -:   10:// Copyright (C) 2013 Pierre Zoppitelli <pierre.zoppitelli@ensimag.fr>
+        -:   11://
+        -:   12:// This Source Code Form is subject to the terms of the Mozilla
+        -:   13:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:   14:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:#ifndef EIGEN_SVDBASE_H
+        -:   17:#define EIGEN_SVDBASE_H
+        -:   18:
+        -:   19:namespace Eigen {
+        -:   20:/** \ingroup SVD_Module
+        -:   21: *
+        -:   22: *
+        -:   23: * \class SVDBase
+        -:   24: *
+        -:   25: * \brief Base class of SVD algorithms
+        -:   26: *
+        -:   27: * \tparam Derived the type of the actual SVD decomposition
+        -:   28: *
+        -:   29: * SVD decomposition consists in decomposing any n-by-p matrix \a A as a product
+        -:   30: *   \f[ A = U S V^* \f]
+        -:   31: * where \a U is a n-by-n unitary, \a V is a p-by-p unitary, and \a S is a n-by-p real positive matrix which is zero outside of its main diagonal;
+        -:   32: * the diagonal entries of S are known as the \em singular \em values of \a A and the columns of \a U and \a V are known as the left
+        -:   33: * and right \em singular \em vectors of \a A respectively.
+        -:   34: *
+        -:   35: * Singular values are always sorted in decreasing order.
+        -:   36: *
+        -:   37: * 
+        -:   38: * You can ask for only \em thin \a U or \a V to be computed, meaning the following. In case of a rectangular n-by-p matrix, letting \a m be the
+        -:   39: * smaller value among \a n and \a p, there are only \a m singular vectors; the remaining columns of \a U and \a V do not correspond to actual
+        -:   40: * singular vectors. Asking for \em thin \a U or \a V means asking for only their \a m first columns to be formed. So \a U is then a n-by-m matrix,
+        -:   41: * and \a V is then a p-by-m matrix. Notice that thin \a U and \a V are all you need for (least squares) solving.
+        -:   42: *  
+        -:   43: * If the input matrix has inf or nan coefficients, the result of the computation is undefined, but the computation is guaranteed to
+        -:   44: * terminate in finite (and reasonable) time.
+        -:   45: * \sa class BDCSVD, class JacobiSVD
+        -:   46: */
+        -:   47:template<typename Derived>
+        -:   48:class SVDBase
+        -:   49:{
+        -:   50:
+        -:   51:public:
+        -:   52:  typedef typename internal::traits<Derived>::MatrixType MatrixType;
+        -:   53:  typedef typename MatrixType::Scalar Scalar;
+        -:   54:  typedef typename NumTraits<typename MatrixType::Scalar>::Real RealScalar;
+        -:   55:  typedef typename MatrixType::StorageIndex StorageIndex;
+        -:   56:  typedef Eigen::Index Index; ///< \deprecated since Eigen 3.3
+        -:   57:  enum {
+        -:   58:    RowsAtCompileTime = MatrixType::RowsAtCompileTime,
+        -:   59:    ColsAtCompileTime = MatrixType::ColsAtCompileTime,
+        -:   60:    DiagSizeAtCompileTime = EIGEN_SIZE_MIN_PREFER_DYNAMIC(RowsAtCompileTime,ColsAtCompileTime),
+        -:   61:    MaxRowsAtCompileTime = MatrixType::MaxRowsAtCompileTime,
+        -:   62:    MaxColsAtCompileTime = MatrixType::MaxColsAtCompileTime,
+        -:   63:    MaxDiagSizeAtCompileTime = EIGEN_SIZE_MIN_PREFER_FIXED(MaxRowsAtCompileTime,MaxColsAtCompileTime),
+        -:   64:    MatrixOptions = MatrixType::Options
+        -:   65:  };
+        -:   66:
+        -:   67:  typedef Matrix<Scalar, RowsAtCompileTime, RowsAtCompileTime, MatrixOptions, MaxRowsAtCompileTime, MaxRowsAtCompileTime> MatrixUType;
+        -:   68:  typedef Matrix<Scalar, ColsAtCompileTime, ColsAtCompileTime, MatrixOptions, MaxColsAtCompileTime, MaxColsAtCompileTime> MatrixVType;
+        -:   69:  typedef typename internal::plain_diag_type<MatrixType, RealScalar>::type SingularValuesType;
+        -:   70:  
+        -:   71:  Derived& derived() { return *static_cast<Derived*>(this); }
+        3:   72:  const Derived& derived() const { return *static_cast<const Derived*>(this); }
+        -:   73:
+        -:   74:  /** \returns the \a U matrix.
+        -:   75:   *
+        -:   76:   * For the SVD decomposition of a n-by-p matrix, letting \a m be the minimum of \a n and \a p,
+        -:   77:   * the U matrix is n-by-n if you asked for \link Eigen::ComputeFullU ComputeFullU \endlink, and is n-by-m if you asked for \link Eigen::ComputeThinU ComputeThinU \endlink.
+        -:   78:   *
+        -:   79:   * The \a m first columns of \a U are the left singular vectors of the matrix being decomposed.
+        -:   80:   *
+        -:   81:   * This method asserts that you asked for \a U to be computed.
+        -:   82:   */
+        -:   83:  const MatrixUType& matrixU() const
+        -:   84:  {
+        -:   85:    eigen_assert(m_isInitialized && "SVD is not initialized.");
+        -:   86:    eigen_assert(computeU() && "This SVD decomposition didn't compute U. Did you ask for it?");
+        -:   87:    return m_matrixU;
+        -:   88:  }
+        -:   89:
+        -:   90:  /** \returns the \a V matrix.
+        -:   91:   *
+        -:   92:   * For the SVD decomposition of a n-by-p matrix, letting \a m be the minimum of \a n and \a p,
+        -:   93:   * the V matrix is p-by-p if you asked for \link Eigen::ComputeFullV ComputeFullV \endlink, and is p-by-m if you asked for \link Eigen::ComputeThinV ComputeThinV \endlink.
+        -:   94:   *
+        -:   95:   * The \a m first columns of \a V are the right singular vectors of the matrix being decomposed.
+        -:   96:   *
+        -:   97:   * This method asserts that you asked for \a V to be computed.
+        -:   98:   */
+        -:   99:  const MatrixVType& matrixV() const
+        -:  100:  {
+        -:  101:    eigen_assert(m_isInitialized && "SVD is not initialized.");
+        -:  102:    eigen_assert(computeV() && "This SVD decomposition didn't compute V. Did you ask for it?");
+        -:  103:    return m_matrixV;
+        -:  104:  }
+        -:  105:
+        -:  106:  /** \returns the vector of singular values.
+        -:  107:   *
+        -:  108:   * For the SVD decomposition of a n-by-p matrix, letting \a m be the minimum of \a n and \a p, the
+        -:  109:   * returned vector has size \a m.  Singular values are always sorted in decreasing order.
+        -:  110:   */
+        -:  111:  const SingularValuesType& singularValues() const
+        -:  112:  {
+        -:  113:    eigen_assert(m_isInitialized && "SVD is not initialized.");
+        -:  114:    return m_singularValues;
+        -:  115:  }
+        -:  116:
+        -:  117:  /** \returns the number of singular values that are not exactly 0 */
+        -:  118:  Index nonzeroSingularValues() const
+        -:  119:  {
+        -:  120:    eigen_assert(m_isInitialized && "SVD is not initialized.");
+        -:  121:    return m_nonzeroSingularValues;
+        -:  122:  }
+        -:  123:  
+        -:  124:  /** \returns the rank of the matrix of which \c *this is the SVD.
+        -:  125:    *
+        -:  126:    * \note This method has to determine which singular values should be considered nonzero.
+        -:  127:    *       For that, it uses the threshold value that you can control by calling
+        -:  128:    *       setThreshold(const RealScalar&).
+        -:  129:    */
+        3:  130:  inline Index rank() const
+        -:  131:  {
+        -:  132:    using std::abs;
+       3*:  133:    eigen_assert(m_isInitialized && "JacobiSVD is not initialized.");
+        3:  133-block  0
+    %%%%%:  133-block  1
+        3:  134:    if(m_singularValues.size()==0) return 0;
+        3:  134-block  0
+        3:  135:    RealScalar premultiplied_threshold = numext::maxi<RealScalar>(m_singularValues.coeff(0) * threshold(), (std::numeric_limits<RealScalar>::min)());
+        3:  135-block  0
+        3:  136:    Index i = m_nonzeroSingularValues-1;
+        3:  136-block  0
+       3*:  137:    while(i>=0 && m_singularValues.coeff(i) < premultiplied_threshold) --i;
+        3:  137-block  0
+        3:  137-block  1
+    %%%%%:  137-block  2
+        3:  138:    return i+1;
+        3:  138-block  0
+        -:  139:  }
+        -:  140:  
+        -:  141:  /** Allows to prescribe a threshold to be used by certain methods, such as rank() and solve(),
+        -:  142:    * which need to determine when singular values are to be considered nonzero.
+        -:  143:    * This is not used for the SVD decomposition itself.
+        -:  144:    *
+        -:  145:    * When it needs to get the threshold value, Eigen calls threshold().
+        -:  146:    * The default is \c NumTraits<Scalar>::epsilon()
+        -:  147:    *
+        -:  148:    * \param threshold The new value to use as the threshold.
+        -:  149:    *
+        -:  150:    * A singular value will be considered nonzero if its value is strictly greater than
+        -:  151:    *  \f$ \vert singular value \vert \leqslant threshold \times \vert max singular value \vert \f$.
+        -:  152:    *
+        -:  153:    * If you want to come back to the default behavior, call setThreshold(Default_t)
+        -:  154:    */
+        -:  155:  Derived& setThreshold(const RealScalar& threshold)
+        -:  156:  {
+        -:  157:    m_usePrescribedThreshold = true;
+        -:  158:    m_prescribedThreshold = threshold;
+        -:  159:    return derived();
+        -:  160:  }
+        -:  161:
+        -:  162:  /** Allows to come back to the default behavior, letting Eigen use its default formula for
+        -:  163:    * determining the threshold.
+        -:  164:    *
+        -:  165:    * You should pass the special object Eigen::Default as parameter here.
+        -:  166:    * \code svd.setThreshold(Eigen::Default); \endcode
+        -:  167:    *
+        -:  168:    * See the documentation of setThreshold(const RealScalar&).
+        -:  169:    */
+        -:  170:  Derived& setThreshold(Default_t)
+        -:  171:  {
+        -:  172:    m_usePrescribedThreshold = false;
+        -:  173:    return derived();
+        -:  174:  }
+        -:  175:
+        -:  176:  /** Returns the threshold that will be used by certain methods such as rank().
+        -:  177:    *
+        -:  178:    * See the documentation of setThreshold(const RealScalar&).
+        -:  179:    */
+        3:  180:  RealScalar threshold() const
+        -:  181:  {
+       3*:  182:    eigen_assert(m_isInitialized || m_usePrescribedThreshold);
+        3:  182-block  0
+    %%%%%:  182-block  1
+    %%%%%:  182-block  2
+       6*:  183:    return m_usePrescribedThreshold ? m_prescribedThreshold
+        3:  183-block  0
+    %%%%%:  183-block  1
+        3:  183-block  2
+        6:  184:                                    : (std::max<Index>)(1,m_diagSize)*NumTraits<Scalar>::epsilon();
+        3:  184-block  0
+        3:  184-block  1
+        -:  185:  }
+        -:  186:
+        -:  187:  /** \returns true if \a U (full or thin) is asked for in this SVD decomposition */
+ 1653902*:  188:  inline bool computeU() const { return m_computeFullU || m_computeThinU; }
+    %%%%%:  188-block  0
+    %%%%%:  188-block  1
+  1650897:  188-block  2
+     1536:  188-block  3
+     1536:  188-block  4
+     1466:  188-block  5
+     1466:  188-block  6
+        3:  188-block  7
+        -:  189:  /** \returns true if \a V (full or thin) is asked for in this SVD decomposition */
+  1652369:  190:  inline bool computeV() const { return m_computeFullV || m_computeThinV; }
+        3:  190-block  0
+        3:  190-block  1
+  1650897:  190-block  2
+     1466:  190-block  3
+     1466:  190-block  4
+        3:  190-block  5
+        -:  191:
+       6*:  192:  inline Index rows() const { return m_rows; }
+        3:  192-block  0
+        3:  192-block  1
+    %%%%%:  192-block  2
+    %%%%%:  192-block  3
+    %%%%%:  192-block  4
+       9*:  193:  inline Index cols() const { return m_cols; }
+    %%%%%:  193-block  0
+        3:  193-block  1
+    %%%%%:  193-block  2
+    %%%%%:  193-block  3
+    %%%%%:  193-block  4
+        3:  193-block  5
+        -:  194:  
+        -:  195:  /** \returns a (least squares) solution of \f$ A x = b \f$ using the current SVD decomposition of A.
+        -:  196:    *
+        -:  197:    * \param b the right-hand-side of the equation to solve.
+        -:  198:    *
+        -:  199:    * \note Solving requires both U and V to be computed. Thin U and V are enough, there is no need for full U or V.
+        -:  200:    *
+        -:  201:    * \note SVD solving is implicitly least-squares. Thus, this method serves both purposes of exact solving and least-squares solving.
+        -:  202:    * In other words, the returned solution is guaranteed to minimize the Euclidean norm \f$ \Vert A x - b \Vert \f$.
+        -:  203:    */
+        -:  204:  template<typename Rhs>
+        -:  205:  inline const Solve<Derived, Rhs>
+        3:  206:  solve(const MatrixBase<Rhs>& b) const
+        -:  207:  {
+       3*:  208:    eigen_assert(m_isInitialized && "SVD is not initialized.");
+        3:  208-block  0
+    %%%%%:  208-block  1
+       6*:  209:    eigen_assert(computeU() && computeV() && "SVD::solve() requires both unitaries U and V to be computed (thin unitaries suffice).");
+        3:  209-block  0
+        3:  209-block  1
+    %%%%%:  209-block  2
+        3:  210:    return Solve<Derived, Rhs>(derived(), b.derived());
+        -:  211:  }
+        -:  212:  
+        -:  213:  #ifndef EIGEN_PARSED_BY_DOXYGEN
+        -:  214:  template<typename RhsType, typename DstType>
+        -:  215:  EIGEN_DEVICE_FUNC
+        -:  216:  void _solve_impl(const RhsType &rhs, DstType &dst) const;
+        -:  217:  #endif
+        -:  218:
+        -:  219:protected:
+        -:  220:  
+        3:  221:  static void check_template_parameters()
+        3:  221-block  0
+        -:  222:  {
+        -:  223:    EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar);
+        -:  224:  }
+        -:  225:  
+        -:  226:  // return true if already allocated
+        -:  227:  bool allocate(Index rows, Index cols, unsigned int computationOptions) ;
+        -:  228:
+        -:  229:  MatrixUType m_matrixU;
+        -:  230:  MatrixVType m_matrixV;
+        -:  231:  SingularValuesType m_singularValues;
+        -:  232:  bool m_isInitialized, m_isAllocated, m_usePrescribedThreshold;
+        -:  233:  bool m_computeFullU, m_computeThinU;
+        -:  234:  bool m_computeFullV, m_computeThinV;
+        -:  235:  unsigned int m_computationOptions;
+        -:  236:  Index m_nonzeroSingularValues, m_rows, m_cols, m_diagSize;
+        -:  237:  RealScalar m_prescribedThreshold;
+        -:  238:
+        -:  239:  /** \brief Default Constructor.
+        -:  240:   *
+        -:  241:   * Default constructor of SVDBase
+        -:  242:   */
+        3:  243:  SVDBase()
+        -:  244:    : m_isInitialized(false),
+        -:  245:      m_isAllocated(false),
+        -:  246:      m_usePrescribedThreshold(false),
+        -:  247:      m_computationOptions(0),
+        3:  248:      m_rows(-1), m_cols(-1), m_diagSize(0)
+        3:  248-block  0
+        -:  249:  {
+        -:  250:    check_template_parameters();
+        -:  251:  }
+        -:  252:
+        -:  253:
+        -:  254:};
+        -:  255:
+        -:  256:#ifndef EIGEN_PARSED_BY_DOXYGEN
+        -:  257:template<typename Derived>
+        -:  258:template<typename RhsType, typename DstType>
+        3:  259:void SVDBase<Derived>::_solve_impl(const RhsType &rhs, DstType &dst) const
+        -:  260:{
+       3*:  261:  eigen_assert(rhs.rows() == rows());
+        3:  261-block  0
+    %%%%%:  261-block  1
+        -:  262:
+        -:  263:  // A = U S V^*
+        -:  264:  // So A^{-1} = V S^{-1} U^*
+        -:  265:
+        6:  266:  Matrix<Scalar, Dynamic, RhsType::ColsAtCompileTime, 0, MatrixType::MaxRowsAtCompileTime, RhsType::MaxColsAtCompileTime> tmp;
+        3:  267:  Index l_rank = rank();
+        3:  267-block  0
+        3:  268:  tmp.noalias() =  m_matrixU.leftCols(l_rank).adjoint() * rhs;
+        3:  269:  tmp = m_singularValues.head(l_rank).asDiagonal().inverse() * tmp;
+        3:  269-block  0
+        3:  270:  dst = m_matrixV.leftCols(l_rank) * tmp;
+        3:  270-block  0
+        3:  270-block  1
+    $$$$$:  270-block  2
+        3:  271:}
+        3:  271-block  0
+        -:  272:#endif
+        -:  273:
+        -:  274:template<typename MatrixType>
+        -:  275:bool SVDBase<MatrixType>::allocate(Index rows, Index cols, unsigned int computationOptions)
+        -:  276:{
+        -:  277:  eigen_assert(rows >= 0 && cols >= 0);
+        -:  278:
+        -:  279:  if (m_isAllocated &&
+        -:  280:      rows == m_rows &&
+        -:  281:      cols == m_cols &&
+        -:  282:      computationOptions == m_computationOptions)
+        -:  283:  {
+        -:  284:    return true;
+        -:  285:  }
+        -:  286:
+        -:  287:  m_rows = rows;
+        -:  288:  m_cols = cols;
+        -:  289:  m_isInitialized = false;
+        -:  290:  m_isAllocated = true;
+        -:  291:  m_computationOptions = computationOptions;
+        -:  292:  m_computeFullU = (computationOptions & ComputeFullU) != 0;
+        -:  293:  m_computeThinU = (computationOptions & ComputeThinU) != 0;
+        -:  294:  m_computeFullV = (computationOptions & ComputeFullV) != 0;
+        -:  295:  m_computeThinV = (computationOptions & ComputeThinV) != 0;
+        -:  296:  eigen_assert(!(m_computeFullU && m_computeThinU) && "SVDBase: you can't ask for both full and thin U");
+        -:  297:  eigen_assert(!(m_computeFullV && m_computeThinV) && "SVDBase: you can't ask for both full and thin V");
+        -:  298:  eigen_assert(EIGEN_IMPLIES(m_computeThinU || m_computeThinV, MatrixType::ColsAtCompileTime==Dynamic) &&
+        -:  299:	       "SVDBase: thin U and V are only available when your matrix has a dynamic number of columns.");
+        -:  300:
+        -:  301:  m_diagSize = (std::min)(m_rows, m_cols);
+        -:  302:  m_singularValues.resize(m_diagSize);
+        -:  303:  if(RowsAtCompileTime==Dynamic)
+        -:  304:    m_matrixU.resize(m_rows, m_computeFullU ? m_rows : m_computeThinU ? m_diagSize : 0);
+        -:  305:  if(ColsAtCompileTime==Dynamic)
+        -:  306:    m_matrixV.resize(m_cols, m_computeFullV ? m_cols : m_computeThinV ? m_diagSize : 0);
+        -:  307:
+        -:  308:  return false;
+        -:  309:}
+        -:  310:
+        -:  311:}// end namespace
+        -:  312:
+        -:  313:#endif // EIGEN_SVDBASE_H

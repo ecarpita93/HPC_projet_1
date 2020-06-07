@@ -1,0 +1,284 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/exposure_fusion.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_EXPOSURE_FUSION_HPP
+        -:   19:#define PIC_TONE_MAPPING_EXPOSURE_FUSION_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:#include "../util/std_util.hpp"
+        -:   23:#include "../util/array.hpp"
+        -:   24:#include "../colors/saturation.hpp"
+        -:   25:#include "../filtering/filter_luminance.hpp"
+        -:   26:#include "../filtering/filter_laplacian.hpp"
+        -:   27:#include "../filtering/filter_exposure_fusion_weights.hpp"
+        -:   28:
+        -:   29:#include "../algorithms/pyramid.hpp"
+        -:   30:
+        -:   31:#include "../tone_mapping/get_all_exposures.hpp"
+        -:   32:#include "../tone_mapping/tone_mapping_operator.hpp"
+        -:   33:
+        -:   34:namespace pic {
+        -:   35:
+        -:   36:/**
+        -:   37: * @brief The ExposureFusion class
+        -:   38: */
+        -:   39:class ExposureFusion: public ToneMappingOperator
+        -:   40:{
+        -:   41:protected:
+        -:   42:    FilterLuminance flt_lum;
+        -:   43:    FilterExposureFusionWeights flt_weights;
+        -:   44:
+        -:   45:    Pyramid *pW, *pI, *pOut;
+        -:   46:
+        -:   47:    /**
+        -:   48:     * @brief removeNegative
+        -:   49:     * @param x
+        -:   50:     * @return
+        -:   51:     */
+    #####:   52:    static float removeNegative(float x)
+        -:   53:    {
+    #####:   54:        return MAX(x, 0.0f);
+        -:   55:    }
+        -:   56:
+        -:   57:    /**
+        -:   58:     * @brief ProcessAux
+        -:   59:     * @param imgIn
+        -:   60:     * @param imgOut
+        -:   61:     * @return
+        -:   62:     */
+    #####:   63:    Image *ProcessAux(ImageVec imgIn, Image *imgOut)
+        -:   64:    {
+    #####:   65:        if(imgIn.size() > 1) {
+    %%%%%:   65-block  0
+    #####:   66:            return ProcessAuxStack(imgIn, imgOut);
+    %%%%%:   66-block  0
+    %%%%%:   66-block  1
+    %%%%%:   66-block  2
+    $$$$$:   66-block  3
+        -:   67:        } else {
+    #####:   68:            pic::ImageVec stack = getAllExposuresImages(imgIn[0]);
+    %%%%%:   68-block  0
+    %%%%%:   68-block  1
+        -:   69:
+    #####:   70:            imgOut = ProcessAuxStack(stack, imgOut);
+    %%%%%:   70-block  0
+    %%%%%:   70-block  1
+    $$$$$:   70-block  2
+    $$$$$:   70-block  3
+        -:   71:
+    #####:   72:            stdVectorClear<Image>(stack);
+    %%%%%:   72-block  0
+        -:   73:
+    #####:   74:            return imgOut;
+        -:   75:        }
+        -:   76:    }
+        -:   77:
+        -:   78:    /**
+        -:   79:     * @brief ProcessAuxStack
+        -:   80:     * @param imgIn
+        -:   81:     * @param imgOut
+        -:   82:     * @return
+        -:   83:     */
+    #####:   84:    Image *ProcessAuxStack(ImageVec imgIn, Image *imgOut)
+        -:   85:    {
+    #####:   86:        auto n = imgIn.size();
+    %%%%%:   86-block  0
+        -:   87:
+    #####:   88:        if(n < 2 || !ImageVecCheck(imgIn, -1)) {
+    %%%%%:   88-block  0
+    %%%%%:   88-block  1
+        -:   89:            return imgOut;
+        -:   90:        }
+        -:   91:
+        -:   92:        //compute weights values
+    #####:   93:        int channels = imgIn[0]->channels;
+    %%%%%:   93-block  0
+    #####:   94:        int width = imgIn[0]->width;
+    #####:   95:        int height = imgIn[0]->height;
+        -:   96:
+    #####:   97:        updateImage(imgIn[0]);
+    %%%%%:   97-block  0
+        -:   98:
+    #####:   99:        if(images[2] == NULL) {//images[2] --> acc
+    #####:  100:            images[2] = new Image(1, width, height, 1);
+    %%%%%:  100-block  0
+    %%%%%:  100-block  1
+    $$$$$:  100-block  2
+        -:  101:        }
+        -:  102:
+        -:  103:        //compute weights values
+    #####:  104:        *images[2] = 0.0f;
+    %%%%%:  104-block  0
+    #####:  105:        for(auto j = 0; j < n; j++) {
+    %%%%%:  105-block  0
+    #####:  106:            images[0] = flt_lum.Process(Single(imgIn[j]), images[0]);
+    %%%%%:  106-block  0
+    %%%%%:  106-block  1
+    $$$$$:  106-block  2
+    #####:  107:            images[1] = flt_weights.Process(Double(images[0], imgIn[j]), images[1]);
+    %%%%%:  107-block  0
+    %%%%%:  107-block  1
+    $$$$$:  107-block  2
+        -:  108:
+    #####:  109:            *images[2] += *images[1];
+    %%%%%:  109-block  0
+        -:  110:        }
+        -:  111:
+        -:  112:        //accumulate into a Pyramid
+        -:  113:
+    #####:  114:        releaseAux();
+    %%%%%:  114-block  0
+        -:  115:
+    #####:  116:        int limitLevel = 2;
+    #####:  117:        pW = new Pyramid(width, height, 1, false, limitLevel);
+    $$$$$:  117-block  0
+    #####:  118:        pI = new Pyramid(width, height, channels, true, limitLevel);
+    %%%%%:  118-block  0
+    $$$$$:  118-block  1
+    #####:  119:        pOut = new Pyramid(width, height, channels, true, limitLevel);
+    %%%%%:  119-block  0
+    $$$$$:  119-block  1
+        -:  120:
+    #####:  121:        pOut->setValue(0.0f);
+    %%%%%:  121-block  0
+        -:  122:
+    #####:  123:        for(auto j = 0; j < n; j++) {
+    %%%%%:  123-block  0
+    #####:  124:            images[0] = flt_lum.Process(Single(imgIn[j]), images[0]);
+    %%%%%:  124-block  0
+    %%%%%:  124-block  1
+    $$$$$:  124-block  2
+    #####:  125:            images[1] = flt_weights.Process(Double(images[0], imgIn[j]), images[1]);
+    %%%%%:  125-block  0
+    %%%%%:  125-block  1
+        -:  126:
+        -:  127:            //normalization
+    #####:  128:            *images[1] /= *images[2];
+    %%%%%:  128-block  0
+        -:  129:
+    #####:  130:            pW->update(images[1]);
+    #####:  131:            pI->update(imgIn[j]);
+        -:  132:
+    #####:  133:            pI->mul(pW);
+    #####:  134:            pOut->add(pI);
+        -:  135:        }
+        -:  136:
+        -:  137:        //final result
+    #####:  138:        imgOut = pOut->reconstruct(imgOut);
+    %%%%%:  138-block  0
+        -:  139:
+    #####:  140:        float *minVal = imgOut->getMinVal(NULL, NULL);
+    #####:  141:        float *maxVal = imgOut->getMaxVal(NULL, NULL);
+        -:  142:
+    #####:  143:        int ind;
+    #####:  144:        float minV = Arrayf::getMin(minVal, imgOut->channels, ind);
+    #####:  145:        float maxV = Arrayf::getMax(maxVal, imgOut->channels, ind);
+    %%%%%:  145-block  0
+    #####:  146:        *imgOut -= minV;
+    %%%%%:  146-block  0
+    #####:  147:        *imgOut /= (maxV- minV);
+        -:  148:
+    #####:  149:        imgOut->applyFunction(removeNegative);
+        -:  150:
+    #####:  151:        return imgOut;
+        -:  152:    }
+        -:  153:
+        -:  154:    /**
+        -:  155:     * @brief releaseAux
+        -:  156:     */
+    #####:  157:    void releaseAux()
+        -:  158:    {
+    #####:  159:        pW = delete_s(pW);
+    %%%%%:  159-block  0
+    #####:  160:        pI = delete_s(pI);
+    %%%%%:  160-block  0
+    #####:  161:        pOut = delete_s(pOut);
+    %%%%%:  161-block  0
+    #####:  162:    }
+        -:  163:
+        -:  164:public:
+        -:  165:
+        -:  166:    /**
+        -:  167:     * @brief ExposureFusion
+        -:  168:     * @param wC
+        -:  169:     * @param wE
+        -:  170:     * @param wS
+        -:  171:     */
+        -:  172:    ExposureFusion(float wC = 1.0f, float wE = 1.0f,
+        -:  173:                   float wS = 1.0f)
+        -:  174:    {
+        -:  175:        pW = NULL;
+        -:  176:        pI = NULL;
+        -:  177:        pOut = NULL;
+        -:  178:
+        -:  179:        flt_lum.update(LT_LUMA);
+        -:  180:        setToANullVector<Image>(images, 3);
+        -:  181:
+        -:  182:        update(wC, wE, wS);
+        -:  183:    }
+        -:  184:
+        -:  185:    ~ExposureFusion()
+        -:  186:    {
+        -:  187:        release();
+        -:  188:    }
+        -:  189:
+        -:  190:    /**
+        -:  191:     * @brief update
+        -:  192:     * @param wC
+        -:  193:     * @param wE
+        -:  194:     * @param wS
+        -:  195:     */
+        -:  196:    void update(float wC = 1.0f, float wE = 1.0f,
+        -:  197:                float wS = 1.0f)
+        -:  198:    {
+        -:  199:        flt_weights.update(wC, wE, wS);
+        -:  200:    }
+        -:  201:
+        -:  202:    /**
+        -:  203:     * @brief execute
+        -:  204:     * @param imgIn
+        -:  205:     * @param imgOut
+        -:  206:     * @return
+        -:  207:     */
+        -:  208:    static Image* execute(Image *imgIn, Image *imgOut)
+        -:  209:    {
+        -:  210:        ExposureFusion ef(1.0f, 1.0f, 1.0f);
+        -:  211:        return ef.Process(Single(imgIn), imgOut);
+        -:  212:    }
+        -:  213:
+        -:  214:    /**
+        -:  215:     * @brief executeStack
+        -:  216:     * @param imgIn
+        -:  217:     * @param imgOut
+        -:  218:     * @return
+        -:  219:     */
+        -:  220:    static Image* executeStack(ImageVec imgIn, Image *imgOut)
+        -:  221:    {
+        -:  222:        ExposureFusion ef(1.0f, 1.0f, 1.0f);
+        -:  223:        return ef.Process(imgIn, imgOut);
+        -:  224:    }
+        -:  225:};
+        -:  226:
+        -:  227:
+        -:  228:} // end namespace pic
+        -:  229:
+        -:  230:#endif /* PIC_TONE_MAPPING_EXPOSURE_FUSION_HPP */
+        -:  231:

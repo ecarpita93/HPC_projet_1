@@ -1,0 +1,197 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_non_local_means_s.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_NON_LOCAL_MEANS_HPP
+        -:   19:#define PIC_FILTERING_FILTER_NON_LOCAL_MEANS_HPP
+        -:   20:
+        -:   21:#include <random>
+        -:   22:
+        -:   23:#include "../filtering/filter.hpp"
+        -:   24:#include "../features_matching/patch_comp.hpp"
+        -:   25:#include "../filtering/filter_bilateral_2ds.hpp"
+        -:   26:#include "../util/array.hpp"
+        -:   27:#include "../point_samplers/sampler_random_m.hpp"
+        -:   28:
+        -:   29:namespace pic {
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief The FilterNonLocalMeansS class
+        -:   33: */
+        -:   34:class FilterNonLocalMeansS: public Filter
+        -:   35:{
+        -:   36:protected:
+        -:   37:    float sigma_r, sigma_r_sq_2;
+        -:   38:    int kernelSize;
+        -:   39:    float kernelSize_sq, h, h_sq;
+        -:   40:
+        -:   41:    MRSamplers<2> *ms;
+        -:   42:    int seed;
+        -:   43:
+        -:   44:    /**
+        -:   45:     * @brief ProcessBBox
+        -:   46:     * @param dst
+        -:   47:     * @param src
+        -:   48:     * @param box
+        -:   49:     */
+        -:   50:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   51:
+        -:   52:public:
+        -:   53:
+        -:   54:    /**
+        -:   55:     * @brief FilterNonLocalMeansS
+        -:   56:     */
+        -:   57:    FilterNonLocalMeansS() : Filter()
+        -:   58:    {
+        -:   59:        seed = 1;
+        -:   60:        ms = NULL;
+        -:   61:    }
+        -:   62:
+        -:   63:    /**
+        -:   64:     * @brief FilterNonLocalMeansS
+        -:   65:     * @param sigma_s
+        -:   66:     * @param sigma_r
+        -:   67:     */
+        -:   68:    FilterNonLocalMeansS(int searchWindow, int kernelSize, float sigma_r);
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief update
+        -:   72:     * @param sigma_r
+        -:   73:     */
+        -:   74:    void update(int searchWindow, int kernelSize, float sigma_r);
+        -:   75:
+        -:   76:};
+        -:   77:
+        -:   78:PIC_INLINE FilterNonLocalMeansS::FilterNonLocalMeansS(int searchWindow, int kernelSize, float sigma_r) : Filter()
+        -:   79:{
+        -:   80:    update(searchWindow, kernelSize, sigma_r);
+        -:   81:}
+        -:   82:
+        -:   83:PIC_INLINE void FilterNonLocalMeansS::update(int searchWindow, int kernelSize, float sigma_r)
+        -:   84:{
+        -:   85:    //protected values are assigned/computed
+        -:   86:    this->sigma_r = sigma_r;
+        -:   87:    sigma_r_sq_2 = sigma_r * sigma_r * 2.0f;
+        -:   88:
+        -:   89:    int halfKernelSize = kernelSize >> 1;
+        -:   90:    this->kernelSize = (halfKernelSize << 1) + 1;
+        -:   91:    kernelSize_sq = float(this->kernelSize * this->kernelSize);
+        -:   92:
+        -:   93:
+        -:   94:    h = sigma_r * 0.5f;
+        -:   95:    h_sq = h * h;
+        -:   96:
+        -:   97:    float density = FilterBilateral2DS::getK(searchWindow);
+        -:   98:    int nSamples = int(lround(float(searchWindow)) * density);
+        -:   99:    int nMaxSamples = (searchWindow * searchWindow) / 4;
+        -:  100:
+        -:  101:    nSamples = MAX(MIN(nSamples * 4, nMaxSamples), 1);
+        -:  102:
+        -:  103:    Vec2i window = Vec2i(searchWindow, searchWindow);
+        -:  104:    ms = new MRSamplers<2>(ST_BRIDSON, window, nSamples, 1, 64);
+        -:  105:
+        -:  106:    seed = 1;
+        -:  107:}
+        -:  108:
+    #####:  109:PIC_INLINE void FilterNonLocalMeansS::ProcessBBox(Image *dst, ImageVec src,
+        -:  110:        BBox *box)
+        -:  111:{
+    #####:  112:    int width = dst->width;
+    #####:  113:    int height = dst->height;
+    #####:  114:    int channels = dst->channels;
+        -:  115:
+        -:  116:    //Mersenne Twister
+    #####:  117:    std::mt19937 m(seed);
+    %%%%%:  117-block  0
+        -:  118:
+    #####:  119:    PatchComp pc(src[0], src[0], kernelSize);
+    %%%%%:  119-block  0
+        -:  120:
+    #####:  121:    float area = kernelSize_sq * dst->channelsf;
+        -:  122:
+    #####:  123:    for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  123-block  0
+    %%%%%:  123-block  1
+    %%%%%:  123-block  2
+    #####:  124:        for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  124-block  0
+    %%%%%:  124-block  1
+    %%%%%:  124-block  2
+        -:  125:
+    #####:  126:            RandomSampler<2> *ps = ms->getSampler(&m);
+    %%%%%:  126-block  0
+    #####:  127:            int nSamples = int(ps->samplesR.size());
+        -:  128:
+    #####:  129:            float *tmp_dst = (*dst)(i, j);
+        -:  130:
+    #####:  131:            float tot = 0.0f;
+    #####:  132:            Array<float>::assign(0.0f, tmp_dst, dst->channels);
+    %%%%%:  132-block  0
+        -:  133:
+    #####:  134:            for(int k = 0; k < nSamples; k += 2) {
+    %%%%%:  134-block  0
+    %%%%%:  134-block  1
+        -:  135:                //fetch addresses
+    #####:  136:                int ci = CLAMP(i + ps->samplesR[k    ],  width);
+    %%%%%:  136-block  0
+    %%%%%:  136-block  1
+    %%%%%:  136-block  2
+    #####:  137:                int cj = CLAMP(j + ps->samplesR[k + 1], height);
+    %%%%%:  137-block  0
+    %%%%%:  137-block  1
+    %%%%%:  137-block  2
+        -:  138:
+    #####:  139:                float *tmp_src = (*src[0])(ci, cj);
+    %%%%%:  139-block  0
+        -:  140:
+    #####:  141:                float d_sq = pc.getSSD(i, j, ci, cj) / area;
+        -:  142:
+    #####:  143:                float w = expf(-MAX(d_sq - sigma_r_sq_2, 0.0f) / h_sq);
+    #####:  144:                tot += w;
+        -:  145:
+    #####:  146:                for(int c = 0; c < channels; c++) {
+    %%%%%:  146-block  0
+    %%%%%:  146-block  1
+    #####:  147:                    tmp_dst[c] += tmp_src[c] * w;
+    %%%%%:  147-block  0
+        -:  148:                }
+        -:  149:            }
+        -:  150:
+    #####:  151:            float *tmp_src = (*src[0])(i, j);
+    %%%%%:  151-block  0
+    #####:  152:            bool sumTest = tot > 0.0f;
+        -:  153:
+    #####:  154:            for(int c = 0; c < channels; c++) {
+    %%%%%:  154-block  0
+    %%%%%:  154-block  1
+    #####:  155:                tmp_dst[c] = sumTest ? tmp_dst[c] / tot : tmp_src[c];
+    %%%%%:  155-block  0
+    %%%%%:  155-block  1
+    %%%%%:  155-block  2
+    %%%%%:  155-block  3
+        -:  156:            }
+        -:  157:        }
+        -:  158:    }
+    #####:  159:}
+        -:  160:
+        -:  161:} // end namespace pic
+        -:  162:
+        -:  163:#endif /* PIC_FILTERING_FILTER_NON_LOCAL_MEANS_HPP */
+        -:  164:

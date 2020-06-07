@@ -1,0 +1,620 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/histogram.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_HISTOGRAM_HPP
+        -:   19:#define PIC_HISTOGRAM_HPP
+        -:   20:
+        -:   21:#include "image.hpp"
+        -:   22:#include "util/std_util.hpp"
+        -:   23:#include "util/array.hpp"
+        -:   24:#include "util/math.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:enum VALUE_SPACE {VS_LDR, VS_LIN, VS_LOG_2, VS_LOG_E, VS_LOG_10};
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief The Histogram class is a class for creating,
+        -:   32: * managing, loading, and saving histogram for an Image.
+        -:   33: */
+        -:   34:class Histogram
+        -:   35:{
+        -:   36:protected:
+        -:   37:    float *bin_c;
+        -:   38:    float *bin_nor;
+        -:   39:    int nBin;
+        -:   40:    VALUE_SPACE type;
+        -:   41:    float fMin, fMax;
+        -:   42:    float deltaMaxMin, nBinf;
+        -:   43:    float epsilon;
+        -:   44:
+        -:   45:    /**
+        -:   46:     * @brief projectDomain applies the histogram domain to x.
+        -:   47:     * @param x is an input value.
+        -:   48:     * @return x is converted into the histogram domain.
+        -:   49:     */
+        -:   50:    inline float projectDomain(float x)
+        -:   51:    {
+        -:   52:        switch(type) {
+        -:   53:            case VS_LOG_2: {
+        -:   54:                return logf(x + epsilon) * C_INV_LOG_NAT_2;
+        -:   55:            }
+        -:   56:            break;
+        -:   57:
+        -:   58:            case VS_LOG_E: {
+        -:   59:                return logf(x + epsilon);
+        -:   60:            }
+        -:   61:            break;
+        -:   62:
+        -:   63:            case VS_LOG_10: {
+        -:   64:                return log10f(x + epsilon);
+        -:   65:            }
+        -:   66:            break;
+        -:   67:                
+        -:   68:            default: {
+        -:   69:                return x;
+        -:   70:            } break;
+        -:   71:        }
+        -:   72:
+        -:   73:        return x;
+        -:   74:    }
+        -:   75:
+        -:   76:    /**
+        -:   77:     * @brief unprojectDomain removes the histogram domain to x.
+        -:   78:     * @param x is an input value.
+        -:   79:     * @return x is converted back to its original domain.
+        -:   80:     */
+        -:   81:    inline float unprojectDomain(float x)
+        -:   82:    {
+        -:   83:        switch(type) {
+        -:   84:            case VS_LOG_2: {
+        -:   85:                return powf(2.0f, x) - epsilon;
+        -:   86:            }
+        -:   87:            break;
+        -:   88:
+        -:   89:            case VS_LOG_E: {
+        -:   90:                return expf(x) - epsilon;
+        -:   91:            }
+        -:   92:            break;
+        -:   93:
+        -:   94:            case VS_LOG_10: {
+        -:   95:                return powf(10.0f, x) - epsilon;
+        -:   96:            }
+        -:   97:            break;
+        -:   98:                
+        -:   99:            default: {
+        -:  100:                return x;
+        -:  101:            }
+        -:  102:            break;
+        -:  103:        }
+        -:  104:
+        -:  105:        return x;
+        -:  106:    }
+        -:  107:
+        -:  108:public:
+        -:  109:    unsigned int *bin, *bin_work;
+        -:  110:
+        -:  111:    /**
+        -:  112:     * @brief Histogram is the basic constructor setting variables to defaults.
+        -:  113:     */
+       21:  114:    Histogram()
+       21:  115:    {
+       21:  116:        bin     = NULL;
+       21:  117:        bin_nor = NULL;
+       21:  118:        bin_c   = NULL;
+       21:  119:        bin_work = NULL;
+        -:  120:
+       21:  121:        nBin =  0;
+       21:  122:        type =  VS_LIN;
+       21:  123:        fMin = -FLT_MAX;
+       21:  124:        fMax =  FLT_MAX;
+        -:  125:
+       21:  126:        epsilon = 1e-6f;
+       21:  126-block  0
+        -:  127:    }
+        -:  128:
+        -:  129:    /**
+        -:  130:     * @brief Histogram is an extension of the basic constructor, where calculate
+        -:  131:     * is called in order to populate the Histogram.
+        -:  132:     * @param imgIn is an input image for which Histogram needs to be computed.
+        -:  133:     * @param type is the space of computations (please see calculate()).
+        -:  134:     * @param nBin is the number of bins of the Histogram.
+        -:  135:     * @param channel is the color channel for which Histogram needs to be computed.
+        -:  136:     */
+    #####:  137:    Histogram(Image *imgIn, VALUE_SPACE type, int nBin, int channel = 0)
+    #####:  138:    {
+    #####:  139:        bin     = NULL;
+    #####:  140:        bin_nor = NULL;
+    #####:  141:        bin_c   = NULL;
+    #####:  142:        bin_work = NULL;
+        -:  143:
+    #####:  144:        fMin = -FLT_MAX;
+    #####:  145:        fMax =  FLT_MAX;
+        -:  146:
+    #####:  147:        epsilon = 1e-6f;
+    #####:  148:        this->nBin = 0;
+        -:  149:
+    #####:  150:        calculate(imgIn, type, nBin, channel);
+    %%%%%:  150-block  0
+    #####:  151:    }
+    %%%%%:  151-block  0
+        -:  152:
+        -:  153:    /**
+        -:  154:    * @brief ~Histogram is the basic destructor which frees memory.
+        -:  155:    */
+      21*:  156:    ~Histogram()
+       21:  157:    {
+      21*:  158:        release();
+    $$$$$:  158-block  0
+       21:  158-block  1
+        -:  159:
+      21*:  160:        nBin = 0;
+      21*:  161:        type =  VS_LIN;
+      21*:  162:        fMin = -FLT_MAX;
+    #####:  163:        fMax =  FLT_MAX;
+    %%%%%:  163-block  0
+      21*:  164:    }   
+        -:  165:
+        -:  166:    /**
+        -:  167:     * @brief release
+        -:  168:     */
+       42:  169:    void release()
+        -:  170:    {
+       42:  171:        bin = delete_vec_s(bin);
+       42:  171-block  0
+       42:  172:        bin_c = delete_vec_s(bin_c);
+       42:  172-block  0
+       42:  173:        bin_nor = delete_vec_s(bin_nor);
+       42:  173-block  0
+       42:  174:        bin_work = delete_vec_s(bin_work);
+       42:  174-block  0
+       42:  175:    }
+        -:  176:
+        -:  177:    /**
+        -:  178:     * @brief calculate computes the histogram of an input image. In the case
+        -:  179:     * of LDR images, they are ssumed to be normalized; i.e. with values in [0, 1].
+        -:  180:     * This function computes the histogram for a single color channel.
+        -:  181:     * @param imgIn is the input image for which the histogram needs to be computed
+        -:  182:     * @param type is the domain space for histogram computations.
+        -:  183:     * Histogram can be computed as: VS_LDR (256 bins), VS_LIN (linear space),
+        -:  184:     * VS_LOG_2 (logarithm 2 base), VS_LOG_E (natural logarithm space), and VS_LOG_10
+        -:  185:     * (logarithm 10 base).
+        -:  186:     * @param nBin is the number of bins of the Histogram to be computed. The default value
+        -:  187:     * is 256.
+        -:  188:     * @param channel is the color channel for which the Histogram will be computed.
+        -:  189:     */
+       21:  190:    void calculate(Image *imgIn, VALUE_SPACE type, int nBin,
+        -:  191:                              int channel = 0)
+        -:  192:    {
+       21:  193:        if((imgIn == NULL) || (channel < 0) ) {
+       21:  193-block  0
+        -:  194:            return;
+        -:  195:        }
+        -:  196:
+       42:  197:        if(!imgIn->isValid() || (channel >= imgIn->channels)) {
+       21:  197-block  0
+       21:  197-block  1
+        -:  198:            return;
+        -:  199:        }
+        -:  200:
+       21:  201:        if(nBin < 1 || type == VS_LDR) {
+       21:  201-block  0
+       21:  202:            nBin = 256;
+       21:  202-block  0
+        -:  203:        }
+        -:  204:
+       21:  205:        bool c1 = (nBin != this->nBin) && (bin != NULL);
+       21:  205-block  0
+       21:  205-block  1
+       21:  206:        bool c2 = (bin == NULL);
+       21:  207:        if(c1 || c2)  {
+       21:  207-block  0
+       21:  208:            release();
+       21:  208-block  0
+        -:  209:
+      21*:  210:            bin = new unsigned int[nBin];
+       21:  210-block  0
+    %%%%%:  210-block  1
+       21:  211:            memset((void *)bin, 0, nBin * sizeof(unsigned int));
+        -:  212:        }
+        -:  213:
+       21:  214:        this->nBin = nBin;
+       21:  215:        this->type = type;
+        -:  216:
+       21:  217:        int size = imgIn->width * imgIn->height * imgIn->channels;
+       21:  218:        int channels = imgIn->channels;
+        -:  219:
+        -:  220:        //compute statistics
+       21:  221:        fMin =  FLT_MAX;
+       21:  222:        fMax = -FLT_MAX;
+        -:  223:
+  5738901:  224:        for(int i = channel; i < size; i += channels) {
+       21:  224-block  0
+  5738901:  224-block  1
+  5738880:  225:            float val = imgIn->data[i];
+  5738880:  226:            fMin = MIN(fMin, val);
+  5738880:  227:            fMax = MAX(fMax, val);
+  5738880:  227-block  0
+        -:  228:        }
+        -:  229:
+       21:  230:        fMin = projectDomain(fMin);
+       21:  231:        fMax = projectDomain(fMax);
+        -:  232:
+       21:  233:        deltaMaxMin = (fMax - fMin);
+       21:  234:        nBinf = float(nBin - 1);
+        -:  235:
+        -:  236:        //compute the histogram
+  5738901:  237:        for(int i = channel; i < size; i += channels) {           
+       21:  237-block  0
+  5738901:  237-block  1
+  5738880:  238:            float val = projectDomain(imgIn->data[i]);
+        -:  239:
+  5738880:  240:            int indx = int(((val - fMin) * nBinf) / deltaMaxMin);
+        -:  241:
+        -:  242:            #ifdef PIC_DEBUG
+        -:  243:            if((indx >= nBin) || (indx < 0)) {
+        -:  244:                printf("Error in Calculate %d.\n",indx);
+        -:  245:            }
+        -:  246:            #endif
+        -:  247:
+ 5738880*:  248:            bin[CLAMP(indx, nBin)]++;
+  5738880:  248-block  0
+    %%%%%:  248-block  1
+  5738880:  248-block  2
+  5738880:  248-block  3
+        -:  249:        }
+        -:  250:    }
+        -:  251:
+        -:  252:    /**
+        -:  253:     * @brief project converts an input value in the histogram domain.
+        -:  254:     * @param x is an input value.
+        -:  255:     * @return x is projected in the histogram domain.
+        -:  256:     */
+        -:  257:    int project(float x)
+        -:  258:    {
+        -:  259:        float y = projectDomain(x);
+        -:  260:        return int(((y - fMin) * nBinf) / deltaMaxMin);
+        -:  261:    }
+        -:  262:
+        -:  263:    /**
+        -:  264:     * @brief unproject converts a histogram value back to its original domain.
+        -:  265:     * @param ind is a histogram value.
+        -:  266:     * @return ind is converted back to its original domain.
+        -:  267:     */
+        -:  268:    float unproject(int ind)
+        -:  269:    {
+        -:  270:        float indf = float(ind);
+        -:  271:        float y = ((indf * deltaMaxMin) / nBinf) + fMin;
+        -:  272:        return unprojectDomain(y);
+        -:  273:    }
+        -:  274:
+        -:  275:    /**
+        -:  276:     * @brief ceiling limits the maximum value of the histogram using Ward
+        -:  277:     * algorithm.
+        -:  278:     */
+    #####:  279:    void ceiling(float k)
+        -:  280:    {
+    #####:  281:        float tolerance = float(Array<unsigned int>::sum(bin, nBin)) * 0.025f;
+    %%%%%:  281-block  0
+    #####:  282:        int   trimmings = 0;
+    #####:  283:        bool  bFlag = true;
+        -:  284:
+    #####:  285:        std::vector<bool> trimmed_vec;
+    %%%%%:  285-block  0
+        -:  286:
+    #####:  287:        while((trimmings <= tolerance) && bFlag) {
+    %%%%%:  287-block  0
+    %%%%%:  287-block  1
+    #####:  288:            trimmings = 0;
+    #####:  289:            float T = float(Array<unsigned int>::sum(bin, nBin));
+    %%%%%:  289-block  0
+        -:  290:
+    #####:  291:            if(T < tolerance) {
+    %%%%%:  291-block  0
+        -:  292:                bFlag = false;
+        -:  293:            } else {
+    #####:  294:                bool bTrimmed = false;
+    #####:  295:                unsigned int ceiling = int(T * k);
+        -:  296:
+    #####:  297:                for(int i = 0; i < nBin; i++) {
+    %%%%%:  297-block  0
+    %%%%%:  297-block  1
+    %%%%%:  297-block  2
+    #####:  298:                    if(bin[i] > ceiling) {
+    %%%%%:  298-block  0
+    #####:  299:                        trimmings += (bin[i] - ceiling);
+    #####:  300:                        bin[i] = ceiling;
+    #####:  301:                        bTrimmed = true;
+    %%%%%:  301-block  0
+        -:  302:                    }
+        -:  303:                }
+        -:  304:
+    #####:  305:                trimmed_vec.push_back(bTrimmed);
+    %%%%%:  305-block  0
+        -:  306:
+        -:  307:            }
+        -:  308:
+    #####:  309:            int tvSize = int(trimmed_vec.size());
+    %%%%%:  309-block  0
+    #####:  310:            if(tvSize >= 2) {
+    %%%%%:  310-block  0
+    #####:  311:                bool b0 = !trimmed_vec[tvSize - 1];
+    %%%%%:  311-block  0
+    #####:  312:                bool b1 = !trimmed_vec[tvSize - 2];
+    #####:  313:                if(b0 && b1) {
+    %%%%%:  313-block  0
+    #####:  314:                    bFlag = false;
+    %%%%%:  314-block  0
+        -:  315:                }
+        -:  316:            }
+        -:  317:        }
+    #####:  318:    }
+        -:  319:
+        -:  320:    /**
+        -:  321:     * @brief cumulativef computes the cumulative Histogram.
+        -:  322:     * @param bNormalized is a boolean value; if it is true values of
+        -:  323:     * the Histogram will be normalized.
+        -:  324:     * @return It returns the cumulative Histogram as a float pointer.
+        -:  325:     */
+       21:  326:    float *cumulativef(bool bNormalized)
+        -:  327:    {
+       21:  328:        getNormalized();
+       21:  328-block  0
+        -:  329:    
+       21:  330:        bin_c = Array<float>::cumsum(bin_nor, nBin, bin_c);
+        -:  331:
+       21:  332:        if(bNormalized) {
+     5397:  333:            for(int i = 0; i < nBin; i++) {
+     5397:  333-block  0
+     5376:  334:                bin_c[i] /= bin_c[nBin - 1];
+     5376:  334-block  0
+        -:  335:            }
+        -:  336:        }
+        -:  337:
+       21:  338:        return bin_c;
+        -:  339:    }
+        -:  340:
+        -:  341:    /**
+        -:  342:     * @brief getCumulativef this function returns the cumulative
+        -:  343:     * Histogram. Note that cumulativef needs to be computed before otherwise
+        -:  344:     * the function will return a NULL pointer.
+        -:  345:     * @return It returns a float pointer to the cumulative Histogram.
+        -:  346:     */
+     5376:  347:    float *getCumulativef()
+        -:  348:    {
+     5376:  349:        return bin_c;
+     5376:  349-block  0
+        -:  350:    }
+        -:  351:
+        -:  352:    /**
+        -:  353:     * @brief getNormalized normalizes the Histogram.
+        -:  354:     * @return It returns the normalized Histogram as a float pointer.
+        -:  355:     */
+       21:  356:    float *getNormalized()
+        -:  357:    {
+       21:  358:        if(bin_nor == NULL) {
+       21:  358-block  0
+      21*:  359:            bin_nor = new float[nBin];
+       21:  359-block  0
+       21:  359-block  1
+    %%%%%:  359-block  2
+        -:  360:        }
+        -:  361:
+       21:  362:        int ind;
+       21:  363:        float maxValf = float(Array<unsigned int>::getMax(bin, nBin, ind));
+       21:  363-block  0
+        -:  364:
+     5397:  365:        for(int i = 0; i < nBin; i++) {
+       21:  365-block  0
+     5397:  365-block  1
+     5376:  366:            bin_nor[i] = float(bin[i]) / maxValf;
+     5376:  366-block  0
+        -:  367:        }
+        -:  368:
+       21:  369:        return bin_nor;
+        -:  370:    }
+        -:  371:
+        -:  372:    /**
+        -:  373:     * @brief write saves the Histogram as an Image into a file.
+        -:  374:     * @param name is the filename where to save the Histogram.
+        -:  375:     * @param bNor is a boolean value for normalizing or not the Histogram.
+        -:  376:     */
+        -:  377:    void write(std::string name, bool bNor)
+        -:  378:    {
+        -:  379:        Image img(1, nBin, 1, 1);
+        -:  380:
+        -:  381:        if(bNor) {
+        -:  382:            getNormalized();
+        -:  383:            memcpy(img.data, bin_nor, sizeof(float)*nBin);
+        -:  384:        } else {
+        -:  385:            for(int i = 0; i < nBin; i++) {
+        -:  386:                img.data[i] = float(bin[i]);
+        -:  387:            }
+        -:  388:        }
+        -:  389:
+        -:  390:        img.Write(name, LT_NONE);
+        -:  391:    }
+        -:  392:
+        -:  393:    /**
+        -:  394:     * @brief exposureCovering computes the exposure values for fully covering
+        -:  395:     * the dynamic range of the image. This function works only if the histogram
+        -:  396:     * was compute usign VS_LOG_2.
+        -:  397:     * @param nBits is the number of bit used for storing each output exposure image.
+        -:  398:     * The default value is 8.
+        -:  399:     * @param overlap is the value, in f-stops, of overlapping between two exposure images.
+        -:  400:     * This value is set to 1 by default.
+        -:  401:     * @return It returns an std::vector<float> which contains the exposure values
+        -:  402:     * in f-stops for all required exposures for covering information.
+        -:  403:     */
+    #####:  404:    std::vector< float > exposureCovering(int nBits = 8, float overlap = 1.0f)
+        -:  405:    {
+    #####:  406:        std::vector< float > ret;
+    %%%%%:  406-block  0
+        -:  407:
+    #####:  408:        if(type != VS_LOG_2) {
+    %%%%%:  408-block  0
+        -:  409:            #ifdef PIC_DEBUG
+        -:  410:                printf("ERROR in ExposureCovering: this histogram has to be in log2!\n");
+        -:  411:            #endif
+        -:  412:            
+        -:  413:            return ret;
+        -:  414:        }
+        -:  415:
+    #####:  416:        float dMM = deltaMaxMin / nBinf;
+        -:  417:
+    #####:  418:        int removingBins = int(float(nBits) /dMM + overlap);
+        -:  419:
+    #####:  420:        if( bin_work == NULL) {
+    %%%%%:  420-block  0
+    #####:  421:            bin_work = new unsigned int [nBin];
+    %%%%%:  421-block  0
+    %%%%%:  421-block  1
+    %%%%%:  421-block  2
+    %%%%%:  421-block  3
+        -:  422:        }
+        -:  423:
+    #####:  424:        memcpy(bin_work, bin, sizeof(unsigned int) * nBin);
+    %%%%%:  424-block  0
+        -:  425:
+    #####:  426:        int countIndex = 0;
+    %%%%%:  426-block  0
+    #####:  427:        while(Array<unsigned int>::sum(bin_work, nBin) > 0) {
+    %%%%%:  427-block  0
+    %%%%%:  427-block  1
+    %%%%%:  427-block  2
+        -:  428:
+        -:  429:
+        -:  430:            int count = -1;
+        -:  431:            int index = 0;
+        -:  432:
+    #####:  433:            for(int i = 0; i < (nBin - removingBins); i++) {
+    %%%%%:  433-block  0
+    %%%%%:  433-block  1
+        -:  434:                int tmpCount = 0;
+        -:  435:
+    #####:  436:                for(int j = i; j < (i + removingBins); j++) {
+    %%%%%:  436-block  0
+    #####:  437:                    tmpCount += bin_work[j];
+    %%%%%:  437-block  0
+        -:  438:                }
+        -:  439:
+    #####:  440:                if(tmpCount > count) {
+    %%%%%:  440-block  0
+    #####:  441:                    count = tmpCount;
+    #####:  442:                    index = i;
+    %%%%%:  442-block  0
+        -:  443:                }
+        -:  444:            }
+        -:  445:
+    #####:  446:            if(index == 0) {
+    %%%%%:  446-block  0
+    #####:  447:                countIndex++;
+    %%%%%:  447-block  0
+        -:  448:            }
+        -:  449:
+    #####:  450:            if(countIndex > 2) {
+    %%%%%:  450-block  0
+        -:  451:                break;
+        -:  452:            }
+        -:  453:
+    #####:  454:            for(int j = index; j < (index + removingBins); j++) {
+    %%%%%:  454-block  0
+    #####:  455:                bin_work[j] = 0;
+    %%%%%:  455-block  0
+        -:  456:            }
+        -:  457:
+    #####:  458:            float fstop = (float(index + removingBins) * dMM) + fMin;
+        -:  459:
+        -:  460:
+        -:  461:            /*
+        -:  462:            int ind;
+        -:  463:            Array<unsigned int>::getMax(bin_work, nBin, ind);
+        -:  464:
+        -:  465:            int indMin = MAX(ind - removingBins_half, 0);
+        -:  466:            int indMax = MIN(ind + removingBins_half, nBin);
+        -:  467:
+        -:  468:            for(int i = indMin; i < indMax; i++) {
+        -:  469:                bin_work[i] = 0;
+        -:  470:            }
+        -:  471:
+        -:  472:            float fstop = -float(ind - removingBins_half) * dMM + fMin;*/
+        -:  473:
+    #####:  474:            printf("%f\n", fstop);
+    %%%%%:  474-block  0
+    #####:  475:            ret.push_back(fstop);
+    %%%%%:  475-block  0
+        -:  476:
+        -:  477:        }
+        -:  478:
+        -:  479:        return ret;
+        -:  480:    }
+        -:  481:
+        -:  482:    /**
+        -:  483:     * @brief getBestExposure computes the best interval center.
+        -:  484:     * @param nBits is the number of bits in the budget for the output image.
+        -:  485:     * @return It returns the exposure, in f-stops, for setting the image
+        -:  486:     * with the best exposure at given dynamic range.
+        -:  487:     */
+        -:  488:    float getBestExposure(int nBits, float overlap = 0.5f)
+        -:  489:    {
+        -:  490:        if(overlap < 0.0f) {
+        -:  491:            overlap = 0.5f;
+        -:  492:        }
+        -:  493:
+        -:  494:        float nBits_f = float(nBits);
+        -:  495:        if((type != VS_LOG_2) && (nBits_f > deltaMaxMin) && (nBits < 1)){
+        -:  496:            return 0.0f;
+        -:  497:        }
+        -:  498:
+        -:  499:        float dMM = deltaMaxMin / nBinf;
+        -:  500:        int range_size_hist = int(float(nBits) /dMM + overlap);
+        -:  501:        range_size_hist = (range_size_hist < 1) ? 2 : range_size_hist;
+        -:  502:
+        -:  503:        #ifdef PIC_DEBUG
+        -:  504:            printf("Histogram [%f %f] %d\n", fMin, fMax, range_size_hist);
+        -:  505:        #endif
+        -:  506:
+        -:  507:        int count = -1;
+        -:  508:        int index = 0;
+        -:  509:
+        -:  510:        for(int i = 0; i < (nBin - range_size_hist); i++) {
+        -:  511:            int tmpCount = 0;
+        -:  512:
+        -:  513:            for(int j = i; j < (i + range_size_hist); j++) {
+        -:  514:                tmpCount += bin[j];
+        -:  515:            }
+        -:  516:
+        -:  517:            if(tmpCount > count) {
+        -:  518:                count = tmpCount;
+        -:  519:                index = i;
+        -:  520:            }
+        -:  521:        }
+        -:  522:
+        -:  523:        float fstop_index = (float(index + range_size_hist) * dMM) + fMin;
+        -:  524:        return -fstop_index;
+        -:  525:    }
+        -:  526:};
+        -:  527:
+        -:  528:
+        -:  529:} // end namespace pic
+        -:  530:
+        -:  531:#endif /* PIC_HISTOGRAM_HPP */
+        -:  532:

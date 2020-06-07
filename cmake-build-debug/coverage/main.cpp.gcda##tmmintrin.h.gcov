@@ -1,0 +1,255 @@
+        -:    0:Source:/usr/lib/gcc/x86_64-linux-gnu/9/include/tmmintrin.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/* Copyright (C) 2006-2019 Free Software Foundation, Inc.
+        -:    2:
+        -:    3:   This file is part of GCC.
+        -:    4:
+        -:    5:   GCC is free software; you can redistribute it and/or modify
+        -:    6:   it under the terms of the GNU General Public License as published by
+        -:    7:   the Free Software Foundation; either version 3, or (at your option)
+        -:    8:   any later version.
+        -:    9:
+        -:   10:   GCC is distributed in the hope that it will be useful,
+        -:   11:   but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   12:   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        -:   13:   GNU General Public License for more details.
+        -:   14:
+        -:   15:   Under Section 7 of GPL version 3, you are granted additional
+        -:   16:   permissions described in the GCC Runtime Library Exception, version
+        -:   17:   3.1, as published by the Free Software Foundation.
+        -:   18:
+        -:   19:   You should have received a copy of the GNU General Public License and
+        -:   20:   a copy of the GCC Runtime Library Exception along with this program;
+        -:   21:   see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+        -:   22:   <http://www.gnu.org/licenses/>.  */
+        -:   23:
+        -:   24:/* Implemented from the specification included in the Intel C++ Compiler
+        -:   25:   User Guide and Reference, version 9.1.  */
+        -:   26:
+        -:   27:#ifndef _TMMINTRIN_H_INCLUDED
+        -:   28:#define _TMMINTRIN_H_INCLUDED
+        -:   29:
+        -:   30:/* We need definitions from the SSE3, SSE2 and SSE header files*/
+        -:   31:#include <pmmintrin.h>
+        -:   32:
+        -:   33:#ifndef __SSSE3__
+        -:   34:#pragma GCC push_options
+        -:   35:#pragma GCC target("ssse3")
+        -:   36:#define __DISABLE_SSSE3__
+        -:   37:#endif /* __SSSE3__ */
+        -:   38:
+        -:   39:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:   40:_mm_hadd_epi16 (__m128i __X, __m128i __Y)
+        -:   41:{
+        -:   42:  return (__m128i) __builtin_ia32_phaddw128 ((__v8hi)__X, (__v8hi)__Y);
+        -:   43:}
+        -:   44:
+        -:   45:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+    #####:   46:_mm_hadd_epi32 (__m128i __X, __m128i __Y)
+        -:   47:{
+    #####:   48:  return (__m128i) __builtin_ia32_phaddd128 ((__v4si)__X, (__v4si)__Y);
+    %%%%%:   48-block  0
+    %%%%%:   48-block  1
+        -:   49:}
+        -:   50:
+        -:   51:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:   52:_mm_hadds_epi16 (__m128i __X, __m128i __Y)
+        -:   53:{
+        -:   54:  return (__m128i) __builtin_ia32_phaddsw128 ((__v8hi)__X, (__v8hi)__Y);
+        -:   55:}
+        -:   56:
+        -:   57:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:   58:_mm_hadd_pi16 (__m64 __X, __m64 __Y)
+        -:   59:{
+        -:   60:  return (__m64) __builtin_ia32_phaddw ((__v4hi)__X, (__v4hi)__Y);
+        -:   61:}
+        -:   62:
+        -:   63:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:   64:_mm_hadd_pi32 (__m64 __X, __m64 __Y)
+        -:   65:{
+        -:   66:  return (__m64) __builtin_ia32_phaddd ((__v2si)__X, (__v2si)__Y);
+        -:   67:}
+        -:   68:
+        -:   69:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:   70:_mm_hadds_pi16 (__m64 __X, __m64 __Y)
+        -:   71:{
+        -:   72:  return (__m64) __builtin_ia32_phaddsw ((__v4hi)__X, (__v4hi)__Y);
+        -:   73:}
+        -:   74:
+        -:   75:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:   76:_mm_hsub_epi16 (__m128i __X, __m128i __Y)
+        -:   77:{
+        -:   78:  return (__m128i) __builtin_ia32_phsubw128 ((__v8hi)__X, (__v8hi)__Y);
+        -:   79:}
+        -:   80:
+        -:   81:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:   82:_mm_hsub_epi32 (__m128i __X, __m128i __Y)
+        -:   83:{
+        -:   84:  return (__m128i) __builtin_ia32_phsubd128 ((__v4si)__X, (__v4si)__Y);
+        -:   85:}
+        -:   86:
+        -:   87:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:   88:_mm_hsubs_epi16 (__m128i __X, __m128i __Y)
+        -:   89:{
+        -:   90:  return (__m128i) __builtin_ia32_phsubsw128 ((__v8hi)__X, (__v8hi)__Y);
+        -:   91:}
+        -:   92:
+        -:   93:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:   94:_mm_hsub_pi16 (__m64 __X, __m64 __Y)
+        -:   95:{
+        -:   96:  return (__m64) __builtin_ia32_phsubw ((__v4hi)__X, (__v4hi)__Y);
+        -:   97:}
+        -:   98:
+        -:   99:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  100:_mm_hsub_pi32 (__m64 __X, __m64 __Y)
+        -:  101:{
+        -:  102:  return (__m64) __builtin_ia32_phsubd ((__v2si)__X, (__v2si)__Y);
+        -:  103:}
+        -:  104:
+        -:  105:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  106:_mm_hsubs_pi16 (__m64 __X, __m64 __Y)
+        -:  107:{
+        -:  108:  return (__m64) __builtin_ia32_phsubsw ((__v4hi)__X, (__v4hi)__Y);
+        -:  109:}
+        -:  110:
+        -:  111:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  112:_mm_maddubs_epi16 (__m128i __X, __m128i __Y)
+        -:  113:{
+        -:  114:  return (__m128i) __builtin_ia32_pmaddubsw128 ((__v16qi)__X, (__v16qi)__Y);
+        -:  115:}
+        -:  116:
+        -:  117:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  118:_mm_maddubs_pi16 (__m64 __X, __m64 __Y)
+        -:  119:{
+        -:  120:  return (__m64) __builtin_ia32_pmaddubsw ((__v8qi)__X, (__v8qi)__Y);
+        -:  121:}
+        -:  122:
+        -:  123:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  124:_mm_mulhrs_epi16 (__m128i __X, __m128i __Y)
+        -:  125:{
+        -:  126:  return (__m128i) __builtin_ia32_pmulhrsw128 ((__v8hi)__X, (__v8hi)__Y);
+        -:  127:}
+        -:  128:
+        -:  129:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  130:_mm_mulhrs_pi16 (__m64 __X, __m64 __Y)
+        -:  131:{
+        -:  132:  return (__m64) __builtin_ia32_pmulhrsw ((__v4hi)__X, (__v4hi)__Y);
+        -:  133:}
+        -:  134:
+        -:  135:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  136:_mm_shuffle_epi8 (__m128i __X, __m128i __Y)
+        -:  137:{
+        -:  138:  return (__m128i) __builtin_ia32_pshufb128 ((__v16qi)__X, (__v16qi)__Y);
+        -:  139:}
+        -:  140:
+        -:  141:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  142:_mm_shuffle_pi8 (__m64 __X, __m64 __Y)
+        -:  143:{
+        -:  144:  return (__m64) __builtin_ia32_pshufb ((__v8qi)__X, (__v8qi)__Y);
+        -:  145:}
+        -:  146:
+        -:  147:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  148:_mm_sign_epi8 (__m128i __X, __m128i __Y)
+        -:  149:{
+        -:  150:  return (__m128i) __builtin_ia32_psignb128 ((__v16qi)__X, (__v16qi)__Y);
+        -:  151:}
+        -:  152:
+        -:  153:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  154:_mm_sign_epi16 (__m128i __X, __m128i __Y)
+        -:  155:{
+        -:  156:  return (__m128i) __builtin_ia32_psignw128 ((__v8hi)__X, (__v8hi)__Y);
+        -:  157:}
+        -:  158:
+        -:  159:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  160:_mm_sign_epi32 (__m128i __X, __m128i __Y)
+        -:  161:{
+        -:  162:  return (__m128i) __builtin_ia32_psignd128 ((__v4si)__X, (__v4si)__Y);
+        -:  163:}
+        -:  164:
+        -:  165:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  166:_mm_sign_pi8 (__m64 __X, __m64 __Y)
+        -:  167:{
+        -:  168:  return (__m64) __builtin_ia32_psignb ((__v8qi)__X, (__v8qi)__Y);
+        -:  169:}
+        -:  170:
+        -:  171:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  172:_mm_sign_pi16 (__m64 __X, __m64 __Y)
+        -:  173:{
+        -:  174:  return (__m64) __builtin_ia32_psignw ((__v4hi)__X, (__v4hi)__Y);
+        -:  175:}
+        -:  176:
+        -:  177:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  178:_mm_sign_pi32 (__m64 __X, __m64 __Y)
+        -:  179:{
+        -:  180:  return (__m64) __builtin_ia32_psignd ((__v2si)__X, (__v2si)__Y);
+        -:  181:}
+        -:  182:
+        -:  183:#ifdef __OPTIMIZE__
+        -:  184:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  185:_mm_alignr_epi8(__m128i __X, __m128i __Y, const int __N)
+        -:  186:{
+        -:  187:  return (__m128i) __builtin_ia32_palignr128 ((__v2di)__X,
+        -:  188:					      (__v2di)__Y, __N * 8);
+        -:  189:}
+        -:  190:
+        -:  191:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  192:_mm_alignr_pi8(__m64 __X, __m64 __Y, const int __N)
+        -:  193:{
+        -:  194:  return (__m64) __builtin_ia32_palignr ((__v1di)__X,
+        -:  195:					 (__v1di)__Y, __N * 8);
+        -:  196:}
+        -:  197:#else
+        -:  198:#define _mm_alignr_epi8(X, Y, N)					\
+        -:  199:  ((__m128i) __builtin_ia32_palignr128 ((__v2di)(__m128i)(X),		\
+        -:  200:					(__v2di)(__m128i)(Y),		\
+        -:  201:					(int)(N) * 8))
+        -:  202:#define _mm_alignr_pi8(X, Y, N)						\
+        -:  203:  ((__m64) __builtin_ia32_palignr ((__v1di)(__m64)(X),			\
+        -:  204:				   (__v1di)(__m64)(Y),			\
+        -:  205:				   (int)(N) * 8))
+        -:  206:#endif
+        -:  207:
+        -:  208:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  209:_mm_abs_epi8 (__m128i __X)
+        -:  210:{
+        -:  211:  return (__m128i) __builtin_ia32_pabsb128 ((__v16qi)__X);
+        -:  212:}
+        -:  213:
+        -:  214:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  215:_mm_abs_epi16 (__m128i __X)
+        -:  216:{
+        -:  217:  return (__m128i) __builtin_ia32_pabsw128 ((__v8hi)__X);
+        -:  218:}
+        -:  219:
+        -:  220:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  221:_mm_abs_epi32 (__m128i __X)
+        -:  222:{
+        -:  223:  return (__m128i) __builtin_ia32_pabsd128 ((__v4si)__X);
+        -:  224:}
+        -:  225:
+        -:  226:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  227:_mm_abs_pi8 (__m64 __X)
+        -:  228:{
+        -:  229:  return (__m64) __builtin_ia32_pabsb ((__v8qi)__X);
+        -:  230:}
+        -:  231:
+        -:  232:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  233:_mm_abs_pi16 (__m64 __X)
+        -:  234:{
+        -:  235:  return (__m64) __builtin_ia32_pabsw ((__v4hi)__X);
+        -:  236:}
+        -:  237:
+        -:  238:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  239:_mm_abs_pi32 (__m64 __X)
+        -:  240:{
+        -:  241:  return (__m64) __builtin_ia32_pabsd ((__v2si)__X);
+        -:  242:}
+        -:  243:
+        -:  244:#ifdef __DISABLE_SSSE3__
+        -:  245:#undef __DISABLE_SSSE3__
+        -:  246:#pragma GCC pop_options
+        -:  247:#endif /* __DISABLE_SSSE3__ */
+        -:  248:
+        -:  249:#endif /* _TMMINTRIN_H_INCLUDED */

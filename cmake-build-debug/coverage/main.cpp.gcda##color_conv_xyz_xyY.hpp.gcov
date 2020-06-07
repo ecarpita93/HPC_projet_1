@@ -1,0 +1,90 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/colors/color_conv_xyz_xyY.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_COLORS_COLOR_CONV_XYZ_TO_xyY_HPP
+        -:   19:#define PIC_COLORS_COLOR_CONV_XYZ_TO_xyY_HPP
+        -:   20:
+        -:   21:#include "../colors/color_conv.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The ColorConvXYZtoxyY class
+        -:   27: */
+        -:   28:class ColorConvXYZtoxyY: public ColorConv
+        -:   29:{
+        -:   30:public:
+        -:   31:
+        -:   32:    /**
+        -:   33:     * @brief direct
+        -:   34:     * @param colIn
+        -:   35:     * @param colOut
+        -:   36:     */
+    #####:   37:    void direct(float *colIn, float *colOut)
+        -:   38:    {
+    #####:   39:        float XYZ = colIn[0] + colIn[1] + colIn[2];
+        -:   40:
+    #####:   41:        if(XYZ > 0.0f) {
+    %%%%%:   41-block  0
+    #####:   42:            colOut[0] = colIn[0] / XYZ;
+    #####:   43:            colOut[1] = colIn[1] / XYZ;
+    #####:   44:            colOut[2] = colIn[2];
+    %%%%%:   44-block  0
+        -:   45:        } else {
+    #####:   46:            colOut[0] = -1.0f;
+    #####:   47:            colOut[1] = -1.0f;
+    #####:   48:            colOut[2] = -1.0f;
+    %%%%%:   48-block  0
+        -:   49:        }
+    #####:   50:    }
+        -:   51:
+        -:   52:    /**
+        -:   53:     * @brief inverse
+        -:   54:     * @param colIn
+        -:   55:     * @param colOut
+        -:   56:     */
+    #####:   57:    void inverse(float *colIn, float *colOut)
+        -:   58:    {
+    #####:   59:        if(colIn[0] != 0.0f) {
+    %%%%%:   59-block  0
+    #####:   60:            float ratio = colIn[2] / colIn[1];
+    #####:   61:            float z = CLAMPi(1.0f - colIn[0] - colIn[1], 0.0f, 1.0f);
+    %%%%%:   61-block  0
+    %%%%%:   61-block  1
+    %%%%%:   61-block  2
+        -:   62:
+    #####:   63:            colOut[0] = colIn[0] * ratio;
+    #####:   64:            colOut[1] = colIn[2];
+    #####:   65:            colOut[2] = z * ratio;
+    %%%%%:   65-block  0
+        -:   66:        } else {
+    #####:   67:            colOut[0] = -1.0f;
+    #####:   68:            colOut[1] = -1.0f;
+    #####:   69:            colOut[2] = -1.0f;
+    %%%%%:   69-block  0
+        -:   70:        }
+    #####:   71:    }
+        -:   72:};
+        -:   73:
+        -:   74:} // end namespace pic
+        -:   75:
+        -:   76:#endif /* PIC_COLORS_COLOR_SPACE_CIELAB_HPP */
+        -:   77:

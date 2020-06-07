@@ -1,0 +1,1811 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/util/Memory.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2008-2015 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5:// Copyright (C) 2008-2009 Benoit Jacob <jacob.benoit.1@gmail.com>
+        -:    6:// Copyright (C) 2009 Kenneth Riddile <kfriddile@yahoo.com>
+        -:    7:// Copyright (C) 2010 Hauke Heibel <hauke.heibel@gmail.com>
+        -:    8:// Copyright (C) 2010 Thomas Capricelli <orzel@freehackers.org>
+        -:    9:// Copyright (C) 2013 Pavel Holoborodko <pavel@holoborodko.com>
+        -:   10://
+        -:   11:// This Source Code Form is subject to the terms of the Mozilla
+        -:   12:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:   13:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   14:
+        -:   15:
+        -:   16:/*****************************************************************************
+        -:   17:*** Platform checks for aligned malloc functions                           ***
+        -:   18:*****************************************************************************/
+        -:   19:
+        -:   20:#ifndef EIGEN_MEMORY_H
+        -:   21:#define EIGEN_MEMORY_H
+        -:   22:
+        -:   23:#ifndef EIGEN_MALLOC_ALREADY_ALIGNED
+        -:   24:
+        -:   25:// Try to determine automatically if malloc is already aligned.
+        -:   26:
+        -:   27:// On 64-bit systems, glibc's malloc returns 16-byte-aligned pointers, see:
+        -:   28://   http://www.gnu.org/s/libc/manual/html_node/Aligned-Memory-Blocks.html
+        -:   29:// This is true at least since glibc 2.8.
+        -:   30:// This leaves the question how to detect 64-bit. According to this document,
+        -:   31://   http://gcc.fyxm.net/summit/2003/Porting%20to%2064%20bit.pdf
+        -:   32:// page 114, "[The] LP64 model [...] is used by all 64-bit UNIX ports" so it's indeed
+        -:   33:// quite safe, at least within the context of glibc, to equate 64-bit with LP64.
+        -:   34:#if defined(__GLIBC__) && ((__GLIBC__>=2 && __GLIBC_MINOR__ >= 8) || __GLIBC__>2) \
+        -:   35: && defined(__LP64__) && ! defined( __SANITIZE_ADDRESS__ ) && (EIGEN_DEFAULT_ALIGN_BYTES == 16)
+        -:   36:  #define EIGEN_GLIBC_MALLOC_ALREADY_ALIGNED 1
+        -:   37:#else
+        -:   38:  #define EIGEN_GLIBC_MALLOC_ALREADY_ALIGNED 0
+        -:   39:#endif
+        -:   40:
+        -:   41:// FreeBSD 6 seems to have 16-byte aligned malloc
+        -:   42://   See http://svn.freebsd.org/viewvc/base/stable/6/lib/libc/stdlib/malloc.c?view=markup
+        -:   43:// FreeBSD 7 seems to have 16-byte aligned malloc except on ARM and MIPS architectures
+        -:   44://   See http://svn.freebsd.org/viewvc/base/stable/7/lib/libc/stdlib/malloc.c?view=markup
+        -:   45:#if defined(__FreeBSD__) && !(EIGEN_ARCH_ARM || EIGEN_ARCH_MIPS) && (EIGEN_DEFAULT_ALIGN_BYTES == 16)
+        -:   46:  #define EIGEN_FREEBSD_MALLOC_ALREADY_ALIGNED 1
+        -:   47:#else
+        -:   48:  #define EIGEN_FREEBSD_MALLOC_ALREADY_ALIGNED 0
+        -:   49:#endif
+        -:   50:
+        -:   51:#if (EIGEN_OS_MAC && (EIGEN_DEFAULT_ALIGN_BYTES == 16))     \
+        -:   52: || (EIGEN_OS_WIN64 && (EIGEN_DEFAULT_ALIGN_BYTES == 16))   \
+        -:   53: || EIGEN_GLIBC_MALLOC_ALREADY_ALIGNED              \
+        -:   54: || EIGEN_FREEBSD_MALLOC_ALREADY_ALIGNED
+        -:   55:  #define EIGEN_MALLOC_ALREADY_ALIGNED 1
+        -:   56:#else
+        -:   57:  #define EIGEN_MALLOC_ALREADY_ALIGNED 0
+        -:   58:#endif
+        -:   59:
+        -:   60:#endif
+        -:   61:
+        -:   62:namespace Eigen {
+        -:   63:
+        -:   64:namespace internal {
+        -:   65:
+        -:   66:EIGEN_DEVICE_FUNC 
+    #####:   67:inline void throw_std_bad_alloc()
+        -:   68:{
+        -:   69:  #ifdef EIGEN_EXCEPTIONS
+    #####:   70:    throw std::bad_alloc();
+    %%%%%:   70-block  0
+        -:   71:  #else
+        -:   72:    std::size_t huge = static_cast<std::size_t>(-1);
+        -:   73:    new int[huge];
+        -:   74:  #endif
+        -:   75:}
+        -:   76:
+        -:   77:/*****************************************************************************
+        -:   78:*** Implementation of handmade aligned functions                           ***
+        -:   79:*****************************************************************************/
+        -:   80:
+        -:   81:/* ----- Hand made implementations of aligned malloc/free and realloc ----- */
+        -:   82:
+        -:   83:/** \internal Like malloc, but the returned pointer is guaranteed to be 16-byte aligned.
+        -:   84:  * Fast, but wastes 16 additional bytes of memory. Does not throw any exception.
+        -:   85:  */
+    3252*:   86:inline void* handmade_aligned_malloc(std::size_t size)
+        -:   87:{
+    3252*:   88:  void *original = std::malloc(size+EIGEN_DEFAULT_ALIGN_BYTES);
+    3252*:   89:  if (original == 0) return 0;
+    3252*:   90:  void *aligned = reinterpret_cast<void*>((reinterpret_cast<std::size_t>(original) & ~(std::size_t(EIGEN_DEFAULT_ALIGN_BYTES-1))) + EIGEN_DEFAULT_ALIGN_BYTES);
+    3252*:   91:  *(reinterpret_cast<void**>(aligned) - 1) = original;
+    3252*:   92:  return aligned;
+     3252:   92-block  0
+    %%%%%:   92-block  1
+        -:   93:}
+        -:   94:
+        -:   95:/** \internal Frees memory allocated with handmade_aligned_malloc */
+    1989*:   96:inline void handmade_aligned_free(void *ptr)
+        -:   97:{
+    1674*:   98:  if (ptr) std::free(*(reinterpret_cast<void**>(ptr) - 1));
+    %%%%%:   98-block  0
+    %%%%%:   98-block  1
+    $$$$$:   98-block  2
+    $$$$$:   98-block  3
+    %%%%%:   98-block  4
+    %%%%%:   98-block  5
+    $$$$$:   98-block  6
+    $$$$$:   98-block  7
+    %%%%%:   98-block  8
+    $$$$$:   98-block  9
+    $$$$$:   98-block 10
+       33:   98-block 11
+    %%%%%:   98-block 12
+    $$$$$:   98-block 13
+    $$$$$:   98-block 14
+    %%%%%:   98-block 15
+    $$$$$:   98-block 16
+    %%%%%:   98-block 17
+    $$$$$:   98-block 18
+    %%%%%:   98-block 19
+    $$$$$:   98-block 20
+    %%%%%:   98-block 21
+       33:   98-block 22
+    $$$$$:   98-block 23
+    $$$$$:   98-block 24
+    %%%%%:   98-block 25
+    $$$$$:   98-block 26
+    %%%%%:   98-block 27
+    $$$$$:   98-block 28
+    $$$$$:   98-block 29
+    $$$$$:   98-block 30
+    $$$$$:   98-block 31
+    $$$$$:   98-block 32
+    %%%%%:   98-block 33
+    $$$$$:   98-block 34
+    $$$$$:   98-block 35
+    $$$$$:   98-block 36
+    $$$$$:   98-block 37
+    %%%%%:   98-block 38
+    %%%%%:   98-block 39
+    %%%%%:   98-block 40
+    %%%%%:   98-block 41
+     1530:   98-block 42
+    %%%%%:   98-block 43
+    $$$$$:   98-block 44
+    %%%%%:   98-block 45
+    %%%%%:   98-block 46
+    $$$$$:   98-block 47
+    %%%%%:   98-block 48
+    $$$$$:   98-block 49
+    $$$$$:   98-block 50
+    %%%%%:   98-block 51
+    $$$$$:   98-block 52
+        3:   98-block 53
+    $$$$$:   98-block 54
+    $$$$$:   98-block 55
+    %%%%%:   98-block 56
+    $$$$$:   98-block 57
+       33:   98-block 58
+       33:   98-block 59
+    $$$$$:   98-block 60
+    $$$$$:   98-block 61
+    $$$$$:   98-block 62
+    $$$$$:   98-block 63
+    $$$$$:   98-block 64
+    $$$$$:   98-block 65
+    $$$$$:   98-block 66
+    $$$$$:   98-block 67
+    %%%%%:   98-block 68
+    %%%%%:   98-block 69
+    %%%%%:   98-block 70
+    $$$$$:   98-block 71
+    $$$$$:   98-block 72
+    $$$$$:   98-block 73
+    %%%%%:   98-block 74
+    %%%%%:   98-block 75
+    %%%%%:   98-block 76
+    $$$$$:   98-block 77
+    $$$$$:   98-block 78
+    $$$$$:   98-block 79
+    %%%%%:   98-block 80
+    $$$$$:   98-block 81
+    %%%%%:   98-block 82
+    $$$$$:   98-block 83
+    %%%%%:   98-block 84
+    $$$$$:   98-block 85
+    %%%%%:   98-block 86
+    $$$$$:   98-block 87
+    $$$$$:   98-block 88
+    %%%%%:   98-block 89
+    $$$$$:   98-block 90
+    $$$$$:   98-block 91
+    $$$$$:   98-block 92
+    $$$$$:   98-block 93
+    %%%%%:   98-block 94
+    $$$$$:   98-block 95
+    $$$$$:   98-block 96
+    $$$$$:   98-block 97
+    $$$$$:   98-block 98
+    $$$$$:   98-block 99
+    $$$$$:   98-block 100
+    $$$$$:   98-block 101
+    $$$$$:   98-block 102
+    $$$$$:   98-block 103
+    $$$$$:   98-block 104
+    $$$$$:   98-block 105
+    $$$$$:   98-block 106
+    %%%%%:   98-block 107
+    %%%%%:   98-block 108
+    %%%%%:   98-block 109
+    %%%%%:   98-block 110
+    %%%%%:   98-block 111
+    $$$$$:   98-block 112
+    $$$$$:   98-block 113
+    $$$$$:   98-block 114
+    $$$$$:   98-block 115
+    %%%%%:   98-block 116
+    %%%%%:   98-block 117
+    $$$$$:   98-block 118
+    $$$$$:   98-block 119
+    %%%%%:   98-block 120
+    %%%%%:   98-block 121
+    $$$$$:   98-block 122
+    $$$$$:   98-block 123
+    %%%%%:   98-block 124
+    %%%%%:   98-block 125
+    %%%%%:   98-block 126
+    $$$$$:   98-block 127
+    $$$$$:   98-block 128
+    %%%%%:   98-block 129
+    %%%%%:   98-block 130
+    $$$$$:   98-block 131
+    $$$$$:   98-block 132
+        3:   98-block 133
+        3:   98-block 134
+        3:   98-block 135
+    $$$$$:   98-block 136
+    $$$$$:   98-block 137
+    $$$$$:   98-block 138
+        -:   99:}
+        -:  100:
+        -:  101:/** \internal
+        -:  102:  * \brief Reallocates aligned memory.
+        -:  103:  * Since we know that our handmade version is based on std::malloc
+        -:  104:  * we can use std::realloc to implement efficient reallocation.
+        -:  105:  */
+    #####:  106:inline void* handmade_aligned_realloc(void* ptr, std::size_t size, std::size_t = 0)
+        -:  107:{
+    #####:  108:  if (ptr == 0) return handmade_aligned_malloc(size);
+    %%%%%:  108-block  0
+    %%%%%:  108-block  1
+    #####:  109:  void *original = *(reinterpret_cast<void**>(ptr) - 1);
+    #####:  110:  std::ptrdiff_t previous_offset = static_cast<char *>(ptr)-static_cast<char *>(original);
+    #####:  111:  original = std::realloc(original,size+EIGEN_DEFAULT_ALIGN_BYTES);
+    #####:  112:  if (original == 0) return 0;
+    %%%%%:  112-block  0
+    #####:  113:  void *aligned = reinterpret_cast<void*>((reinterpret_cast<std::size_t>(original) & ~(std::size_t(EIGEN_DEFAULT_ALIGN_BYTES-1))) + EIGEN_DEFAULT_ALIGN_BYTES);
+    #####:  114:  void *previous_aligned = static_cast<char *>(original)+previous_offset;
+    #####:  115:  if(aligned!=previous_aligned)
+    %%%%%:  115-block  0
+    #####:  116:    std::memmove(aligned, previous_aligned, size);
+    %%%%%:  116-block  0
+        -:  117:  
+    #####:  118:  *(reinterpret_cast<void**>(aligned) - 1) = original;
+    #####:  119:  return aligned;
+    %%%%%:  119-block  0
+        -:  120:}
+        -:  121:
+        -:  122:/*****************************************************************************
+        -:  123:*** Implementation of portable aligned versions of malloc/free/realloc     ***
+        -:  124:*****************************************************************************/
+        -:  125:
+        -:  126:#ifdef EIGEN_NO_MALLOC
+        -:  127:EIGEN_DEVICE_FUNC inline void check_that_malloc_is_allowed()
+        -:  128:{
+        -:  129:  eigen_assert(false && "heap allocation is forbidden (EIGEN_NO_MALLOC is defined)");
+        -:  130:}
+        -:  131:#elif defined EIGEN_RUNTIME_NO_MALLOC
+        -:  132:EIGEN_DEVICE_FUNC inline bool is_malloc_allowed_impl(bool update, bool new_value = false)
+        -:  133:{
+        -:  134:  static bool value = true;
+        -:  135:  if (update == 1)
+        -:  136:    value = new_value;
+        -:  137:  return value;
+        -:  138:}
+        -:  139:EIGEN_DEVICE_FUNC inline bool is_malloc_allowed() { return is_malloc_allowed_impl(false); }
+        -:  140:EIGEN_DEVICE_FUNC inline bool set_is_malloc_allowed(bool new_value) { return is_malloc_allowed_impl(true, new_value); }
+        -:  141:EIGEN_DEVICE_FUNC inline void check_that_malloc_is_allowed()
+        -:  142:{
+        -:  143:  eigen_assert(is_malloc_allowed() && "heap allocation is forbidden (EIGEN_RUNTIME_NO_MALLOC is defined and g_is_malloc_allowed is false)");
+        -:  144:}
+        -:  145:#else 
+     3252:  146:EIGEN_DEVICE_FUNC inline void check_that_malloc_is_allowed()
+        -:  147:{}
+        -:  148:#endif
+        -:  149:
+        -:  150:/** \internal Allocates \a size bytes. The returned pointer is guaranteed to have 16 or 32 bytes alignment depending on the requirements.
+        -:  151:  * On allocation error, the returned pointer is null, and std::bad_alloc is thrown.
+        -:  152:  */
+     3252:  153:EIGEN_DEVICE_FUNC inline void* aligned_malloc(std::size_t size)
+        -:  154:{
+     3252:  155:  check_that_malloc_is_allowed();
+        -:  156:
+     3252:  157:  void *result;
+        -:  158:  #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
+        -:  159:    result = std::malloc(size);
+        -:  160:    #if EIGEN_DEFAULT_ALIGN_BYTES==16
+        -:  161:    eigen_assert((size<16 || (std::size_t(result)%16)==0) && "System's malloc returned an unaligned pointer. Compile with EIGEN_MALLOC_ALREADY_ALIGNED=0 to fallback to handmade alignd memory allocator.");
+        -:  162:    #endif
+        -:  163:  #else
+     3252:  164:    result = handmade_aligned_malloc(size);
+     3252:  164-block  0
+        -:  165:  #endif
+        -:  166:
+     3252:  167:  if(!result && size)
+     3252:  167-block  0
+    #####:  168:    throw_std_bad_alloc();
+    %%%%%:  168-block  0
+        -:  169:
+     3252:  170:  return result;
+        -:  171:}
+        -:  172:
+        -:  173:/** \internal Frees memory allocated with aligned_malloc. */
+    1989*:  174:EIGEN_DEVICE_FUNC inline void aligned_free(void *ptr)
+        -:  175:{
+        -:  176:  #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
+        -:  177:    std::free(ptr);
+        -:  178:  #else
+    8514*:  179:    handmade_aligned_free(ptr);
+        -:  180:  #endif
+        -:  181:}
+        -:  182:
+        -:  183:/**
+        -:  184:  * \internal
+        -:  185:  * \brief Reallocates an aligned block of memory.
+        -:  186:  * \throws std::bad_alloc on allocation failure
+        -:  187:  */
+    #####:  188:inline void* aligned_realloc(void *ptr, std::size_t new_size, std::size_t old_size)
+        -:  189:{
+    #####:  190:  EIGEN_UNUSED_VARIABLE(old_size);
+    %%%%%:  190-block  0
+        -:  191:
+    #####:  192:  void *result;
+        -:  193:#if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
+        -:  194:  result = std::realloc(ptr,new_size);
+        -:  195:#else
+    #####:  196:  result = handmade_aligned_realloc(ptr,new_size,old_size);
+    %%%%%:  196-block  0
+        -:  197:#endif
+        -:  198:
+    #####:  199:  if (!result && new_size)
+    #####:  200:    throw_std_bad_alloc();
+    %%%%%:  200-block  0
+        -:  201:
+    #####:  202:  return result;
+        -:  203:}
+        -:  204:
+        -:  205:/*****************************************************************************
+        -:  206:*** Implementation of conditionally aligned functions                      ***
+        -:  207:*****************************************************************************/
+        -:  208:
+        -:  209:/** \internal Allocates \a size bytes. If Align is true, then the returned ptr is 16-byte-aligned.
+        -:  210:  * On allocation error, the returned pointer is null, and a std::bad_alloc is thrown.
+        -:  211:  */
+    3186*:  212:template<bool Align> EIGEN_DEVICE_FUNC inline void* conditional_aligned_malloc(std::size_t size)
+        -:  213:{
+    3186*:  214:  return aligned_malloc(size);
+        -:  215:}
+        -:  216:
+        -:  217:template<> EIGEN_DEVICE_FUNC inline void* conditional_aligned_malloc<false>(std::size_t size)
+        -:  218:{
+        -:  219:  check_that_malloc_is_allowed();
+        -:  220:
+        -:  221:  void *result = std::malloc(size);
+        -:  222:  if(!result && size)
+        -:  223:    throw_std_bad_alloc();
+        -:  224:  return result;
+        -:  225:}
+        -:  226:
+        -:  227:/** \internal Frees memory allocated with conditional_aligned_malloc */
+    1725*:  228:template<bool Align> EIGEN_DEVICE_FUNC inline void conditional_aligned_free(void *ptr)
+        -:  229:{
+    1725*:  230:  aligned_free(ptr);
+        -:  231:}
+        -:  232:
+        -:  233:template<> EIGEN_DEVICE_FUNC inline void conditional_aligned_free<false>(void *ptr)
+        -:  234:{
+        -:  235:  std::free(ptr);
+        -:  236:}
+        -:  237:
+    #####:  238:template<bool Align> inline void* conditional_aligned_realloc(void* ptr, std::size_t new_size, std::size_t old_size)
+        -:  239:{
+    #####:  240:  return aligned_realloc(ptr, new_size, old_size);
+        -:  241:}
+        -:  242:
+        -:  243:template<> inline void* conditional_aligned_realloc<false>(void* ptr, std::size_t new_size, std::size_t)
+        -:  244:{
+        -:  245:  return std::realloc(ptr, new_size);
+        -:  246:}
+        -:  247:
+        -:  248:/*****************************************************************************
+        -:  249:*** Construction/destruction of array elements                             ***
+        -:  250:*****************************************************************************/
+        -:  251:
+        -:  252:/** \internal Destructs the elements of an array.
+        -:  253:  * The \a size parameters tells on how many objects to call the destructor of T.
+        -:  254:  */
+      198:  255:template<typename T> EIGEN_DEVICE_FUNC inline void destruct_elements_of_array(T *ptr, std::size_t size)
+        -:  256:{
+        -:  257:  // always destruct an array starting from the end.
+        -:  258:  if(ptr)
+        -:  259:    while(size) ptr[--size].~T();
+        -:  260:}
+        -:  261:
+        -:  262:/** \internal Constructs the elements of an array.
+        -:  263:  * The \a size parameter tells on how many objects to call the constructor of T.
+        -:  264:  */
+        -:  265:template<typename T> EIGEN_DEVICE_FUNC inline T* construct_elements_of_array(T *ptr, std::size_t size)
+        -:  266:{
+        -:  267:  std::size_t i;
+        -:  268:  EIGEN_TRY
+        -:  269:  {
+        -:  270:      for (i = 0; i < size; ++i) ::new (ptr + i) T;
+        -:  271:      return ptr;
+        -:  272:  }
+        -:  273:  EIGEN_CATCH(...)
+        -:  274:  {
+        -:  275:    destruct_elements_of_array(ptr, i);
+        -:  276:    EIGEN_THROW;
+        -:  277:  }
+        -:  278:  return NULL;
+        -:  279:}
+        -:  280:
+        -:  281:/*****************************************************************************
+        -:  282:*** Implementation of aligned new/delete-like functions                    ***
+        -:  283:*****************************************************************************/
+        -:  284:
+        -:  285:template<typename T>
+    #####:  286:EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void check_size_for_overflow(std::size_t size)
+    %%%%%:  286-block  0
+    %%%%%:  286-block  1
+    %%%%%:  286-block  2
+    %%%%%:  286-block  3
+        -:  287:{
+    7923*:  288:  if(size > std::size_t(-1) / sizeof(T))
+    %%%%%:  288-block  0
+    %%%%%:  288-block  1
+       33:  288-block  2
+       33:  288-block  3
+     1503:  288-block  4
+       33:  288-block  5
+       33:  288-block  6
+        3:  288-block  7
+       33:  288-block  8
+       33:  288-block  9
+    %%%%%:  288-block 10
+    %%%%%:  288-block 11
+        3:  288-block 12
+        3:  288-block 13
+    %%%%%:  288-block 14
+    %%%%%:  288-block 15
+    %%%%%:  288-block 16
+     3180:  288-block 17
+    #####:  289:    throw_std_bad_alloc();
+    %%%%%:  289-block  0
+    %%%%%:  289-block  1
+    %%%%%:  289-block  2
+    %%%%%:  289-block  3
+    %%%%%:  289-block  4
+    %%%%%:  289-block  5
+    %%%%%:  289-block  6
+    %%%%%:  289-block  7
+    %%%%%:  289-block  8
+    %%%%%:  289-block  9
+    %%%%%:  289-block 10
+    %%%%%:  289-block 11
+    %%%%%:  289-block 12
+    %%%%%:  289-block 13
+    %%%%%:  289-block 14
+    %%%%%:  289-block 15
+    %%%%%:  289-block 16
+    %%%%%:  289-block 17
+    %%%%%:  289-block 18
+    %%%%%:  289-block 19
+    %%%%%:  289-block 20
+    %%%%%:  289-block 21
+    %%%%%:  289-block 22
+    %%%%%:  289-block 23
+        -:  290:}
+        -:  291:
+        -:  292:/** \internal Allocates \a size objects of type T. The returned pointer is guaranteed to have 16 bytes alignment.
+        -:  293:  * On allocation error, the returned pointer is undefined, but a std::bad_alloc is thrown.
+        -:  294:  * The default constructor of T is called.
+        -:  295:  */
+        -:  296:template<typename T> EIGEN_DEVICE_FUNC inline T* aligned_new(std::size_t size)
+        -:  297:{
+        -:  298:  check_size_for_overflow<T>(size);
+        -:  299:  T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
+        -:  300:  EIGEN_TRY
+        -:  301:  {
+        -:  302:    return construct_elements_of_array(result, size);
+        -:  303:  }
+        -:  304:  EIGEN_CATCH(...)
+        -:  305:  {
+        -:  306:    aligned_free(result);
+        -:  307:    EIGEN_THROW;
+        -:  308:  }
+        -:  309:  return result;
+        -:  310:}
+        -:  311:
+        -:  312:template<typename T, bool Align> EIGEN_DEVICE_FUNC inline T* conditional_aligned_new(std::size_t size)
+        -:  313:{
+        -:  314:  check_size_for_overflow<T>(size);
+        -:  315:  T *result = reinterpret_cast<T*>(conditional_aligned_malloc<Align>(sizeof(T)*size));
+        -:  316:  EIGEN_TRY
+        -:  317:  {
+        -:  318:    return construct_elements_of_array(result, size);
+        -:  319:  }
+        -:  320:  EIGEN_CATCH(...)
+        -:  321:  {
+        -:  322:    conditional_aligned_free<Align>(result);
+        -:  323:    EIGEN_THROW;
+        -:  324:  }
+        -:  325:  return result;
+        -:  326:}
+        -:  327:
+        -:  328:/** \internal Deletes objects constructed with aligned_new
+        -:  329:  * The \a size parameters tells on how many objects to call the destructor of T.
+        -:  330:  */
+      198:  331:template<typename T> EIGEN_DEVICE_FUNC inline void aligned_delete(T *ptr, std::size_t size)
+        -:  332:{
+       99:  333:  destruct_elements_of_array<T>(ptr, size);
+       99:  333-block  0
+       99:  333-block  1
+       99:  334:  aligned_free(ptr);
+       99:  334-block  0
+        -:  335:}
+        -:  336:
+        -:  337:/** \internal Deletes objects constructed with conditional_aligned_new
+        -:  338:  * The \a size parameters tells on how many objects to call the destructor of T.
+        -:  339:  */
+        -:  340:template<typename T, bool Align> EIGEN_DEVICE_FUNC inline void conditional_aligned_delete(T *ptr, std::size_t size)
+        -:  341:{
+        -:  342:  destruct_elements_of_array<T>(ptr, size);
+        -:  343:  conditional_aligned_free<Align>(ptr);
+        -:  344:}
+        -:  345:
+        -:  346:template<typename T, bool Align> EIGEN_DEVICE_FUNC inline T* conditional_aligned_realloc_new(T* pts, std::size_t new_size, std::size_t old_size)
+        -:  347:{
+        -:  348:  check_size_for_overflow<T>(new_size);
+        -:  349:  check_size_for_overflow<T>(old_size);
+        -:  350:  if(new_size < old_size)
+        -:  351:    destruct_elements_of_array(pts+new_size, old_size-new_size);
+        -:  352:  T *result = reinterpret_cast<T*>(conditional_aligned_realloc<Align>(reinterpret_cast<void*>(pts), sizeof(T)*new_size, sizeof(T)*old_size));
+        -:  353:  if(new_size > old_size)
+        -:  354:  {
+        -:  355:    EIGEN_TRY
+        -:  356:    {
+        -:  357:      construct_elements_of_array(result+old_size, new_size-old_size);
+        -:  358:    }
+        -:  359:    EIGEN_CATCH(...)
+        -:  360:    {
+        -:  361:      conditional_aligned_free<Align>(result);
+        -:  362:      EIGEN_THROW;
+        -:  363:    }
+        -:  364:  }
+        -:  365:  return result;
+        -:  366:}
+        -:  367:
+        -:  368:
+    3186*:  369:template<typename T, bool Align> EIGEN_DEVICE_FUNC inline T* conditional_aligned_new_auto(std::size_t size)
+        -:  370:{
+    3186*:  371:  if(size==0)
+        -:  372:    return 0; // short-cut. Also fixes Bug 884
+    3186*:  373:  check_size_for_overflow<T>(size);
+    3186*:  374:  T *result = reinterpret_cast<T*>(conditional_aligned_malloc<Align>(sizeof(T)*size));
+        -:  375:  if(NumTraits<T>::RequireInitialization)
+        -:  376:  {
+        -:  377:    EIGEN_TRY
+        -:  378:    {
+        -:  379:      construct_elements_of_array(result, size);
+        -:  380:    }
+        -:  381:    EIGEN_CATCH(...)
+        -:  382:    {
+        -:  383:      conditional_aligned_free<Align>(result);
+        -:  384:      EIGEN_THROW;
+        -:  385:    }
+        -:  386:  }
+    3186*:  387:  return result;
+        -:  388:}
+------------------
+_ZN5Eigen8internal28conditional_aligned_new_autoIlLb1EEEPT_m:
+        3:  369:template<typename T, bool Align> EIGEN_DEVICE_FUNC inline T* conditional_aligned_new_auto(std::size_t size)
+        -:  370:{
+        3:  371:  if(size==0)
+        3:  371-block  0
+        -:  372:    return 0; // short-cut. Also fixes Bug 884
+        3:  373:  check_size_for_overflow<T>(size);
+        3:  374:  T *result = reinterpret_cast<T*>(conditional_aligned_malloc<Align>(sizeof(T)*size));
+        3:  374-block  0
+        -:  375:  if(NumTraits<T>::RequireInitialization)
+        -:  376:  {
+        -:  377:    EIGEN_TRY
+        -:  378:    {
+        -:  379:      construct_elements_of_array(result, size);
+        -:  380:    }
+        -:  381:    EIGEN_CATCH(...)
+        -:  382:    {
+        -:  383:      conditional_aligned_free<Align>(result);
+        -:  384:      EIGEN_THROW;
+        -:  385:    }
+        -:  386:  }
+        3:  387:  return result;
+        -:  388:}
+------------------
+_ZN5Eigen8internal28conditional_aligned_new_autoIiLb1EEEPT_m:
+        3:  369:template<typename T, bool Align> EIGEN_DEVICE_FUNC inline T* conditional_aligned_new_auto(std::size_t size)
+        -:  370:{
+        3:  371:  if(size==0)
+        3:  371-block  0
+        -:  372:    return 0; // short-cut. Also fixes Bug 884
+        3:  373:  check_size_for_overflow<T>(size);
+        3:  374:  T *result = reinterpret_cast<T*>(conditional_aligned_malloc<Align>(sizeof(T)*size));
+        3:  374-block  0
+        -:  375:  if(NumTraits<T>::RequireInitialization)
+        -:  376:  {
+        -:  377:    EIGEN_TRY
+        -:  378:    {
+        -:  379:      construct_elements_of_array(result, size);
+        -:  380:    }
+        -:  381:    EIGEN_CATCH(...)
+        -:  382:    {
+        -:  383:      conditional_aligned_free<Align>(result);
+        -:  384:      EIGEN_THROW;
+        -:  385:    }
+        -:  386:  }
+        3:  387:  return result;
+        -:  388:}
+------------------
+_ZN5Eigen8internal28conditional_aligned_new_autoIdLb1EEEPT_m:
+    #####:  369:template<typename T, bool Align> EIGEN_DEVICE_FUNC inline T* conditional_aligned_new_auto(std::size_t size)
+        -:  370:{
+    #####:  371:  if(size==0)
+    %%%%%:  371-block  0
+        -:  372:    return 0; // short-cut. Also fixes Bug 884
+    #####:  373:  check_size_for_overflow<T>(size);
+    #####:  374:  T *result = reinterpret_cast<T*>(conditional_aligned_malloc<Align>(sizeof(T)*size));
+    %%%%%:  374-block  0
+        -:  375:  if(NumTraits<T>::RequireInitialization)
+        -:  376:  {
+        -:  377:    EIGEN_TRY
+        -:  378:    {
+        -:  379:      construct_elements_of_array(result, size);
+        -:  380:    }
+        -:  381:    EIGEN_CATCH(...)
+        -:  382:    {
+        -:  383:      conditional_aligned_free<Align>(result);
+        -:  384:      EIGEN_THROW;
+        -:  385:    }
+        -:  386:  }
+    #####:  387:  return result;
+        -:  388:}
+------------------
+_ZN5Eigen8internal28conditional_aligned_new_autoIfLb1EEEPT_m:
+     3180:  369:template<typename T, bool Align> EIGEN_DEVICE_FUNC inline T* conditional_aligned_new_auto(std::size_t size)
+        -:  370:{
+     3180:  371:  if(size==0)
+     3180:  371-block  0
+        -:  372:    return 0; // short-cut. Also fixes Bug 884
+     3180:  373:  check_size_for_overflow<T>(size);
+     3180:  374:  T *result = reinterpret_cast<T*>(conditional_aligned_malloc<Align>(sizeof(T)*size));
+     3180:  374-block  0
+        -:  375:  if(NumTraits<T>::RequireInitialization)
+        -:  376:  {
+        -:  377:    EIGEN_TRY
+        -:  378:    {
+        -:  379:      construct_elements_of_array(result, size);
+        -:  380:    }
+        -:  381:    EIGEN_CATCH(...)
+        -:  382:    {
+        -:  383:      conditional_aligned_free<Align>(result);
+        -:  384:      EIGEN_THROW;
+        -:  385:    }
+        -:  386:  }
+     3180:  387:  return result;
+        -:  388:}
+------------------
+        -:  389:
+    #####:  390:template<typename T, bool Align> inline T* conditional_aligned_realloc_new_auto(T* pts, std::size_t new_size, std::size_t old_size)
+    %%%%%:  390-block  0
+        -:  391:{
+    #####:  392:  check_size_for_overflow<T>(new_size);
+    %%%%%:  392-block  0
+    #####:  393:  check_size_for_overflow<T>(old_size);
+        -:  394:  if(NumTraits<T>::RequireInitialization && (new_size < old_size))
+        -:  395:    destruct_elements_of_array(pts+new_size, old_size-new_size);
+    #####:  396:  T *result = reinterpret_cast<T*>(conditional_aligned_realloc<Align>(reinterpret_cast<void*>(pts), sizeof(T)*new_size, sizeof(T)*old_size));
+    %%%%%:  396-block  0
+        -:  397:  if(NumTraits<T>::RequireInitialization && (new_size > old_size))
+        -:  398:  {
+        -:  399:    EIGEN_TRY
+        -:  400:    {
+        -:  401:      construct_elements_of_array(result+old_size, new_size-old_size);
+        -:  402:    }
+        -:  403:    EIGEN_CATCH(...)
+        -:  404:    {
+        -:  405:      conditional_aligned_free<Align>(result);
+        -:  406:      EIGEN_THROW;
+        -:  407:    }
+        -:  408:  }
+    #####:  409:  return result;
+        -:  410:}
+        -:  411:
+    1725*:  412:template<typename T, bool Align> EIGEN_DEVICE_FUNC inline void conditional_aligned_delete_auto(T *ptr, std::size_t size)
+    $$$$$:  412-block  0
+    %%%%%:  412-block  1
+    $$$$$:  412-block  2
+    $$$$$:  412-block  3
+    $$$$$:  412-block  4
+    $$$$$:  412-block  5
+    $$$$$:  412-block  6
+    %%%%%:  412-block  7
+    $$$$$:  412-block  8
+    $$$$$:  412-block  9
+    $$$$$:  412-block 10
+    $$$$$:  412-block 11
+    %%%%%:  412-block 12
+    %%%%%:  412-block 13
+     1530:  412-block 14
+    %%%%%:  412-block 15
+    $$$$$:  412-block 16
+       33:  412-block 17
+    %%%%%:  412-block 18
+    $$$$$:  412-block 19
+    $$$$$:  412-block 20
+        3:  412-block 21
+    $$$$$:  412-block 22
+    $$$$$:  412-block 23
+    %%%%%:  412-block 24
+    $$$$$:  412-block 25
+       33:  412-block 26
+       33:  412-block 27
+    $$$$$:  412-block 28
+    $$$$$:  412-block 29
+    $$$$$:  412-block 30
+    $$$$$:  412-block 31
+    $$$$$:  412-block 32
+    $$$$$:  412-block 33
+    $$$$$:  412-block 34
+    $$$$$:  412-block 35
+    %%%%%:  412-block 36
+    $$$$$:  412-block 37
+    %%%%%:  412-block 38
+    $$$$$:  412-block 39
+    %%%%%:  412-block 40
+    $$$$$:  412-block 41
+    $$$$$:  412-block 42
+       84:  412-block 43
+    $$$$$:  412-block 44
+    $$$$$:  412-block 45
+    $$$$$:  412-block 46
+    $$$$$:  412-block 47
+    %%%%%:  412-block 48
+    $$$$$:  412-block 49
+    $$$$$:  412-block 50
+    $$$$$:  412-block 51
+    $$$$$:  412-block 52
+    $$$$$:  412-block 53
+    $$$$$:  412-block 54
+    $$$$$:  412-block 55
+    $$$$$:  412-block 56
+    $$$$$:  412-block 57
+    $$$$$:  412-block 58
+    $$$$$:  412-block 59
+    $$$$$:  412-block 60
+    %%%%%:  412-block 61
+    %%%%%:  412-block 62
+    %%%%%:  412-block 63
+    %%%%%:  412-block 64
+    %%%%%:  412-block 65
+    $$$$$:  412-block 66
+    $$$$$:  412-block 67
+    $$$$$:  412-block 68
+    $$$$$:  412-block 69
+    %%%%%:  412-block 70
+    %%%%%:  412-block 71
+    $$$$$:  412-block 72
+    $$$$$:  412-block 73
+    %%%%%:  412-block 74
+    %%%%%:  412-block 75
+    $$$$$:  412-block 76
+    $$$$$:  412-block 77
+    %%%%%:  412-block 78
+    %%%%%:  412-block 79
+    %%%%%:  412-block 80
+    $$$$$:  412-block 81
+    $$$$$:  412-block 82
+    %%%%%:  412-block 83
+    %%%%%:  412-block 84
+    $$$$$:  412-block 85
+    $$$$$:  412-block 86
+        3:  412-block 87
+        3:  412-block 88
+    $$$$$:  412-block 89
+    $$$$$:  412-block 90
+    $$$$$:  412-block 91
+        -:  413:{
+        -:  414:  if(NumTraits<T>::RequireInitialization)
+        -:  415:    destruct_elements_of_array<T>(ptr, size);
+     195*:  416:  conditional_aligned_free<Align>(ptr);
+    %%%%%:  416-block  0
+    %%%%%:  416-block  1
+    %%%%%:  416-block  2
+       33:  416-block  3
+    %%%%%:  416-block  4
+    $$$$$:  416-block  5
+        3:  416-block  6
+    %%%%%:  416-block  7
+       33:  416-block  8
+       33:  416-block  9
+    $$$$$:  416-block 10
+    $$$$$:  416-block 11
+    $$$$$:  416-block 12
+    $$$$$:  416-block 13
+    $$$$$:  416-block 14
+    $$$$$:  416-block 15
+    %%%%%:  416-block 16
+    %%%%%:  416-block 17
+    $$$$$:  416-block 18
+    %%%%%:  416-block 19
+       84:  416-block 20
+    %%%%%:  416-block 21
+    $$$$$:  416-block 22
+    $$$$$:  416-block 23
+    $$$$$:  416-block 24
+    $$$$$:  416-block 25
+    $$$$$:  416-block 26
+    $$$$$:  416-block 27
+    $$$$$:  416-block 28
+    %%%%%:  416-block 29
+    %%%%%:  416-block 30
+    %%%%%:  416-block 31
+    %%%%%:  416-block 32
+    %%%%%:  416-block 33
+    $$$$$:  416-block 34
+    $$$$$:  416-block 35
+    %%%%%:  416-block 36
+    %%%%%:  416-block 37
+    $$$$$:  416-block 38
+    $$$$$:  416-block 39
+    %%%%%:  416-block 40
+    %%%%%:  416-block 41
+    $$$$$:  416-block 42
+    %%%%%:  416-block 43
+    %%%%%:  416-block 44
+    %%%%%:  416-block 45
+    $$$$$:  416-block 46
+    %%%%%:  416-block 47
+    %%%%%:  416-block 48
+    $$$$$:  416-block 49
+        3:  416-block 50
+        3:  416-block 51
+        3:  416-block 52
+    $$$$$:  416-block 53
+    $$$$$:  416-block 54
+        -:  417:}
+        -:  418:
+        -:  419:/****************************************************************************/
+        -:  420:
+        -:  421:/** \internal Returns the index of the first element of the array that is well aligned with respect to the requested \a Alignment.
+        -:  422:  *
+        -:  423:  * \tparam Alignment requested alignment in Bytes.
+        -:  424:  * \param array the address of the start of the array
+        -:  425:  * \param size the size of the array
+        -:  426:  *
+        -:  427:  * \note If no element of the array is well aligned or the requested alignment is not a multiple of a scalar,
+        -:  428:  * the size of the array is returned. For example with SSE, the requested alignment is typically 16-bytes. If
+        -:  429:  * packet size for the given scalar type is 1, then everything is considered well-aligned.
+        -:  430:  *
+        -:  431:  * \note Otherwise, if the Alignment is larger that the scalar size, we rely on the assumptions that sizeof(Scalar) is a
+        -:  432:  * power of 2. On the other hand, we do not assume that the array address is a multiple of sizeof(Scalar), as that fails for
+        -:  433:  * example with Scalar=double on certain 32-bit platforms, see bug #79.
+        -:  434:  *
+        -:  435:  * There is also the variant first_aligned(const MatrixBase&) defined in DenseCoeffsBase.h.
+        -:  436:  * \sa first_default_aligned()
+        -:  437:  */
+        -:  438:template<int Alignment, typename Scalar, typename Index>
+  466073*:  439:EIGEN_DEVICE_FUNC inline Index first_aligned(const Scalar* array, Index size)
+        -:  440:{
+  466073*:  441:  const Index ScalarSize = sizeof(Scalar);
+  466073*:  442:  const Index AlignmentSize = Alignment / ScalarSize;
+  466073*:  443:  const Index AlignmentMask = AlignmentSize-1;
+        -:  444:
+        -:  445:  if(AlignmentSize<=1)
+        -:  446:  {
+        -:  447:    // Either the requested alignment if smaller than a scalar, or it exactly match a 1 scalar
+        -:  448:    // so that all elements of the array have the same alignment.
+        -:  449:    return 0;
+        -:  450:  }
+  439034*:  451:  else if( (UIntPtr(array) & (sizeof(Scalar)-1)) || (Alignment%ScalarSize)!=0)
+    35328:  451-block  0
+     1503:  451-block  1
+    %%%%%:  451-block  2
+    %%%%%:  451-block  3
+     1530:  451-block  4
+   392445:  451-block  5
+    %%%%%:  451-block  6
+    %%%%%:  451-block  7
+        6:  451-block  8
+     1503:  451-block  9
+    %%%%%:  451-block 10
+     1530:  451-block 11
+    %%%%%:  451-block 12
+    %%%%%:  451-block 13
+    %%%%%:  451-block 14
+      761:  451-block 15
+    %%%%%:  451-block 16
+     4428:  451-block 17
+        -:  452:  {
+        -:  453:    // The array is not aligned to the size of a single scalar, or the requested alignment is not a multiple of the scalar size.
+        -:  454:    // Consequently, no element of the array is well aligned.
+        -:  455:    return size;
+        -:  456:  }
+        -:  457:  else
+        -:  458:  {
+    #####:  459:    Index first = (AlignmentSize - (Index((UIntPtr(array)/sizeof(Scalar))) & AlignmentMask)) & AlignmentMask;
+    %%%%%:  459-block  0
+  442622*:  460:    return (first < size) ? first : size;
+    35328:  460-block  0
+     3585:  460-block  1
+     1503:  460-block  2
+    %%%%%:  460-block  3
+    %%%%%:  460-block  4
+     1530:  460-block  5
+   392445:  460-block  6
+    %%%%%:  460-block  7
+    %%%%%:  460-block  8
+        6:  460-block  9
+     1503:  460-block 10
+    %%%%%:  460-block 11
+        3:  460-block 12
+     1530:  460-block 13
+    %%%%%:  460-block 14
+    %%%%%:  460-block 15
+    %%%%%:  460-block 16
+    %%%%%:  460-block 17
+      761:  460-block 18
+    %%%%%:  460-block 19
+     4428:  460-block 20
+        -:  461:  }
+        -:  462:}
+        -:  463:
+        -:  464:/** \internal Returns the index of the first element of the array that is well aligned with respect the largest packet requirement.
+        -:  465:   * \sa first_aligned(Scalar*,Index) and first_default_aligned(DenseBase<Derived>) */
+        -:  466:template<typename Scalar, typename Index>
+    3588*:  467:EIGEN_DEVICE_FUNC inline Index first_default_aligned(const Scalar* array, Index size)
+     3585:  467-block  0
+        3:  467-block  1
+    %%%%%:  467-block  2
+        -:  468:{
+        -:  469:  typedef typename packet_traits<Scalar>::type DefaultPacketType;
+   23451*:  470:  return first_aligned<unpacket_traits<DefaultPacketType>::alignment>(array, size);
+     3585:  470-block  0
+     3585:  470-block  1
+     5088:  470-block  2
+     5088:  470-block  3
+     5088:  470-block  4
+     1533:  470-block  5
+     1533:  470-block  6
+     1533:  470-block  7
+        3:  470-block  8
+        3:  470-block  9
+    %%%%%:  470-block 10
+    %%%%%:  470-block 11
+        -:  471:}
+        -:  472:
+        -:  473:/** \internal Returns the smallest integer multiple of \a base and greater or equal to \a size
+        -:  474:  */ 
+        -:  475:template<typename Index> 
+        -:  476:inline Index first_multiple(Index size, Index base)
+        -:  477:{
+        -:  478:  return ((size+base-1)/base)*base;
+        -:  479:}
+        -:  480:
+        -:  481:// std::copy is much slower than memcpy, so let's introduce a smart_copy which
+        -:  482:// use memcpy on trivial types, i.e., on types that does not require an initialization ctor.
+        -:  483:template<typename T, bool UseMemcpy> struct smart_copy_helper;
+        -:  484:
+    #####:  485:template<typename T> EIGEN_DEVICE_FUNC void smart_copy(const T* start, const T* end, T* target)
+        -:  486:{
+    #####:  487:  smart_copy_helper<T,!NumTraits<T>::RequireInitialization>::run(start, end, target);
+        -:  488:}
+        -:  489:
+        -:  490:template<typename T> struct smart_copy_helper<T,true> {
+    #####:  491:  EIGEN_DEVICE_FUNC static inline void run(const T* start, const T* end, T* target)
+        -:  492:  {
+    #####:  493:    IntPtr size = IntPtr(end)-IntPtr(start);
+    #####:  494:    if(size==0) return;
+    %%%%%:  494-block  0
+    %%%%%:  494-block  1
+    %%%%%:  494-block  2
+    %%%%%:  494-block  3
+    %%%%%:  494-block  4
+        -:  495:    eigen_internal_assert(start!=0 && end!=0 && target!=0);
+    #####:  496:    memcpy(target, start, size);
+    %%%%%:  496-block  0
+    %%%%%:  496-block  1
+    %%%%%:  496-block  2
+    %%%%%:  496-block  3
+    %%%%%:  496-block  4
+    %%%%%:  496-block  5
+    %%%%%:  496-block  6
+    %%%%%:  496-block  7
+    %%%%%:  496-block  8
+    %%%%%:  496-block  9
+        -:  497:  }
+        -:  498:};
+        -:  499:
+        -:  500:template<typename T> struct smart_copy_helper<T,false> {
+        -:  501:  EIGEN_DEVICE_FUNC static inline void run(const T* start, const T* end, T* target)
+        -:  502:  { std::copy(start, end, target); }
+        -:  503:};
+        -:  504:
+        -:  505:// intelligent memmove. falls back to std::memmove for POD types, uses std::copy otherwise. 
+        -:  506:template<typename T, bool UseMemmove> struct smart_memmove_helper;
+        -:  507:
+        -:  508:template<typename T> void smart_memmove(const T* start, const T* end, T* target)
+        -:  509:{
+        -:  510:  smart_memmove_helper<T,!NumTraits<T>::RequireInitialization>::run(start, end, target);
+        -:  511:}
+        -:  512:
+        -:  513:template<typename T> struct smart_memmove_helper<T,true> {
+        -:  514:  static inline void run(const T* start, const T* end, T* target)
+        -:  515:  {
+        -:  516:    IntPtr size = IntPtr(end)-IntPtr(start);
+        -:  517:    if(size==0) return;
+        -:  518:    eigen_internal_assert(start!=0 && end!=0 && target!=0);
+        -:  519:    std::memmove(target, start, size);
+        -:  520:  }
+        -:  521:};
+        -:  522:
+        -:  523:template<typename T> struct smart_memmove_helper<T,false> {
+        -:  524:  static inline void run(const T* start, const T* end, T* target)
+        -:  525:  { 
+        -:  526:    if (UIntPtr(target) < UIntPtr(start))
+        -:  527:    {
+        -:  528:      std::copy(start, end, target);
+        -:  529:    }
+        -:  530:    else                                 
+        -:  531:    {
+        -:  532:      std::ptrdiff_t count = (std::ptrdiff_t(end)-std::ptrdiff_t(start)) / sizeof(T);
+        -:  533:      std::copy_backward(start, end, target + count); 
+        -:  534:    }
+        -:  535:  }
+        -:  536:};
+        -:  537:
+        -:  538:
+        -:  539:/*****************************************************************************
+        -:  540:*** Implementation of runtime stack allocation (falling back to malloc)    ***
+        -:  541:*****************************************************************************/
+        -:  542:
+        -:  543:// you can overwrite Eigen's default behavior regarding alloca by defining EIGEN_ALLOCA
+        -:  544:// to the appropriate stack allocation function
+        -:  545:#ifndef EIGEN_ALLOCA
+        -:  546:  #if EIGEN_OS_LINUX || EIGEN_OS_MAC || (defined alloca)
+        -:  547:    #define EIGEN_ALLOCA alloca
+        -:  548:  #elif EIGEN_COMP_MSVC
+        -:  549:    #define EIGEN_ALLOCA _alloca
+        -:  550:  #endif
+        -:  551:#endif
+        -:  552:
+        -:  553:// This helper class construct the allocated memory, and takes care of destructing and freeing the handled data
+        -:  554:// at destruction time. In practice this helper class is mainly useful to avoid memory leak in case of exceptions.
+        -:  555:template<typename T> class aligned_stack_memory_handler : noncopyable
+        -:  556:{
+        -:  557:  public:
+        -:  558:    /* Creates a stack_memory_handler responsible for the buffer \a ptr of size \a size.
+        -:  559:     * Note that \a ptr can be 0 regardless of the other parameters.
+        -:  560:     * This constructor takes care of constructing/initializing the elements of the buffer if required by the scalar type T (see NumTraits<T>::RequireInitialization).
+        -:  561:     * In this case, the buffer elements will also be destructed when this handler will be destructed.
+        -:  562:     * Finally, if \a dealloc is true, then the pointer \a ptr is freed.
+        -:  563:     **/
+    4737*:  564:    aligned_stack_memory_handler(T* ptr, std::size_t size, bool dealloc)
+    %%%%%:  564-block  0
+    %%%%%:  564-block  1
+       33:  564-block  2
+       33:  564-block  3
+     1503:  564-block  4
+       33:  564-block  5
+       33:  564-block  6
+     1503:  564-block  7
+        3:  564-block  8
+       33:  564-block  9
+       33:  564-block 10
+    %%%%%:  564-block 11
+     1530:  564-block 12
+    %%%%%:  564-block 13
+    %%%%%:  564-block 14
+    %%%%%:  564-block 15
+    %%%%%:  564-block 16
+    %%%%%:  564-block 17
+    %%%%%:  564-block 18
+    %%%%%:  564-block 19
+    %%%%%:  564-block 20
+    %%%%%:  564-block 21
+    4737*:  565:      : m_ptr(ptr), m_size(size), m_deallocate(dealloc)
+    %%%%%:  565-block  0
+    %%%%%:  565-block  1
+       33:  565-block  2
+       33:  565-block  3
+     1503:  565-block  4
+       33:  565-block  5
+       33:  565-block  6
+     1503:  565-block  7
+        3:  565-block  8
+       33:  565-block  9
+       33:  565-block 10
+    %%%%%:  565-block 11
+     1530:  565-block 12
+    %%%%%:  565-block 13
+    %%%%%:  565-block 14
+    %%%%%:  565-block 15
+    %%%%%:  565-block 16
+    %%%%%:  565-block 17
+    %%%%%:  565-block 18
+    %%%%%:  565-block 19
+    %%%%%:  565-block 20
+    %%%%%:  565-block 21
+        -:  566:    {
+        -:  567:      if(NumTraits<T>::RequireInitialization && m_ptr)
+        -:  568:        Eigen::internal::construct_elements_of_array(m_ptr, size);
+        -:  569:    }
+    4737*:  570:    ~aligned_stack_memory_handler()
+        -:  571:    {
+        -:  572:      if(NumTraits<T>::RequireInitialization && m_ptr)
+        -:  573:        Eigen::internal::destruct_elements_of_array<T>(m_ptr, m_size);
+    4671*:  574:      if(m_deallocate)
+    %%%%%:  574-block  0
+    %%%%%:  574-block  1
+    $$$$$:  574-block  2
+    $$$$$:  574-block  3
+       33:  574-block  4
+       33:  574-block  5
+    $$$$$:  574-block  6
+    $$$$$:  574-block  7
+     1503:  574-block  8
+    $$$$$:  574-block  9
+       33:  574-block 10
+       33:  574-block 11
+    $$$$$:  574-block 12
+    $$$$$:  574-block 13
+     1503:  574-block 14
+    $$$$$:  574-block 15
+        3:  574-block 16
+    $$$$$:  574-block 17
+       33:  574-block 18
+       33:  574-block 19
+    $$$$$:  574-block 20
+    $$$$$:  574-block 21
+    %%%%%:  574-block 22
+    $$$$$:  574-block 23
+     1530:  574-block 24
+    $$$$$:  574-block 25
+    %%%%%:  574-block 26
+    $$$$$:  574-block 27
+    %%%%%:  574-block 28
+    $$$$$:  574-block 29
+    %%%%%:  574-block 30
+    %%%%%:  574-block 31
+    %%%%%:  574-block 32
+    $$$$$:  574-block 33
+    $$$$$:  574-block 34
+    $$$$$:  574-block 35
+    %%%%%:  574-block 36
+    %%%%%:  574-block 37
+    %%%%%:  574-block 38
+    $$$$$:  574-block 39
+    $$$$$:  574-block 40
+    $$$$$:  574-block 41
+    %%%%%:  574-block 42
+    $$$$$:  574-block 43
+    4704*:  575:        Eigen::internal::aligned_free(m_ptr);
+    %%%%%:  575-block  0
+    %%%%%:  575-block  1
+    %%%%%:  575-block  2
+    %%%%%:  575-block  3
+    $$$$$:  575-block  4
+    $$$$$:  575-block  5
+    $$$$$:  575-block  6
+    %%%%%:  575-block  7
+       33:  575-block  8
+    %%%%%:  575-block  9
+       33:  575-block 10
+    $$$$$:  575-block 11
+    $$$$$:  575-block 12
+    $$$$$:  575-block 13
+    %%%%%:  575-block 14
+     1503:  575-block 15
+    $$$$$:  575-block 16
+       33:  575-block 17
+       33:  575-block 18
+    %%%%%:  575-block 19
+       33:  575-block 20
+    $$$$$:  575-block 21
+    $$$$$:  575-block 22
+    $$$$$:  575-block 23
+    %%%%%:  575-block 24
+     1503:  575-block 25
+    $$$$$:  575-block 26
+    %%%%%:  575-block 27
+        3:  575-block 28
+    $$$$$:  575-block 29
+    %%%%%:  575-block 30
+       33:  575-block 31
+       33:  575-block 32
+       33:  575-block 33
+    $$$$$:  575-block 34
+    $$$$$:  575-block 35
+    $$$$$:  575-block 36
+    %%%%%:  575-block 37
+    %%%%%:  575-block 38
+    $$$$$:  575-block 39
+    %%%%%:  575-block 40
+     1530:  575-block 41
+    $$$$$:  575-block 42
+    %%%%%:  575-block 43
+    %%%%%:  575-block 44
+    $$$$$:  575-block 45
+    %%%%%:  575-block 46
+    %%%%%:  575-block 47
+    $$$$$:  575-block 48
+    %%%%%:  575-block 49
+    %%%%%:  575-block 50
+    %%%%%:  575-block 51
+    %%%%%:  575-block 52
+    %%%%%:  575-block 53
+    %%%%%:  575-block 54
+    $$$$$:  575-block 55
+    $$$$$:  575-block 56
+    $$$$$:  575-block 57
+    $$$$$:  575-block 58
+    $$$$$:  575-block 59
+    %%%%%:  575-block 60
+    %%%%%:  575-block 61
+    %%%%%:  575-block 62
+    %%%%%:  575-block 63
+    %%%%%:  575-block 64
+    %%%%%:  575-block 65
+    $$$$$:  575-block 66
+    $$$$$:  575-block 67
+    $$$$$:  575-block 68
+    $$$$$:  575-block 69
+    $$$$$:  575-block 70
+    %%%%%:  575-block 71
+    %%%%%:  575-block 72
+    $$$$$:  575-block 73
+    4671*:  576:    }
+    %%%%%:  576-block  0
+    %%%%%:  576-block  1
+    $$$$$:  576-block  2
+       33:  576-block  3
+       33:  576-block  4
+    $$$$$:  576-block  5
+     1503:  576-block  6
+       33:  576-block  7
+       33:  576-block  8
+    $$$$$:  576-block  9
+     1503:  576-block 10
+        3:  576-block 11
+       33:  576-block 12
+       33:  576-block 13
+    $$$$$:  576-block 14
+    %%%%%:  576-block 15
+     1530:  576-block 16
+    %%%%%:  576-block 17
+    %%%%%:  576-block 18
+    %%%%%:  576-block 19
+    %%%%%:  576-block 20
+    %%%%%:  576-block 21
+    $$$$$:  576-block 22
+    $$$$$:  576-block 23
+    %%%%%:  576-block 24
+    %%%%%:  576-block 25
+    %%%%%:  576-block 26
+    $$$$$:  576-block 27
+    $$$$$:  576-block 28
+    %%%%%:  576-block 29
+        -:  577:  protected:
+        -:  578:    T* m_ptr;
+        -:  579:    std::size_t m_size;
+        -:  580:    bool m_deallocate;
+        -:  581:};
+        -:  582:
+        -:  583:template<typename T> class scoped_array : noncopyable
+        -:  584:{
+        -:  585:  T* m_ptr;
+        -:  586:public:
+    #####:  587:  explicit scoped_array(std::ptrdiff_t size)
+    #####:  588:  {
+    #####:  589:    m_ptr = new T[size];
+    #####:  590:  }
+------------------
+_ZN5Eigen8internal12scoped_arrayIiEC2El:
+    #####:  587:  explicit scoped_array(std::ptrdiff_t size)
+    %%%%%:  587-block  0
+    #####:  588:  {
+    #####:  589:    m_ptr = new T[size];
+    %%%%%:  589-block  0
+    %%%%%:  589-block  1
+    #####:  590:  }
+------------------
+_ZN5Eigen8internal12scoped_arrayIdEC2El:
+    #####:  587:  explicit scoped_array(std::ptrdiff_t size)
+    %%%%%:  587-block  0
+    #####:  588:  {
+    #####:  589:    m_ptr = new T[size];
+    %%%%%:  589-block  0
+    %%%%%:  589-block  1
+    #####:  590:  }
+------------------
+    #####:  591:  ~scoped_array()
+        -:  592:  {
+    #####:  593:    delete[] m_ptr;
+    %%%%%:  593-block  0
+    %%%%%:  593-block  1
+    %%%%%:  593-block  2
+    %%%%%:  593-block  3
+    $$$$$:  593-block  4
+    $$$$$:  593-block  5
+    #####:  594:  }
+    %%%%%:  594-block  0
+    %%%%%:  594-block  1
+        -:  595:  T& operator[](std::ptrdiff_t i) { return m_ptr[i]; }
+        -:  596:  const T& operator[](std::ptrdiff_t i) const { return m_ptr[i]; }
+    #####:  597:  T* &ptr() { return m_ptr; }
+    %%%%%:  597-block  0
+    %%%%%:  597-block  1
+    %%%%%:  597-block  2
+        -:  598:  const T* ptr() const { return m_ptr; }
+        -:  599:  operator const T*() const { return m_ptr; }
+        -:  600:};
+        -:  601:
+        -:  602:template<typename T> void swap(scoped_array<T> &a,scoped_array<T> &b)
+        -:  603:{
+        -:  604:  std::swap(a.ptr(),b.ptr());
+        -:  605:}
+        -:  606:    
+        -:  607:} // end namespace internal
+        -:  608:
+        -:  609:/** \internal
+        -:  610:  * Declares, allocates and construct an aligned buffer named NAME of SIZE elements of type TYPE on the stack
+        -:  611:  * if SIZE is smaller than EIGEN_STACK_ALLOCATION_LIMIT, and if stack allocation is supported by the platform
+        -:  612:  * (currently, this is Linux and Visual Studio only). Otherwise the memory is allocated on the heap.
+        -:  613:  * The allocated buffer is automatically deleted when exiting the scope of this declaration.
+        -:  614:  * If BUFFER is non null, then the declared variable is simply an alias for BUFFER, and no allocation/deletion occurs.
+        -:  615:  * Here is an example:
+        -:  616:  * \code
+        -:  617:  * {
+        -:  618:  *   ei_declare_aligned_stack_constructed_variable(float,data,size,0);
+        -:  619:  *   // use data[0] to data[size-1]
+        -:  620:  * }
+        -:  621:  * \endcode
+        -:  622:  * The underlying stack allocation function can controlled with the EIGEN_ALLOCA preprocessor token.
+        -:  623:  */
+        -:  624:#ifdef EIGEN_ALLOCA
+        -:  625:  
+        -:  626:  #if EIGEN_DEFAULT_ALIGN_BYTES>0
+        -:  627:    // We always manually re-align the result of EIGEN_ALLOCA.
+        -:  628:    // If alloca is already aligned, the compiler should be smart enough to optimize away the re-alignment.
+        -:  629:    #define EIGEN_ALIGNED_ALLOCA(SIZE) reinterpret_cast<void*>((internal::UIntPtr(EIGEN_ALLOCA(SIZE+EIGEN_DEFAULT_ALIGN_BYTES-1)) + EIGEN_DEFAULT_ALIGN_BYTES-1) & ~(std::size_t(EIGEN_DEFAULT_ALIGN_BYTES-1)))
+        -:  630:  #else
+        -:  631:    #define EIGEN_ALIGNED_ALLOCA(SIZE) EIGEN_ALLOCA(SIZE)
+        -:  632:  #endif
+        -:  633:
+        -:  634:  #define ei_declare_aligned_stack_constructed_variable(TYPE,NAME,SIZE,BUFFER) \
+        -:  635:    Eigen::internal::check_size_for_overflow<TYPE>(SIZE); \
+        -:  636:    TYPE* NAME = (BUFFER)!=0 ? (BUFFER) \
+        -:  637:               : reinterpret_cast<TYPE*>( \
+        -:  638:                      (sizeof(TYPE)*SIZE<=EIGEN_STACK_ALLOCATION_LIMIT) ? EIGEN_ALIGNED_ALLOCA(sizeof(TYPE)*SIZE) \
+        -:  639:                    : Eigen::internal::aligned_malloc(sizeof(TYPE)*SIZE) );  \
+        -:  640:    Eigen::internal::aligned_stack_memory_handler<TYPE> EIGEN_CAT(NAME,_stack_memory_destructor)((BUFFER)==0 ? NAME : 0,SIZE,sizeof(TYPE)*SIZE>EIGEN_STACK_ALLOCATION_LIMIT)
+        -:  641:
+        -:  642:#else
+        -:  643:
+        -:  644:  #define ei_declare_aligned_stack_constructed_variable(TYPE,NAME,SIZE,BUFFER) \
+        -:  645:    Eigen::internal::check_size_for_overflow<TYPE>(SIZE); \
+        -:  646:    TYPE* NAME = (BUFFER)!=0 ? BUFFER : reinterpret_cast<TYPE*>(Eigen::internal::aligned_malloc(sizeof(TYPE)*SIZE));    \
+        -:  647:    Eigen::internal::aligned_stack_memory_handler<TYPE> EIGEN_CAT(NAME,_stack_memory_destructor)((BUFFER)==0 ? NAME : 0,SIZE,true)
+        -:  648:    
+        -:  649:#endif
+        -:  650:
+        -:  651:
+        -:  652:/*****************************************************************************
+        -:  653:*** Implementation of EIGEN_MAKE_ALIGNED_OPERATOR_NEW [_IF]                ***
+        -:  654:*****************************************************************************/
+        -:  655:
+        -:  656:#if EIGEN_MAX_ALIGN_BYTES!=0
+        -:  657:  #define EIGEN_MAKE_ALIGNED_OPERATOR_NEW_NOTHROW(NeedsToAlign) \
+        -:  658:      void* operator new(std::size_t size, const std::nothrow_t&) EIGEN_NO_THROW { \
+        -:  659:        EIGEN_TRY { return Eigen::internal::conditional_aligned_malloc<NeedsToAlign>(size); } \
+        -:  660:        EIGEN_CATCH (...) { return 0; } \
+        -:  661:      }
+        -:  662:  #define EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(NeedsToAlign) \
+        -:  663:      void *operator new(std::size_t size) { \
+        -:  664:        return Eigen::internal::conditional_aligned_malloc<NeedsToAlign>(size); \
+        -:  665:      } \
+        -:  666:      void *operator new[](std::size_t size) { \
+        -:  667:        return Eigen::internal::conditional_aligned_malloc<NeedsToAlign>(size); \
+        -:  668:      } \
+        -:  669:      void operator delete(void * ptr) EIGEN_NO_THROW { Eigen::internal::conditional_aligned_free<NeedsToAlign>(ptr); } \
+        -:  670:      void operator delete[](void * ptr) EIGEN_NO_THROW { Eigen::internal::conditional_aligned_free<NeedsToAlign>(ptr); } \
+        -:  671:      void operator delete(void * ptr, std::size_t /* sz */) EIGEN_NO_THROW { Eigen::internal::conditional_aligned_free<NeedsToAlign>(ptr); } \
+        -:  672:      void operator delete[](void * ptr, std::size_t /* sz */) EIGEN_NO_THROW { Eigen::internal::conditional_aligned_free<NeedsToAlign>(ptr); } \
+        -:  673:      /* in-place new and delete. since (at least afaik) there is no actual   */ \
+        -:  674:      /* memory allocated we can safely let the default implementation handle */ \
+        -:  675:      /* this particular case. */ \
+        -:  676:      static void *operator new(std::size_t size, void *ptr) { return ::operator new(size,ptr); } \
+        -:  677:      static void *operator new[](std::size_t size, void* ptr) { return ::operator new[](size,ptr); } \
+        -:  678:      void operator delete(void * memory, void *ptr) EIGEN_NO_THROW { return ::operator delete(memory,ptr); } \
+        -:  679:      void operator delete[](void * memory, void *ptr) EIGEN_NO_THROW { return ::operator delete[](memory,ptr); } \
+        -:  680:      /* nothrow-new (returns zero instead of std::bad_alloc) */ \
+        -:  681:      EIGEN_MAKE_ALIGNED_OPERATOR_NEW_NOTHROW(NeedsToAlign) \
+        -:  682:      void operator delete(void *ptr, const std::nothrow_t&) EIGEN_NO_THROW { \
+        -:  683:        Eigen::internal::conditional_aligned_free<NeedsToAlign>(ptr); \
+        -:  684:      } \
+        -:  685:      typedef void eigen_aligned_operator_new_marker_type;
+        -:  686:#else
+        -:  687:  #define EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(NeedsToAlign)
+        -:  688:#endif
+        -:  689:
+        -:  690:#define EIGEN_MAKE_ALIGNED_OPERATOR_NEW EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(true)
+        -:  691:#define EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF_VECTORIZABLE_FIXED_SIZE(Scalar,Size) \
+        -:  692:  EIGEN_MAKE_ALIGNED_OPERATOR_NEW_IF(bool(((Size)!=Eigen::Dynamic) && ((sizeof(Scalar)*(Size))%EIGEN_MAX_ALIGN_BYTES==0)))
+        -:  693:
+        -:  694:/****************************************************************************/
+        -:  695:
+        -:  696:/** \class aligned_allocator
+        -:  697:* \ingroup Core_Module
+        -:  698:*
+        -:  699:* \brief STL compatible allocator to use with with 16 byte aligned types
+        -:  700:*
+        -:  701:* Example:
+        -:  702:* \code
+        -:  703:* // Matrix4f requires 16 bytes alignment:
+        -:  704:* std::map< int, Matrix4f, std::less<int>, 
+        -:  705:*           aligned_allocator<std::pair<const int, Matrix4f> > > my_map_mat4;
+        -:  706:* // Vector3f does not require 16 bytes alignment, no need to use Eigen's allocator:
+        -:  707:* std::map< int, Vector3f > my_map_vec3;
+        -:  708:* \endcode
+        -:  709:*
+        -:  710:* \sa \blank \ref TopicStlContainers.
+        -:  711:*/
+        -:  712:template<class T>
+        -:  713:class aligned_allocator : public std::allocator<T>
+        -:  714:{
+        -:  715:public:
+        -:  716:  typedef std::size_t     size_type;
+        -:  717:  typedef std::ptrdiff_t  difference_type;
+        -:  718:  typedef T*              pointer;
+        -:  719:  typedef const T*        const_pointer;
+        -:  720:  typedef T&              reference;
+        -:  721:  typedef const T&        const_reference;
+        -:  722:  typedef T               value_type;
+        -:  723:
+        -:  724:  template<class U>
+        -:  725:  struct rebind
+        -:  726:  {
+        -:  727:    typedef aligned_allocator<U> other;
+        -:  728:  };
+        -:  729:
+        -:  730:  aligned_allocator() : std::allocator<T>() {}
+        -:  731:
+        -:  732:  aligned_allocator(const aligned_allocator& other) : std::allocator<T>(other) {}
+        -:  733:
+        -:  734:  template<class U>
+        -:  735:  aligned_allocator(const aligned_allocator<U>& other) : std::allocator<T>(other) {}
+        -:  736:
+        -:  737:  ~aligned_allocator() {}
+        -:  738:
+        -:  739:  pointer allocate(size_type num, const void* /*hint*/ = 0)
+        -:  740:  {
+        -:  741:    internal::check_size_for_overflow<T>(num);
+        -:  742:    return static_cast<pointer>( internal::aligned_malloc(num * sizeof(T)) );
+        -:  743:  }
+        -:  744:
+        -:  745:  void deallocate(pointer p, size_type /*num*/)
+        -:  746:  {
+        -:  747:    internal::aligned_free(p);
+        -:  748:  }
+        -:  749:};
+        -:  750:
+        -:  751://---------- Cache sizes ----------
+        -:  752:
+        -:  753:#if !defined(EIGEN_NO_CPUID)
+        -:  754:#  if EIGEN_COMP_GNUC && EIGEN_ARCH_i386_OR_x86_64
+        -:  755:#    if defined(__PIC__) && EIGEN_ARCH_i386
+        -:  756:       // Case for x86 with PIC
+        -:  757:#      define EIGEN_CPUID(abcd,func,id) \
+        -:  758:         __asm__ __volatile__ ("xchgl %%ebx, %k1;cpuid; xchgl %%ebx,%k1": "=a" (abcd[0]), "=&r" (abcd[1]), "=c" (abcd[2]), "=d" (abcd[3]) : "a" (func), "c" (id));
+        -:  759:#    elif defined(__PIC__) && EIGEN_ARCH_x86_64
+        -:  760:       // Case for x64 with PIC. In theory this is only a problem with recent gcc and with medium or large code model, not with the default small code model.
+        -:  761:       // However, we cannot detect which code model is used, and the xchg overhead is negligible anyway.
+        -:  762:#      define EIGEN_CPUID(abcd,func,id) \
+        -:  763:        __asm__ __volatile__ ("xchg{q}\t{%%}rbx, %q1; cpuid; xchg{q}\t{%%}rbx, %q1": "=a" (abcd[0]), "=&r" (abcd[1]), "=c" (abcd[2]), "=d" (abcd[3]) : "0" (func), "2" (id));
+        -:  764:#    else
+        -:  765:       // Case for x86_64 or x86 w/o PIC
+        -:  766:#      define EIGEN_CPUID(abcd,func,id) \
+        -:  767:         __asm__ __volatile__ ("cpuid": "=a" (abcd[0]), "=b" (abcd[1]), "=c" (abcd[2]), "=d" (abcd[3]) : "0" (func), "2" (id) );
+        -:  768:#    endif
+        -:  769:#  elif EIGEN_COMP_MSVC
+        -:  770:#    if (EIGEN_COMP_MSVC > 1500) && EIGEN_ARCH_i386_OR_x86_64
+        -:  771:#      define EIGEN_CPUID(abcd,func,id) __cpuidex((int*)abcd,func,id)
+        -:  772:#    endif
+        -:  773:#  endif
+        -:  774:#endif
+        -:  775:
+        -:  776:namespace internal {
+        -:  777:
+        -:  778:#ifdef EIGEN_CPUID
+        -:  779:
+       1*:  780:inline bool cpuid_is_vendor(int abcd[4], const int vendor[3])
+        -:  781:{
+       1*:  782:  return abcd[1]==vendor[0] && abcd[3]==vendor[1] && abcd[2]==vendor[2];
+        1:  782-block  0
+        1:  782-block  1
+    %%%%%:  782-block  2
+    %%%%%:  782-block  3
+    %%%%%:  782-block  4
+    %%%%%:  782-block  5
+        -:  783:}
+        -:  784:
+        1:  785:inline void queryCacheSizes_intel_direct(int& l1, int& l2, int& l3)
+        -:  786:{
+        1:  787:  int abcd[4];
+        1:  788:  l1 = l2 = l3 = 0;
+        1:  789:  int cache_id = 0;
+        1:  790:  int cache_type = 0;
+        1:  790-block  0
+        5:  791:  do {
+        5:  792:    abcd[0] = abcd[1] = abcd[2] = abcd[3] = 0;
+        5:  793:    EIGEN_CPUID(abcd,0x4,cache_id);
+        5:  793-block  0
+        5:  794:    cache_type  = (abcd[0] & 0x0F) >> 0;
+        5:  795:    if(cache_type==1||cache_type==3) // data or unified cache
+        -:  796:    {
+        3:  797:      int cache_level = (abcd[0] & 0xE0) >> 5;  // A[7:5]
+        3:  798:      int ways        = (abcd[1] & 0xFFC00000) >> 22; // B[31:22]
+        3:  799:      int partitions  = (abcd[1] & 0x003FF000) >> 12; // B[21:12]
+        3:  800:      int line_size   = (abcd[1] & 0x00000FFF) >>  0; // B[11:0]
+        3:  801:      int sets        = (abcd[2]);                    // C[31:0]
+        -:  802:
+        3:  803:      int cache_size = (ways+1) * (partitions+1) * (line_size+1) * (sets+1);
+        -:  804:
+        3:  805:      switch(cache_level)
+        3:  805-block  0
+        -:  806:      {
+        1:  807:        case 1: l1 = cache_size; break;
+        1:  807-block  0
+        1:  808:        case 2: l2 = cache_size; break;
+        1:  808-block  0
+        1:  809:        case 3: l3 = cache_size; break;
+        1:  809-block  0
+        -:  810:        default: break;
+        -:  811:      }
+        -:  812:    }
+        5:  813:    cache_id++;
+        5:  814:  } while(cache_type>0 && cache_id<16);
+        5:  814-block  0
+        1:  815:}
+        -:  816:
+    #####:  817:inline void queryCacheSizes_intel_codes(int& l1, int& l2, int& l3)
+        -:  818:{
+    #####:  819:  int abcd[4];
+    #####:  820:  abcd[0] = abcd[1] = abcd[2] = abcd[3] = 0;
+    #####:  821:  l1 = l2 = l3 = 0;
+    #####:  822:  EIGEN_CPUID(abcd,0x00000002,0);
+    #####:  823:  unsigned char * bytes = reinterpret_cast<unsigned char *>(abcd)+2;
+    #####:  824:  bool check_for_p2_core2 = false;
+    #####:  825:  for(int i=0; i<14; ++i)
+    %%%%%:  825-block  0
+    %%%%%:  825-block  1
+    %%%%%:  825-block  2
+        -:  826:  {
+    #####:  827:    switch(bytes[i])
+    %%%%%:  827-block  0
+        -:  828:    {
+    #####:  829:      case 0x0A: l1 = 8; break;   // 0Ah   data L1 cache, 8 KB, 2 ways, 32 byte lines
+    %%%%%:  829-block  0
+    #####:  830:      case 0x0C: l1 = 16; break;  // 0Ch   data L1 cache, 16 KB, 4 ways, 32 byte lines
+    %%%%%:  830-block  0
+    #####:  831:      case 0x0E: l1 = 24; break;  // 0Eh   data L1 cache, 24 KB, 6 ways, 64 byte lines
+    %%%%%:  831-block  0
+    #####:  832:      case 0x10: l1 = 16; break;  // 10h   data L1 cache, 16 KB, 4 ways, 32 byte lines (IA-64)
+    %%%%%:  832-block  0
+    #####:  833:      case 0x15: l1 = 16; break;  // 15h   code L1 cache, 16 KB, 4 ways, 32 byte lines (IA-64)
+    %%%%%:  833-block  0
+    #####:  834:      case 0x2C: l1 = 32; break;  // 2Ch   data L1 cache, 32 KB, 8 ways, 64 byte lines
+    %%%%%:  834-block  0
+    #####:  835:      case 0x30: l1 = 32; break;  // 30h   code L1 cache, 32 KB, 8 ways, 64 byte lines
+    %%%%%:  835-block  0
+    #####:  836:      case 0x60: l1 = 16; break;  // 60h   data L1 cache, 16 KB, 8 ways, 64 byte lines, sectored
+    %%%%%:  836-block  0
+    #####:  837:      case 0x66: l1 = 8; break;   // 66h   data L1 cache, 8 KB, 4 ways, 64 byte lines, sectored
+    %%%%%:  837-block  0
+    #####:  838:      case 0x67: l1 = 16; break;  // 67h   data L1 cache, 16 KB, 4 ways, 64 byte lines, sectored
+    %%%%%:  838-block  0
+    #####:  839:      case 0x68: l1 = 32; break;  // 68h   data L1 cache, 32 KB, 4 ways, 64 byte lines, sectored
+    %%%%%:  839-block  0
+    #####:  840:      case 0x1A: l2 = 96; break;   // code and data L2 cache, 96 KB, 6 ways, 64 byte lines (IA-64)
+    %%%%%:  840-block  0
+    #####:  841:      case 0x22: l3 = 512; break;   // code and data L3 cache, 512 KB, 4 ways (!), 64 byte lines, dual-sectored
+    %%%%%:  841-block  0
+    #####:  842:      case 0x23: l3 = 1024; break;   // code and data L3 cache, 1024 KB, 8 ways, 64 byte lines, dual-sectored
+    %%%%%:  842-block  0
+    #####:  843:      case 0x25: l3 = 2048; break;   // code and data L3 cache, 2048 KB, 8 ways, 64 byte lines, dual-sectored
+    %%%%%:  843-block  0
+    #####:  844:      case 0x29: l3 = 4096; break;   // code and data L3 cache, 4096 KB, 8 ways, 64 byte lines, dual-sectored
+    %%%%%:  844-block  0
+    #####:  845:      case 0x39: l2 = 128; break;   // code and data L2 cache, 128 KB, 4 ways, 64 byte lines, sectored
+    %%%%%:  845-block  0
+    #####:  846:      case 0x3A: l2 = 192; break;   // code and data L2 cache, 192 KB, 6 ways, 64 byte lines, sectored
+    %%%%%:  846-block  0
+    #####:  847:      case 0x3B: l2 = 128; break;   // code and data L2 cache, 128 KB, 2 ways, 64 byte lines, sectored
+    %%%%%:  847-block  0
+    #####:  848:      case 0x3C: l2 = 256; break;   // code and data L2 cache, 256 KB, 4 ways, 64 byte lines, sectored
+    %%%%%:  848-block  0
+    #####:  849:      case 0x3D: l2 = 384; break;   // code and data L2 cache, 384 KB, 6 ways, 64 byte lines, sectored
+    %%%%%:  849-block  0
+    #####:  850:      case 0x3E: l2 = 512; break;   // code and data L2 cache, 512 KB, 4 ways, 64 byte lines, sectored
+    %%%%%:  850-block  0
+    #####:  851:      case 0x40: l2 = 0; break;   // no integrated L2 cache (P6 core) or L3 cache (P4 core)
+    %%%%%:  851-block  0
+    #####:  852:      case 0x41: l2 = 128; break;   // code and data L2 cache, 128 KB, 4 ways, 32 byte lines
+    %%%%%:  852-block  0
+    #####:  853:      case 0x42: l2 = 256; break;   // code and data L2 cache, 256 KB, 4 ways, 32 byte lines
+    %%%%%:  853-block  0
+    #####:  854:      case 0x43: l2 = 512; break;   // code and data L2 cache, 512 KB, 4 ways, 32 byte lines
+    %%%%%:  854-block  0
+    #####:  855:      case 0x44: l2 = 1024; break;   // code and data L2 cache, 1024 KB, 4 ways, 32 byte lines
+    %%%%%:  855-block  0
+    #####:  856:      case 0x45: l2 = 2048; break;   // code and data L2 cache, 2048 KB, 4 ways, 32 byte lines
+    %%%%%:  856-block  0
+    #####:  857:      case 0x46: l3 = 4096; break;   // code and data L3 cache, 4096 KB, 4 ways, 64 byte lines
+    %%%%%:  857-block  0
+    #####:  858:      case 0x47: l3 = 8192; break;   // code and data L3 cache, 8192 KB, 8 ways, 64 byte lines
+    %%%%%:  858-block  0
+    #####:  859:      case 0x48: l2 = 3072; break;   // code and data L2 cache, 3072 KB, 12 ways, 64 byte lines
+    %%%%%:  859-block  0
+    #####:  860:      case 0x49: if(l2!=0) l3 = 4096; else {check_for_p2_core2=true; l3 = l2 = 4096;} break;// code and data L3 cache, 4096 KB, 16 ways, 64 byte lines (P4) or L2 for core2
+    %%%%%:  860-block  0
+    %%%%%:  860-block  1
+    %%%%%:  860-block  2
+    #####:  861:      case 0x4A: l3 = 6144; break;   // code and data L3 cache, 6144 KB, 12 ways, 64 byte lines
+    %%%%%:  861-block  0
+    #####:  862:      case 0x4B: l3 = 8192; break;   // code and data L3 cache, 8192 KB, 16 ways, 64 byte lines
+    %%%%%:  862-block  0
+    #####:  863:      case 0x4C: l3 = 12288; break;   // code and data L3 cache, 12288 KB, 12 ways, 64 byte lines
+    %%%%%:  863-block  0
+    #####:  864:      case 0x4D: l3 = 16384; break;   // code and data L3 cache, 16384 KB, 16 ways, 64 byte lines
+    %%%%%:  864-block  0
+    #####:  865:      case 0x4E: l2 = 6144; break;   // code and data L2 cache, 6144 KB, 24 ways, 64 byte lines
+    %%%%%:  865-block  0
+    #####:  866:      case 0x78: l2 = 1024; break;   // code and data L2 cache, 1024 KB, 4 ways, 64 byte lines
+    %%%%%:  866-block  0
+    #####:  867:      case 0x79: l2 = 128; break;   // code and data L2 cache, 128 KB, 8 ways, 64 byte lines, dual-sectored
+    %%%%%:  867-block  0
+    #####:  868:      case 0x7A: l2 = 256; break;   // code and data L2 cache, 256 KB, 8 ways, 64 byte lines, dual-sectored
+    %%%%%:  868-block  0
+    #####:  869:      case 0x7B: l2 = 512; break;   // code and data L2 cache, 512 KB, 8 ways, 64 byte lines, dual-sectored
+    %%%%%:  869-block  0
+    #####:  870:      case 0x7C: l2 = 1024; break;   // code and data L2 cache, 1024 KB, 8 ways, 64 byte lines, dual-sectored
+    %%%%%:  870-block  0
+    #####:  871:      case 0x7D: l2 = 2048; break;   // code and data L2 cache, 2048 KB, 8 ways, 64 byte lines
+    %%%%%:  871-block  0
+    #####:  872:      case 0x7E: l2 = 256; break;   // code and data L2 cache, 256 KB, 8 ways, 128 byte lines, sect. (IA-64)
+    %%%%%:  872-block  0
+    #####:  873:      case 0x7F: l2 = 512; break;   // code and data L2 cache, 512 KB, 2 ways, 64 byte lines
+    %%%%%:  873-block  0
+    #####:  874:      case 0x80: l2 = 512; break;   // code and data L2 cache, 512 KB, 8 ways, 64 byte lines
+    %%%%%:  874-block  0
+    #####:  875:      case 0x81: l2 = 128; break;   // code and data L2 cache, 128 KB, 8 ways, 32 byte lines
+    %%%%%:  875-block  0
+    #####:  876:      case 0x82: l2 = 256; break;   // code and data L2 cache, 256 KB, 8 ways, 32 byte lines
+    %%%%%:  876-block  0
+    #####:  877:      case 0x83: l2 = 512; break;   // code and data L2 cache, 512 KB, 8 ways, 32 byte lines
+    %%%%%:  877-block  0
+    #####:  878:      case 0x84: l2 = 1024; break;   // code and data L2 cache, 1024 KB, 8 ways, 32 byte lines
+    %%%%%:  878-block  0
+    #####:  879:      case 0x85: l2 = 2048; break;   // code and data L2 cache, 2048 KB, 8 ways, 32 byte lines
+    %%%%%:  879-block  0
+    #####:  880:      case 0x86: l2 = 512; break;   // code and data L2 cache, 512 KB, 4 ways, 64 byte lines
+    %%%%%:  880-block  0
+    #####:  881:      case 0x87: l2 = 1024; break;   // code and data L2 cache, 1024 KB, 8 ways, 64 byte lines
+    %%%%%:  881-block  0
+    #####:  882:      case 0x88: l3 = 2048; break;   // code and data L3 cache, 2048 KB, 4 ways, 64 byte lines (IA-64)
+    %%%%%:  882-block  0
+    #####:  883:      case 0x89: l3 = 4096; break;   // code and data L3 cache, 4096 KB, 4 ways, 64 byte lines (IA-64)
+    %%%%%:  883-block  0
+    #####:  884:      case 0x8A: l3 = 8192; break;   // code and data L3 cache, 8192 KB, 4 ways, 64 byte lines (IA-64)
+    %%%%%:  884-block  0
+    #####:  885:      case 0x8D: l3 = 3072; break;   // code and data L3 cache, 3072 KB, 12 ways, 128 byte lines (IA-64)
+    %%%%%:  885-block  0
+        -:  886:
+        -:  887:      default: break;
+        -:  888:    }
+        -:  889:  }
+    #####:  890:  if(check_for_p2_core2 && l2 == l3)
+    %%%%%:  890-block  0
+    %%%%%:  890-block  1
+    #####:  891:    l3 = 0;
+    %%%%%:  891-block  0
+    #####:  892:  l1 *= 1024;
+    #####:  893:  l2 *= 1024;
+    #####:  894:  l3 *= 1024;
+    #####:  895:}
+        -:  896:
+        1:  897:inline void queryCacheSizes_intel(int& l1, int& l2, int& l3, int max_std_funcs)
+        -:  898:{
+        1:  899:  if(max_std_funcs>=4)
+        1:  899-block  0
+        1:  900:    queryCacheSizes_intel_direct(l1,l2,l3);
+        1:  900-block  0
+        -:  901:  else
+    #####:  902:    queryCacheSizes_intel_codes(l1,l2,l3);
+    %%%%%:  902-block  0
+        1:  903:}
+        -:  904:
+    #####:  905:inline void queryCacheSizes_amd(int& l1, int& l2, int& l3)
+        -:  906:{
+    #####:  907:  int abcd[4];
+    #####:  908:  abcd[0] = abcd[1] = abcd[2] = abcd[3] = 0;
+    #####:  909:  EIGEN_CPUID(abcd,0x80000005,0);
+    #####:  910:  l1 = (abcd[2] >> 24) * 1024; // C[31:24] = L1 size in KB
+    #####:  911:  abcd[0] = abcd[1] = abcd[2] = abcd[3] = 0;
+    #####:  912:  EIGEN_CPUID(abcd,0x80000006,0);
+    #####:  913:  l2 = (abcd[2] >> 16) * 1024; // C[31;16] = l2 cache size in KB
+    #####:  914:  l3 = ((abcd[3] & 0xFFFC000) >> 18) * 512 * 1024; // D[31;18] = l3 cache size in 512KB
+    #####:  915:}
+        -:  916:#endif
+        -:  917:
+        -:  918:/** \internal
+        -:  919: * Queries and returns the cache sizes in Bytes of the L1, L2, and L3 data caches respectively */
+        1:  920:inline void queryCacheSizes(int& l1, int& l2, int& l3)
+        -:  921:{
+        -:  922:  #ifdef EIGEN_CPUID
+        1:  923:  int abcd[4];
+        1:  924:  const int GenuineIntel[] = {0x756e6547, 0x49656e69, 0x6c65746e};
+        1:  925:  const int AuthenticAMD[] = {0x68747541, 0x69746e65, 0x444d4163};
+        1:  926:  const int AMDisbetter_[] = {0x69444d41, 0x74656273, 0x21726574}; // "AMDisbetter!"
+        -:  927:
+        -:  928:  // identify the CPU vendor
+        1:  929:  EIGEN_CPUID(abcd,0x0,0);
+        1:  929-block  0
+        1:  930:  int max_std_funcs = abcd[1];
+       1*:  931:  if(cpuid_is_vendor(abcd,GenuineIntel))
+        1:  932:    queryCacheSizes_intel(l1,l2,l3,max_std_funcs);
+        1:  932-block  0
+    #####:  933:  else if(cpuid_is_vendor(abcd,AuthenticAMD) || cpuid_is_vendor(abcd,AMDisbetter_))
+    %%%%%:  933-block  0
+    %%%%%:  933-block  1
+    #####:  934:    queryCacheSizes_amd(l1,l2,l3);
+    %%%%%:  934-block  0
+        -:  935:  else
+        -:  936:    // by default let's use Intel's API
+    #####:  937:    queryCacheSizes_intel(l1,l2,l3,max_std_funcs);
+    %%%%%:  937-block  0
+        -:  938:
+        -:  939:  // here is the list of other vendors:
+        -:  940://   ||cpuid_is_vendor(abcd,"VIA VIA VIA ")
+        -:  941://   ||cpuid_is_vendor(abcd,"CyrixInstead")
+        -:  942://   ||cpuid_is_vendor(abcd,"CentaurHauls")
+        -:  943://   ||cpuid_is_vendor(abcd,"GenuineTMx86")
+        -:  944://   ||cpuid_is_vendor(abcd,"TransmetaCPU")
+        -:  945://   ||cpuid_is_vendor(abcd,"RiseRiseRise")
+        -:  946://   ||cpuid_is_vendor(abcd,"Geode by NSC")
+        -:  947://   ||cpuid_is_vendor(abcd,"SiS SiS SiS ")
+        -:  948://   ||cpuid_is_vendor(abcd,"UMC UMC UMC ")
+        -:  949://   ||cpuid_is_vendor(abcd,"NexGenDriven")
+        -:  950:  #else
+        -:  951:  l1 = l2 = l3 = -1;
+        -:  952:  #endif
+        1:  953:}
+        -:  954:
+        -:  955:/** \internal
+        -:  956: * \returns the size in Bytes of the L1 data cache */
+        -:  957:inline int queryL1CacheSize()
+        -:  958:{
+        -:  959:  int l1(-1), l2, l3;
+        -:  960:  queryCacheSizes(l1,l2,l3);
+        -:  961:  return l1;
+        -:  962:}
+        -:  963:
+        -:  964:/** \internal
+        -:  965: * \returns the size in Bytes of the L2 or L3 cache if this later is present */
+        -:  966:inline int queryTopLevelCacheSize()
+        -:  967:{
+        -:  968:  int l1, l2(-1), l3(-1);
+        -:  969:  queryCacheSizes(l1,l2,l3);
+        -:  970:  return (std::max)(l2,l3);
+        -:  971:}
+        -:  972:
+        -:  973:} // end namespace internal
+        -:  974:
+        -:  975:} // end namespace Eigen
+        -:  976:
+        -:  977:#endif // EIGEN_MEMORY_H

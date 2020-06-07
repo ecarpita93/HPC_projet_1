@@ -1,0 +1,263 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/io/pfm.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IO_PFM_HPP
+        -:   19:#define PIC_IO_PFM_HPP
+        -:   20:
+        -:   21:#include <stdio.h>
+        -:   22:#include <string>
+        -:   23:
+        -:   24:#include "../base.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:/**
+        -:   29: * @brief convertFloatEndianess converts a float from little-endian to big-endian
+        -:   30: * or viceversa.
+        -:   31: * @param value is the input float to be converted.
+        -:   32: * @return It returns a big-endian float if value was stored as little-endian. Otherwise,
+        -:   33: * it rerturns a little-endian.
+        -:   34: */
+    #####:   35:PIC_INLINE float convertFloatEndianess(float value)
+        -:   36:{
+    #####:   37:    float ret;
+        -:   38:
+    #####:   39:    unsigned char *c_v = (unsigned char*) &value;
+    #####:   40:    unsigned char *c_r = (unsigned char*) &ret;
+        -:   41:
+    #####:   42:    c_r[0] = c_v[3];
+    #####:   43:    c_r[1] = c_v[2];
+    #####:   44:    c_r[2] = c_v[1];
+    #####:   45:    c_r[3] = c_v[0];
+        -:   46:
+    #####:   47:    return ret;
+        -:   48:}
+        -:   49:
+        -:   50:/**
+        -:   51: * @brief ReadPFM loads a portable float map from a file.
+        -:   52: * @param nameFile
+        -:   53: * @param data
+        -:   54: * @param width
+        -:   55: * @param height
+        -:   56: * @param channel
+        -:   57: * @return
+        -:   58: */
+    #####:   59:PIC_INLINE float *ReadPFM(std::string nameFile, float *data, int &width,
+        -:   60:                          int &height, int &channel)
+        -:   61:{
+    #####:   62:    FILE *file = fopen(nameFile.c_str(), "rb");
+    %%%%%:   62-block  0
+        -:   63:
+    #####:   64:    if(file == NULL) {
+        -:   65:        return NULL;
+        -:   66:    }
+        -:   67:
+    #####:   68:    char  flagc;
+    #####:   69:    float flag;
+    #####:   70:    char P = fgetc(file);
+    %%%%%:   70-block  0
+        -:   71:
+    #####:   72:    if(P != 'P') {
+    #####:   73:        fclose(file);
+    #####:   74:        return NULL;
+    %%%%%:   74-block  0
+        -:   75:    }
+        -:   76:
+    #####:   77:    char F = fgetc(file);
+    %%%%%:   77-block  0
+        -:   78:
+    #####:   79:    bool fCheck = false;
+        -:   80:
+    #####:   81:    if(F == 'f') {
+    #####:   82:        fCheck = true;
+    #####:   83:        channel = 1;
+    %%%%%:   83-block  0
+        -:   84:    }
+        -:   85:
+    #####:   86:    if(F == 'F') {
+    %%%%%:   86-block  0
+    #####:   87:        fCheck = true;
+    #####:   88:        channel = 3;
+        -:   89:    }
+        -:   90:
+    #####:   91:    if(!fCheck) {
+    %%%%%:   91-block  0
+    %%%%%:   91-block  1
+    #####:   92:        fclose(file);
+    #####:   93:        return NULL;
+    %%%%%:   93-block  0
+        -:   94:    }
+        -:   95:
+        -:   96:
+    #####:   97:    fgetc(file);
+    %%%%%:   97-block  0
+    #####:   98:    fscanf(file, "%d %d%c", &width, &height, &flagc);
+    #####:   99:    fscanf(file, "%f%c", &flag, &flagc);
+        -:  100:
+    #####:  101:    if(data == NULL) {
+    #####:  102:        data = new float[width * height * channel];
+    %%%%%:  102-block  0
+    %%%%%:  102-block  1
+    %%%%%:  102-block  2
+        -:  103:    }
+        -:  104:
+    #####:  105:    if(flag < 0.0f) {
+    %%%%%:  105-block  0
+        -:  106:        //little-endian encoding
+        -:  107:
+    #####:  108:        for(int i = height - 1; i > -1; i--) {
+    %%%%%:  108-block  0
+    %%%%%:  108-block  1
+    %%%%%:  108-block  2
+    #####:  109:            int ind = i * width;
+        -:  110:
+    #####:  111:            for(int j = 0; j < width; j++) {
+    %%%%%:  111-block  0
+    %%%%%:  111-block  1
+    #####:  112:                int tmpInd = (ind + j) * channel;
+        -:  113:
+    #####:  114:                fread(&data[tmpInd], sizeof(float), channel, file);
+    %%%%%:  114-block  0
+    %%%%%:  114-block  1
+        -:  115:            }
+        -:  116:        }
+        -:  117:    } else {
+        -:  118:        //big-endian encoding
+        -:  119:
+    #####:  120:        for(int i = height - 1; i > -1; i--) {
+    %%%%%:  120-block  0
+    %%%%%:  120-block  1
+    %%%%%:  120-block  2
+    #####:  121:            int ind = i * width;
+        -:  122:
+    #####:  123:            for(int j = 0; j < width; j++) {
+    %%%%%:  123-block  0
+    %%%%%:  123-block  1
+    %%%%%:  123-block  2
+    #####:  124:                int tmpInd = (ind + j) * channel;
+        -:  125:
+    #####:  126:                fread(&data[tmpInd], sizeof(float), channel, file);
+    %%%%%:  126-block  0
+        -:  127:
+    #####:  128:                for(int k = 0; k < channel; k++) {
+    %%%%%:  128-block  0
+    #####:  129:                    data[tmpInd + k] = convertFloatEndianess(data[tmpInd + k]);
+    %%%%%:  129-block  0
+        -:  130:                }
+        -:  131:            }
+        -:  132:        }
+        -:  133:    }
+        -:  134:
+    #####:  135:    fclose(file);
+    %%%%%:  135-block  0
+        -:  136:    return data;
+        -:  137:}
+        -:  138:
+        -:  139:/**
+        -:  140: * @brief WritePFM writes an HDR image in the portable float map format into a file.
+        -:  141: * @param nameFile
+        -:  142: * @param data
+        -:  143: * @param width
+        -:  144: * @param height
+        -:  145: * @param channels
+        -:  146: * @return
+        -:  147: */
+    #####:  148:PIC_INLINE bool WritePFM(std::string nameFile, float *data, int width,
+        -:  149:                         int height, int channels = 3)
+        -:  150:{
+    #####:  151:    if((data == NULL) || (height < 1) || (width < 1) || (channels < 1)) {
+    %%%%%:  151-block  0
+    %%%%%:  151-block  1
+        -:  152:        return false;
+        -:  153:    }
+        -:  154:
+    #####:  155:    FILE *file = fopen(nameFile.c_str(), "wb");
+    %%%%%:  155-block  0
+        -:  156:
+    #####:  157:    if(file == NULL) {
+        -:  158:        return false;
+        -:  159:    }
+        -:  160:
+        -:  161:    //header
+    #####:  162:    fputc('P', file);
+    %%%%%:  162-block  0
+        -:  163:
+    #####:  164:    if(channels != 1) {
+    #####:  165:        fputc('F', file);
+    %%%%%:  165-block  0
+        -:  166:    } else {
+    #####:  167:        fputc('f', file);
+    %%%%%:  167-block  0
+        -:  168:    }
+        -:  169:
+    #####:  170:    fputc(0x0a, file);
+    %%%%%:  170-block  0
+        -:  171:
+        -:  172:    //width and height
+    #####:  173:    fprintf(file, "%d %d", width, height);
+    #####:  174:    fputc(0x0a, file);
+        -:  175:
+        -:  176:    //flag: writing little-endian only
+    #####:  177:    fprintf(file, "%f", -1.0f);
+    #####:  178:    fputc(0x0a, file);
+        -:  179:
+        -:  180:    //data
+    #####:  181:    int ind1 = 1;
+    #####:  182:    int ind2 = 2;
+        -:  183:
+    #####:  184:    if(channels == 2) {
+    #####:  185:        ind1 = 1;
+    #####:  186:        ind2 = 1;
+    %%%%%:  186-block  0
+        -:  187:    }
+        -:  188:
+    #####:  189:    for(int i = height - 1; i > -1; i--) {
+    %%%%%:  189-block  0
+    %%%%%:  189-block  1
+    %%%%%:  189-block  2
+    #####:  190:        int ind = i * width;
+        -:  191:
+    #####:  192:        for(int j = 0; j < width; j++) {
+    %%%%%:  192-block  0
+    %%%%%:  192-block  1
+    %%%%%:  192-block  2
+    #####:  193:            int tmpInd = (ind + j) * channels;
+        -:  194:
+    #####:  195:            fwrite(&data[tmpInd], sizeof(float), 1, file);
+    %%%%%:  195-block  0
+        -:  196:
+    #####:  197:            if(channels > 1) {
+    #####:  198:                fwrite(&data[tmpInd + ind1], sizeof(float), 1, file);
+    %%%%%:  198-block  0
+    #####:  199:                fwrite(&data[tmpInd + ind2], sizeof(float), 1, file);
+        -:  200:            }
+        -:  201:        }
+        -:  202:    }
+        -:  203:
+    #####:  204:    fclose(file);
+    #####:  205:    return true;
+    %%%%%:  205-block  0
+        -:  206:}
+        -:  207:
+        -:  208:} // end namespace pic
+        -:  209:
+        -:  210:#endif /* PIC_IO_PFM_HPP */
+        -:  211:

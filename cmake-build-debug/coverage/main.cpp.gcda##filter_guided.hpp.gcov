@@ -1,0 +1,291 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_guided.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_GUIDED_HPP
+        -:   19:#define PIC_FILTERING_FILTER_GUIDED_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:#include "../util/array.hpp"
+        -:   24:
+        -:   25:#include "../util/matrix_3_x_3.hpp"
+        -:   26:
+        -:   27:#include "../filtering/filter_guided_a_b.hpp"
+        -:   28:
+        -:   29:#include "../util/math.hpp"
+        -:   30:
+        -:   31:namespace pic {
+        -:   32:
+        -:   33:/**
+        -:   34: * @brief The FilterGuided class
+        -:   35: */
+        -:   36:class FilterGuided: public Filter
+        -:   37:{
+        -:   38:protected:
+        -:   39:
+        -:   40:    int radius;
+        -:   41:    float e_regularization, nPixels;
+        -:   42:    Image *img_a_b;
+        -:   43:
+        -:   44:    FilterGuidedAB flt;
+        -:   45:
+        -:   46:    /**
+        -:   47:     * @brief Process1Channel
+        -:   48:     * @param I
+        -:   49:     * @param p
+        -:   50:     * @param q
+        -:   51:     * @param box
+        -:   52:     */
+        -:   53:    void Process1Channel(Image *I, Image *p, Image *q, BBox *box);
+        -:   54:
+        -:   55:    /**
+        -:   56:     * @brief Process3Channel
+        -:   57:     * @param I
+        -:   58:     * @param p
+        -:   59:     * @param q
+        -:   60:     * @param box
+        -:   61:     */
+        -:   62:    void Process3Channel(Image *I, Image *p, Image *q, BBox *box);
+        -:   63:
+        -:   64:    /**
+        -:   65:     * @brief ProcessBBox
+        -:   66:     * @param dst
+        -:   67:     * @param src
+        -:   68:     * @param box
+        -:   69:     */
+        -:   70:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   71:
+        -:   72:public:
+        -:   73:
+        -:   74:    /**
+        -:   75:     * @brief FilterGuided
+        -:   76:     */
+        -:   77:    FilterGuided() : Filter()
+        -:   78:    {
+        -:   79:        update(5, 0.01f);
+        -:   80:    }
+        -:   81:
+        -:   82:    /**
+        -:   83:     * @brief FilterGuided
+        -:   84:     * @param radius
+        -:   85:     * @param e_regularization
+        -:   86:     */
+        -:   87:    FilterGuided(int radius, float e_regularization) : Filter()
+        -:   88:    {
+        -:   89:        update(radius, e_regularization);
+        -:   90:    }
+        -:   91:
+        -:   92:    /**
+        -:   93:     * @brief update
+        -:   94:     * @param radius
+        -:   95:     * @param e_regularization
+        -:   96:     */
+        -:   97:    void update(int radius, float e_regularization);
+        -:   98:
+        -:   99:    /**
+        -:  100:     * @brief FilterGuided::Process
+        -:  101:     * @param imgIn
+        -:  102:     * @param imgOut
+        -:  103:     * @return
+        -:  104:     */
+        -:  105:    Image *Process(ImageVec imgIn, Image *imgOut);
+        -:  106:
+        -:  107:    /**
+        -:  108:     * @brief execute
+        -:  109:     * @param imgIn
+        -:  110:     * @param guide
+        -:  111:     * @param imgOut
+        -:  112:     * @param radius
+        -:  113:     * @param e_regularization
+        -:  114:     * @return
+        -:  115:     */
+        -:  116:    static Image *execute(Image *imgIn, Image *guide, Image *imgOut,
+        -:  117:                             int radius, float e_regularization)
+        -:  118:    {
+        -:  119:        FilterGuided filter(radius, e_regularization);
+        -:  120:        return filter.Process(Double(imgIn, guide), imgOut);
+        -:  121:    }
+        -:  122:};
+        -:  123:
+        -:  124:PIC_INLINE void FilterGuided::update(int radius, float e_regularization)
+        -:  125:{
+        -:  126:    img_a_b = NULL;
+        -:  127:
+        -:  128:    this->radius = radius;
+        -:  129:    this->e_regularization = e_regularization;
+        -:  130:    nPixels = float(radius * radius * 4);
+        -:  131:
+        -:  132:    flt.update(radius, e_regularization);
+        -:  133:}
+        -:  134:
+    #####:  135:PIC_INLINE void FilterGuided::Process1Channel(Image *I, Image *p, Image *q,
+        -:  136:                                   BBox *box)
+        -:  137:{
+    #####:  138:    float *a_b_mean = new float[img_a_b->channels];
+    %%%%%:  138-block  0
+    %%%%%:  138-block  1
+    %%%%%:  138-block  2
+        -:  139:
+    #####:  140:    for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  140-block  0
+    %%%%%:  140-block  1
+    #####:  141:        for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  141-block  0
+    %%%%%:  141-block  1
+    %%%%%:  141-block  2
+    #####:  142:            float *tmpQ = (*q)(i, j);
+    %%%%%:  142-block  0
+    #####:  143:            float *tmpI = (*I)(i, j);
+    %%%%%:  143-block  0
+        -:  144:
+    #####:  145:            BBox tmpBox(i - radius, i + radius, j - radius, j + radius);
+    %%%%%:  145-block  0
+    #####:  146:            img_a_b->getMeanVal(&tmpBox, a_b_mean);
+    %%%%%:  146-block  0
+        -:  147:
+    #####:  148:            for(int c = 0; c < p->channels; c++) {
+    %%%%%:  148-block  0
+    #####:  149:                int index = c << 1;
+    #####:  150:                float a = a_b_mean[index];
+    #####:  151:                float b = a_b_mean[index + 1];
+    #####:  152:                tmpQ[c] = a * tmpI[0] + b;
+    %%%%%:  152-block  0
+        -:  153:            }
+        -:  154:        }
+        -:  155:    }
+        -:  156:
+    #####:  157:    delete[] a_b_mean;
+    %%%%%:  157-block  0
+    #####:  158:}
+        -:  159:
+    #####:  160:PIC_INLINE void FilterGuided::Process3Channel(Image *I, Image *p,
+        -:  161:        Image *q, BBox *box)
+        -:  162:{
+    #####:  163:    float *a_b_mean = new float[img_a_b->channels];
+    %%%%%:  163-block  0
+    %%%%%:  163-block  1
+    %%%%%:  163-block  2
+        -:  164:
+    #####:  165:    int shift = I->channels + 1;
+        -:  166:
+    #####:  167:    for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  167-block  0
+    %%%%%:  167-block  1
+    #####:  168:        for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  168-block  0
+    %%%%%:  168-block  1
+    %%%%%:  168-block  2
+    #####:  169:            float *tmpQ = (*q)(i, j);
+    %%%%%:  169-block  0
+    #####:  170:            float *tmpI = (*I)(i, j);
+    %%%%%:  170-block  0
+        -:  171:
+    #####:  172:            BBox tmpBox(i - radius, i + radius, j - radius, j + radius);
+    %%%%%:  172-block  0
+    #####:  173:            img_a_b->getMeanVal(&tmpBox, a_b_mean);
+    %%%%%:  173-block  0
+        -:  174:
+    #####:  175:            for(int c = 0; c < p->channels; c++) {
+    %%%%%:  175-block  0
+        -:  176:
+    #####:  177:                int index = c * shift;
+    #####:  178:                float *a = &a_b_mean[index];
+    #####:  179:                float b = a_b_mean[index + I->channels];
+        -:  180:
+    #####:  181:                float a_dot_I = Array<float>::dot(a, tmpI, I->channels);
+    %%%%%:  181-block  0
+        -:  182:
+    #####:  183:                tmpQ[c] = a_dot_I + b;
+    %%%%%:  183-block  0
+        -:  184:            }
+        -:  185:
+        -:  186:        }
+        -:  187:    }
+    #####:  188:    delete[] a_b_mean;
+    %%%%%:  188-block  0
+    #####:  189:}
+        -:  190:
+    #####:  191:PIC_INLINE void FilterGuided::ProcessBBox(Image *dst, ImageVec src,
+        -:  192:        BBox *box)
+        -:  193:{
+    #####:  194:    Image *I, *p;
+        -:  195:
+    #####:  196:    if(src.size() == 2) {
+    %%%%%:  196-block  0
+    #####:  197:        p = src[0];
+    %%%%%:  197-block  0
+        -:  198:
+    #####:  199:        if(src[1] != NULL) {
+    %%%%%:  199-block  0
+    #####:  200:            I = src[1];
+        -:  201:        } else {
+    #####:  202:            I = src[0];
+    %%%%%:  202-block  0
+        -:  203:        }
+        -:  204:    } else {
+    #####:  205:        I = src[0];
+    %%%%%:  205-block  0
+    #####:  206:        p = src[0];
+    %%%%%:  206-block  0
+        -:  207:    }
+        -:  208:
+    #####:  209:    if(I->channels == 3) {
+    %%%%%:  209-block  0
+    #####:  210:        Process3Channel(I, p, dst, box);
+    %%%%%:  210-block  0
+        -:  211:    } else {
+    #####:  212:        Process1Channel(I, p, dst, box);
+    %%%%%:  212-block  0
+        -:  213:    }
+    #####:  214:}
+        -:  215:
+    #####:  216:PIC_INLINE Image *FilterGuided::Process(ImageVec imgIn, Image *imgOut)
+        -:  217:{
+    #####:  218:    if(!checkInput(imgIn)) {
+    %%%%%:  218-block  0
+        -:  219:        return imgOut;
+        -:  220:    }
+        -:  221:
+    #####:  222:    imgOut = setupAux(imgIn, imgOut);
+    %%%%%:  222-block  0
+    %%%%%:  222-block  1
+    $$$$$:  222-block  2
+        -:  223:
+    #####:  224:    if(imgOut == NULL) {
+    %%%%%:  224-block  0
+        -:  225:        return imgOut;
+        -:  226:    }
+        -:  227:
+    #####:  228:    img_a_b = flt.Process(imgIn, img_a_b);
+    %%%%%:  228-block  0
+    %%%%%:  228-block  1
+    $$$$$:  228-block  2
+        -:  229:
+    #####:  230:    return ProcessP(imgIn, imgOut);
+    %%%%%:  230-block  0
+    %%%%%:  230-block  1
+    %%%%%:  230-block  2
+        -:  231:}
+        -:  232:
+        -:  233:} // end namespace pic
+        -:  234:
+        -:  235:#endif /* PIC_FILTERING_FILTER_GUIDED_HPP */
+        -:  236:

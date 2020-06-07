@@ -1,0 +1,221 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_bilateral_2df.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_BILATERAL_2DF_HPP
+        -:   19:#define PIC_FILTERING_FILTER_BILATERAL_2DF_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:#include "../util/std_util.hpp"
+        -:   24:
+        -:   25:#include "../util/array.hpp"
+        -:   26:
+        -:   27:#include "../util/precomputed_gaussian.hpp"
+        -:   28:
+        -:   29:#include "../filtering/filter.hpp"
+        -:   30:
+        -:   31:namespace pic {
+        -:   32:
+        -:   33:/**
+        -:   34: * @brief The FilterBilateral2DF class
+        -:   35: */
+        -:   36:class FilterBilateral2DF: public Filter
+        -:   37:{
+        -:   38:protected:
+        -:   39:    float sigma_s, sigma_r, sigma_r_sq_2;
+        -:   40:
+        -:   41:    PrecomputedGaussian *pg;
+        -:   42:
+        -:   43:    /**
+        -:   44:     * @brief ProcessBBox
+        -:   45:     * @param dst
+        -:   46:     * @param src
+        -:   47:     * @param box
+        -:   48:     */
+        -:   49:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   50:
+        -:   51:public:
+        -:   52:    /**
+        -:   53:     * @brief FilterBilateral2DF
+        -:   54:     */
+        -:   55:    FilterBilateral2DF();
+        -:   56:
+        -:   57:    /**
+        -:   58:     * @brief FilterBilateral2DF
+        -:   59:     * @param sigma_s
+        -:   60:     * @param sigma_r
+        -:   61:     */
+        -:   62:    FilterBilateral2DF(float sigma_s, float sigma_r);
+        -:   63:
+        -:   64:    ~FilterBilateral2DF();
+        -:   65:
+        -:   66:    /**
+        -:   67:     * @brief signature
+        -:   68:     * @return
+        -:   69:     */
+    #####:   70:    std::string signature()
+        -:   71:    {
+    #####:   72:        return genBilString("F", sigma_s, sigma_r);
+    %%%%%:   72-block  0
+    %%%%%:   72-block  1
+    %%%%%:   72-block  2
+    $$$$$:   72-block  3
+        -:   73:    }
+        -:   74:
+        -:   75:    /**
+        -:   76:     * @brief execute
+        -:   77:     * @param imgIn
+        -:   78:     * @param imgOut
+        -:   79:     * @param sigma_s
+        -:   80:     * @param sigma_r
+        -:   81:     * @return
+        -:   82:     */
+        -:   83:    static Image *execute(Image *imgIn, Image *imgOut,
+        -:   84:                             float sigma_s, float sigma_r)
+        -:   85:    {
+        -:   86:        //filter
+        -:   87:        FilterBilateral2DF filter(sigma_s, sigma_r);
+        -:   88:        Image *out = filter.Process(Single(imgIn), imgOut);
+        -:   89:        return out;
+        -:   90:    }
+        -:   91:};
+        -:   92:
+        -:   93:PIC_INLINE FilterBilateral2DF::FilterBilateral2DF() : Filter()
+        -:   94:{
+        -:   95:    pg = NULL;
+        -:   96:}
+        -:   97:
+        -:   98:PIC_INLINE FilterBilateral2DF::FilterBilateral2DF(float sigma_s, float sigma_r) : Filter()
+        -:   99:{
+        -:  100:    //protected values are assigned/computed
+        -:  101:    this->sigma_s = sigma_s > 0.0f ? sigma_s : 1.0f;
+        -:  102:    this->sigma_r = sigma_r > 0.0f ? sigma_r : 0.01f;
+        -:  103:    this->sigma_r_sq_2 = this->sigma_r * this->sigma_r * 2.0f;
+        -:  104:
+        -:  105:    //Precomputation of the Gaussian filter
+        -:  106:    pg = new PrecomputedGaussian(sigma_s);
+        -:  107:}
+        -:  108:
+    #####:  109:FilterBilateral2DF::~FilterBilateral2DF()
+        -:  110:{
+    #####:  111:    pg = delete_s(pg);
+    %%%%%:  111-block  0
+    #####:  112:}
+        -:  113:
+    #####:  114:PIC_INLINE void FilterBilateral2DF::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:  115:{
+    #####:  116:    int channels = dst->channels;
+        -:  117:
+        -:  118:    //Filtering
+    #####:  119:    Image *edge, *base;
+        -:  120:
+    #####:  121:    if(src.size() > 1) {
+    %%%%%:  121-block  0
+        -:  122:        //Joint/Cross Bilateral Filtering
+    #####:  123:        base = src[0];
+    %%%%%:  123-block  0
+    #####:  124:        edge = src[1];
+    %%%%%:  124-block  0
+        -:  125:    } else {
+    #####:  126:        base = src[0];
+    %%%%%:  126-block  0
+    #####:  127:        edge = src[0];
+    %%%%%:  127-block  0
+        -:  128:    }
+        -:  129:
+    #####:  130:    for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  130-block  0
+    %%%%%:  130-block  1
+    %%%%%:  130-block  2
+    #####:  131:        for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  131-block  0
+    %%%%%:  131-block  1
+        -:  132:            //Convolution kernel
+    #####:  133:            float *dst_data = (*dst)(i, j);
+    %%%%%:  133-block  0
+        -:  134:
+    #####:  135:            float *data_edge = (*edge)(i, j);
+    %%%%%:  135-block  0
+        -:  136:
+    #####:  137:            Arrayf::assign(0.0f, dst_data, channels);
+    %%%%%:  137-block  0
+        -:  138:
+        -:  139:            float sum = 0.0f;
+    #####:  140:            for(int k = 0; k < pg->kernelSize; k++) {
+    %%%%%:  140-block  0
+    %%%%%:  140-block  1
+    #####:  141:                int cj = j + k - pg->halfKernelSize;
+        -:  142:
+    #####:  143:                for(int l = 0; l < pg->kernelSize; l++) {
+    %%%%%:  143-block  0
+    %%%%%:  143-block  1
+    #####:  144:                    int ci = i + l - pg->halfKernelSize;
+        -:  145:
+        -:  146:                    //Spatial weight
+    #####:  147:                    float G1 = pg->coeff[k] * pg->coeff[l];
+        -:  148:
+        -:  149:                    //Range weight
+    #####:  150:                    float *cur_edge = (*edge)(ci, cj);
+    %%%%%:  150-block  0
+        -:  151:
+    #####:  152:                    float tmp = Arrayf::distanceSq(data_edge, cur_edge, edge->channels);
+    %%%%%:  152-block  0
+    #####:  153:                    float G2 = expf(-tmp / sigma_r_sq_2);
+        -:  154:
+        -:  155:                    //Weight
+    #####:  156:                    float weight = G1 * G2;
+        -:  157:
+        -:  158:                    //filter
+    #####:  159:                    float *base_data_cur = (*base)(ci, cj);
+    %%%%%:  159-block  0
+        -:  160:
+    #####:  161:                    for(int m = 0; m < channels; m++) {
+    %%%%%:  161-block  0
+    %%%%%:  161-block  1
+    #####:  162:                        dst_data[m] += base_data_cur[m] * weight;
+    %%%%%:  162-block  0
+        -:  163:                    }
+        -:  164:
+    #####:  165:                    sum += weight;
+    %%%%%:  165-block  0
+        -:  166:                }
+        -:  167:            }
+        -:  168:
+        -:  169:            //normalization
+    #####:  170:            if(sum > 0.0f) {
+    %%%%%:  170-block  0
+    #####:  171:                Arrayf::div(dst_data, channels, sum);
+    %%%%%:  171-block  0
+        -:  172:            } else {
+    #####:  173:                float *base_data = (*base)(i, j);
+    %%%%%:  173-block  0
+    #####:  174:                Arrayf::assign(base_data, channels, dst_data);
+    %%%%%:  174-block  0
+    %%%%%:  174-block  1
+        -:  175:            }
+        -:  176:        }
+        -:  177:    }
+    #####:  178:}
+        -:  179:
+        -:  180:} // end namespace pic
+        -:  181:
+        -:  182:#endif /* PIC_FILTERING_FILTER_BILATERAL_2DF_HPP */
+        -:  183:

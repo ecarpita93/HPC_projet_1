@@ -1,0 +1,639 @@
+        -:    0:Source:/usr/include/c++/9/bits/ptr_traits.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// Pointer Traits -*- C++ -*-
+        -:    2:
+        -:    3:// Copyright (C) 2011-2019 Free Software Foundation, Inc.
+        -:    4://
+        -:    5:// This file is part of the GNU ISO C++ Library.  This library is free
+        -:    6:// software; you can redistribute it and/or modify it under the
+        -:    7:// terms of the GNU General Public License as published by the
+        -:    8:// Free Software Foundation; either version 3, or (at your option)
+        -:    9:// any later version.
+        -:   10:
+        -:   11:// This library is distributed in the hope that it will be useful,
+        -:   12:// but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   13:// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        -:   14:// GNU General Public License for more details.
+        -:   15:
+        -:   16:// Under Section 7 of GPL version 3, you are granted additional
+        -:   17:// permissions described in the GCC Runtime Library Exception, version
+        -:   18:// 3.1, as published by the Free Software Foundation.
+        -:   19:
+        -:   20:// You should have received a copy of the GNU General Public License and
+        -:   21:// a copy of the GCC Runtime Library Exception along with this program;
+        -:   22:// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+        -:   23:// <http://www.gnu.org/licenses/>.
+        -:   24:
+        -:   25:/** @file bits/ptr_traits.h
+        -:   26: *  This is an internal header file, included by other library headers.
+        -:   27: *  Do not attempt to use it directly. @headername{memory}
+        -:   28: */
+        -:   29:
+        -:   30:#ifndef _PTR_TRAITS_H
+        -:   31:#define _PTR_TRAITS_H 1
+        -:   32:
+        -:   33:#if __cplusplus >= 201103L
+        -:   34:
+        -:   35:#include <bits/move.h>
+        -:   36:
+        -:   37:namespace std _GLIBCXX_VISIBILITY(default)
+        -:   38:{
+        -:   39:_GLIBCXX_BEGIN_NAMESPACE_VERSION
+        -:   40:
+        -:   41:  class __undefined;
+        -:   42:
+        -:   43:  // Given Template<T, ...> return T, otherwise invalid.
+        -:   44:  template<typename _Tp>
+        -:   45:    struct __get_first_arg
+        -:   46:    { using type = __undefined; };
+        -:   47:
+        -:   48:  template<template<typename, typename...> class _Template, typename _Tp,
+        -:   49:           typename... _Types>
+        -:   50:    struct __get_first_arg<_Template<_Tp, _Types...>>
+        -:   51:    { using type = _Tp; };
+        -:   52:
+        -:   53:  template<typename _Tp>
+        -:   54:    using __get_first_arg_t = typename __get_first_arg<_Tp>::type;
+        -:   55:
+        -:   56:  // Given Template<T, ...> and U return Template<U, ...>, otherwise invalid.
+        -:   57:  template<typename _Tp, typename _Up>
+        -:   58:    struct __replace_first_arg
+        -:   59:    { };
+        -:   60:
+        -:   61:  template<template<typename, typename...> class _Template, typename _Up,
+        -:   62:           typename _Tp, typename... _Types>
+        -:   63:    struct __replace_first_arg<_Template<_Tp, _Types...>, _Up>
+        -:   64:    { using type = _Template<_Up, _Types...>; };
+        -:   65:
+        -:   66:  template<typename _Tp, typename _Up>
+        -:   67:    using __replace_first_arg_t = typename __replace_first_arg<_Tp, _Up>::type;
+        -:   68:
+        -:   69:  template<typename _Tp>
+        -:   70:    using __make_not_void
+        -:   71:      = typename conditional<is_void<_Tp>::value, __undefined, _Tp>::type;
+        -:   72:
+        -:   73:  /**
+        -:   74:   * @brief  Uniform interface to all pointer-like types
+        -:   75:   * @ingroup pointer_abstractions
+        -:   76:  */
+        -:   77:  template<typename _Ptr>
+        -:   78:    struct pointer_traits
+        -:   79:    {
+        -:   80:    private:
+        -:   81:      template<typename _Tp>
+        -:   82:	using __element_type = typename _Tp::element_type;
+        -:   83:
+        -:   84:      template<typename _Tp>
+        -:   85:	using __difference_type = typename _Tp::difference_type;
+        -:   86:
+        -:   87:      template<typename _Tp, typename _Up, typename = void>
+        -:   88:	struct __rebind : __replace_first_arg<_Tp, _Up> { };
+        -:   89:
+        -:   90:      template<typename _Tp, typename _Up>
+        -:   91:	struct __rebind<_Tp, _Up, __void_t<typename _Tp::template rebind<_Up>>>
+        -:   92:	{ using type = typename _Tp::template rebind<_Up>; };
+        -:   93:
+        -:   94:    public:
+        -:   95:      /// The pointer type.
+        -:   96:      using pointer = _Ptr;
+        -:   97:
+        -:   98:      /// The type pointed to.
+        -:   99:      using element_type
+        -:  100:	= __detected_or_t<__get_first_arg_t<_Ptr>, __element_type, _Ptr>;
+        -:  101:
+        -:  102:      /// The type used to represent the difference between two pointers.
+        -:  103:      using difference_type
+        -:  104:	= __detected_or_t<ptrdiff_t, __difference_type, _Ptr>;
+        -:  105:
+        -:  106:      /// A pointer to a different type.
+        -:  107:      template<typename _Up>
+        -:  108:        using rebind = typename __rebind<_Ptr, _Up>::type;
+        -:  109:
+        -:  110:      static _Ptr
+        -:  111:      pointer_to(__make_not_void<element_type>& __e)
+        -:  112:      { return _Ptr::pointer_to(__e); }
+        -:  113:
+        -:  114:      static_assert(!is_same<element_type, __undefined>::value,
+        -:  115:	  "pointer type defines element_type or is like SomePointer<T, Args>");
+        -:  116:    };
+        -:  117:
+        -:  118:  /**
+        -:  119:   * @brief  Partial specialization for built-in pointers.
+        -:  120:   * @ingroup pointer_abstractions
+        -:  121:  */
+        -:  122:  template<typename _Tp>
+        -:  123:    struct pointer_traits<_Tp*>
+        -:  124:    {
+        -:  125:      /// The pointer type
+        -:  126:      typedef _Tp* pointer;
+        -:  127:      /// The type pointed to
+        -:  128:      typedef _Tp  element_type;
+        -:  129:      /// Type used to represent the difference between two pointers
+        -:  130:      typedef ptrdiff_t difference_type;
+        -:  131:
+        -:  132:      template<typename _Up>
+        -:  133:        using rebind = _Up*;
+        -:  134:
+        -:  135:      /**
+        -:  136:       *  @brief  Obtain a pointer to an object
+        -:  137:       *  @param  __r  A reference to an object of type @c element_type
+        -:  138:       *  @return @c addressof(__r)
+        -:  139:      */
+        -:  140:      static _GLIBCXX20_CONSTEXPR pointer
+     814*:  141:      pointer_to(__make_not_void<element_type>& __r) noexcept
+    $$$$$:  141-block  0
+        7:  141-block  1
+        7:  141-block  2
+    %%%%%:  141-block  3
+    %%%%%:  141-block  4
+    $$$$$:  141-block  5
+        7:  141-block  6
+    %%%%%:  141-block  7
+    %%%%%:  141-block  8
+    $$$$$:  141-block  9
+        3:  141-block 10
+    %%%%%:  141-block 11
+    $$$$$:  141-block 12
+    %%%%%:  141-block 13
+    %%%%%:  141-block 14
+    %%%%%:  141-block 15
+    %%%%%:  141-block 16
+    $$$$$:  141-block 17
+        7:  141-block 18
+        7:  141-block 19
+        7:  141-block 20
+        7:  141-block 21
+        7:  141-block 22
+        1:  141-block 23
+        1:  141-block 24
+    $$$$$:  141-block 25
+    $$$$$:  141-block 26
+    $$$$$:  141-block 27
+    $$$$$:  141-block 28
+    $$$$$:  141-block 29
+    $$$$$:  141-block 30
+    %%%%%:  141-block 31
+    $$$$$:  141-block 32
+    %%%%%:  141-block 33
+    $$$$$:  141-block 34
+    %%%%%:  141-block 35
+    $$$$$:  141-block 36
+    %%%%%:  141-block 37
+    $$$$$:  141-block 38
+    %%%%%:  141-block 39
+    $$$$$:  141-block 40
+        7:  141-block 41
+        7:  141-block 42
+    $$$$$:  141-block 43
+      612:  141-block 44
+       21:  141-block 45
+    $$$$$:  141-block 46
+        2:  141-block 47
+    %%%%%:  141-block 48
+    %%%%%:  141-block 49
+        1:  141-block 50
+        1:  141-block 51
+    %%%%%:  141-block 52
+    %%%%%:  141-block 53
+    %%%%%:  141-block 54
+    %%%%%:  141-block 55
+    %%%%%:  141-block 56
+    %%%%%:  141-block 57
+        1:  141-block 58
+        1:  141-block 59
+        1:  141-block 60
+    %%%%%:  141-block 61
+    %%%%%:  141-block 62
+    %%%%%:  141-block 63
+    %%%%%:  141-block 64
+    %%%%%:  141-block 65
+    %%%%%:  141-block 66
+    %%%%%:  141-block 67
+    %%%%%:  141-block 68
+    $$$$$:  141-block 69
+    $$$$$:  141-block 70
+    $$$$$:  141-block 71
+    $$$$$:  141-block 72
+    $$$$$:  141-block 73
+    $$$$$:  141-block 74
+    $$$$$:  141-block 75
+    $$$$$:  141-block 76
+    $$$$$:  141-block 77
+    $$$$$:  141-block 78
+    %%%%%:  141-block 79
+    %%%%%:  141-block 80
+    %%%%%:  141-block 81
+    %%%%%:  141-block 82
+    %%%%%:  141-block 83
+    %%%%%:  141-block 84
+    %%%%%:  141-block 85
+    %%%%%:  141-block 86
+    %%%%%:  141-block 87
+    %%%%%:  141-block 88
+        7:  141-block 89
+    %%%%%:  141-block 90
+    %%%%%:  141-block 91
+    %%%%%:  141-block 92
+    %%%%%:  141-block 93
+    %%%%%:  141-block 94
+    %%%%%:  141-block 95
+    %%%%%:  141-block 96
+    %%%%%:  141-block 97
+        7:  141-block 98
+        7:  141-block 99
+        7:  141-block 100
+        7:  141-block 101
+        7:  141-block 102
+    $$$$$:  141-block 103
+    $$$$$:  141-block 104
+    $$$$$:  141-block 105
+    $$$$$:  141-block 106
+    $$$$$:  141-block 107
+    $$$$$:  141-block 108
+    $$$$$:  141-block 109
+    $$$$$:  141-block 110
+    $$$$$:  141-block 111
+    $$$$$:  141-block 112
+    $$$$$:  141-block 113
+    $$$$$:  141-block 114
+        4:  141-block 115
+    $$$$$:  141-block 116
+    %%%%%:  141-block 117
+    $$$$$:  141-block 118
+        7:  141-block 119
+    $$$$$:  141-block 120
+    %%%%%:  141-block 121
+    $$$$$:  141-block 122
+    %%%%%:  141-block 123
+    %%%%%:  141-block 124
+    %%%%%:  141-block 125
+    $$$$$:  141-block 126
+    %%%%%:  141-block 127
+    %%%%%:  141-block 128
+    %%%%%:  141-block 129
+    $$$$$:  141-block 130
+    %%%%%:  141-block 131
+    %%%%%:  141-block 132
+    $$$$$:  141-block 133
+    %%%%%:  141-block 134
+    %%%%%:  141-block 135
+    %%%%%:  141-block 136
+    %%%%%:  141-block 137
+    %%%%%:  141-block 138
+    %%%%%:  141-block 139
+    %%%%%:  141-block 140
+    $$$$$:  141-block 141
+    $$$$$:  141-block 142
+    %%%%%:  141-block 143
+    %%%%%:  141-block 144
+    $$$$$:  141-block 145
+    %%%%%:  141-block 146
+    %%%%%:  141-block 147
+    %%%%%:  141-block 148
+    %%%%%:  141-block 149
+    %%%%%:  141-block 150
+    %%%%%:  141-block 151
+    %%%%%:  141-block 152
+    $$$$$:  141-block 153
+    $$$$$:  141-block 154
+    %%%%%:  141-block 155
+    %%%%%:  141-block 156
+    $$$$$:  141-block 157
+    %%%%%:  141-block 158
+    %%%%%:  141-block 159
+    %%%%%:  141-block 160
+    %%%%%:  141-block 161
+    %%%%%:  141-block 162
+    %%%%%:  141-block 163
+    %%%%%:  141-block 164
+    %%%%%:  141-block 165
+    %%%%%:  141-block 166
+    %%%%%:  141-block 167
+    %%%%%:  141-block 168
+    %%%%%:  141-block 169
+    %%%%%:  141-block 170
+    %%%%%:  141-block 171
+    %%%%%:  141-block 172
+    %%%%%:  141-block 173
+    $$$$$:  141-block 174
+    $$$$$:  141-block 175
+    $$$$$:  141-block 176
+    $$$$$:  141-block 177
+    $$$$$:  141-block 178
+    $$$$$:  141-block 179
+    %%%%%:  141-block 180
+    %%%%%:  141-block 181
+    %%%%%:  141-block 182
+    %%%%%:  141-block 183
+    %%%%%:  141-block 184
+    %%%%%:  141-block 185
+    %%%%%:  141-block 186
+    %%%%%:  141-block 187
+    %%%%%:  141-block 188
+    %%%%%:  141-block 189
+    %%%%%:  141-block 190
+    %%%%%:  141-block 191
+    $$$$$:  141-block 192
+    $$$$$:  141-block 193
+    $$$$$:  141-block 194
+    $$$$$:  141-block 195
+    $$$$$:  141-block 196
+    $$$$$:  141-block 197
+    $$$$$:  141-block 198
+    $$$$$:  141-block 199
+    %%%%%:  141-block 200
+    %%%%%:  141-block 201
+    %%%%%:  141-block 202
+    %%%%%:  141-block 203
+    %%%%%:  141-block 204
+    $$$$$:  141-block 205
+    $$$$$:  141-block 206
+    $$$$$:  141-block 207
+    $$$$$:  141-block 208
+    $$$$$:  141-block 209
+    %%%%%:  141-block 210
+    %%%%%:  141-block 211
+    %%%%%:  141-block 212
+    $$$$$:  141-block 213
+    %%%%%:  141-block 214
+    $$$$$:  141-block 215
+     814*:  142:      { return std::addressof(__r); }
+    $$$$$:  142-block  0
+        7:  142-block  1
+        7:  142-block  2
+    %%%%%:  142-block  3
+    %%%%%:  142-block  4
+    $$$$$:  142-block  5
+        7:  142-block  6
+    %%%%%:  142-block  7
+    %%%%%:  142-block  8
+    $$$$$:  142-block  9
+        3:  142-block 10
+    %%%%%:  142-block 11
+    $$$$$:  142-block 12
+    %%%%%:  142-block 13
+    %%%%%:  142-block 14
+    %%%%%:  142-block 15
+    %%%%%:  142-block 16
+    $$$$$:  142-block 17
+        7:  142-block 18
+        7:  142-block 19
+        7:  142-block 20
+        7:  142-block 21
+        7:  142-block 22
+        1:  142-block 23
+        1:  142-block 24
+    $$$$$:  142-block 25
+    $$$$$:  142-block 26
+    $$$$$:  142-block 27
+    $$$$$:  142-block 28
+    $$$$$:  142-block 29
+    $$$$$:  142-block 30
+    %%%%%:  142-block 31
+    $$$$$:  142-block 32
+    %%%%%:  142-block 33
+    $$$$$:  142-block 34
+    %%%%%:  142-block 35
+    $$$$$:  142-block 36
+    %%%%%:  142-block 37
+    $$$$$:  142-block 38
+    %%%%%:  142-block 39
+    $$$$$:  142-block 40
+        7:  142-block 41
+        7:  142-block 42
+    $$$$$:  142-block 43
+      612:  142-block 44
+       21:  142-block 45
+    $$$$$:  142-block 46
+        2:  142-block 47
+    %%%%%:  142-block 48
+    %%%%%:  142-block 49
+        1:  142-block 50
+        1:  142-block 51
+    %%%%%:  142-block 52
+    %%%%%:  142-block 53
+    %%%%%:  142-block 54
+    %%%%%:  142-block 55
+    %%%%%:  142-block 56
+    %%%%%:  142-block 57
+        1:  142-block 58
+        1:  142-block 59
+        1:  142-block 60
+    %%%%%:  142-block 61
+    %%%%%:  142-block 62
+    %%%%%:  142-block 63
+    %%%%%:  142-block 64
+    %%%%%:  142-block 65
+    %%%%%:  142-block 66
+    %%%%%:  142-block 67
+    %%%%%:  142-block 68
+    $$$$$:  142-block 69
+    $$$$$:  142-block 70
+    $$$$$:  142-block 71
+    $$$$$:  142-block 72
+    $$$$$:  142-block 73
+    $$$$$:  142-block 74
+    $$$$$:  142-block 75
+    $$$$$:  142-block 76
+    $$$$$:  142-block 77
+    $$$$$:  142-block 78
+    %%%%%:  142-block 79
+    %%%%%:  142-block 80
+    %%%%%:  142-block 81
+    %%%%%:  142-block 82
+    %%%%%:  142-block 83
+    %%%%%:  142-block 84
+    %%%%%:  142-block 85
+    %%%%%:  142-block 86
+    %%%%%:  142-block 87
+    %%%%%:  142-block 88
+        7:  142-block 89
+    %%%%%:  142-block 90
+    %%%%%:  142-block 91
+    %%%%%:  142-block 92
+    %%%%%:  142-block 93
+    %%%%%:  142-block 94
+    %%%%%:  142-block 95
+    %%%%%:  142-block 96
+    %%%%%:  142-block 97
+        7:  142-block 98
+        7:  142-block 99
+        7:  142-block 100
+        7:  142-block 101
+        7:  142-block 102
+    $$$$$:  142-block 103
+    $$$$$:  142-block 104
+    $$$$$:  142-block 105
+    $$$$$:  142-block 106
+    $$$$$:  142-block 107
+    $$$$$:  142-block 108
+    $$$$$:  142-block 109
+    $$$$$:  142-block 110
+    $$$$$:  142-block 111
+    $$$$$:  142-block 112
+    $$$$$:  142-block 113
+    $$$$$:  142-block 114
+        4:  142-block 115
+    $$$$$:  142-block 116
+    %%%%%:  142-block 117
+    $$$$$:  142-block 118
+        7:  142-block 119
+    $$$$$:  142-block 120
+    %%%%%:  142-block 121
+    $$$$$:  142-block 122
+    %%%%%:  142-block 123
+    %%%%%:  142-block 124
+    %%%%%:  142-block 125
+    $$$$$:  142-block 126
+    %%%%%:  142-block 127
+    %%%%%:  142-block 128
+    %%%%%:  142-block 129
+    $$$$$:  142-block 130
+    %%%%%:  142-block 131
+    %%%%%:  142-block 132
+    $$$$$:  142-block 133
+    %%%%%:  142-block 134
+    %%%%%:  142-block 135
+    %%%%%:  142-block 136
+    %%%%%:  142-block 137
+    %%%%%:  142-block 138
+    %%%%%:  142-block 139
+    %%%%%:  142-block 140
+    $$$$$:  142-block 141
+    $$$$$:  142-block 142
+    %%%%%:  142-block 143
+    %%%%%:  142-block 144
+    $$$$$:  142-block 145
+    %%%%%:  142-block 146
+    %%%%%:  142-block 147
+    %%%%%:  142-block 148
+    %%%%%:  142-block 149
+    %%%%%:  142-block 150
+    %%%%%:  142-block 151
+    %%%%%:  142-block 152
+    $$$$$:  142-block 153
+    $$$$$:  142-block 154
+    %%%%%:  142-block 155
+    %%%%%:  142-block 156
+    $$$$$:  142-block 157
+    %%%%%:  142-block 158
+    %%%%%:  142-block 159
+    %%%%%:  142-block 160
+    %%%%%:  142-block 161
+    %%%%%:  142-block 162
+    %%%%%:  142-block 163
+    %%%%%:  142-block 164
+    %%%%%:  142-block 165
+    %%%%%:  142-block 166
+    %%%%%:  142-block 167
+    %%%%%:  142-block 168
+    %%%%%:  142-block 169
+    %%%%%:  142-block 170
+    %%%%%:  142-block 171
+    %%%%%:  142-block 172
+    %%%%%:  142-block 173
+    $$$$$:  142-block 174
+    $$$$$:  142-block 175
+    $$$$$:  142-block 176
+    $$$$$:  142-block 177
+    $$$$$:  142-block 178
+    $$$$$:  142-block 179
+    %%%%%:  142-block 180
+    %%%%%:  142-block 181
+    %%%%%:  142-block 182
+    %%%%%:  142-block 183
+    %%%%%:  142-block 184
+    %%%%%:  142-block 185
+    %%%%%:  142-block 186
+    %%%%%:  142-block 187
+    %%%%%:  142-block 188
+    %%%%%:  142-block 189
+    %%%%%:  142-block 190
+    %%%%%:  142-block 191
+    $$$$$:  142-block 192
+    $$$$$:  142-block 193
+    $$$$$:  142-block 194
+    $$$$$:  142-block 195
+    $$$$$:  142-block 196
+    $$$$$:  142-block 197
+    $$$$$:  142-block 198
+    $$$$$:  142-block 199
+    %%%%%:  142-block 200
+    %%%%%:  142-block 201
+    %%%%%:  142-block 202
+    %%%%%:  142-block 203
+    %%%%%:  142-block 204
+    $$$$$:  142-block 205
+    $$$$$:  142-block 206
+    $$$$$:  142-block 207
+    $$$$$:  142-block 208
+    $$$$$:  142-block 209
+    %%%%%:  142-block 210
+    %%%%%:  142-block 211
+    %%%%%:  142-block 212
+    $$$$$:  142-block 213
+    %%%%%:  142-block 214
+    $$$$$:  142-block 215
+        -:  143:    };
+        -:  144:
+        -:  145:  /// Convenience alias for rebinding pointers.
+        -:  146:  template<typename _Ptr, typename _Tp>
+        -:  147:    using __ptr_rebind = typename pointer_traits<_Ptr>::template rebind<_Tp>;
+        -:  148:
+        -:  149:  template<typename _Tp>
+        -:  150:    constexpr _Tp*
+        -:  151:    __to_address(_Tp* __ptr) noexcept
+        -:  152:    {
+        -:  153:      static_assert(!std::is_function<_Tp>::value, "not a function pointer");
+        -:  154:      return __ptr;
+        -:  155:    }
+        -:  156:
+        -:  157:#if __cplusplus <= 201703L
+        -:  158:  template<typename _Ptr>
+        -:  159:    constexpr typename std::pointer_traits<_Ptr>::element_type*
+        -:  160:    __to_address(const _Ptr& __ptr)
+        -:  161:    { return std::__to_address(__ptr.operator->()); }
+        -:  162:#else
+        -:  163:  template<typename _Ptr>
+        -:  164:    constexpr auto
+        -:  165:    __to_address(const _Ptr& __ptr) noexcept
+        -:  166:    -> decltype(std::pointer_traits<_Ptr>::to_address(__ptr))
+        -:  167:    { return std::pointer_traits<_Ptr>::to_address(__ptr); }
+        -:  168:
+        -:  169:  template<typename _Ptr, typename... _None>
+        -:  170:    constexpr auto
+        -:  171:    __to_address(const _Ptr& __ptr, _None...) noexcept
+        -:  172:    { return std::__to_address(__ptr.operator->()); }
+        -:  173:
+        -:  174:  /**
+        -:  175:   * @brief Obtain address referenced by a pointer to an object
+        -:  176:   * @param __ptr A pointer to an object
+        -:  177:   * @return @c __ptr
+        -:  178:   * @ingroup pointer_abstractions
+        -:  179:  */
+        -:  180:  template<typename _Tp>
+        -:  181:    constexpr _Tp*
+        -:  182:    to_address(_Tp* __ptr) noexcept
+        -:  183:    { return std::__to_address(__ptr); }
+        -:  184:
+        -:  185:  /**
+        -:  186:   * @brief Obtain address referenced by a pointer to an object
+        -:  187:   * @param __ptr A pointer to an object
+        -:  188:   * @return @c pointer_traits<_Ptr>::to_address(__ptr) if that expression is
+        -:  189:             well-formed, otherwise @c to_address(__ptr.operator->())
+        -:  190:   * @ingroup pointer_abstractions
+        -:  191:  */
+        -:  192:  template<typename _Ptr>
+        -:  193:    constexpr auto
+        -:  194:    to_address(const _Ptr& __ptr) noexcept
+        -:  195:    { return std::__to_address(__ptr); }
+        -:  196:#endif // C++2a
+        -:  197:
+        -:  198:_GLIBCXX_END_NAMESPACE_VERSION
+        -:  199:} // namespace std
+        -:  200:
+        -:  201:#endif
+        -:  202:
+        -:  203:#endif

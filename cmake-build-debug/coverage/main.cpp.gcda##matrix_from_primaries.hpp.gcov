@@ -1,0 +1,192 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/colors/matrix_from_primaries.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_COLORS_MATRIX_FORM_PRIMARIES_HPP
+        -:   19:#define PIC_COLORS_MATRIX_FORM_PRIMARIES_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:#ifndef PIC_DISABLE_EIGEN
+        -:   24:    #ifndef PIC_EIGEN_NOT_BUNDLED
+        -:   25:        #include "../externals/Eigen/Dense"
+        -:   26:        #include "../externals/Eigen/QR"
+        -:   27:    #else
+        -:   28:        #include <Eigen/Dense>
+        -:   29:        #include <Eigen/QR>
+        -:   30:    #endif
+        -:   31:#endif
+        -:   32:
+        -:   33:namespace pic {
+        -:   34:
+        -:   35:/**
+        -:   36: * @brief createMatrixFromPrimaries computes a matrix for converting XYZ values into the
+        -:   37: * defined color space (i.e., by defining the three primaries: red, green, and blue).
+        -:   38: * @param red_XYZ is the XYZ values of the red primary
+        -:   39: * @param green_XYZ is the XYZ values of the green primary
+        -:   40: * @param blue_XYZ is the XYZ values of the blue primary
+        -:   41: * @param white_point_XYZ is the XYZ values of the white point primary
+        -:   42: * @return It returns a 3x3 matrix for converting XYZ values into the defined color space
+        -:   43: */
+    #####:   44:float *createMatrixFromPrimaries(float *red_XYZ,
+        -:   45:                                 float *green_XYZ,
+        -:   46:                                 float *blue_XYZ,
+        -:   47:                                 float *white_point_XYZ,
+        -:   48:                                 float *ret = NULL
+        -:   49:                                 )
+        -:   50:{
+    #####:   51:    if(red_XYZ == NULL || green_XYZ == NULL || blue_XYZ == NULL) {
+    %%%%%:   51-block  0
+    %%%%%:   51-block  1
+        -:   52:        return ret;
+        -:   53:    }
+        -:   54:
+    #####:   55:    if(ret == NULL) {
+    %%%%%:   55-block  0
+    #####:   56:        ret = new float[9];
+    %%%%%:   56-block  0
+        -:   57:    }
+        -:   58:
+        -:   59:#ifndef PIC_DISABLE_EIGEN
+        -:   60:
+    #####:   61:    int w = 0;
+    #####:   62:    if(white_point_XYZ != NULL) {
+    %%%%%:   62-block  0
+    #####:   63:        w = 3;
+    %%%%%:   63-block  0
+        -:   64:    }
+        -:   65:
+        -:   66:    //set up a liner system A x = b
+    #####:   67:    int nRow = 9 + w;
+    #####:   68:    Eigen::MatrixXf A(nRow, 9);
+    %%%%%:   68-block  0
+    %%%%%:   68-block  1
+    #####:   69:    Eigen::VectorXf b(nRow);
+    %%%%%:   69-block  0
+    $$$$$:   69-block  1
+        -:   70:
+        -:   71:    //A matrix
+    #####:   72:    A.setZero();
+    %%%%%:   72-block  0
+        -:   73:
+        -:   74:    //red
+    #####:   75:    for(int j = 0; j < 3; j++) {
+    %%%%%:   75-block  0
+    %%%%%:   75-block  1
+    #####:   76:        for(int i = 0 ; i < 3; i++) {
+    %%%%%:   76-block  0
+    #####:   77:            A(j, j * 3 + i) = red_XYZ[i];
+    %%%%%:   77-block  0
+        -:   78:        }
+        -:   79:    }
+        -:   80:
+        -:   81:    //green`
+    #####:   82:    for(int j = 0; j < 3; j++) {
+    %%%%%:   82-block  0
+    %%%%%:   82-block  1
+    #####:   83:        for(int i = 0 ; i < 3; i++) {
+    %%%%%:   83-block  0
+    #####:   84:            A(j + 3, j * 3 + i) = green_XYZ[i];
+    %%%%%:   84-block  0
+        -:   85:        }
+        -:   86:    }
+        -:   87:
+        -:   88:    //blue`
+    #####:   89:    for(int j = 0; j < 3; j++) {
+    %%%%%:   89-block  0
+    %%%%%:   89-block  1
+    #####:   90:        for(int i = 0 ; i < 3; i++) {
+    %%%%%:   90-block  0
+    #####:   91:            A(j + 6, j * 3 + i) = blue_XYZ[i];
+    %%%%%:   91-block  0
+        -:   92:        }
+        -:   93:    }
+        -:   94:
+        -:   95:    //white
+    #####:   96:    if(w == 3) {
+    %%%%%:   96-block  0
+    #####:   97:        for(int j = 0; j < 3; j++) {
+    %%%%%:   97-block  0
+    %%%%%:   97-block  1
+    #####:   98:            for(int i = 0 ; i < 3; i++) {
+    %%%%%:   98-block  0
+    #####:   99:                A(j + 9, j * 3 + i) = white_point_XYZ[i];
+    %%%%%:   99-block  0
+        -:  100:            }
+        -:  101:        }
+        -:  102:    }
+        -:  103:
+        -:  104:    //b vector
+    #####:  105:    b(0) = 1.0f;
+    %%%%%:  105-block  0
+    #####:  106:    b(1) = 0.0f;
+    %%%%%:  106-block  0
+    #####:  107:    b(2) = 0.0f;
+    %%%%%:  107-block  0
+        -:  108:
+    #####:  109:    b(3) = 0.0f;
+    %%%%%:  109-block  0
+    #####:  110:    b(4) = 1.0f;
+    %%%%%:  110-block  0
+    #####:  111:    b(5) = 0.0f;
+    %%%%%:  111-block  0
+        -:  112:
+    #####:  113:    b(6) = 0.0f;
+    %%%%%:  113-block  0
+    #####:  114:    b(7) = 0.0f;
+    %%%%%:  114-block  0
+    #####:  115:    b(8) = 1.0f;
+    %%%%%:  115-block  0
+        -:  116:
+    #####:  117:    if(w == 3) {
+    %%%%%:  117-block  0
+    #####:  118:        b(9) = 1.0f;
+    %%%%%:  118-block  0
+    #####:  119:        b(10) = 1.0f;
+    %%%%%:  119-block  0
+    #####:  120:        b(11) = 1.0f;
+    %%%%%:  120-block  0
+    %%%%%:  120-block  1
+        -:  121:    }
+        -:  122:
+        -:  123:    //solve Ax=b
+    #####:  124:    Eigen::VectorXf x = A.colPivHouseholderQr().solve(b);
+    %%%%%:  124-block  0
+    %%%%%:  124-block  1
+    %%%%%:  124-block  2
+    %%%%%:  124-block  3
+    %%%%%:  124-block  4
+    $$$$$:  124-block  5
+    $$$$$:  124-block  6
+        -:  125:
+    #####:  126:    for(int i = 0; i < 9; i++) {
+    %%%%%:  126-block  0
+    #####:  127:        ret[i] = x(i);
+    %%%%%:  127-block  0
+        -:  128:    }
+        -:  129:#endif
+    #####:  130:    return ret;
+    %%%%%:  130-block  0
+        -:  131:}
+        -:  132:
+        -:  133:} // end namespace pic
+        -:  134:
+        -:  135:#endif /* PIC_COLORS_MATRIX_FORM_PRIMARIES_HPP */
+        -:  136:

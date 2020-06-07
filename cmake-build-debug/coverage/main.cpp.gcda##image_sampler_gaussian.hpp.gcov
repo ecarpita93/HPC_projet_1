@@ -1,0 +1,130 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/image_samplers/image_sampler_gaussian.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IMAGE_SAMPLERS_IMAGE_SAMPLER_GAUSSIAN_HPP
+        -:   19:#define PIC_IMAGE_SAMPLERS_IMAGE_SAMPLER_GAUSSIAN_HPP
+        -:   20:
+        -:   21:#include "../image_samplers/image_sampler.hpp"
+        -:   22:#include "../util/precomputed_gaussian.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The ImageSamplerGaussian class
+        -:   28: */
+    #####:   29:class ImageSamplerGaussian: public ImageSampler
+    %%%%%:   29-block  0
+        -:   30:{
+        -:   31:protected:
+        -:   32:    PrecomputedGaussian *pg;
+        -:   33:
+        -:   34:public:
+        -:   35:    /**
+        -:   36:     * @brief ImageSamplerGaussian
+        -:   37:     */
+    #####:   38:    ImageSamplerGaussian()
+    #####:   39:    {
+    #####:   40:        pg = NULL;
+        -:   41:    }
+        -:   42:
+        -:   43:    /**
+        -:   44:     * @brief ImageSamplerGaussian
+        -:   45:     * @param sigma
+        -:   46:     * @param direction
+        -:   47:     */
+        -:   48:    ImageSamplerGaussian(float sigma, unsigned int direction)
+        -:   49:    {
+        -:   50:        update(sigma, direction);
+        -:   51:    }
+        -:   52:
+        -:   53:    /**
+        -:   54:     * @brief update
+        -:   55:     * @param sigma
+        -:   56:     * @param direction
+        -:   57:     */
+    #####:   58:    void update(float sigma, unsigned int direction)
+        -:   59:    {
+    #####:   60:        if(pg != NULL) {
+    %%%%%:   60-block  0
+    #####:   61:            delete pg;
+    %%%%%:   61-block  0
+    %%%%%:   61-block  1
+    #####:   62:            pg = NULL;
+        -:   63:        }
+        -:   64:
+    #####:   65:        pg = new PrecomputedGaussian(sigma);
+    %%%%%:   65-block  0
+    $$$$$:   65-block  1
+        -:   66:
+    #####:   67:        SetDirection(direction);
+    %%%%%:   67-block  0
+    #####:   68:    }
+    %%%%%:   68-block  0
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief SampleImage samples an image in uniform coordiantes.
+        -:   72:     * @param img
+        -:   73:     * @param x
+        -:   74:     * @param y
+        -:   75:     * @param vOut
+        -:   76:     */
+    #####:   77:    void SampleImage(Image *img, float x, float y, float *vOut)
+        -:   78:    {
+    #####:   79:        for(int k = 0; k < img->channels; k++) {
+    %%%%%:   79-block  0
+    %%%%%:   79-block  1
+    #####:   80:            vOut[k] = 0.0f;
+    %%%%%:   80-block  0
+        -:   81:        }
+        -:   82:
+    #####:   83:        int ix = int(x * img->widthf);
+    #####:   84:        int iy = int(y * img->heightf);
+        -:   85:
+    #####:   86:        for(int i = 0; i < pg->kernelSize ; i++) {
+    %%%%%:   86-block  0
+    %%%%%:   86-block  1
+    %%%%%:   86-block  2
+    #####:   87:            int ex = CLAMP(ix + i * dirs[0], img->width);
+    %%%%%:   87-block  0
+    %%%%%:   87-block  1
+    %%%%%:   87-block  2
+    #####:   88:            int ey = CLAMP(iy + i * dirs[1], img->height);
+    %%%%%:   88-block  0
+    %%%%%:   88-block  1
+    %%%%%:   88-block  2
+        -:   89:
+    #####:   90:            int ind = (ey * img->width + ex) * img->channels;
+        -:   91:
+    #####:   92:            for(int k = 0; k < img->channels; k++) {
+    %%%%%:   92-block  0
+    %%%%%:   92-block  1
+    #####:   93:                vOut[k] += img->data[ind] * pg->coeff[i];
+    #####:   94:                ind++;
+    %%%%%:   94-block  0
+        -:   95:            }
+        -:   96:        }
+    #####:   97:    }
+        -:   98:};
+        -:   99:
+        -:  100:} // end namespace pic
+        -:  101:
+        -:  102:#endif /* PIC_IMAGE_SAMPLERS_IMAGE_SAMPLER_GAUSSIAN_HPP */
+        -:  103:

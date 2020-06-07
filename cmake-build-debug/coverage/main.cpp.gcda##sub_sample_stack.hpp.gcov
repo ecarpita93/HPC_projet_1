@@ -1,0 +1,327 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/algorithms/sub_sample_stack.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_ALGORITHMS_SUB_SAMPLE_STACK_HPP
+        -:   19:#define PIC_ALGORITHMS_SUB_SAMPLE_STACK_HPP
+        -:   20:
+        -:   21:#include "../util/math.hpp"
+        -:   22:#include "../util/std_util.hpp"
+        -:   23:
+        -:   24:#include "../image.hpp"
+        -:   25:#include "../image_vec.hpp"
+        -:   26:#include "../point_samplers/sampler_random.hpp"
+        -:   27:#include "../histogram.hpp"
+        -:   28:
+        -:   29:namespace pic {
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief The SubSampleStack class
+        -:   33: */
+        -:   34:class SubSampleStack
+        -:   35:{
+        -:   36:protected:
+        -:   37:
+        -:   38:    /**
+        -:   39:    * \brief sampleGrossberg creates a low resolution version of the stack using Grossberg and Nayar sampling.
+        -:   40:    * \param stack is a stack of Image* at different exposures
+        -:   41:    */
+        1:   42:    void sampleGrossberg(ImageVec &stack)
+        -:   43:    {
+        -:   44:        #ifdef PIC_DEBUG
+        -:   45:            printf("Computing histograms...");
+        -:   46:        #endif
+        -:   47:
+       22:   48:        Histogram *h = new Histogram[exposures * channels];
+        1:   48-block  0
+        1:   48-block  1
+        1:   48-block  2
+       22:   48-block  3
+       21:   48-block  4
+        -:   49:
+        -:   50:        int c = 0;
+        4:   51:        for(int j = 0; j < channels; j++) {
+        4:   51-block  0
+        3:   51-block  1
+       24:   52:            for(int i = 0; i < exposures; i++) {
+       24:   52-block  0
+       21:   53:                h[c].calculate(stack[i], VS_LDR, 256, j);
+       21:   53-block  0
+       21:   54:                h[c].cumulativef(true);
+       21:   55:                c++;
+        -:   56:            }
+        -:   57:        }
+        -:   58:
+        -:   59:        #ifdef PIC_DEBUG
+        -:   60:            printf("Ok\n");
+        -:   61:        #endif
+        -:   62:
+        1:   63:        total = this->nSamples * this->channels * this->exposures;
+       1*:   64:        samples = new int[total];
+        1:   64-block  0
+        1:   64-block  1
+    %%%%%:   64-block  2
+        -:   65:
+        -:   66:        #ifdef PIC_DEBUG
+        -:   67:            printf("Sampling...");
+        -:   68:        #endif
+        -:   69:
+        1:   70:        float div = float(nSamples - 1);
+        1:   71:        c = 0;
+        4:   72:        for(int k = 0; k < channels; k++) {
+        4:   72-block  0
+        3:   72-block  1
+      771:   73:            for(int i = 0; i < nSamples; i++) {
+      771:   73-block  0
+      768:   73-block  1
+        -:   74:
+      768:   75:                float u = float(i) / div;
+        -:   76:
+     6144:   77:                for(int j = 0; j < exposures; j++) {
+      768:   77-block  0
+     6144:   77-block  1
+        -:   78:
+     5376:   79:                    int ind = k * exposures + j;
+        -:   80:
+     5376:   81:                    float *bin_c = h[ind].getCumulativef();
+     5376:   81-block  0
+        -:   82:
+     5376:   83:                    float *ptr = std::upper_bound(&bin_c[0], &bin_c[0]+256, u);
+     5376:   83-block  0
+        -:   84:
+     5376:   85:                    samples[c] = CLAMPi((int)(ptr - bin_c), 0, 255);
+     5376:   86:                    c++;
+     5376:   86-block  0
+        -:   87:                }
+        -:   88:            }
+        -:   89:        }
+        -:   90:
+        -:   91:        #ifdef PIC_DEBUG
+        -:   92:            printf("Ok\n");
+        -:   93:        #endif
+        -:   94:
+       22:   95:        delete[] h;
+        1:   95-block  0
+       22:   95-block  1
+        1:   95-block  2
+        1:   96:    }
+        -:   97:
+        -:   98:    /**
+        -:   99:     * @brief sampleSpatial creates a low resolution version of the stack.
+        -:  100:     * @param stack is a stack of Image* at different exposures
+        -:  101:     * @param sub_type
+        -:  102:     */
+    #####:  103:    void sampleSpatial(ImageVec &stack, SAMPLER_TYPE sub_type = ST_MONTECARLO_S)
+        -:  104:    {
+    #####:  105:        int width    = stack[0]->width;
+    %%%%%:  105-block  0
+    #####:  106:        int height   = stack[0]->height;
+        -:  107:
+    #####:  108:        Vec<2, int> vec(width, height);
+    %%%%%:  108-block  0
+        -:  109:
+    #####:  110:        RandomSampler<2> *sampler = new RandomSampler<2>(sub_type, vec, nSamples, 1, 0);
+    %%%%%:  110-block  0
+    $$$$$:  110-block  1
+        -:  111:
+        -:  112:        #ifdef PIC_DEBUG
+        -:  113:            int oldNSamples = nSamples;
+        -:  114:        #endif
+        -:  115:
+    #####:  116:        this->nSamples = sampler->getSamplesPerLevel(0);
+    %%%%%:  116-block  0
+        -:  117:
+    #####:  118:        total = this->nSamples * this->channels * this->exposures;
+    #####:  119:        samples = new int[total];
+    %%%%%:  119-block  0
+    %%%%%:  119-block  1
+    %%%%%:  119-block  2
+        -:  120:
+        -:  121:        #ifdef PIC_DEBUG
+        -:  122:            printf("--subSample samples: %d \t \t old samples: %d\n", nSamples, oldNSamples);
+        -:  123:        #endif
+        -:  124:
+    #####:  125:        int c = 0;
+        -:  126:
+    #####:  127:        for(int k = 0; k < channels; k++) {
+    %%%%%:  127-block  0
+    %%%%%:  127-block  1
+    #####:  128:            for(int i = 0; i < nSamples; i++) {
+    %%%%%:  128-block  0
+    %%%%%:  128-block  1
+        -:  129:
+    #####:  130:                int x, y;
+    #####:  131:                sampler->getSampleAt(0, i, x, y);
+        -:  132:
+    #####:  133:                for(int j = 0; j < exposures; j++) {
+    %%%%%:  133-block  0
+    %%%%%:  133-block  1
+    #####:  134:                    float fetched = (*stack[j])(x, y)[k];
+    %%%%%:  134-block  0
+    #####:  135:                    float tmp = lround(fetched * 255.0f);
+    #####:  136:                    samples[c] = CLAMPi(int(tmp), 0, 255);
+    #####:  137:                    c++;
+    %%%%%:  137-block  0
+        -:  138:                }
+        -:  139:            }
+        -:  140:        }
+        -:  141:
+    #####:  142:        delete sampler;
+    %%%%%:  142-block  0
+    #####:  143:    }
+        -:  144:
+        -:  145:    int exposures;
+        -:  146:    int channels;
+        -:  147:    int nSamples;
+        -:  148:    int total;
+        -:  149:    int *samples;
+        -:  150:
+        -:  151:public:
+        -:  152:    
+        -:  153:    /**
+        -:  154:     * @brief SubSampleStack
+        -:  155:     */
+        1:  156:    SubSampleStack()
+        1:  157:    {
+        1:  158:        total = 0;
+        1:  159:        exposures = 0;
+        1:  160:        channels = 0;
+        1:  161:        nSamples = 0;
+        1:  162:        samples = NULL;
+        1:  162-block  0
+        -:  163:    }
+        -:  164:
+        -:  165:    ~SubSampleStack()
+        -:  166:    {
+        -:  167:        release();
+        -:  168:    }
+        -:  169:
+        -:  170:    /**
+        -:  171:     * @brief release
+        -:  172:     */
+        2:  173:    void release()
+        -:  174:    {
+        2:  175:        exposures = 0;
+        2:  176:        channels = 0;
+        2:  177:        nSamples = 0;
+        2:  178:        total = 0;
+        -:  179:
+        1:  180:        samples = delete_s(samples);
+        1:  180-block  0
+        1:  180-block  1
+        -:  181:    }
+        -:  182:
+        -:  183:    /**
+        -:  184:     * @brief execute
+        -:  185:     * @param stack
+        -:  186:     * @param nSamples output number of samples
+        -:  187:     * @param bSpatial
+        -:  188:     * @param sub_type
+        -:  189:     */
+        1:  190:    void execute(ImageVec &stack, int nSamples, float alpha = 0.f, bool bSpatial = false, SAMPLER_TYPE sub_type = ST_MONTECARLO_S)
+        -:  191:    {
+        1:  192:        release();
+        1:  192-block  0
+        -:  193:
+        1:  194:        if(!((stack.size() > 1 && (nSamples > 1)))) {
+        1:  194-block  0
+        1:  194-block  1
+        -:  195:            return;
+        -:  196:        }
+        -:  197:
+        1:  198:        this->nSamples = nSamples;
+        1:  199:        this->channels  = stack[0]->channels;
+        1:  199-block  0
+        1:  200:        this->exposures = int(stack.size());
+        1:  200-block  0
+        -:  201:
+        1:  202:        if(bSpatial) {
+        1:  202-block  0
+    #####:  203:            sampleSpatial(stack, sub_type);
+    %%%%%:  203-block  0
+        -:  204:        } else {
+        1:  205:            sampleGrossberg(stack);
+        1:  205-block  0
+        -:  206:        }
+        -:  207:
+        1:  208:        if (alpha < 0.f || alpha > 1.f)
+        1:  208-block  0
+        -:  209:            alpha = 0.f;
+        1:  210:        else if (alpha > 0.5f)
+        1:  210-block  0
+    #####:  211:            alpha = 1.f - alpha;
+    %%%%%:  211-block  0
+        -:  212:
+        1:  213:        if(alpha > 0.f && alpha <= 0.5f) {
+        1:  213-block  0
+    #####:  214:            float t_min_f = alpha;
+    #####:  215:            float t_max_f = 1.0f - t_min_f;
+        -:  216:
+    #####:  217:            int t_min = int(t_min_f * 255.0f);
+    #####:  218:            int t_max = int(t_max_f * 255.0f);
+        -:  219:
+    #####:  220:            for(int i = 0; i < total; i++) {
+    %%%%%:  220-block  0
+    %%%%%:  220-block  1
+    %%%%%:  220-block  2
+    #####:  221:                if(samples[i] < t_min || samples[i] > t_max) {
+    %%%%%:  221-block  0
+    %%%%%:  221-block  1
+    #####:  222:                    samples[i] = -1;
+    %%%%%:  222-block  0
+        -:  223:                }
+        -:  224:            }
+        -:  225:        }
+        -:  226:    }
+        -:  227:
+        -:  228:    /**
+        -:  229:     * @brief get
+        -:  230:     * @return
+        -:  231:     */
+        1:  232:    int *get()
+        -:  233:    {
+        1:  234:        return samples;
+        -:  235:    }
+        -:  236:
+        -:  237:    /**
+        -:  238:     * @brief getNSamples
+        -:  239:     * @return
+        -:  240:     */
+        1:  241:    int getNSamples() const
+        -:  242:    {
+        1:  243:        return nSamples;
+        -:  244:    }
+        -:  245:
+        -:  246:    /**
+        -:  247:     * @brief print
+        -:  248:     */
+        -:  249:    void print()
+        -:  250:    {
+        -:  251:        for(int i = 0; i < total; i++) {
+        -:  252:           printf("%d\n", samples[i]);
+        -:  253:        }
+        -:  254:
+        -:  255:    }
+        -:  256:};
+        -:  257:
+        -:  258:} // end namespace pic
+        -:  259:
+        -:  260:#endif /* PIC_ALGORITHMS_SUB_SAMPLE_STACK_HPP */
+        -:  261:

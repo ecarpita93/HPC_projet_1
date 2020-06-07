@@ -1,0 +1,634 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/OrderingMethods/Amd.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2010 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5:
+        -:    6:/*
+        -:    7:
+        -:    8:NOTE: this routine has been adapted from the CSparse library:
+        -:    9:
+        -:   10:Copyright (c) 2006, Timothy A. Davis.
+        -:   11:http://www.suitesparse.com
+        -:   12:
+        -:   13:CSparse is free software; you can redistribute it and/or
+        -:   14:modify it under the terms of the GNU Lesser General Public
+        -:   15:License as published by the Free Software Foundation; either
+        -:   16:version 2.1 of the License, or (at your option) any later version.
+        -:   17:
+        -:   18:CSparse is distributed in the hope that it will be useful,
+        -:   19:but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   20:MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+        -:   21:Lesser General Public License for more details.
+        -:   22:
+        -:   23:You should have received a copy of the GNU Lesser General Public
+        -:   24:License along with this Module; if not, write to the Free Software
+        -:   25:Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+        -:   26:
+        -:   27:*/
+        -:   28:
+        -:   29:#include "../Core/util/NonMPL2.h"
+        -:   30:
+        -:   31:#ifndef EIGEN_SPARSE_AMD_H
+        -:   32:#define EIGEN_SPARSE_AMD_H
+        -:   33:
+        -:   34:namespace Eigen { 
+        -:   35:
+        -:   36:namespace internal {
+        -:   37:  
+    #####:   38:template<typename T> inline T amd_flip(const T& i) { return -i-2; }
+        -:   39:template<typename T> inline T amd_unflip(const T& i) { return i<0 ? amd_flip(i) : i; }
+        -:   40:template<typename T0, typename T1> inline bool amd_marked(const T0* w, const T1& j) { return w[j]<0; }
+        -:   41:template<typename T0, typename T1> inline void amd_mark(const T0* w, const T1& j) { return w[j] = amd_flip(w[j]); }
+        -:   42:
+        -:   43:/* clear w */
+        -:   44:template<typename StorageIndex>
+    #####:   45:static StorageIndex cs_wclear (StorageIndex mark, StorageIndex lemax, StorageIndex *w, StorageIndex n)
+        -:   46:{
+        -:   47:  StorageIndex k;
+    #####:   48:  if(mark < 2 || (mark + lemax < 0))
+    %%%%%:   48-block  0
+    %%%%%:   48-block  1
+        -:   49:  {
+    #####:   50:    for(k = 0; k < n; k++)
+    %%%%%:   50-block  0
+    %%%%%:   50-block  1
+    %%%%%:   50-block  2
+    %%%%%:   50-block  3
+    %%%%%:   50-block  4
+    #####:   51:      if(w[k] != 0)
+    %%%%%:   51-block  0
+    %%%%%:   51-block  1
+    %%%%%:   51-block  2
+    #####:   52:        w[k] = 1;
+    %%%%%:   52-block  0
+    %%%%%:   52-block  1
+    %%%%%:   52-block  2
+        -:   53:    mark = 2;
+        -:   54:  }
+        -:   55:  return (mark);     /* at this point, w[0..n-1] < mark holds */
+        -:   56:}
+        -:   57:
+        -:   58:/* depth-first search and postorder of a tree rooted at node j */
+        -:   59:template<typename StorageIndex>
+    #####:   60:StorageIndex cs_tdfs(StorageIndex j, StorageIndex k, StorageIndex *head, const StorageIndex *next, StorageIndex *post, StorageIndex *stack)
+        -:   61:{
+    #####:   62:  StorageIndex i, p, top = 0;
+    #####:   63:  if(!head || !next || !post || !stack) return (-1);    /* check inputs */
+    %%%%%:   63-block  0
+    %%%%%:   63-block  1
+    #####:   64:  stack[0] = j;                 /* place j on the stack */
+    %%%%%:   64-block  0
+    #####:   65:  while (top >= 0)                /* while (stack is not empty) */
+    %%%%%:   65-block  0
+        -:   66:  {
+    #####:   67:    p = stack[top];           /* p = top of stack */
+    #####:   68:    i = head[p];              /* i = youngest child of p */
+    #####:   69:    if(i == -1)
+    %%%%%:   69-block  0
+        -:   70:    {
+    #####:   71:      top--;                 /* p has no unordered children left */
+    #####:   72:      post[k++] = p;        /* node p is the kth postordered node */
+    %%%%%:   72-block  0
+        -:   73:    }
+        -:   74:    else
+        -:   75:    {
+    #####:   76:      head[p] = next[i];   /* remove i from children of p */
+    #####:   77:      stack[++top] = i;     /* start dfs on child node i */
+    %%%%%:   77-block  0
+        -:   78:    }
+        -:   79:  }
+        -:   80:  return k;
+        -:   81:}
+        -:   82:
+        -:   83:
+        -:   84:/** \internal
+        -:   85:  * \ingroup OrderingMethods_Module 
+        -:   86:  * Approximate minimum degree ordering algorithm.
+        -:   87:  *
+        -:   88:  * \param[in] C the input selfadjoint matrix stored in compressed column major format.
+        -:   89:  * \param[out] perm the permutation P reducing the fill-in of the input matrix \a C
+        -:   90:  *
+        -:   91:  * Note that the input matrix \a C must be complete, that is both the upper and lower parts have to be stored, as well as the diagonal entries.
+        -:   92:  * On exit the values of C are destroyed */
+        -:   93:template<typename Scalar, typename StorageIndex>
+    #####:   94:void minimum_degree_ordering(SparseMatrix<Scalar,ColMajor,StorageIndex>& C, PermutationMatrix<Dynamic,Dynamic,StorageIndex>& perm)
+        -:   95:{
+        -:   96:  using std::sqrt;
+        -:   97:  
+    #####:   98:  StorageIndex d, dk, dext, lemax = 0, e, elenk, eln, i, j, k, k1,
+    #####:   99:                k2, k3, jlast, ln, dense, nzmax, mindeg = 0, nvi, nvj, nvk, mark, wnvi,
+    #####:  100:                ok, nel = 0, p, p1, p2, p3, p4, pj, pk, pk1, pk2, pn, q, t, h;
+        -:  101:  
+    #####:  102:  StorageIndex n = StorageIndex(C.cols());
+    %%%%%:  102-block  0
+    #####:  103:  dense = std::max<StorageIndex> (16, StorageIndex(10 * sqrt(double(n))));   /* find dense threshold */
+    %%%%%:  103-block  0
+    #####:  104:  dense = (std::min)(n-2, dense);
+    %%%%%:  104-block  0
+        -:  105:  
+    #####:  106:  StorageIndex cnz = StorageIndex(C.nonZeros());
+    %%%%%:  106-block  0
+    #####:  107:  perm.resize(n+1);
+    #####:  108:  t = cnz + cnz/5 + 2*n;                 /* add elbow room to C */
+    #####:  109:  C.resizeNonZeros(t);
+        -:  110:  
+        -:  111:  // get workspace
+    #####:  112:  ei_declare_aligned_stack_constructed_variable(StorageIndex,W,8*(n+1),0);
+    %%%%%:  112-block  0
+    %%%%%:  112-block  1
+    %%%%%:  112-block  2
+    %%%%%:  112-block  3
+    #####:  113:  StorageIndex* len     = W;
+    #####:  114:  StorageIndex* nv      = W +   (n+1);
+    #####:  115:  StorageIndex* next    = W + 2*(n+1);
+    #####:  116:  StorageIndex* head    = W + 3*(n+1);
+    #####:  117:  StorageIndex* elen    = W + 4*(n+1);
+    #####:  118:  StorageIndex* degree  = W + 5*(n+1);
+    #####:  119:  StorageIndex* w       = W + 6*(n+1);
+    #####:  120:  StorageIndex* hhead   = W + 7*(n+1);
+    %%%%%:  120-block  0
+    #####:  121:  StorageIndex* last    = perm.indices().data();                              /* use P as workspace for last */
+    %%%%%:  121-block  0
+        -:  122:  
+        -:  123:  /* --- Initialize quotient graph ---------------------------------------- */
+    #####:  124:  StorageIndex* Cp = C.outerIndexPtr();
+    %%%%%:  124-block  0
+    #####:  125:  StorageIndex* Ci = C.innerIndexPtr();
+    #####:  126:  for(k = 0; k < n; k++)
+    %%%%%:  126-block  0
+    %%%%%:  126-block  1
+    #####:  127:    len[k] = Cp[k+1] - Cp[k];
+    %%%%%:  127-block  0
+    #####:  128:  len[n] = 0;
+    #####:  129:  nzmax = t;
+        -:  130:  
+    #####:  131:  for(i = 0; i <= n; i++)
+    %%%%%:  131-block  0
+    %%%%%:  131-block  1
+        -:  132:  {
+    #####:  133:    head[i]   = -1;                     // degree list i is empty
+    #####:  134:    last[i]   = -1;
+    #####:  135:    next[i]   = -1;
+    #####:  136:    hhead[i]  = -1;                     // hash list i is empty 
+    #####:  137:    nv[i]     = 1;                      // node i is just one node
+    #####:  138:    w[i]      = 1;                      // node i is alive
+    #####:  139:    elen[i]   = 0;                      // Ek of node i is empty
+    #####:  140:    degree[i] = len[i];                 // degree of node i
+    %%%%%:  140-block  0
+        -:  141:  }
+    #####:  142:  mark = internal::cs_wclear<StorageIndex>(0, 0, w, n);         /* clear w */
+    %%%%%:  142-block  0
+        -:  143:  
+        -:  144:  /* --- Initialize degree lists ------------------------------------------ */
+    #####:  145:  for(i = 0; i < n; i++)
+    %%%%%:  145-block  0
+    %%%%%:  145-block  1
+        -:  146:  {
+    #####:  147:    bool has_diag = false;
+    #####:  148:    for(p = Cp[i]; p<Cp[i+1]; ++p)
+    %%%%%:  148-block  0
+    %%%%%:  148-block  1
+    %%%%%:  148-block  2
+    #####:  149:      if(Ci[p]==i)
+    %%%%%:  149-block  0
+        -:  150:      {
+        -:  151:        has_diag = true;
+        -:  152:        break;
+        -:  153:      }
+        -:  154:   
+    #####:  155:    d = degree[i];
+    #####:  156:    if(d == 1 && has_diag)           /* node i is empty */
+    %%%%%:  156-block  0
+    %%%%%:  156-block  1
+        -:  157:    {
+    #####:  158:      elen[i] = -2;                 /* element i is dead */
+    #####:  159:      nel++;
+    #####:  160:      Cp[i] = -1;                   /* i is a root of assembly tree */
+    #####:  161:      w[i] = 0;
+    %%%%%:  161-block  0
+        -:  162:    }
+    #####:  163:    else if(d > dense || !has_diag)  /* node i is dense or has no structural diagonal element */
+    %%%%%:  163-block  0
+    %%%%%:  163-block  1
+        -:  164:    {
+    #####:  165:      nv[i] = 0;                    /* absorb i into element n */
+    #####:  166:      elen[i] = -1;                 /* node i is dead */
+    #####:  167:      nel++;
+    #####:  168:      Cp[i] = amd_flip (n);
+    #####:  169:      nv[n]++;
+    %%%%%:  169-block  0
+        -:  170:    }
+        -:  171:    else
+        -:  172:    {
+    #####:  173:      if(head[d] != -1) last[head[d]] = i;
+    %%%%%:  173-block  0
+    %%%%%:  173-block  1
+    #####:  174:      next[i] = head[d];           /* put node i in degree list d */
+    #####:  175:      head[d] = i;
+    %%%%%:  175-block  0
+        -:  176:    }
+        -:  177:  }
+        -:  178:  
+    #####:  179:  elen[n] = -2;                         /* n is a dead element */
+    #####:  180:  Cp[n] = -1;                           /* n is a root of assembly tree */
+    #####:  181:  w[n] = 0;                             /* n is a dead element */
+    %%%%%:  181-block  0
+        -:  182:  
+    #####:  183:  while (nel < n)                         /* while (selecting pivots) do */
+    %%%%%:  183-block  0
+        -:  184:  {
+        -:  185:    /* --- Select node of minimum approximate degree -------------------- */
+    #####:  186:    for(k = -1; mindeg < n && (k = head[mindeg]) == -1; mindeg++) {}
+    %%%%%:  186-block  0
+    %%%%%:  186-block  1
+    %%%%%:  186-block  2
+    #####:  187:    if(next[k] != -1) last[next[k]] = -1;
+    %%%%%:  187-block  0
+    %%%%%:  187-block  1
+    #####:  188:    head[mindeg] = next[k];          /* remove k from degree list */
+    #####:  189:    elenk = elen[k];                  /* elenk = |Ek| */
+    #####:  190:    nvk = nv[k];                      /* # of nodes k represents */
+    #####:  191:    nel += nvk;                        /* nv[k] nodes of A eliminated */
+        -:  192:    
+        -:  193:    /* --- Garbage collection ------------------------------------------- */
+    #####:  194:    if(elenk > 0 && cnz + mindeg >= nzmax)
+    %%%%%:  194-block  0
+    %%%%%:  194-block  1
+        -:  195:    {
+    #####:  196:      for(j = 0; j < n; j++)
+    %%%%%:  196-block  0
+    %%%%%:  196-block  1
+        -:  197:      {
+    #####:  198:        if((p = Cp[j]) >= 0)      /* j is a live node or element */
+    %%%%%:  198-block  0
+        -:  199:        {
+    #####:  200:          Cp[j] = Ci[p];          /* save first entry of object */
+    #####:  201:          Ci[p] = amd_flip (j);    /* first entry is now amd_flip(j) */
+    %%%%%:  201-block  0
+        -:  202:        }
+        -:  203:      }
+    #####:  204:      for(q = 0, p = 0; p < cnz; ) /* scan all of memory */
+    %%%%%:  204-block  0
+        -:  205:      {
+    #####:  206:        if((j = amd_flip (Ci[p++])) >= 0)  /* found object j */
+    %%%%%:  206-block  0
+        -:  207:        {
+    #####:  208:          Ci[q] = Cp[j];       /* restore first entry of object */
+    #####:  209:          Cp[j] = q++;          /* new pointer to object j */
+    #####:  210:          for(k3 = 0; k3 < len[j]-1; k3++) Ci[q++] = Ci[p++];
+    %%%%%:  210-block  0
+    %%%%%:  210-block  1
+    %%%%%:  210-block  2
+        -:  211:        }
+        -:  212:      }
+        -:  213:      cnz = q;                       /* Ci[cnz...nzmax-1] now free */
+        -:  214:    }
+        -:  215:    
+        -:  216:    /* --- Construct new element ---------------------------------------- */
+    #####:  217:    dk = 0;
+    #####:  218:    nv[k] = -nvk;                     /* flag k as in Lk */
+    #####:  219:    p = Cp[k];
+    #####:  220:    pk1 = (elenk == 0) ? p : cnz;      /* do in place if elen[k] == 0 */
+    %%%%%:  220-block  0
+    #####:  221:    pk2 = pk1;
+    #####:  222:    for(k1 = 1; k1 <= elenk + 1; k1++)
+    %%%%%:  222-block  0
+    %%%%%:  222-block  1
+    %%%%%:  222-block  2
+        -:  223:    {
+    #####:  224:      if(k1 > elenk)
+    %%%%%:  224-block  0
+        -:  225:      {
+    #####:  226:        e = k;                     /* search the nodes in k */
+    #####:  227:        pj = p;                    /* list of nodes starts at Ci[pj]*/
+    #####:  228:        ln = len[k] - elenk;      /* length of list of nodes in k */
+    %%%%%:  228-block  0
+        -:  229:      }
+        -:  230:      else
+        -:  231:      {
+    #####:  232:        e = Ci[p++];              /* search the nodes in e */
+    #####:  233:        pj = Cp[e];
+    #####:  234:        ln = len[e];              /* length of list of nodes in e */
+    %%%%%:  234-block  0
+        -:  235:      }
+    #####:  236:      for(k2 = 1; k2 <= ln; k2++)
+    %%%%%:  236-block  0
+    %%%%%:  236-block  1
+    %%%%%:  236-block  2
+        -:  237:      {
+    #####:  238:        i = Ci[pj++];
+    #####:  239:        if((nvi = nv[i]) <= 0) continue; /* node i dead, or seen */
+    %%%%%:  239-block  0
+    %%%%%:  239-block  1
+    #####:  240:        dk += nvi;                 /* degree[Lk] += size of node i */
+    #####:  241:        nv[i] = -nvi;             /* negate nv[i] to denote i in Lk*/
+    #####:  242:        Ci[pk2++] = i;            /* place i in Lk */
+    #####:  243:        if(next[i] != -1) last[next[i]] = last[i];
+    %%%%%:  243-block  0
+    %%%%%:  243-block  1
+    #####:  244:        if(last[i] != -1)         /* remove i from degree list */
+    %%%%%:  244-block  0
+        -:  245:        {
+    #####:  246:          next[last[i]] = next[i];
+    %%%%%:  246-block  0
+        -:  247:        }
+        -:  248:        else
+        -:  249:        {
+    #####:  250:          head[degree[i]] = next[i];
+    %%%%%:  250-block  0
+        -:  251:        }
+        -:  252:      }
+    #####:  253:      if(e != k)
+    %%%%%:  253-block  0
+        -:  254:      {
+    #####:  255:        Cp[e] = amd_flip (k);      /* absorb e into k */
+    #####:  256:        w[e] = 0;                 /* e is now a dead element */
+    %%%%%:  256-block  0
+        -:  257:      }
+        -:  258:    }
+    #####:  259:    if(elenk != 0) cnz = pk2;         /* Ci[cnz...nzmax] is free */
+    %%%%%:  259-block  0
+    %%%%%:  259-block  1
+    #####:  260:    degree[k] = dk;                   /* external degree of k - |Lk\i| */
+    #####:  261:    Cp[k] = pk1;                      /* element k is in Ci[pk1..pk2-1] */
+    #####:  262:    len[k] = pk2 - pk1;
+    #####:  263:    elen[k] = -2;                     /* k is now an element */
+        -:  264:    
+        -:  265:    /* --- Find set differences ----------------------------------------- */
+    #####:  266:    mark = internal::cs_wclear<StorageIndex>(mark, lemax, w, n);  /* clear w if necessary */
+    %%%%%:  266-block  0
+    #####:  267:    for(pk = pk1; pk < pk2; pk++)    /* scan 1: find |Le\Lk| */
+    %%%%%:  267-block  0
+    %%%%%:  267-block  1
+    %%%%%:  267-block  2
+        -:  268:    {
+    #####:  269:      i = Ci[pk];
+    #####:  270:      if((eln = elen[i]) <= 0) continue;/* skip if elen[i] empty */
+    %%%%%:  270-block  0
+    %%%%%:  270-block  1
+    #####:  271:      nvi = -nv[i];                      /* nv[i] was negated */
+    #####:  272:      wnvi = mark - nvi;
+    #####:  273:      for(p = Cp[i]; p <= Cp[i] + eln - 1; p++)  /* scan Ei */
+    %%%%%:  273-block  0
+    %%%%%:  273-block  1
+    %%%%%:  273-block  2
+        -:  274:      {
+    #####:  275:        e = Ci[p];
+    #####:  276:        if(w[e] >= mark)
+    %%%%%:  276-block  0
+        -:  277:        {
+    #####:  278:          w[e] -= nvi;          /* decrement |Le\Lk| */
+    %%%%%:  278-block  0
+        -:  279:        }
+    #####:  280:        else if(w[e] != 0)        /* ensure e is a live element */
+    %%%%%:  280-block  0
+        -:  281:        {
+    #####:  282:          w[e] = degree[e] + wnvi; /* 1st time e seen in scan 1 */
+    %%%%%:  282-block  0
+        -:  283:        }
+        -:  284:      }
+        -:  285:    }
+        -:  286:    
+        -:  287:    /* --- Degree update ------------------------------------------------ */
+    #####:  288:    for(pk = pk1; pk < pk2; pk++)    /* scan2: degree update */
+    %%%%%:  288-block  0
+    %%%%%:  288-block  1
+        -:  289:    {
+    #####:  290:      i = Ci[pk];                   /* consider node i in Lk */
+    #####:  291:      p1 = Cp[i];
+    #####:  292:      p2 = p1 + elen[i] - 1;
+    #####:  293:      pn = p1;
+    #####:  294:      for(h = 0, d = 0, p = p1; p <= p2; p++)    /* scan Ei */
+    %%%%%:  294-block  0
+    %%%%%:  294-block  1
+    %%%%%:  294-block  2
+        -:  295:      {
+    #####:  296:        e = Ci[p];
+    #####:  297:        if(w[e] != 0)             /* e is an unabsorbed element */
+    %%%%%:  297-block  0
+        -:  298:        {
+    #####:  299:          dext = w[e] - mark;   /* dext = |Le\Lk| */
+    #####:  300:          if(dext > 0)
+    %%%%%:  300-block  0
+        -:  301:          {
+    #####:  302:            d += dext;         /* sum up the set differences */
+    #####:  303:            Ci[pn++] = e;     /* keep e in Ei */
+    #####:  304:            h += e;            /* compute the hash of node i */
+    %%%%%:  304-block  0
+        -:  305:          }
+        -:  306:          else
+        -:  307:          {
+    #####:  308:            Cp[e] = amd_flip (k);  /* aggressive absorb. e->k */
+    #####:  309:            w[e] = 0;             /* e is a dead element */
+    %%%%%:  309-block  0
+        -:  310:          }
+        -:  311:        }
+        -:  312:      }
+    #####:  313:      elen[i] = pn - p1 + 1;        /* elen[i] = |Ei| */
+    #####:  314:      p3 = pn;
+    #####:  315:      p4 = p1 + len[i];
+    #####:  316:      for(p = p2 + 1; p < p4; p++) /* prune edges in Ai */
+    %%%%%:  316-block  0
+    %%%%%:  316-block  1
+    %%%%%:  316-block  2
+        -:  317:      {
+    #####:  318:        j = Ci[p];
+    #####:  319:        if((nvj = nv[j]) <= 0) continue; /* node j dead or in Lk */
+    %%%%%:  319-block  0
+    %%%%%:  319-block  1
+    #####:  320:        d += nvj;                  /* degree(i) += |j| */
+    #####:  321:        Ci[pn++] = j;             /* place j in node list of i */
+    #####:  322:        h += j;                    /* compute hash for node i */
+    %%%%%:  322-block  0
+        -:  323:      }
+    #####:  324:      if(d == 0)                     /* check for mass elimination */
+    %%%%%:  324-block  0
+        -:  325:      {
+    #####:  326:        Cp[i] = amd_flip (k);      /* absorb i into k */
+    #####:  327:        nvi = -nv[i];
+    #####:  328:        dk -= nvi;                 /* |Lk| -= |i| */
+    #####:  329:        nvk += nvi;                /* |k| += nv[i] */
+    #####:  330:        nel += nvi;
+    #####:  331:        nv[i] = 0;
+    #####:  332:        elen[i] = -1;             /* node i is dead */
+    %%%%%:  332-block  0
+        -:  333:      }
+        -:  334:      else
+        -:  335:      {
+    #####:  336:        degree[i] = std::min<StorageIndex> (degree[i], d);   /* update degree(i) */
+    %%%%%:  336-block  0
+    #####:  337:        Ci[pn] = Ci[p3];         /* move first node to end */
+    #####:  338:        Ci[p3] = Ci[p1];         /* move 1st el. to end of Ei */
+    #####:  339:        Ci[p1] = k;               /* add k as 1st element in of Ei */
+    #####:  340:        len[i] = pn - p1 + 1;     /* new len of adj. list of node i */
+    #####:  341:        h %= n;                    /* finalize hash of i */
+    #####:  342:        next[i] = hhead[h];      /* place i in hash bucket */
+    #####:  343:        hhead[h] = i;
+    #####:  344:        last[i] = h;      /* save hash of i in last[i] */
+    %%%%%:  344-block  0
+        -:  345:      }
+        -:  346:    }                                   /* scan2 is done */
+    #####:  347:    degree[k] = dk;                   /* finalize |Lk| */
+    %%%%%:  347-block  0
+    #####:  348:    lemax = std::max<StorageIndex>(lemax, dk);
+    #####:  349:    mark = internal::cs_wclear<StorageIndex>(mark+lemax, lemax, w, n);    /* clear w */
+    %%%%%:  349-block  0
+        -:  350:    
+        -:  351:    /* --- Supernode detection ------------------------------------------ */
+    #####:  352:    for(pk = pk1; pk < pk2; pk++)
+    %%%%%:  352-block  0
+    %%%%%:  352-block  1
+        -:  353:    {
+    #####:  354:      i = Ci[pk];
+    #####:  355:      if(nv[i] >= 0) continue;         /* skip if i is dead */
+    %%%%%:  355-block  0
+    %%%%%:  355-block  1
+    #####:  356:      h = last[i];                      /* scan hash bucket of node i */
+    #####:  357:      i = hhead[h];
+    #####:  358:      hhead[h] = -1;                    /* hash bucket will be empty */
+    %%%%%:  358-block  0
+    #####:  359:      for(; i != -1 && next[i] != -1; i = next[i], mark++)
+    %%%%%:  359-block  0
+    %%%%%:  359-block  1
+    %%%%%:  359-block  2
+        -:  360:      {
+    #####:  361:        ln = len[i];
+    #####:  362:        eln = elen[i];
+    #####:  363:        for(p = Cp[i]+1; p <= Cp[i] + ln-1; p++) w[Ci[p]] = mark;
+    %%%%%:  363-block  0
+    %%%%%:  363-block  1
+    %%%%%:  363-block  2
+    #####:  364:        jlast = i;
+    #####:  365:        for(j = next[i]; j != -1; ) /* compare i with all j */
+    %%%%%:  365-block  0
+    %%%%%:  365-block  1
+        -:  366:        {
+    #####:  367:          ok = (len[j] == ln) && (elen[j] == eln);
+    %%%%%:  367-block  0
+    %%%%%:  367-block  1
+    #####:  368:          for(p = Cp[j] + 1; ok && p <= Cp[j] + ln - 1; p++)
+    %%%%%:  368-block  0
+    %%%%%:  368-block  1
+    %%%%%:  368-block  2
+    %%%%%:  368-block  3
+        -:  369:          {
+    #####:  370:            if(w[Ci[p]] != mark) ok = 0;    /* compare i and j*/
+    %%%%%:  370-block  0
+    %%%%%:  370-block  1
+        -:  371:          }
+    #####:  372:          if(ok)                     /* i and j are identical */
+    %%%%%:  372-block  0
+        -:  373:          {
+    #####:  374:            Cp[j] = amd_flip (i);  /* absorb j into i */
+    #####:  375:            nv[i] += nv[j];
+    #####:  376:            nv[j] = 0;
+    #####:  377:            elen[j] = -1;         /* node j is dead */
+    #####:  378:            j = next[j];          /* delete j from hash bucket */
+    #####:  379:            next[jlast] = j;
+    %%%%%:  379-block  0
+        -:  380:          }
+        -:  381:          else
+        -:  382:          {
+    #####:  383:            jlast = j;             /* j and i are different */
+    #####:  384:            j = next[j];
+    %%%%%:  384-block  0
+        -:  385:          }
+        -:  386:        }
+        -:  387:      }
+        -:  388:    }
+        -:  389:    
+        -:  390:    /* --- Finalize new element------------------------------------------ */
+    #####:  391:    for(p = pk1, pk = pk1; pk < pk2; pk++)   /* finalize Lk */
+    %%%%%:  391-block  0
+    %%%%%:  391-block  1
+        -:  392:    {
+    #####:  393:      i = Ci[pk];
+    #####:  394:      if((nvi = -nv[i]) <= 0) continue;/* skip if i is dead */
+    %%%%%:  394-block  0
+    %%%%%:  394-block  1
+    #####:  395:      nv[i] = nvi;                      /* restore nv[i] */
+    #####:  396:      d = degree[i] + dk - nvi;         /* compute external degree(i) */
+    #####:  397:      d = std::min<StorageIndex> (d, n - nel - nvi);
+    %%%%%:  397-block  0
+    #####:  398:      if(head[d] != -1) last[head[d]] = i;
+    %%%%%:  398-block  0
+    %%%%%:  398-block  1
+    #####:  399:      next[i] = head[d];               /* put i back in degree list */
+    #####:  400:      last[i] = -1;
+    #####:  401:      head[d] = i;
+    %%%%%:  401-block  0
+    #####:  402:      mindeg = std::min<StorageIndex> (mindeg, d);       /* find new minimum degree */
+    #####:  403:      degree[i] = d;
+    #####:  404:      Ci[p++] = i;                      /* place i in Lk */
+    %%%%%:  404-block  0
+        -:  405:    }
+    #####:  406:    nv[k] = nvk;                      /* # nodes absorbed into k */
+    #####:  407:    if((len[k] = p-pk1) == 0)         /* length of adj list of element k*/
+    %%%%%:  407-block  0
+        -:  408:    {
+    #####:  409:      Cp[k] = -1;                   /* k is a root of the tree */
+    #####:  410:      w[k] = 0;                     /* k is now a dead element */
+    %%%%%:  410-block  0
+        -:  411:    }
+    #####:  412:    if(elenk != 0) cnz = p;           /* free unused space in Lk */
+    %%%%%:  412-block  0
+    %%%%%:  412-block  1
+        -:  413:  }
+        -:  414:  
+        -:  415:  /* --- Postordering ----------------------------------------------------- */
+    #####:  416:  for(i = 0; i < n; i++) Cp[i] = amd_flip (Cp[i]);/* fix assembly tree */
+    %%%%%:  416-block  0
+    %%%%%:  416-block  1
+    #####:  417:  for(j = 0; j <= n; j++) head[j] = -1;
+    %%%%%:  417-block  0
+    %%%%%:  417-block  1
+    #####:  418:  for(j = n; j >= 0; j--)              /* place unordered nodes in lists */
+    %%%%%:  418-block  0
+    %%%%%:  418-block  1
+        -:  419:  {
+    #####:  420:    if(nv[j] > 0) continue;          /* skip if j is an element */
+    %%%%%:  420-block  0
+    %%%%%:  420-block  1
+    #####:  421:    next[j] = head[Cp[j]];          /* place j in list of its parent */
+    #####:  422:    head[Cp[j]] = j;
+    %%%%%:  422-block  0
+        -:  423:  }
+    #####:  424:  for(e = n; e >= 0; e--)              /* place elements in lists */
+    %%%%%:  424-block  0
+    %%%%%:  424-block  1
+        -:  425:  {
+    #####:  426:    if(nv[e] <= 0) continue;         /* skip unless e is an element */
+    %%%%%:  426-block  0
+    %%%%%:  426-block  1
+    #####:  427:    if(Cp[e] != -1)
+    %%%%%:  427-block  0
+        -:  428:    {
+    #####:  429:      next[e] = head[Cp[e]];      /* place e in list of its parent */
+    #####:  430:      head[Cp[e]] = e;
+    %%%%%:  430-block  0
+        -:  431:    }
+        -:  432:  }
+    #####:  433:  for(k = 0, i = 0; i <= n; i++)       /* postorder the assembly tree */
+    %%%%%:  433-block  0
+    %%%%%:  433-block  1
+        -:  434:  {
+    #####:  435:    if(Cp[i] == -1) k = internal::cs_tdfs<StorageIndex>(i, k, head, next, perm.indices().data(), w);
+    %%%%%:  435-block  0
+    %%%%%:  435-block  1
+        -:  436:  }
+        -:  437:  
+    #####:  438:  perm.indices().conservativeResize(n);
+    %%%%%:  438-block  0
+    %%%%%:  438-block  1
+    #####:  439:}
+    %%%%%:  439-block  0
+        -:  440:
+        -:  441:} // namespace internal
+        -:  442:
+        -:  443:} // end namespace Eigen
+        -:  444:
+        -:  445:#endif // EIGEN_SPARSE_AMD_H

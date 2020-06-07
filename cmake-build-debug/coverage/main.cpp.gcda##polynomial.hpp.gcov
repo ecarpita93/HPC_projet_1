@@ -1,0 +1,487 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/polynomial.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_coeffNOMIAL_HPP
+        -:   19:#define PIC_UTIL_coeffNOMIAL_HPP
+        -:   20:
+        -:   21:#include <vector>
+        -:   22:
+        -:   23:#include "../base.hpp"
+        -:   24:
+        -:   25:#ifndef PIC_DISABLE_EIGEN
+        -:   26:    #ifndef PIC_EIGEN_NOT_BUNDLED
+        -:   27:        #include "../externals/Eigen/QR"
+        -:   28:        #include "../externals/Eigen/Eigenvalues"
+        -:   29:    #else
+        -:   30:        #include <Eigen/QR>
+        -:   31:    #endif
+        -:   32:#endif
+        -:   33:
+        -:   34:namespace pic {
+        -:   35:
+        -:   36:
+        -:   37:class Polynomial
+        -:   38:{
+        -:   39:public:
+        -:   40:    std::vector<float> coeff;
+        -:   41:    bool  all_coeff_positive;
+        -:   42:
+        -:   43:    /**
+        -:   44:     * @brief Polynomial
+        -:   45:     */
+        -:   46:    Polynomial()
+        -:   47:    {
+        -:   48:        all_coeff_positive = true;
+        -:   49:    }
+        -:   50:
+        -:   51:    /**
+        -:   52:     * @brief Polynomial
+        -:   53:     * @param nCoeff
+        -:   54:     */
+        -:   55:    Polynomial(int nCoeff)
+        -:   56:    {
+        -:   57:        for(int i = 0; i < nCoeff; i++) {
+        -:   58:            coeff.push_back(0.0f);
+        -:   59:        }
+        -:   60:
+        -:   61:        all_coeff_positive = true;
+        -:   62:    }
+        -:   63:
+        -:   64:    /**
+        -:   65:     * @brief coeffnomial
+        -:   66:     * @param coeff
+        -:   67:     * @param nCoeff
+        -:   68:     */
+        -:   69:    Polynomial(float *coeff, int nCoeff)
+        -:   70:    {
+        -:   71:        if(nCoeff < 1 || coeff == NULL) {
+        -:   72:            return;
+        -:   73:        }
+        -:   74:
+        -:   75:        this->coeff.assign(coeff, coeff + nCoeff);
+        -:   76:
+        -:   77:        computeAllCoeffPositive();
+        -:   78:    }
+        -:   79:
+        -:   80:    ~Polynomial()
+        -:   81:    {
+        -:   82:
+        -:   83:    }
+        -:   84:
+        -:   85:    /**
+        -:   86:     * @brief computeAllCoeffPositive
+        -:   87:     */
+        -:   88:    void computeAllCoeffPositive()
+        -:   89:    {
+        -:   90:        int counter = 0;
+        -:   91:        for (const float &c : coeff) {
+        -:   92:            if(c < 0.0f) {
+        -:   93:                counter++;
+        -:   94:            }
+        -:   95:        }
+        -:   96:
+        -:   97:        all_coeff_positive = counter < 1;
+        -:   98:    }
+        -:   99:
+        -:  100:    /**
+        -:  101:     * @brief print
+        -:  102:     */
+        -:  103:    void print()
+        -:  104:    {
+        -:  105:        printf("%s\n", toString().c_str());
+        -:  106:    }
+        -:  107:
+        -:  108:    std::string toString()
+        -:  109:    {
+        -:  110:        std::string ret = "";
+        -:  111:        if(coeff.empty()) {
+        -:  112:            return ret;
+        -:  113:        }
+        -:  114:
+        -:  115:        auto nCoeff = coeff.size();
+        -:  116:
+        -:  117:        if(nCoeff > 1) {
+        -:  118:
+        -:  119:            std::string sep = "+ ";
+        -:  120:            if(coeff[1] < 0.0f) {
+        -:  121:                sep = " ";
+        -:  122:            }
+        -:  123:
+        -:  124:            ret = fromNumberToString(coeff[0]) + sep;
+        -:  125:
+        -:  126:            for(auto i = 1; i < (nCoeff - 1); i++) {
+        -:  127:
+        -:  128:                if(coeff[i + 1] > 0.0f) {
+        -:  129:                    sep = "+ ";
+        -:  130:                } else {
+        -:  131:                    sep = " ";
+        -:  132:                }
+        -:  133:
+        -:  134:                ret += fromNumberToString(coeff[i]) + " * x^" + fromNumberToString(i) + sep;
+        -:  135:            }
+        -:  136:
+        -:  137:            ret += fromNumberToString(coeff[nCoeff - 1]) + " * x^" + fromNumberToString(nCoeff - 1);
+        -:  138:        } else {
+        -:  139:            ret = fromNumberToString(coeff[0]);
+        -:  140:        }
+        -:  141:        return ret;
+        -:  142:    }
+        -:  143:
+        -:  144:    /**
+        -:  145:     * @brief getArray
+        -:  146:     * @return
+        -:  147:     */
+        -:  148:    float *getArray(float *ret)
+        -:  149:    {
+        -:  150:        if(ret == NULL) {
+        -:  151:            ret = new float[coeff.size()];
+        -:  152:        }
+        -:  153:
+        -:  154:        for(int i = 0; i < coeff.size(); i++) {
+        -:  155:            ret[i] = coeff[i];
+        -:  156:        }
+        -:  157:
+        -:  158:        return ret;
+        -:  159:    }
+        -:  160:
+        -:  161:    /**
+        -:  162:     * @brief eval
+        -:  163:     * @param x
+        -:  164:     * @return
+        -:  165:     */
+    #####:  166:    float eval(float x)
+        -:  167:    {
+    #####:  168:        float val = 0.f;
+    #####:  169:        float M = 1.f;
+    #####:  170:        for (const float &c : coeff) {
+    %%%%%:  170-block  0
+    %%%%%:  170-block  1
+    %%%%%:  170-block  2
+    #####:  171:            val += c * M;
+    #####:  172:            M *= x;
+    %%%%%:  172-block  0
+        -:  173:        }
+        -:  174:        return val;
+        -:  175:    }
+        -:  176:
+        -:  177:    /**
+        -:  178:     * @brief dEval
+        -:  179:     * @param t
+        -:  180:     * @return
+        -:  181:     */
+        -:  182:    float dEval(float x)
+        -:  183:    {
+        -:  184:        auto nCoeff = coeff.size();
+        -:  185:
+        -:  186:        if(nCoeff < 2) {
+        -:  187:            return 0.0f;
+        -:  188:        }
+        -:  189:
+        -:  190:        float ret = coeff[nCoeff - 1] * float(nCoeff - 1);
+        -:  191:
+        -:  192:        for(auto i = (nCoeff - 2); i > 0 ; i--) {
+        -:  193:            ret = (ret * x) + coeff[i] * float(i);
+        -:  194:        }
+        -:  195:        return ret;
+        -:  196:    }
+        -:  197:
+        -:  198:    /**
+        -:  199:     * @brief fit
+        -:  200:     * @param x
+        -:  201:     * @param y
+        -:  202:     * @param n
+        -:  203:     */
+        -:  204:    void fit(std::vector<float> &x, std::vector<float> &y, int n)
+        -:  205:    {
+        -:  206:#ifndef PIC_DISABLE_EIGEN
+        -:  207:        if(n < 1 || (x.size() != y.size())) {
+        -:  208:            return;
+        -:  209:        }
+        -:  210:
+        -:  211:        coeff.clear();
+        -:  212:
+        -:  213:        int np1 = n + 1;
+        -:  214:
+        -:  215:        int s = int(x.size());
+        -:  216:        Eigen::MatrixXf A(s, np1);
+        -:  217:        Eigen::VectorXf b(s);
+        -:  218:
+        -:  219:        for(int i = 0; i < s; i++) {
+        -:  220:            b(i) = y[i];
+        -:  221:            A(i, n) = 1.0f;
+        -:  222:        }
+        -:  223:
+        -:  224:        for(int j = (n - 1); j >= 0; j--) {
+        -:  225:            for(int i = 0; i < s; i++) {
+        -:  226:                A(i, j) = x[i] * A(i, j + 1);
+        -:  227:            }
+        -:  228:        }
+        -:  229:
+        -:  230:        Eigen::VectorXf _x = A.colPivHouseholderQr().solve(b);
+        -:  231:
+        -:  232:        for(int i = n; i >= 0; i--) {
+        -:  233:            coeff.push_back(_x(i));
+        -:  234:        }
+        -:  235:#endif
+        -:  236:    }
+        -:  237:
+        -:  238:    /**
+        -:  239:     * @brief normalForm
+        -:  240:     */
+        -:  241:    void normalForm()
+        -:  242:    {
+        -:  243:        auto last = coeff.size() - 1;
+        -:  244:
+        -:  245:        if(fabsf(coeff[last]) > 0.0f) {
+        -:  246:
+        -:  247:            for(int i = 0; i < last; i++) {
+        -:  248:                coeff[i] /= coeff[last];
+        -:  249:            }
+        -:  250:
+        -:  251:            coeff[last] = 1.0f;
+        -:  252:        }
+        -:  253:    }
+        -:  254:
+        -:  255:    /**
+        -:  256:     * @brief horner
+        -:  257:     * @param d
+        -:  258:     * @param remainder
+        -:  259:     * @return
+        -:  260:     */
+        -:  261:    Polynomial horner(float d, float &remainder)
+        -:  262:    {
+        -:  263:        int nCoeff = int(coeff.size());
+        -:  264:        Polynomial p(nCoeff - 1);
+        -:  265:
+        -:  266:        p.coeff[nCoeff - 2] = coeff[nCoeff - 1];
+        -:  267:
+        -:  268:        for(int i = (nCoeff - 3); i >= 0 ; i--) {
+        -:  269:            p.coeff[i] = (p.coeff[i + 1] * d + coeff[i + 1]);
+        -:  270:        }
+        -:  271:
+        -:  272:        p.computeAllCoeffPositive();
+        -:  273:
+        -:  274:        remainder = coeff[0] + p.coeff[0] * d;
+        -:  275:
+        -:  276:        return p;
+        -:  277:    }
+        -:  278:
+        -:  279:    /**
+        -:  280:     * @brief getRoots
+        -:  281:     * @param x
+        -:  282:     * @return
+        -:  283:     */
+        -:  284:    bool getRoots(float *x)
+        -:  285:    {
+        -:  286:        auto nCoeff = coeff.size();
+        -:  287:
+        -:  288:        if(nCoeff < 2) {
+        -:  289:            return false;
+        -:  290:        }
+        -:  291:
+        -:  292:        if(nCoeff == 2) {
+        -:  293:            //this coefficient may be not positive
+        -:  294:            if(coeff[1] > 0.0f) {
+        -:  295:                x[0] = -coeff[0] / coeff[1];
+        -:  296:                return true;
+        -:  297:            } else {
+        -:  298:                return false;
+        -:  299:            }
+        -:  300:        }
+        -:  301:
+        -:  302:        if(nCoeff == 3) {
+        -:  303:            //these coefficients may be not positive
+        -:  304:            return getSecondOrderRoots(coeff[2], coeff[1], coeff[0], &x[0], &x[1]);
+        -:  305:        }
+        -:  306:
+        -:  307:        if(all_coeff_positive) {
+        -:  308:            return false;
+        -:  309:        }
+        -:  310:
+        -:  311:        float max_coeff0 = -1.0f;
+        -:  312:
+        -:  313:        for(int i = 1; i < coeff.size(); i++) {
+        -:  314:            float tmp = fabsf(coeff[i]);
+        -:  315:            if(tmp > max_coeff0) {
+        -:  316:                max_coeff0 = tmp;
+        -:  317:            }
+        -:  318:        }
+        -:  319:
+        -:  320:        float tmp = fabsf(coeff[0]);
+        -:  321:        float max_coeff;
+        -:  322:        if(max_coeff0 < tmp) {
+        -:  323:            max_coeff = tmp;
+        -:  324:        } else {
+        -:  325:            max_coeff = max_coeff0;
+        -:  326:        }
+        -:  327:
+        -:  328:        float lower_bound = fabsf(coeff[0]) / (fabsf(coeff[0]) + max_coeff0);
+        -:  329:
+        -:  330:#ifdef PIC_DEBUG
+        -:  331:        float upper_bound = 1.0f + max_coeff / fabsf(coeff[0]);
+        -:  332:        printf("Upper bound: %f\n", upper_bound);
+        -:  333:        printf("Lower bound: %f\n", lower_bound);
+        -:  334:#endif
+        -:  335:
+        -:  336:        float x_p = lower_bound;
+        -:  337:        float x_n;
+        -:  338:        bool notConverged = true;
+        -:  339:        int counter = 0;
+        -:  340:        float E_x_p;
+        -:  341:        while(notConverged) {
+        -:  342:            E_x_p = eval(x_p);
+        -:  343:            x_n = x_p - E_x_p / dEval(x_p);
+        -:  344:            x_p = x_n;
+        -:  345:            counter++;
+        -:  346:
+        -:  347:            notConverged = (fabsf(E_x_p) > 1e-6f) && (counter < 500);
+        -:  348:        }
+        -:  349:
+        -:  350:        if(counter >= 500) {
+        -:  351:            return false;
+        -:  352:        } else {
+        -:  353:            *x = x_n;
+        -:  354:            return true;
+        -:  355:        }
+        -:  356:    }
+        -:  357:
+        -:  358:    /**
+        -:  359:     * @brief getAllRoots
+        -:  360:     * @param x
+        -:  361:     * @return
+        -:  362:     */
+        -:  363:    bool getAllRoots(float *x)
+        -:  364:    {
+        -:  365:        for(int i = 0; i < coeff.size() - 1; i++) {
+        -:  366:            x[i] = FLT_MAX;
+        -:  367:        }
+        -:  368:
+        -:  369:        bool bOut = getRoots(&x[0]);
+        -:  370:
+        -:  371:        if(!bOut) {
+        -:  372:            return false;
+        -:  373:        }
+        -:  374:
+        -:  375:        float r;
+        -:  376:        Polynomial p = horner(x[0], r);
+        -:  377:        p.normalForm();
+        -:  378:
+        -:  379:        int nCoeff = int(coeff.size());
+        -:  380:        for(int i = 1; i < (nCoeff - 2); i++) {
+        -:  381:            bool bOut = p.getRoots(&x[i]);
+        -:  382:
+        -:  383:            if(!bOut) {
+        -:  384:                return true;
+        -:  385:            }
+        -:  386:
+        -:  387:            p = p.horner(x[i], r);
+        -:  388:            p.normalForm();
+        -:  389:        }
+        -:  390:
+        -:  391:        return true;
+        -:  392:    }
+        -:  393:
+        -:  394:    /**
+        -:  395:     * @brief getQuarticRoots --> MANDATORY p[5] == 1.0
+        -:  396:     * @param p
+        -:  397:     * @param x
+        -:  398:     * @return
+        -:  399:     */
+        -:  400:    static bool getQuarticRoots(float *p, float *x)
+        -:  401:    {
+        -:  402:#ifndef PIC_DISABLE_EIGEN
+        -:  403:        Eigen::Matrix4d m;
+        -:  404:
+        -:  405:        m << -p[3], -p[2], -p[1], -p[0],
+        -:  406:             1.0f, 0.0f, 0.0f, 0.0f,
+        -:  407:             0.0f, 1.0f, 0.0f, 0.0f,
+        -:  408:             0.0f, 0.0f, 1.0f, 0.0f;
+        -:  409:
+        -:  410:        Eigen::EigenSolver<Eigen::Matrix4d> es(m);
+        -:  411:        Eigen::Vector4cd e = es.eigenvalues();
+        -:  412:
+        -:  413:        bool bOut = false;
+        -:  414:
+        -:  415:        for (int i = 0; i < 4; i++) {
+        -:  416:            if (fabs(e(i).imag()) <= 0.0) {
+        -:  417:                x[i] = float(e(i).real());
+        -:  418:                bOut = true;
+        -:  419:            }
+        -:  420:        }
+        -:  421:
+        -:  422:        return bOut;
+        -:  423:#else
+        -:  424:        return true;
+        -:  425:#endif
+        -:  426:    }
+        -:  427:
+        -:  428:    /**
+        -:  429:     * @brief getSecondOrderRoots solves second order equations, ax^2 + b x + c = 0
+        -:  430:     * @param a is the a coefficient
+        -:  431:     * @param b is the b coefficient
+        -:  432:     * @param c is the c coefficient
+        -:  433:     * @param x0 is the first zero
+        -:  434:     * @param x1 is the second zero
+        -:  435:     * @return It returns true, if x0 and x1 have a real value, false otherwise
+        -:  436:     */
+        -:  437:    static bool getSecondOrderRoots(float a, float b, float c, float *x0, float *x1)
+        -:  438:    {
+        -:  439:        float delta = b * b - 4.0f * a * c;
+        -:  440:
+        -:  441:        if(delta >= 0.0f) {
+        -:  442:            float dnum = 2.0f * a;
+        -:  443:            delta = sqrtf(delta);
+        -:  444:            *x0 = (-b + delta) / dnum;
+        -:  445:            *x1 = (-b - delta) / dnum;
+        -:  446:            return true;
+        -:  447:        } else {
+        -:  448:            return false;
+        -:  449:        }
+        -:  450:    }
+        -:  451:
+        -:  452:    /**
+        -:  453:     * @brief getSecondOrderRootsS solves second order equations, ax^2 + 2 b x + c = 0; i.e., 2 b is even!
+        -:  454:     * @param a is the a coefficient
+        -:  455:     * @param b is the b coefficient
+        -:  456:     * @param c is the c coefficient
+        -:  457:     * @param x0 is the first zero
+        -:  458:     * @param x1 is the second zero
+        -:  459:     * @return It returns true, if x0 and x1 have a real value, false otherwise
+        -:  460:     */
+        -:  461:    static bool getSecondOrderRootsS(float a, float b, float c, float *x0, float *x1)
+        -:  462:    {
+        -:  463:        float delta = b * b - a * c;
+        -:  464:        if(delta >= 0.0f) {
+        -:  465:            delta = sqrtf(delta);
+        -:  466:            *x0 = (-b + delta) / a;
+        -:  467:            *x1 = (-b - delta) / a;
+        -:  468:            return true;
+        -:  469:        } else {
+        -:  470:            return false;
+        -:  471:        }
+        -:  472:    }
+        -:  473:
+        -:  474:
+        -:  475:};
+        -:  476:
+        -:  477:} // end namespace pic
+        -:  478:
+        -:  479:#endif //PIC_UTIL_coeffNOMIAL_HPP

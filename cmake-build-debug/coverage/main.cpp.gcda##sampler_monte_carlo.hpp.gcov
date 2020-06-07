@@ -1,0 +1,129 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/point_samplers/sampler_monte_carlo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_POINT_SAMPLERS_SAMPLER_MONTE_CARLO_HPP
+        -:   19:#define PIC_POINT_SAMPLERS_SAMPLER_MONTE_CARLO_HPP
+        -:   20:
+        -:   21:#include <random>
+        -:   22:
+        -:   23:#include "../base.hpp"
+        -:   24:
+        -:   25:#include "../util/math.hpp"
+        -:   26:
+        -:   27:namespace pic {
+        -:   28:
+        -:   29:/**
+        -:   30: * @brief getMonteCarloSamples
+        -:   31: * @param m
+        -:   32: * @param nSamples
+        -:   33: * @param samples
+        -:   34: */
+        -:   35:template <unsigned int N> PIC_INLINE
+    #####:   36:void getMonteCarloSamples(std::mt19937 *m, int nSamples, std::vector<float> &samples)
+        -:   37:{
+    #####:   38:    for(int i = 0; i < nSamples; i++) {
+    %%%%%:   38-block  0
+    %%%%%:   38-block  1
+    %%%%%:   38-block  2
+    #####:   39:        for(unsigned int j = 0; j < N; j++) {
+    %%%%%:   39-block  0
+    #####:   40:            float val = getRandom((*m)()) * 2.0f - 1.0f;
+    %%%%%:   40-block  0
+    #####:   41:            samples.push_back(val);
+        -:   42:        }
+        -:   43:    }
+    #####:   44:}
+        -:   45:
+        -:   46:/**
+        -:   47: * @brief getMonteCarloStratifiedSamples
+        -:   48: * @param m
+        -:   49: * @param nSamples
+        -:   50: * @param samples
+        -:   51: */
+        -:   52:template <unsigned int N> PIC_INLINE
+    #####:   53:void getMonteCarloStratifiedSamples(std::mt19937 *m, int nSamples,
+        -:   54:                                 std::vector<float> &samples)
+        -:   55:{
+    #####:   56:    int n = int(powf(float(nSamples), 1 / float(N))) + 1; //int(sqrtf(nSamples))+1;
+    #####:   57:    float n_f = float(n);
+    #####:   58:    nSamples = n;
+        -:   59:
+    #####:   60:    for(unsigned int i = 1; i < N; i++) {
+    %%%%%:   60-block  0
+    %%%%%:   60-block  1
+    #####:   61:        nSamples *= n;
+    %%%%%:   61-block  0
+        -:   62:    }
+        -:   63:
+    #####:   64:    for(int i = 0; i < nSamples; i++) {
+    %%%%%:   64-block  0
+    %%%%%:   64-block  1
+        -:   65:        int div = 1;
+        -:   66:
+    #####:   67:        for(unsigned int j = 0; j < N; j++) {
+    %%%%%:   67-block  0
+    #####:   68:            int k = (i / div) % n;
+    #####:   69:            float val = ((getRandom((*m)()) + k) / n_f) * 2.0f - 1.0f;
+    %%%%%:   69-block  0
+    #####:   70:            samples.push_back(val);
+    #####:   71:            div *= n;
+        -:   72:        }
+        -:   73:    }
+    #####:   74:}
+        -:   75:
+        -:   76:/**
+        -:   77: * @brief getPatternMethodSampler
+        -:   78: * @param nSamples
+        -:   79: * @param samples
+        -:   80: */
+        -:   81:template <unsigned int N> PIC_INLINE
+    #####:   82:void getPatternMethodSamples(int nSamples, std::vector<float> &samples)
+        -:   83:{
+    #####:   84:    int n = int(powf(float(nSamples), 1 / float(N))) + 1; //int(sqrtf(nSamples))+1;
+    #####:   85:    nSamples = n;
+        -:   86:
+    #####:   87:    for(unsigned int i = 1; i < N; i++) {
+    %%%%%:   87-block  0
+    %%%%%:   87-block  1
+    #####:   88:        nSamples *= n;
+    %%%%%:   88-block  0
+        -:   89:    }
+        -:   90:
+    #####:   91:    for(int i = 0; i < nSamples; i++) {
+    %%%%%:   91-block  0
+    %%%%%:   91-block  1
+        -:   92:        int div = 1;
+        -:   93:
+    #####:   94:        for(unsigned int j = 0; j < N; j++) {
+    %%%%%:   94-block  0
+    #####:   95:            int k = ((i / div)) % n;
+    #####:   96:            float val = (float(k) / float(n)) * 2.0f - 1.0f;
+    #####:   97:            samples.push_back(val);
+    %%%%%:   97-block  0
+    #####:   98:            div *= n;
+        -:   99:        }
+        -:  100:    }
+    #####:  101:}
+        -:  102:
+        -:  103:} // end namespace pic
+        -:  104:
+        -:  105:#endif /* PIC_POINT_SAMPLERS_SAMPLER_MONTE_CARLO_HPP */
+        -:  106:

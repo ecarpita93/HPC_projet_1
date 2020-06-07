@@ -1,0 +1,114 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/algorithms/weight_function.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_ALGORITHMS_WEIGHT_FUNCTION_HPP
+        -:   19:#define PIC_ALGORITHMS_WEIGHT_FUNCTION_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The CRF_WEIGHT enum
+        -:   27: */
+        -:   28:enum CRF_WEIGHT {CW_ALL, CW_HAT, CW_DEB97, CW_DEB97p01, CW_ROBERTSON};
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief weightFunction computes weight functions for x in [0,1].
+        -:   32: * @param x is an input value in [0, 1].
+        -:   33: * @param type is the type of the function.
+        -:   34: * @return It returns a weight for x.
+        -:   35: */
+  1913216:   36:PIC_INLINE float weightFunction(float x, CRF_WEIGHT type)
+        -:   37:{
+  1913216:   38:    switch(type) {
+  1913216:   38-block  0
+        -:   39:
+    #####:   40:    case CW_ROBERTSON: {
+        -:   41:        // w(x) = exp(-4*(x*255 - 127.5)^2/(127.5)^2) = exp(-16.0 * (x - 0.5)^2)
+        -:   42:        // (according to the paper it should be scaled and shifted s.t. w(0) = w(255) = 0 and w(127.5) = 1)
+    #####:   43:        static const double shift    = exp(-4);
+    #####:   44:        static const double scaleDiv = (1.0 - shift);
+    #####:   45:        const double t = x - 0.5;
+    #####:   46:        return float((exp(-16.0 * (t * t) ) - shift) / scaleDiv);
+    %%%%%:   46-block  0
+        -:   47:    }
+    #####:   48:    break;
+        -:   49:
+    #####:   50:    case CW_HAT: {
+    #####:   51:        float val = (2.0f * x - 1.0f);
+    #####:   52:        float val_squared = val * val;
+    #####:   53:        float val_quartic = val_squared * val_squared;
+    #####:   54:        return (1.0f - val_quartic * val_quartic * val_quartic);
+    %%%%%:   54-block  0
+        -:   55:    }
+  1913216:   56:    break;
+        -:   57:
+  1913216:   58:    case CW_DEB97: {
+  1913216:   59:        static const float Zmin = 0.0f;
+  1913216:   60:        static const float Zmax = 1.0f;
+  1913216:   61:        static const float tr = (Zmin + Zmax) / 2.0f;
+        -:   62:
+  1913216:   63:        if(x <= tr) {
+  1913216:   63-block  0
+        -:   64:            return x - Zmin;
+        -:   65:        } else {
+   457369:   66:            return Zmax - x;
+   457369:   66-block  0
+        -:   67:        }
+        -:   68:    }
+    #####:   69:    break;
+        -:   70:
+    #####:   71:    case CW_DEB97p01: {
+    #####:   72:        static const float Zmin = 0.01f;
+    #####:   73:        static const float Zmax = 0.99f;
+    #####:   74:        float tr = (Zmin + Zmax) / 2.0f;
+        -:   75:
+    #####:   76:        if(x <= tr) {
+    %%%%%:   76-block  0
+    #####:   77:            return CLAMPi(x - Zmin, 0.0f, 1.0f);
+    %%%%%:   77-block  0
+    %%%%%:   77-block  1
+    %%%%%:   77-block  2
+    %%%%%:   77-block  3
+        -:   78:        } else {
+    #####:   79:            return CLAMPi(Zmax - x, 0.0f, 1.0f);
+    %%%%%:   79-block  0
+    %%%%%:   79-block  1
+    %%%%%:   79-block  2
+    %%%%%:   79-block  3
+        -:   80:        }
+        -:   81:    }
+        -:   82:    break;
+        -:   83:
+        -:   84:    default: {
+        -:   85:        return 1.0f;
+        -:   86:    }
+        -:   87:    break;
+        -:   88:    }
+        -:   89:
+        -:   90:    return 1.0f;
+        -:   91:}
+        -:   92:
+        -:   93:} // end namespace pic
+        -:   94:
+        -:   95:#endif /* PIC_ALGORITHMS_WEIGHT_FUNCTION_HPP */
+        -:   96:

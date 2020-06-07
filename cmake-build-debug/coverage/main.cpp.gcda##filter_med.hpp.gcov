@@ -1,0 +1,141 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_med.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_MED_HPP
+        -:   19:#define PIC_FILTERING_FILTER_MED_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterMed class
+        -:   27: */
+        -:   28:class FilterMed: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:    int halfSize, areaKernel, midValue;
+        -:   32:
+        -:   33:    /**
+        -:   34:     * @brief ProcessBBox
+        -:   35:     * @param dst
+        -:   36:     * @param src
+        -:   37:     * @param box
+        -:   38:     */
+    #####:   39:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   40:    {
+    #####:   41:        Image *in = src[0];
+    %%%%%:   41-block  0
+    #####:   42:        float *values = new float[areaKernel * in->channels];
+    %%%%%:   42-block  0
+    %%%%%:   42-block  1
+    %%%%%:   42-block  2
+        -:   43:
+    #####:   44:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   44-block  0
+    %%%%%:   44-block  1
+    #####:   45:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   45-block  0
+    %%%%%:   45-block  1
+    %%%%%:   45-block  2
+        -:   46:
+    #####:   47:                int c = 0;
+    #####:   48:                for(int k = -halfSize; k <= halfSize; k++) {
+    %%%%%:   48-block  0
+    %%%%%:   48-block  1
+    %%%%%:   48-block  2
+    #####:   49:                    for(int l = -halfSize; l <= halfSize; l++) {
+    %%%%%:   49-block  0
+        -:   50:
+    #####:   51:                        float *color = (*in)(i + l, j + k);
+    %%%%%:   51-block  0
+        -:   52:
+    #####:   53:                        for(int ch = 0; ch < in->channels; ch++) {
+    %%%%%:   53-block  0
+    %%%%%:   53-block  1
+    #####:   54:                            values[areaKernel * ch + c] = color[ch];
+    %%%%%:   54-block  0
+        -:   55:                        }
+        -:   56:
+    #####:   57:                        c++;
+    %%%%%:   57-block  0
+        -:   58:                    }
+        -:   59:                }
+        -:   60:
+    #####:   61:                float *out = (*dst) (i, j);
+    %%%%%:   61-block  0
+        -:   62:
+    #####:   63:                for(int ch = 0; ch < in->channels; ch++) {
+    %%%%%:   63-block  0
+    %%%%%:   63-block  1
+    #####:   64:                    float *tmp_v_ch = &values[areaKernel * ch];
+    #####:   65:                    std::sort(tmp_v_ch, tmp_v_ch + areaKernel);
+    %%%%%:   65-block  0
+        -:   66:
+    #####:   67:                    out[ch] = tmp_v_ch[midValue];
+        -:   68:                }
+        -:   69:            }
+        -:   70:        }
+        -:   71:
+    #####:   72:        delete[] values;
+    %%%%%:   72-block  0
+    #####:   73:    }
+        -:   74:
+        -:   75:public:
+        -:   76:    /**
+        -:   77:     * @brief FilterMed
+        -:   78:     * @param size
+        -:   79:     */
+        -:   80:    FilterMed(int size) : Filter()
+        -:   81:    {
+        -:   82:        update(size);
+        -:   83:    }
+        -:   84:
+        -:   85:    /**
+        -:   86:     * @brief update
+        -:   87:     * @param size
+        -:   88:     */
+        -:   89:    void update(int size)
+        -:   90:    {
+        -:   91:        this->halfSize = checkHalfSize(size);
+        -:   92:        size = (halfSize << 1) + 1;
+        -:   93:        this->areaKernel = size * size;
+        -:   94:        this->midValue = areaKernel >> 1;
+        -:   95:    }
+        -:   96:
+        -:   97:    /**
+        -:   98:     * @brief execute
+        -:   99:     * @param imgIn
+        -:  100:     * @param imgOut
+        -:  101:     * @param size
+        -:  102:     * @return
+        -:  103:     */
+        -:  104:    static Image *execute(Image *imgIn, Image *imgOut, int size)
+        -:  105:    {
+        -:  106:        FilterMed filter(size);
+        -:  107:        return filter.Process(Single(imgIn), imgOut);
+        -:  108:    }
+        -:  109:};
+        -:  110:
+        -:  111:} // end namespace pic
+        -:  112:
+        -:  113:#endif /* PIC_FILTERING_FILTER_MED_HPP */
+        -:  114:

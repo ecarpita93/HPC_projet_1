@@ -1,0 +1,403 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/tile_list.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_TILE_LIST_HPP
+        -:   19:#define PIC_UTIL_TILE_LIST_HPP
+        -:   20:
+        -:   21:#include <thread>
+        -:   22:#include <mutex>
+        -:   23:#include <vector>
+        -:   24:
+        -:   25:#include "../base.hpp"
+        -:   26:#include "../util/tile.hpp"
+        -:   27:
+        -:   28:namespace pic {
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief The TileList class
+        -:   32: */
+        -:   33:class TileList
+        -:   34:{
+        -:   35:protected:
+        -:   36:    unsigned int counter;
+        -:   37:
+        -:   38:#ifndef PIC_DISABLE_THREAD
+        -:   39:    std::mutex mutex;
+        -:   40:#endif
+        -:   41:
+        -:   42:public:
+        -:   43:    int width, height;
+        -:   44:    int h_tile, w_tile;
+        -:   45:    int mod_h, mod_w;
+        -:   46:
+        -:   47:    /**
+        -:   48:     * @brief tiles a list of tiles
+        -:   49:     */
+        -:   50:    std::vector<Tile> tiles;
+        -:   51:
+        -:   52:    /**
+        -:   53:     * @brief TileList basic constructor
+        -:   54:     */
+        -:   55:    TileList();
+        -:   56:
+        -:   57:    /**
+        -:   58:     * @brief TileList creates a list of tiles.
+        -:   59:     * @param tileSize is the width and height of a tile in pixels.
+        -:   60:     * @param width is the horizontal size of the original image in pixels.
+        -:   61:     * @param height is the vertical size of the original image in pixels.
+        -:   62:     */
+        -:   63:    TileList(int tileSize, int width, int height);
+        -:   64:
+        -:   65:    ~TileList();
+        -:   66:
+        -:   67:    /**
+        -:   68:     * @brief genBBox
+        -:   69:     * @param index
+        -:   70:     * @return
+        -:   71:     */
+        -:   72:    BBox getBBox(int index);
+        -:   73:
+        -:   74:    /**
+        -:   75:     * @brief getNext returns the index of the next tile to process.
+        -:   76:     * @return This function returns the index of the next tile to proces.
+        -:   77:     */
+        -:   78:    unsigned int getNext();
+        -:   79:
+        -:   80:    /**
+        -:   81:     * @brief size
+        -:   82:     * @return
+        -:   83:     */
+        -:   84:    unsigned int size();
+        -:   85:
+        -:   86:    /**
+        -:   87:     * @brief resetCounter sets the counter to zero.
+        -:   88:     */
+        -:   89:    void resetCounter();
+        -:   90:
+        -:   91:    /**
+        -:   92:     * @brief Create creates a list of tiles.
+        -:   93:     * @param tileSize is the width and height of a tile in pixels.
+        -:   94:     * @param width is the horizontal size of the original image in pixels.
+        -:   95:     * @param height is the vertical size of the original image in pixels.
+        -:   96:     */
+        -:   97:    void create(int tileSize, int width, int height);
+        -:   98:
+        -:   99:    /**
+        -:  100:     * @brief read loads a TileList from a file.
+        -:  101:     * @param name is the file name.
+        -:  102:     * @param flag is a boolean value. If it is true, this loads
+        -:  103:     * an Image from the tile name. Otherwise, an Image of the tile
+        -:  104:     * size is allocated.
+        -:  105:     * @return This function returns true if it is successfull.
+        -:  106:     */
+        -:  107:    bool read(std::string name, bool flag);
+        -:  108:
+        -:  109:    /**
+        -:  110:     * @brief write saves a TileList into a file.
+        -:  111:     * @param name is the file name
+        -:  112:     * @return This function returns true if it is successfull.
+        -:  113:     */
+        -:  114:    bool write(std::string name);
+        -:  115:
+        -:  116:    /**
+        -:  117:     * @brief writeIntoMemory copies tiles inside an output image.
+        -:  118:     * @param output is the Image where tiles will be copied to.
+        -:  119:     */
+        -:  120:    void writeIntoMemory(Image *output);
+        -:  121:};
+        -:  122:
+        -:  123:PIC_INLINE TileList::TileList()
+        -:  124:{
+        -:  125:    counter = 0;
+        -:  126:
+        -:  127:    w_tile = 0;
+        -:  128:    h_tile = 0;
+        -:  129:
+        -:  130:    mod_h = 0;
+        -:  131:    mod_w = 0;
+        -:  132:}
+        -:  133:
+        3:  134:PIC_INLINE TileList::TileList(int tileSize, int width, int height)
+        3:  134-block  0
+    $$$$$:  134-block  1
+        -:  135:{
+        3:  136:    counter = 0;
+        3:  137:    create(tileSize, width, height);
+        3:  137-block  0
+        3:  138:}
+        3:  138-block  0
+        -:  139:
+        9:  140:PIC_INLINE TileList::~TileList()
+        -:  141:{
+        6:  142:    tiles.clear();
+        3:  142-block  0
+        3:  142-block  1
+        3:  143:}
+        -:  144:
+      210:  145:PIC_INLINE BBox TileList::getBBox(int index)
+        -:  146:{
+      210:  147:    int i = index % tiles.size();
+      210:  147-block  0
+        -:  148:
+      210:  149:    return tiles[i].getBBox(width, height);
+      210:  149-block  0
+        -:  150:}
+        -:  151:
+      234:  152:PIC_INLINE unsigned int TileList::getNext()
+        -:  153:{
+      234:  154:    unsigned int ret = 0;
+      234:  155:    {
+        -:  156:#ifndef PIC_DISABLE_THREAD
+      234:  157:        std::lock_guard<std::mutex> lock(mutex);
+      234:  157-block  0
+        -:  158:#endif
+      234:  159:        ret = counter;
+      234:  160:        counter++;
+        -:  161:    }
+      234:  162:    return ret;
+      234:  162-block  0
+        -:  163:}
+        -:  164:
+        -:  165:PIC_INLINE unsigned int TileList::size()
+        -:  166:{
+        -:  167:    return (unsigned int)(tiles.size());
+        -:  168:}
+        -:  169:
+        3:  170:PIC_INLINE void TileList::resetCounter()
+        -:  171:{
+        3:  172:    {
+        -:  173:#ifndef PIC_DISABLE_THREAD
+        9:  174:        std::lock_guard<std::mutex> lock(mutex);
+        -:  175:#endif
+        3:  176:        counter = 0;
+        -:  177:    }
+        -:  178:}
+        -:  179:
+        3:  180:PIC_INLINE void TileList::create(int tileSize, int width, int height)
+        -:  181:{
+        3:  182:    resetCounter();
+        3:  182-block  0
+        -:  183:
+        3:  184:    if(!tiles.empty()) {
+        3:  184-block  0
+    #####:  185:        if((tiles[0].width == tileSize) && (this->width == width) &&
+    %%%%%:  185-block  0
+    %%%%%:  185-block  1
+    #####:  186:           (this->height == height)) {
+    %%%%%:  186-block  0
+        -:  187:            return;
+        -:  188:        }
+        -:  189:
+    #####:  190:        tiles.clear();
+    %%%%%:  190-block  0
+        -:  191:    }
+        -:  192:
+        3:  193:    this->width = width;
+        3:  194:    this->height = height;
+        -:  195:
+        3:  196:    h_tile = height / tileSize;
+        3:  197:    w_tile = width  / tileSize;
+        3:  198:    mod_h  = height % tileSize;
+        3:  199:    mod_w  = width  % tileSize;
+        -:  200:
+        -:  201:    //main blocks
+        3:  202:    bool bWidth = mod_w != 0;
+       21:  203:    for(int i = 0; i < h_tile; i++) {
+        3:  203-block  0
+       21:  203-block  1
+       36:  204:        Tile tile;
+       18:  204-block  0
+       18:  204-block  1
+    $$$$$:  204-block  2
+       18:  205:        tile.width = tileSize;
+       18:  206:        tile.height = tileSize;
+       18:  207:        tile.startY = i * tileSize;
+        -:  208:
+      198:  209:        for(int j = 0; j < w_tile; j++) {
+      198:  209-block  0
+      180:  209-block  1
+      180:  210:            tile.startX = j * tileSize;
+      180:  211:            tiles.push_back(tile);
+      180:  211-block  0
+        -:  212:        }
+        -:  213:
+        -:  214:        //extra blocks
+       18:  215:        if(bWidth) {
+       18:  215-block  0
+    #####:  216:            tile.startX = w_tile * tileSize;
+    #####:  217:            tile.width  = mod_w;
+    #####:  218:            tiles.push_back(tile);
+    %%%%%:  218-block  0
+        -:  219:        }
+        -:  220:    }
+        -:  221:
+        -:  222:    //fixed height strip blocks
+        3:  223:    if(mod_h != 0) {
+        3:  223-block  0
+        3:  224:        int i = h_tile;
+        -:  225:
+        6:  226:        Tile tile;
+        3:  226-block  0
+        3:  226-block  1
+    $$$$$:  226-block  2
+        3:  227:        tile.startY = i * tileSize;
+        3:  228:        tile.width  = tileSize;
+        -:  229:
+       33:  230:        for(int j = 0; j < w_tile; j++) {
+       33:  230-block  0
+       30:  230-block  1
+       30:  231:            tile.startX = j * tileSize;
+       30:  232:            tile.height  = mod_h;
+       30:  233:            tiles.push_back(tile);
+       30:  233-block  0
+        -:  234:        }
+        -:  235:
+        3:  236:        if(bWidth) {
+        3:  236-block  0
+    #####:  237:            tile.startX = w_tile * tileSize;
+    #####:  238:            tile.width  = mod_w;
+    #####:  239:            tile.height  = mod_h;
+    #####:  240:            tiles.push_back(tile);
+    %%%%%:  240-block  0
+        -:  241:        }
+        -:  242:    }
+        -:  243:}
+        -:  244:
+        -:  245:PIC_INLINE void TileList::writeIntoMemory(Image *output)
+        -:  246:{
+        -:  247:    if(output == NULL) {
+        -:  248:        return;
+        -:  249:    }
+        -:  250:
+        -:  251:    if(!output->isValid()) {
+        -:  252:        return;
+        -:  253:    }
+        -:  254:
+        -:  255:    for(unsigned int i = 0; i < tiles.size(); i++) { //for each tile
+        -:  256:        if(tiles[i].tile != NULL) {
+        -:  257:            output->copySubImage(tiles[i].tile, tiles[i].startX, tiles[i].startY);
+        -:  258:        }
+        -:  259:
+        -:  260:        #ifdef PIC_DEBUG
+        -:  261:            printf("Tile x: %d y: %d\n", tiles[i].startX, tiles[i].startY);
+        -:  262:        #endif
+        -:  263:    }
+        -:  264:}
+        -:  265:
+        -:  266:PIC_INLINE bool TileList::read(std::string name, bool flag)
+        -:  267:{
+        -:  268:    FILE *file = fopen(name.c_str(), "r");
+        -:  269:
+        -:  270:    if(file == NULL) {
+        -:  271:        return false;
+        -:  272:    }
+        -:  273:
+        -:  274:    //tmp vars
+        -:  275:    char tmp[128];
+        -:  276:    char txt[128];
+        -:  277:
+        -:  278:    //number of tiles
+        -:  279:    int n;
+        -:  280:    fscanf(file, "%s", tmp);
+        -:  281:    fscanf(file, "%d", &n);
+        -:  282:
+        -:  283:    //flag
+        -:  284:    fscanf(file, "%s", tmp);
+        -:  285:    fscanf(file, "%s", txt);
+        -:  286:
+        -:  287:    Tile tmpTile;
+        -:  288:    char tmp_name[128];
+        -:  289:
+        -:  290:    for(int i = 0; i < n; i++) { //for each tile
+        -:  291:        fscanf(file, "%s", tmp);
+        -:  292:        fscanf(file, "%s", tmp_name);
+        -:  293:
+        -:  294:        fscanf(file, "%s", tmp);
+        -:  295:        fscanf(file, "%d", &tmpTile.startX);
+        -:  296:
+        -:  297:        fscanf(file, "%s", tmp);
+        -:  298:        fscanf(file, "%d", &tmpTile.startY);
+        -:  299:
+        -:  300:        fscanf(file, "%s", tmp);
+        -:  301:        fscanf(file, "%d", &tmpTile.width);
+        -:  302:
+        -:  303:        fscanf(file, "%s", tmp);
+        -:  304:        fscanf(file, "%d", &tmpTile.height);
+        -:  305:
+        -:  306:        tmpTile.name = tmp_name;
+        -:  307:
+        -:  308:        if(flag) {
+        -:  309:            tmpTile.tile = new Image(tmpTile.name);
+        -:  310:        } else {
+        -:  311:            tmpTile.tile = new Image(1, tmpTile.width, tmpTile.height, 3);
+        -:  312:        }
+        -:  313:
+        -:  314:        tiles.push_back(tmpTile);
+        -:  315:    }
+        -:  316:
+        -:  317:    fclose(file);
+        -:  318:    return true;
+        -:  319:}
+        -:  320:
+        -:  321:PIC_INLINE bool TileList::write(std::string name)
+        -:  322:{
+        -:  323:    FILE *file = fopen(name.c_str(), "w");
+        -:  324:
+        -:  325:    if(file == NULL) {
+        -:  326:        return false;
+        -:  327:    }
+        -:  328:
+        -:  329:    //number of tiles
+        -:  330:    int n = int(tiles.size());
+        -:  331:    fprintf(file, "NUMBER_OF_TILES: %d\n", n);
+        -:  332:
+        -:  333:    //flag
+        -:  334:    fprintf(file, "FLAG: NONE\n");
+        -:  335:
+        -:  336:    for(int i = 0; i < n; i++) { //for each tile
+        -:  337:
+        -:  338:        bool bName = !tiles[i].name.empty();
+        -:  339:        if(bName) {
+        -:  340:            fprintf(file, "Tile_name: %s\n", tiles[i].name.c_str());
+        -:  341:        } else {
+        -:  342:            fprintf(file, "Tile_name: none\n");
+        -:  343:        }
+        -:  344:
+        -:  345:        fprintf(file, "StartX: %d\n", tiles[i].startX);
+        -:  346:        fprintf(file, "StartY: %d\n", tiles[i].startY);
+        -:  347:
+        -:  348:        fprintf(file, "Width: %d\n", tiles[i].width);
+        -:  349:        fprintf(file, "Height: %d\n", tiles[i].height);
+        -:  350:
+        -:  351:        if(bName && tiles[i].tile != NULL) {
+        -:  352:            tiles[i].tile->Write(tiles[i].name);
+        -:  353:        }
+        -:  354:    }
+        -:  355:
+        -:  356:    fclose(file);
+        -:  357:
+        -:  358:    return true;
+        -:  359:}
+        -:  360:
+        -:  361:} // end namespace pic
+        -:  362:
+        -:  363:#endif /* PIC_UTIL_TILE_LIST_HPP */
+        -:  364:

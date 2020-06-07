@@ -1,0 +1,173 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/point_samplers/sampler_bridson.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_POINT_SAMPLERS_SAMPLER_BRIDSON_HPP
+        -:   19:#define PIC_POINT_SAMPLERS_SAMPLER_BRIDSON_HPP
+        -:   20:
+        -:   21:#include <math.h>
+        -:   22:#include <random>
+        -:   23:#include "../util/math.hpp"
+        -:   24:#include "../util/vec.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:/**
+        -:   29: * @brief checkNeighborsBruteForce
+        -:   30: * @param samples
+        -:   31: * @param x
+        -:   32: * @param radius
+        -:   33: * @return
+        -:   34: */
+        -:   35:template<unsigned int N>
+    #####:   36:bool checkNeighborsBruteForce(std::vector< Vec<N, float> > &samples,
+        -:   37:                              Vec<N, float> x, float radius)
+        -:   38:{
+    #####:   39:    float radius_sq = radius * radius;
+        -:   40:
+    #####:   41:    for(unsigned int i = 0; i < samples.size(); i++) {
+    %%%%%:   41-block  0
+    %%%%%:   41-block  1
+    %%%%%:   41-block  2
+    #####:   42:        if(x.distanceSq(samples[i]) < radius_sq) {
+    %%%%%:   42-block  0
+        -:   43:            return false;
+        -:   44:        }
+        -:   45:    }
+        -:   46:
+        -:   47:    return true;
+        -:   48:}
+        -:   49:
+        -:   50:/**
+        -:   51: * @brief getBridsonSamples
+        -:   52: * @param m
+        -:   53: * @param radius
+        -:   54: * @param samples
+        -:   55: * @param kSamples
+        -:   56: */
+        -:   57:template<unsigned int N>
+    #####:   58:void getBridsonSamples(std::mt19937 *m, float radius, std::vector<float> &samples,
+        -:   59:                    int kSamples = 30)
+        -:   60:{
+    #####:   61:    if(kSamples < 1) {
+    %%%%%:   61-block  0
+    #####:   62:        kSamples = 30;
+    %%%%%:   62-block  0
+        -:   63:    }
+        -:   64:
+        -:   65:    //Step 0: Creating an N-grid
+        -:   66://	Grid<N> grid(0.999f * radius / sqrtf(float(N)));
+        -:   67:
+        -:   68:    //Step 1: Initial sample
+    #####:   69:    Vec<N, float> x0 = randomPoint<N>(m);
+    %%%%%:   69-block  0
+        -:   70:
+    #####:   71:    std::vector< Vec<N, float> > vecSamples;
+    #####:   72:    std::vector<int> activeList;
+    %%%%%:   72-block  0
+    $$$$$:   72-block  1
+        -:   73:
+    #####:   74:    vecSamples.push_back(x0);
+    #####:   75:    activeList.push_back(0);
+    %%%%%:   75-block  0
+    %%%%%:   75-block  1
+    $$$$$:   75-block  2
+        -:   76://	grid.setValue(0, x0);
+        -:   77:
+        -:   78:    //Step 2: active list
+    #####:   79:    while(!activeList.empty()) {
+    %%%%%:   79-block  0
+    #####:   80:        int i = (*m)() % activeList.size();
+    %%%%%:   80-block  0
+        -:   81:
+    #####:   82:        int ind = activeList[i];
+        -:   83:
+    #####:   84:        bool bCheckSuccess = false;
+    #####:   85:        bool bFlag = true;
+        -:   86:
+    #####:   87:        int j = 0;
+        -:   88:
+    #####:   89:        while(bFlag) {
+    %%%%%:   89-block  0
+        -:   90:            //create samples inside the annulus around sample_i
+    #####:   91:            Vec<N, float> x = annulusSampling<N>(m, vecSamples[ind], radius);
+    %%%%%:   91-block  0
+        -:   92:
+        -:   93:            //check if the generated sample is in the bounding box
+    #####:   94:            if(insideVecBBox(x)) {
+    %%%%%:   94-block  0
+        -:   95:                //check if the sample does not have neighbors in grid with distance radius
+    #####:   96:                if(checkNeighborsBruteForce(vecSamples, x, radius)) {
+    %%%%%:   96-block  0
+    #####:   97:                    vecSamples.push_back(x);
+    %%%%%:   97-block  0
+    #####:   98:                    int value = int(vecSamples.size()) - 1;
+    %%%%%:   98-block  0
+        -:   99:
+    #####:  100:                    activeList.push_back(value);
+    %%%%%:  100-block  0
+        -:  101:                    //                grid.setValue(value, x);
+    #####:  102:                    bCheckSuccess = true;
+    %%%%%:  102-block  0
+        -:  103:                }
+        -:  104:            }
+        -:  105:
+    #####:  106:            j++;
+        -:  107:
+    #####:  108:            bFlag = (j < kSamples) && (!bCheckSuccess);
+    %%%%%:  108-block  0
+        -:  109:        }
+        -:  110:
+    #####:  111:        if(!bCheckSuccess) { //removing i-th sample from the active list
+    %%%%%:  111-block  0
+    #####:  112:            if(activeList.size() > 1) {
+    %%%%%:  112-block  0
+    #####:  113:                activeList[i] = activeList.back();
+    %%%%%:  113-block  0
+    #####:  114:                activeList.pop_back();
+    %%%%%:  114-block  0
+        -:  115:            } else {
+    #####:  116:                activeList.pop_back();
+    %%%%%:  116-block  0
+        -:  117:            }
+        -:  118:        }
+        -:  119:    }
+        -:  120:
+    #####:  121:    for(unsigned int i = 0; i < vecSamples.size(); i++) {
+    %%%%%:  121-block  0
+    %%%%%:  121-block  1
+    #####:  122:        Vec<N, float> x = vecSamples[i];
+    %%%%%:  122-block  0
+        -:  123:
+    #####:  124:        for(unsigned int k = 0; k < N; k++) {
+    %%%%%:  124-block  0
+    %%%%%:  124-block  1
+    %%%%%:  124-block  2
+    #####:  125:            samples.push_back(x[k]);
+    %%%%%:  125-block  0
+        -:  126:        }
+        -:  127:    }
+    #####:  128:}
+    %%%%%:  128-block  0
+        -:  129:
+        -:  130:} // end namespace pic
+        -:  131:
+        -:  132:#endif /* PIC_POINT_SAMPLERS_SAMPLER_BRIDSON_HPP */
+        -:  133:

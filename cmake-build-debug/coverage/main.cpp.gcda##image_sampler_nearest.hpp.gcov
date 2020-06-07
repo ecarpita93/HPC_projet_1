@@ -1,0 +1,134 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/image_samplers/image_sampler_nearest.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IMAGE_SAMPLERS_IMAGE_SAMPLER_NEAREST_HPP
+        -:   19:#define PIC_IMAGE_SAMPLERS_IMAGE_SAMPLER_NEAREST_HPP
+        -:   20:
+        -:   21:#include "../image_samplers/image_sampler.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The ImageSamplerNearest class
+        -:   27: */
+    #####:   28:class ImageSamplerNearest: public ImageSampler
+    %%%%%:   28-block  0
+    $$$$$:   28-block  1
+    %%%%%:   28-block  2
+        -:   29:{
+        -:   30:public:
+        -:   31:    /**
+        -:   32:     * @brief ImageSamplerNearest
+        -:   33:     */
+    #####:   34:    ImageSamplerNearest() {}
+    %%%%%:   34-block  0
+    %%%%%:   34-block  1
+        -:   35:
+        -:   36:    /**
+        -:   37:     * @brief SampleImage samples an image in uniform coordiantes.
+        -:   38:     * @param img
+        -:   39:     * @param x
+        -:   40:     * @param y
+        -:   41:     * @param vOut
+        -:   42:     */
+    #####:   43:    void SampleImage(Image *img, float x, float y, float *vOut)
+        -:   44:    {
+    #####:   45:        x = CLAMPi(x, 0.0f, 1.0f);
+    #####:   46:        y = CLAMPi(y, 0.0f, 1.0f);
+        -:   47:
+        -:   48:        //Coordiantes in [0,width-1]x[0,height-1]
+    #####:   49:        x = x * img->width1f;
+    #####:   50:        y = y * img->height1f;
+        -:   51:
+    #####:   52:        SampleImageUC(img, x, y, vOut);
+    %%%%%:   52-block  0
+    #####:   53:    }
+        -:   54:
+        -:   55:    /**
+        -:   56:     * @brief SampleImageUC samples an image in unnormalized coordinates [0,width-1]x[0,height-1].
+        -:   57:     * @param img
+        -:   58:     * @param x
+        -:   59:     * @param y
+        -:   60:     * @param vOut
+        -:   61:     */
+    #####:   62:    void SampleImageUC(Image *img, float x, float y, float *vOut)
+        -:   63:    {
+        -:   64:        //Integer coordinates
+    #####:   65:        int ix = CLAMP(int(x), img->width);
+    %%%%%:   65-block  0
+    %%%%%:   65-block  1
+    %%%%%:   65-block  2
+    #####:   66:        int iy = CLAMP(int(y), img->height);
+    %%%%%:   66-block  0
+    %%%%%:   66-block  1
+    %%%%%:   66-block  2
+        -:   67:
+        -:   68:        //Bilinear interpolation indicies
+    #####:   69:        int ind = (ix * img->xstride + iy * img->ystride);
+        -:   70:
+    #####:   71:        for(int i = 0; i < img->channels; i++) {
+    %%%%%:   71-block  0
+    %%%%%:   71-block  1
+    #####:   72:            vOut[i] = img->data[ind + i];
+    %%%%%:   72-block  0
+        -:   73:        }
+    #####:   74:    }
+        -:   75:
+        -:   76:    /**
+        -:   77:     * @brief SampleImage samples an image in uniform coordiantes.
+        -:   78:     * @param img
+        -:   79:     * @param x
+        -:   80:     * @param y
+        -:   81:     * @param t
+        -:   82:     * @param vOut
+        -:   83:     */
+    #####:   84:    void SampleImage(Image *img, float x, float y, float t, float *vOut)
+        -:   85:    {
+    #####:   86:        x = CLAMPi(x, 0.0f, 1.0f);
+    #####:   87:        y = CLAMPi(y, 0.0f, 1.0f);
+    #####:   88:        t = CLAMPi(t, 0.0f, 1.0f);
+        -:   89:
+        -:   90:        //coordiantes in [0,width-1] x [0,height-1] x [0,frames-1]
+    #####:   91:        x = x * img->width1f;
+    #####:   92:        y = y * img->height1f;
+    #####:   93:        t = t * img->frames1f;
+        -:   94:
+        -:   95:        //integer coordinates
+    #####:   96:        int ix = int(x);
+    #####:   97:        int iy = int(y);
+    #####:   98:        int it = int(t);
+        -:   99:
+        -:  100:        //indicies
+    #####:  101:        int ind = (ix * img->xstride + iy * img->ystride + it * img->tstride);
+        -:  102:
+    #####:  103:        for(int i = 0; i < img->channels; i++) {
+    %%%%%:  103-block  0
+    %%%%%:  103-block  1
+    #####:  104:            vOut[i] = img->data[ind + i];
+    %%%%%:  104-block  0
+        -:  105:        }
+    #####:  106:    }
+        -:  107:};
+        -:  108:
+        -:  109:} // end namespace pic
+        -:  110:
+        -:  111:#endif /* PIC_IMAGE_SAMPLERS_IMAGE_SAMPLER_NEAREST_HPP */
+        -:  112:

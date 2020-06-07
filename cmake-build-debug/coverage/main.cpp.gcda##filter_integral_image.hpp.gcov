@@ -1,0 +1,158 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_integral_image.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_INTEGRAL_IMAGE
+        -:   19:#define PIC_FILTERING_FILTER_INTEGRAL_IMAGE
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterIntegralImage class
+        -:   27: */
+        -:   28:class FilterIntegralImage: public Filter
+        -:   29:{
+        -:   30:public:
+        -:   31:
+        -:   32:    /**
+        -:   33:     * @brief FilterIntegralImage
+        -:   34:     */
+        -:   35:    FilterIntegralImage() : Filter()
+        -:   36:    {
+        -:   37:    }
+        -:   38:
+        -:   39:    /**
+        -:   40:     * @brief Process
+        -:   41:     * @param imgIn
+        -:   42:     * @param imgOut
+        -:   43:     * @return
+        -:   44:     */
+    #####:   45:    Image *Process(ImageVec imgIn, Image *imgOut)
+        -:   46:    {
+    #####:   47:        if(imgIn.empty()){
+    %%%%%:   47-block  0
+        -:   48:            return imgOut;
+        -:   49:        }
+        -:   50:
+    #####:   51:        if(imgIn[0] == NULL) {
+    %%%%%:   51-block  0
+        -:   52:            return imgOut;
+        -:   53:        }
+        -:   54:
+    #####:   55:        imgOut = setupAux(imgIn, imgOut);
+    %%%%%:   55-block  0
+    %%%%%:   55-block  1
+        -:   56:
+    #####:   57:        int width = imgIn[0]->width;
+    %%%%%:   57-block  0
+    #####:   58:        int height = imgIn[0]->height;
+    #####:   59:        int channels = imgIn[0]->channels;
+        -:   60:
+        -:   61:        //set up the first pixel (0,0)
+    #####:   62:        for(int k = 0; k < channels; k++) {
+    %%%%%:   62-block  0
+    %%%%%:   62-block  1
+    %%%%%:   62-block  2
+    #####:   63:            imgOut->data[k] = imgIn[0]->data[k];
+    %%%%%:   63-block  0
+        -:   64:        }
+        -:   65:
+        -:   66:        //set up the first row
+    #####:   67:        for(int j=1; j<width; j++) {
+    %%%%%:   67-block  0
+    %%%%%:   67-block  1
+    #####:   68:            int ind1 = j * channels;
+    #####:   69:            int ind2 = ind1 - channels;
+        -:   70:
+    #####:   71:            for(int k=0; k<channels; k++) {
+    %%%%%:   71-block  0
+    %%%%%:   71-block  1
+    %%%%%:   71-block  2
+    #####:   72:                imgOut->data[ind1 + k] = imgIn[0]->data[ind1 + k] + imgOut->data[ind2 + k];
+    %%%%%:   72-block  0
+        -:   73:            }
+        -:   74:        }
+        -:   75:
+        -:   76:        //set up the first column
+    #####:   77:        int c1 = width * channels;
+    #####:   78:        for(int i=1; i<height; i++){
+    %%%%%:   78-block  0
+    %%%%%:   78-block  1
+    %%%%%:   78-block  2
+    #####:   79:            int ind1 = i * c1;
+    #####:   80:            int ind2 = ind1 - c1;
+    #####:   81:            for(int k=0; k<channels; k++) {
+    %%%%%:   81-block  0
+    %%%%%:   81-block  1
+    %%%%%:   81-block  2
+    #####:   82:                imgOut->data[ind1 + k] = imgIn[0]->data[ind1 + k] + imgOut->data[ind2 + k];
+    %%%%%:   82-block  0
+        -:   83:            }
+        -:   84:        }
+        -:   85:
+    #####:   86:        int c2 = (width + 1) * channels;
+        -:   87:
+    #####:   88:        for(int i=1; i<height; i++) {
+    %%%%%:   88-block  0
+    %%%%%:   88-block  1
+    %%%%%:   88-block  2
+    #####:   89:            int ind = i * width;
+    #####:   90:            for(int j=1; j<width; j++) {
+    %%%%%:   90-block  0
+    %%%%%:   90-block  1
+    %%%%%:   90-block  2
+    #####:   91:                int ind1 = (ind + j) * channels;
+    #####:   92:                int ind2 = ind1 - channels;
+    #####:   93:                int ind3 = ind1 - c1;
+    #####:   94:                int ind4 = ind1 - c2;
+        -:   95:
+    #####:   96:                for(int k=0; k<channels; k++) {
+    %%%%%:   96-block  0
+    %%%%%:   96-block  1
+    #####:   97:                    imgOut->data[ind1 + k] = imgIn[0]->data[ind1 + k] +
+    %%%%%:   97-block  0
+    #####:   98:                                             imgOut->data[ind2 + k] +
+    #####:   99:                                             imgOut->data[ind3 + k] -
+    #####:  100:                                             imgOut->data[ind4 + k];
+    %%%%%:  100-block  0
+        -:  101:                }
+        -:  102:            }
+        -:  103:        }
+        -:  104:
+        -:  105:        return imgOut;
+        -:  106:    }
+        -:  107:
+        -:  108:    /**
+        -:  109:     * @brief ProcessP
+        -:  110:     * @param imgIn
+        -:  111:     * @param imgOut
+        -:  112:     * @return
+        -:  113:     */
+        -:  114:    Image *ProcessP(ImageVec imgIn, Image *imgOut)
+        -:  115:    {
+        -:  116:        return Process(imgIn, imgOut);
+        -:  117:    }
+        -:  118:};
+        -:  119:
+        -:  120:} // end namespace pic
+        -:  121:
+        -:  122:#endif /* PIC_FILTERING_FILTER_INTEGRAL_IMAGE_HPP */

@@ -1,0 +1,230 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/image_vec.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IMAGE_RAW_VEC_HPP
+        -:   19:#define PIC_IMAGE_RAW_VEC_HPP
+        -:   20:
+        -:   21:#include <vector>
+        -:   22:#include "image.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief ImageVec an std::vector of pic::Image
+        -:   28: */
+        -:   29:typedef	std::vector<Image *> ImageVec;
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief Single creates an std::vector which contains img; this is for filters input.
+        -:   33: * @param img is a pointer to a pic::Image
+        -:   34: * @return It returns an std::vector which contains img.
+        -:   35: */
+        2:   36:PIC_INLINE ImageVec Single(Image *img)
+        -:   37:{
+        2:   38:    ImageVec ret;
+        2:   38-block  0
+        2:   39:    ret.push_back(img);
+        2:   39-block  0
+        2:   40:    return ret;
+        2:   40-block  0
+        -:   41:}
+        -:   42:
+        -:   43:/**
+        -:   44: * @brief Double creates an std::vector which contains img1 and img2; this is for filters input.
+        -:   45: * @param img1 is a pointer to a pic::Image
+        -:   46: * @param img2 is a pointer to a pic::Image
+        -:   47: * @return It returns an std::vector which contains img1 and img2.
+        -:   48: */
+    #####:   49:PIC_INLINE ImageVec Double(Image *img1, Image *img2)
+        -:   50:{
+    #####:   51:    ImageVec ret;
+    %%%%%:   51-block  0
+    #####:   52:    ret.push_back(img1);
+    %%%%%:   52-block  0
+    #####:   53:    ret.push_back(img2);
+    %%%%%:   53-block  0
+    #####:   54:    return ret;
+    %%%%%:   54-block  0
+        -:   55:}
+        -:   56:
+        -:   57:/**
+        -:   58: * @brief Triple creates an std::vector which contains img1, img2, and img3; this is for filters input.
+        -:   59: * @param img1 is a pointer to a pic::Image
+        -:   60: * @param img2 is a pointer to a pic::Image
+        -:   61: * @param img3 is a pointer to a pic::Image
+        -:   62: * @return It returns an std::vector which contains img1, img2, and img3.
+        -:   63: */
+        -:   64:PIC_INLINE ImageVec Triple(Image *img1, Image *img2, Image *img3)
+        -:   65:{
+        -:   66:    ImageVec ret;
+        -:   67:    ret.push_back(img1);
+        -:   68:    ret.push_back(img2);
+        -:   69:    ret.push_back(img3);
+        -:   70:    return ret;
+        -:   71:}
+        -:   72:
+        -:   73:/**
+        -:   74: * @brief Triple creates an std::vector which contains img1, img2, img3, and img4; this is for filters input.
+        -:   75: * @param img1 is a pointer to a pic::Image
+        -:   76: * @param img2 is a pointer to a pic::Image
+        -:   77: * @param img3 is a pointer to a pic::Image
+        -:   78: * @param img4 is a pointer to a pic::Image
+        -:   79: * @return It returns an std::vector which contains img1, img2, img3, and img4.
+        -:   80: */
+        -:   81:PIC_INLINE ImageVec Quad(Image *img1, Image *img2, Image *img3,
+        -:   82:                            Image *img4)
+        -:   83:{
+        -:   84:    ImageVec ret;
+        -:   85:    ret.push_back(img1);
+        -:   86:    ret.push_back(img2);
+        -:   87:    ret.push_back(img3);
+        -:   88:    ret.push_back(img4);
+        -:   89:    return ret;
+        -:   90:}
+        -:   91:
+        -:   92:/**
+        -:   93: * @brief ImaveVecSortByExposureTime
+        -:   94: * @param stack
+        -:   95: */
+    #####:   96:PIC_INLINE void ImaveVecSortByExposureTime(ImageVec &stack)
+        -:   97:{
+    #####:   98:    std::sort(stack.begin(), stack.end(), [](const Image *l, const Image *r)->bool{
+    %%%%%:   98-block  0
+    #####:   99:        if (!l || !r) {
+    %%%%%:   99-block  0
+    %%%%%:   99-block  1
+    %%%%%:   99-block  2
+    %%%%%:   99-block  3
+    %%%%%:   99-block  4
+    %%%%%:   99-block  5
+    %%%%%:   99-block  6
+    %%%%%:   99-block  7
+    %%%%%:   99-block  8
+    %%%%%:   99-block  9
+    %%%%%:   99-block 10
+    %%%%%:   99-block 11
+        -:  100:            return false;
+        -:  101:        }
+    #####:  102:        return l->exposure < r->exposure;
+    %%%%%:  102-block  0
+    %%%%%:  102-block  1
+    %%%%%:  102-block  2
+    %%%%%:  102-block  3
+    %%%%%:  102-block  4
+    %%%%%:  102-block  5
+    %%%%%:  102-block  6
+    %%%%%:  102-block  7
+    %%%%%:  102-block  8
+    %%%%%:  102-block  9
+    %%%%%:  102-block 10
+    %%%%%:  102-block 11
+        -:  103:    });
+        -:  104:}
+        -:  105:
+        -:  106:
+        -:  107:/**
+        -:  108: * @brief ImaveVecGetExposureTimesAsArray
+        -:  109: * @param stack
+        -:  110: */
+        1:  111:PIC_INLINE void ImaveVecGetExposureTimesAsArray(ImageVec &stack, std::vector<float> &output, bool bLog)
+        -:  112:{
+        1:  113:    output.clear();
+        1:  113-block  0
+        -:  114:
+        8:  115:    for(unsigned int i = 0; i < stack.size(); i++) {
+        8:  115-block  0
+       7*:  116:        float tmp = bLog ? logf(stack[i]->exposure) : stack[i]->exposure;
+        7:  116-block  0
+        7:  116-block  1
+    %%%%%:  116-block  2
+        7:  117:        output.push_back(tmp);
+        7:  117-block  0
+        -:  118:    }
+        1:  119:}
+        -:  120:
+        -:  121:/**
+        -:  122: * @brief ImageVecCheckSimilarType
+        -:  123: * @param stack
+        -:  124: * @return
+        -:  125: */
+        1:  126:PIC_INLINE bool ImageVecCheckSimilarType(ImageVec &stack)
+        -:  127:{
+        1:  128:    if(stack.size() < 2) {
+        1:  128-block  0
+        -:  129:        return false;
+        -:  130:    }
+        -:  131:
+        7:  132:    for (unsigned int i = 1; i < stack.size(); i++) {
+        7:  132-block  0
+       12:  133:        if (!stack[0]->isSimilarType(stack[i])) {
+        6:  133-block  0
+        6:  133-block  1
+        -:  134:            return false;
+        -:  135:        }
+        -:  136:    }
+        -:  137:
+        -:  138:    return true;
+        -:  139:}
+        -:  140:
+        -:  141:/**
+        -:  142: * @brief ImageVecCheck
+        -:  143: * @param vec
+        -:  144: * @param minInputImages
+        -:  145: * @return
+        -:  146: */
+        4:  147:PIC_INLINE bool ImageVecCheck(ImageVec &imgIn, int minInputImages)
+        -:  148:{
+        4:  149:    int n;
+        4:  150:    if(minInputImages < 0) {
+        4:  150-block  0
+        1:  151:        n = int(imgIn.size());
+        1:  151-block  0
+        -:  152:    } else {
+        3:  153:        if(imgIn.size() < minInputImages) {
+        3:  153-block  0
+        -:  154:            return false;
+        -:  155:        }
+        -:  156:
+        -:  157:        n = minInputImages;
+        -:  158:    }
+        -:  159:
+        9:  160:    for(int i = 0; i < n; i ++) {
+        4:  160-block  0
+        9:  160-block  1
+        5:  161:        if(imgIn[i] == NULL) {
+        5:  161-block  0
+        -:  162:            return false;
+        -:  163:        } else {
+       10:  164:            if(!imgIn[i]->isValid()) {
+        5:  164-block  0
+        5:  164-block  1
+        -:  165:                return false;
+        -:  166:            }
+        -:  167:        }
+        -:  168:    }
+        -:  169:
+        -:  170:    return true;
+        -:  171:}
+        -:  172:
+        -:  173:} // end namespace pic
+        -:  174:
+        -:  175:#endif /* PIC_IMAGE_RAW_VEC_HPP */
+        -:  176:

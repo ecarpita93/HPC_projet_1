@@ -1,0 +1,547 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/io/hdr.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IO_HDR_HPP
+        -:   19:#define PIC_IO_HDR_HPP
+        -:   20:
+        -:   21:#include <stdio.h>
+        -:   22:#include <string.h>
+        -:   23:
+        -:   24:#include "../colors/rgbe.hpp"
+        -:   25:#include "../base.hpp"
+        -:   26://SYSTEM: X NEG Y POS
+        -:   27:
+        -:   28:namespace pic {
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief ReadHDR reads a .hdr/.pic file.
+        -:   32: * @param nameFile
+        -:   33: * @param data
+        -:   34: * @param width
+        -:   35: * @param height
+        -:   36: * @return
+        -:   37: */
+    #####:   38:PIC_INLINE float *ReadHDR(std::string nameFile, float *data, int &width,
+        -:   39:                          int &height)
+        -:   40:{
+    #####:   41:    FILE *file = fopen(nameFile.c_str(), "rb");
+    %%%%%:   41-block  0
+        -:   42:
+    #####:   43:    if(file == NULL) {
+        -:   44:        return NULL;
+        -:   45:    }
+        -:   46:
+    #####:   47:    char tmp[512];
+        -:   48:
+        -:   49:    //Is it a Radiance file?
+    #####:   50:    fscanf(file, "%s\n", tmp);
+    %%%%%:   50-block  0
+        -:   51:
+    #####:   52:    if(strcmp(tmp, "#?RADIANCE") != 0) {
+        -:   53:        return NULL;
+        -:   54:    }
+        -:   55:
+    #####:   56:    while(true) { //Reading Radiance Header
+    #####:   57:        std::string line = "";
+    %%%%%:   57-block  0
+    %%%%%:   57-block  1
+        -:   58:
+    #####:   59:        while(true) { //read property line
+    #####:   60:            char *tmp2 = fgets(tmp, 512, file);
+    %%%%%:   60-block  0
+        -:   61:
+    #####:   62:            if(tmp2 == NULL) {
+    %%%%%:   62-block  0
+    #####:   63:                return NULL;
+    %%%%%:   63-block  0
+        -:   64:            }
+        -:   65:
+    #####:   66:            line += tmp2;
+    %%%%%:   66-block  0
+    #####:   67:            size_t pos = line.find("\n");
+    %%%%%:   67-block  0
+        -:   68:
+    #####:   69:            if(pos != std::string::npos) {
+        -:   70:                break;
+        -:   71:            }
+        -:   72:        }
+        -:   73:
+    #####:   74:        if(line.compare("\n") == 0) {
+    %%%%%:   74-block  0
+        -:   75:            break;
+        -:   76:        }
+        -:   77:
+        -:   78:        //Properties:
+    #####:   79:        if(line.find("FORMAT") != std::string::npos) { //Format
+    %%%%%:   79-block  0
+    #####:   80:            if(line.find("32-bit_rle_rgbe") == std::string::npos) {
+    %%%%%:   80-block  0
+        -:   81:                return NULL;
+        -:   82:            }
+        -:   83:        }
+        -:   84:
+    #####:   85:        if(line.find("EXPOSURE=") != std::string::npos) { //Exposure
+    %%%%%:   85-block  0
+        -:   86:            //TODO: ...
+        -:   87:        }
+        -:   88:    }
+        -:   89:
+        -:   90:    //width and height
+    #####:   91:    fscanf(file, "-Y %d +X %d", &height, &width);
+    %%%%%:   91-block  0
+    #####:   92:    fgetc(file);
+        -:   93:
+    #####:   94:    if(data == NULL) {
+    #####:   95:        data = new float[width * height * 3];
+    %%%%%:   95-block  0
+    %%%%%:   95-block  1
+    %%%%%:   95-block  2
+        -:   96:    }
+        -:   97:
+        -:   98:    //File size
+    #####:   99:    long int s_cur = ftell(file);
+    %%%%%:   99-block  0
+    #####:  100:    fseek(file, 0 , SEEK_END);
+    #####:  101:    long int s_end = ftell(file);
+    #####:  102:    fseek(file, s_cur, SEEK_SET);
+    #####:  103:    int total = s_end - s_cur;
+        -:  104:
+        -:  105:#ifdef PIC_DEBUG
+        -:  106:    printf("%d %d\n", total, width * height * 4);
+        -:  107:#endif
+        -:  108:
+        -:  109:    //Compressed?
+    #####:  110:    if(total == (width * height * 4)) { //uncompressed
+        -:  111:        unsigned char colRGBE[4];
+        -:  112:
+        -:  113:        int c = 0;
+        -:  114:
+    #####:  115:        for(int i = 0; i < width; i++) {
+    %%%%%:  115-block  0
+    %%%%%:  115-block  1
+    #####:  116:            for(int j = 0; j < height; j++) {
+    %%%%%:  116-block  0
+    #####:  117:                fread(colRGBE, 1, 4, file);
+    %%%%%:  117-block  0
+    #####:  118:                fromRGBEToFloat(colRGBE, &data[c]);
+    #####:  119:                c += 3;
+        -:  120:            }
+        -:  121:        }
+        -:  122:    } else { //RLE compressed
+    #####:  123:        unsigned char *buffer = new unsigned char[total];
+    %%%%%:  123-block  0
+    #####:  124:        fread(buffer, sizeof(unsigned char)*total, 1, file);
+        -:  125:
+    #####:  126:        int line_width3 = width * 3;
+    #####:  127:        int line_width4 = width * 4;
+        -:  128:
+    #####:  129:        unsigned char *buffer_line_start;
+    #####:  130:        unsigned char *buffer_line = new unsigned char[line_width4];
+    %%%%%:  130-block  0
+        -:  131:        int c = 4;
+        -:  132:        int c_buffer_line = 0;
+        -:  133:
+        -:  134:        //for each line
+    #####:  135:        for(int i = 0; i < height; i++) {
+    %%%%%:  135-block  0
+    #####:  136:            buffer_line_start = &buffer[c - 4];
+        -:  137:
+    #####:  138:            int width_check  = buffer_line_start[2];
+    #####:  139:            int width_check2 = buffer_line_start[3];
+        -:  140:
+    #####:  141:            bool b1 = buffer_line_start[0] != 2;
+    #####:  142:            bool b2 = buffer_line_start[1] != 2;
+    #####:  143:            bool b3 = width_check  != (width >> 8); 
+    #####:  144:            bool b4 = width_check2 != (width & 0xFF);
+        -:  145:
+    #####:  146:            if(b1 || b2 || b3 || b4) {
+    %%%%%:  146-block  0
+    %%%%%:  146-block  1
+        -:  147:                #ifdef PIC_DEBUG
+        -:  148:                    printf("ReadHDR ERROR: the file is not a RLE encoded .hdr file.\n");
+        -:  149:                #endif
+        -:  150:
+    #####:  151:                fclose(file);
+        -:  152:
+    #####:  153:                return NULL;
+    %%%%%:  153-block  0
+        -:  154:            }
+        -:  155:
+    #####:  156:            for(int j = 0; j < 4; j++) {
+    %%%%%:  156-block  0
+    %%%%%:  156-block  1
+        -:  157:                int k = 0;
+        -:  158:
+        -:  159:                //decompression of a single channel line
+    #####:  160:                while(k < width) {
+    %%%%%:  160-block  0
+    #####:  161:                    int num = buffer[c];
+        -:  162:
+    #####:  163:                    if(num > 128) {
+    %%%%%:  163-block  0
+    #####:  164:                        num -= 128;
+        -:  165:
+    #####:  166:                        for(int l = k; l < (k + num); l++) {
+    %%%%%:  166-block  0
+    %%%%%:  166-block  1
+    #####:  167:                            buffer_line[l * 4 + j] = buffer[c + 1];
+    %%%%%:  167-block  0
+        -:  168:                        }
+        -:  169:
+    #####:  170:                        c += 2;
+    #####:  171:                        k += num;
+    %%%%%:  171-block  0
+        -:  172:                    } else {
+    #####:  173:                        for(int l = 0; l < num; l++) {
+    %%%%%:  173-block  0
+    #####:  174:                            buffer_line[(l + k) * 4 + j] = buffer[c + 1 + l];
+    %%%%%:  174-block  0
+        -:  175:                        }
+        -:  176:
+    #####:  177:                        c += num + 1;
+    #####:  178:                        k += num;
+    %%%%%:  178-block  0
+        -:  179:                    }
+        -:  180:                }
+        -:  181:            }
+        -:  182:
+        -:  183:            //From RGBE to Float
+    #####:  184:            for(int j = 0; j < width; j++) {
+    %%%%%:  184-block  0
+    #####:  185:                fromRGBEToFloat(&buffer_line[j * 4], &data[c_buffer_line + j * 3]);
+    %%%%%:  185-block  0
+        -:  186:            }
+        -:  187:
+    #####:  188:            c += 4;
+    #####:  189:            c_buffer_line += line_width3;
+    %%%%%:  189-block  0
+        -:  190:        }
+        -:  191:
+    #####:  192:        delete[] buffer_line;
+    %%%%%:  192-block  0
+    #####:  193:        delete[] buffer;
+        -:  194:    }
+        -:  195:
+    #####:  196:    fclose(file);
+    %%%%%:  196-block  0
+        -:  197:    return data;
+        -:  198:}
+        -:  199:
+        -:  200:/**
+        -:  201: * @brief WriteLineHDR writes a scanline of an image using RLE and RGBE encoding.
+        -:  202: * @param file
+        -:  203: * @param buffer_line
+        -:  204: * @param width
+        -:  205: */
+     1708:  206:PIC_INLINE void WriteLineHDR(FILE *file, unsigned char *buffer_line, int width)
+        -:  207:{
+     1708:  208:    int cur_pointer = 0;
+     1708:  208-block  0
+        -:  209:
+    18114:  210:    while(cur_pointer < width) {
+    18114:  210-block  0
+        -:  211:        int run_length = 0;
+        -:  212:        int run_length_old = 0;
+        -:  213:
+        -:  214:        int run_start = cur_pointer;
+        -:  215:
+        -:  216:        //we need to find a long run; length>3
+   822223:  217:        while((run_length < 4 ) && (run_start < width)) {
+   822223:  217-block  0
+   805817:  218:            run_start += run_length;
+   805817:  219:            run_length_old = run_length;
+        -:  220:
+   805817:  221:            int start = (run_start + 1);
+   805817:  222:            int end = MIN(run_start + 127, width); 
+   805817:  223:            unsigned char tmp = buffer_line[run_start];
+   805817:  224:            run_length = 1;
+        -:  225:
+        -:  226:            //finding a run
+  1094465:  227:            for(int i=start; i<end; i++) {
+   805817:  227-block  0
+  1094465:  227-block  1
+  1091291:  228:                if(tmp == buffer_line[i]) {
+  1091291:  228-block  0
+   288648:  229:                    run_length++;
+   288648:  229-block  0
+        -:  230:                } else {
+        -:  231:                    break;
+        -:  232:                }
+        -:  233:            }
+        -:  234:        }
+        -:  235:
+        -:  236:        //do we have a short run <4 before a long one?
+    16406:  237:        if((run_length_old > 1) && (run_length_old == (run_start - cur_pointer))){
+    16406:  237-block  0
+     3581:  237-block  1
+     1435:  238:            unsigned char length_to_write = run_length_old + 128;
+     1435:  239:            unsigned char value_to_write = buffer_line[cur_pointer];
+     1435:  240:            fwrite(&length_to_write, sizeof(unsigned char), 1, file);
+     1435:  240-block  0
+     1435:  241:            fwrite(&value_to_write, sizeof(unsigned char), 1, file);
+        -:  242:
+     1435:  243:            cur_pointer = run_start;
+        -:  244:        }
+        -:  245:
+        -:  246:        //writing non-runs
+    30268:  247:        while(cur_pointer < run_start) {
+    30268:  247-block  0
+    13862:  248:            int non_run_length = run_start - cur_pointer;
+        -:  249:
+    13862:  250:            if(non_run_length > 128) {
+    13862:  250-block  0
+     5015:  251:                unsigned char length_to_write = 128;
+     5015:  252:                fwrite(&length_to_write, sizeof(unsigned char), 1, file);
+     5015:  252-block  0
+     5015:  253:                fwrite(&buffer_line[cur_pointer], sizeof(unsigned char)*length_to_write, 1, file);
+        -:  254:
+     5015:  255:                cur_pointer += length_to_write;
+        -:  256:            } else {
+     8847:  257:                fwrite(&non_run_length, sizeof(unsigned char), 1, file);
+     8847:  257-block  0
+     8847:  258:                fwrite(&buffer_line[cur_pointer], sizeof(unsigned char)*non_run_length, 1, file);
+        -:  259:
+     8847:  260:                cur_pointer += non_run_length;
+        -:  261:            }
+        -:  262:        }
+        -:  263:
+        -:  264:        //writing the found long run
+    16406:  265:        if(run_length > 3) {
+    16406:  265-block  0
+    15061:  266:            unsigned char length_to_write = run_length + 128;
+    15061:  267:            unsigned char value_to_write = buffer_line[run_start];
+    15061:  268:            fwrite(&length_to_write, sizeof(unsigned char), 1, file);
+    15061:  268-block  0
+    15061:  269:            fwrite(&value_to_write, sizeof(unsigned char), 1, file);
+        -:  270:
+    15061:  271:            cur_pointer += run_length;
+        -:  272:        }
+        -:  273:
+        -:  274:    }
+     1708:  275:}
+        -:  276:
+        -:  277:/**
+        -:  278: * @brief WriteHDR  writes a .hdr/.pic file
+        -:  279: * @param nameFile
+        -:  280: * @param data
+        -:  281: * @param width
+        -:  282: * @param height
+        -:  283: * @param channels
+        -:  284: * @param appliedExposure
+        -:  285: * @param bRLE
+        -:  286: * @return
+        -:  287: */
+        1:  288:PIC_INLINE bool WriteHDR(std::string nameFile, float *data, int width,
+        -:  289:                         int height, int channels, float appliedExposure = 1.0f, bool bRLE = true)
+        -:  290:{
+        1:  291:    FILE *file;
+        -:  292:
+        1:  293:    if(data==NULL) {
+        1:  293-block  0
+        -:  294:        return false;
+        -:  295:    }
+        -:  296:    
+        1:  297:    file = fopen(nameFile.c_str(), "wb");
+        1:  297-block  0
+        -:  298:
+        1:  299:    if( file == NULL) {
+        -:  300:        return false;
+        -:  301:    }
+        -:  302:
+        1:  303:    if((channels == 2) || (channels == 0)) {
+        1:  303-block  0
+        -:  304:        return false;
+        -:  305:    }
+        -:  306:
+        -:  307:    //writing the header...
+        1:  308:    fprintf(file, "#?RADIANCE\n");
+        1:  308-block  0
+        1:  309:    fprintf(file, "#Spiced by Piccante\n");
+        1:  310:    fprintf(file, "FORMAT=32-bit_rle_rgbe\n");
+        1:  311:    fprintf(file, "EXPOSURE= %f\n\n", appliedExposure);
+        1:  312:    fprintf(file, "-Y %d +X %d\n", height, width);
+        -:  313:
+        -:  314:    //RLE encoding is not allowed in some cases
+       1*:  315:    if(((width < 8) || (width > 32767)) && bRLE) {
+    %%%%%:  315-block  0
+        -:  316:        bRLE = false;
+        -:  317:    }
+        -:  318:
+        1:  319:    if(bRLE) {
+        1:  319-block  0
+        -:  320:        //buffers
+        1:  321:        unsigned char *buffer_line = new unsigned char[width * 4];
+        1:  321-block  0
+        1:  322:        unsigned char buffer_rgbe[4];
+        1:  323:        unsigned char buffer_line_start[4];
+        -:  324:
+        -:  325:        //new line start "header"
+        1:  326:        buffer_line_start[0] = 2;
+        1:  327:        buffer_line_start[1] = 2;
+        1:  328:        buffer_line_start[2] = width >> 8;
+        1:  329:        buffer_line_start[3] = width & 0xFF;
+        -:  330:
+        1:  331:        int width2 = width * 2;
+        1:  332:        int width3 = width * 3;
+        -:  333:
+      428:  334:        for(int i=0; i<height; i++) {
+      428:  334-block  0
+      427:  334-block  1
+      427:  335:            int ind = i * width;
+        -:  336:
+        -:  337:            //Converting the line data into the RGBE format
+   273707:  338:            for(int j = 0; j < width; j++) {
+      427:  338-block  0
+   273707:  338-block  1
+   273280:  339:                int ind2 = (ind + j) * channels;
+        -:  340:
+   273280:  341:                if(channels == 1) {
+   273280:  341-block  0
+    #####:  342:                    fromSingleFloatToRGBE(&data[ind2], buffer_rgbe);
+    %%%%%:  342-block  0
+        -:  343:                } else {
+   273280:  344:                    fromFloatToRGBE(&data[ind2], buffer_rgbe);
+   273280:  344-block  0
+        -:  345:                }
+        -:  346:
+   273280:  347:                buffer_line[         j] = buffer_rgbe[0];
+   273280:  348:                buffer_line[width  + j] = buffer_rgbe[1];
+   273280:  349:                buffer_line[width2 + j] = buffer_rgbe[2];
+   273280:  350:                buffer_line[width3 + j] = buffer_rgbe[3];
+   273280:  350-block  0
+        -:  351:            }
+        -:  352:
+        -:  353:            //Here a new line start
+      427:  354:            fwrite(buffer_line_start, sizeof(unsigned char)*4, 1, file);
+      427:  354-block  0
+        -:  355:
+        -:  356:            //RLE encoding for each line
+     2135:  357:            for(int j=0; j<4; j++) {
+     2135:  357-block  0
+     1708:  358:                WriteLineHDR(file, &buffer_line[j * width], width);
+     1708:  358-block  0
+        -:  359:            }
+        -:  360:        }
+        -:  361:
+        -:  362:    } else {
+        -:  363:        unsigned char colRGBE[4];
+    #####:  364:        for(int j = 0; j < height; j++) {
+    %%%%%:  364-block  0
+    %%%%%:  364-block  1
+    #####:  365:            int ind = j * width;
+        -:  366:
+    #####:  367:            for(int i = 0; i < width; i++) {
+    %%%%%:  367-block  0
+    %%%%%:  367-block  1
+    #####:  368:                int c = (ind + i);
+        -:  369:
+    #####:  370:                if(channels == 3) {
+    %%%%%:  370-block  0
+    #####:  371:                    c *= 3;
+    #####:  372:                    fromFloatToRGBE(&data[c], colRGBE);
+    %%%%%:  372-block  0
+        -:  373:                } else {
+    #####:  374:                    fromSingleFloatToRGBE(&data[c], colRGBE);
+    %%%%%:  374-block  0
+        -:  375:                }
+        -:  376:
+    #####:  377:                fwrite(colRGBE, 1, 4 * sizeof(unsigned char), file);
+    %%%%%:  377-block  0
+        -:  378:            }
+        -:  379:        }
+        -:  380:    }
+        -:  381:
+        1:  382:    fclose(file);
+        1:  383:    return true;
+        1:  383-block  0
+        -:  384:}
+        -:  385:
+        -:  386:/**
+        -:  387: * @brief WriteHDRBlock writes a .hdr file.
+        -:  388: * @param nameFile
+        -:  389: * @param buffer_line
+        -:  390: * @param width
+        -:  391: * @param height
+        -:  392: * @param channels
+        -:  393: * @param blockID
+        -:  394: * @param nBlocks
+        -:  395: * @return
+        -:  396: */
+        -:  397:PIC_INLINE bool WriteHDRBlock(std::string nameFile, float *buffer_line, int width,
+        -:  398:                              int height, int channels, int blockID, int nBlocks)
+        -:  399:{
+        -:  400:    FILE *file;
+        -:  401:
+        -:  402:    if((file = fopen(nameFile.c_str(), "wb")) == NULL || (buffer_line == NULL)) {
+        -:  403:        return false;
+        -:  404:    }
+        -:  405:
+        -:  406:    //TODO: compressed version!
+        -:  407:
+        -:  408:    //writing the header...
+        -:  409:    if(nBlocks < 1) {
+        -:  410:        nBlocks = 10;
+        -:  411:    }
+        -:  412:
+        -:  413:    int blockWidth = width / nBlocks;
+        -:  414:
+        -:  415:    int xStart = blockWidth * blockID;
+        -:  416:    int xEnd   = xStart + blockWidth;
+        -:  417:
+        -:  418:    if(xEnd > width) {
+        -:  419:        xEnd = width;
+        -:  420:    }
+        -:  421:
+        -:  422:    blockWidth = xEnd - xStart;
+        -:  423:
+        -:  424:    fprintf(file, "#?RADIANCE\n");
+        -:  425:    fprintf(file, "#Spiced by Piccante\n");
+        -:  426:    fprintf(file, "FORMAT=32-bit_rle_rgbe\n");
+        -:  427:    fprintf(file, "EXPOSURE= 1.0\n\n");
+        -:  428:    fprintf(file, "-Y %d +X %d\n", height, blockWidth);
+        -:  429:
+        -:  430:    unsigned char colRGBE[4];
+        -:  431:
+        -:  432:    for(int j = 0; j < height; j++) {
+        -:  433:        int ind = j * width;
+        -:  434:
+        -:  435:        for(int i = xStart; i < xEnd; i++) {
+        -:  436:            int c = (ind + i);
+        -:  437:
+        -:  438:            if(channels == 3) {
+        -:  439:                c *= 3;
+        -:  440:                fromFloatToRGBE(&buffer_line[c], colRGBE);
+        -:  441:            } else {
+        -:  442:                fromSingleFloatToRGBE(&buffer_line[c], colRGBE);
+        -:  443:            }
+        -:  444:
+        -:  445:            fwrite(colRGBE, 1, 4 * sizeof(unsigned char), file);
+        -:  446:        }
+        -:  447:    }
+        -:  448:
+        -:  449:    fclose(file);
+        -:  450:    return true;
+        -:  451:}
+        -:  452:
+        -:  453:} // end namespace pic
+        -:  454:
+        -:  455:#endif /* PIC_IO_HDR_HPP */
+        -:  456:

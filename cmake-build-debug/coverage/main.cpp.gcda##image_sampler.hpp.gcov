@@ -1,0 +1,217 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/image_sampler.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_IMAGE_SAMPLER_HPP
+        -:   19:#define PIC_UTIL_IMAGE_SAMPLER_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:#include "../util/math.hpp"
+        -:   24:
+        -:   25:namespace pic {
+        -:   26:
+        -:   27:/*
+        -:   28:			a--x----b
+        -:   29:			|  |	|
+        -:   30:			y--?----y
+        -:   31:			|  |	|
+        -:   32:			c--x----d
+        -:   33:*/
+        -:   34:
+        -:   35:/**
+        -:   36: * @brief Bilinear calculates 2D bilinear interpolation at the point (x,y).
+        -:   37: * @param a is the NW pixel value.
+        -:   38: * @param b is the NE pixel value.
+        -:   39: * @param c is the SW pixel value.
+        -:   40: * @param d is the SE pixel value.
+        -:   41: * @param x is the horizontal coordinate.
+        -:   42: * @param y is the vertical coordinate.
+        -:   43: * @return the evaluation of the B-spline.
+        -:   44: */
+    #####:   45:template<class Scalar> inline Scalar Bilinear(Scalar a, Scalar b, Scalar c, Scalar d, float x, float y)
+        -:   46:{
+    #####:   47:    Scalar px0 = a + y * (c - a);
+    #####:   48:    Scalar px1 = b + y * (d - b);
+    #####:   49:    return px0 + x * (px1 - px0);
+    %%%%%:   49-block  0
+    %%%%%:   49-block  1
+        -:   50:}
+        -:   51:
+        -:   52:/**
+        -:   53: * @brief invBilinear
+        -:   54: * @param A
+        -:   55: * @param dx
+        -:   56: * @param dy
+        -:   57: * @param out
+        -:   58: */
+        -:   59:inline void invBilinear(float A, float dx, float dy, float *out)
+        -:   60:{
+        -:   61:    dx = CLAMPi(dx, 0.0f, 1.0f);
+        -:   62:    dy = CLAMPi(dy, 0.0f, 1.0f);
+        -:   63:
+        -:   64:    out[0] = A * dx;
+        -:   65:    out[1] = A * (1.0f - dx);
+        -:   66:
+        -:   67:    float i_dy = 1.0f - dy;
+        -:   68:    out[2] = out[0] * i_dy;
+        -:   69:    out[3] = out[1] * i_dy;
+        -:   70:
+        -:   71:    out[0] = out[0] * dy;
+        -:   72:    out[1] = out[0] * dy;
+        -:   73:}
+        -:   74:
+        -:   75:/**
+        -:   76: * @brief Rx evaluates B-spline (cubic).
+        -:   77: * @param x is the curve parameter in [0, 1].
+        -:   78: * @return the evaluation of the B-spline.
+        -:   79: */
+    #####:   80:inline float Rx(float x)
+        -:   81:{
+    #####:   82:    float px_1 = MAX(x - 1.0f, 0.0f);
+    %%%%%:   82-block  0
+    %%%%%:   82-block  1
+    #####:   83:    float px   = MAX(x,        0.0f);
+    #####:   84:    float px1  = MAX(x + 1.0f, 0.0f);
+    %%%%%:   84-block  0
+    %%%%%:   84-block  1
+    #####:   85:    float px2  = MAX(x + 2.0f, 0.0f);
+    %%%%%:   85-block  0
+    %%%%%:   85-block  1
+        -:   86:
+    #####:   87:    return (         px2  * px2  * px2
+    #####:   88:            - 4.0f * px1  * px1  * px1 +
+    #####:   89:              6.0f * px   * px   * px
+    #####:   90:            - 4.0f * px_1 * px_1 * px_1
+    #####:   91:           ) / 6.0f;
+        -:   92:}
+        -:   93:
+        -:   94:/**
+        -:   95: * @brief MitchellNetravali
+        -:   96: * @param x
+        -:   97: * @param B
+        -:   98: * @param C
+        -:   99: * @return
+        -:  100: */
+        -:  101:inline float MitchellNetravali(float x, float B, float C)
+        -:  102:{
+        -:  103:    float y = fabsf(x);
+        -:  104:    if(y < 1.0f) {
+        -:  105:        float y_sq = y * y;
+        -:  106:        float t_3 =  12.0f - 9.0f * B - 6.0f * C;
+        -:  107:        float t_2 = -18.0f + 12.0f * B + 6.0f * C;
+        -:  108:        float c   = 6.0f - 2.0f * B;
+        -:  109:        return (t_3 * y_sq * y + t_2 * y_sq + c) / 6.0f;
+        -:  110:    } else {
+        -:  111:        if(y < 2.0f) {
+        -:  112:            float y_sq = y * y;
+        -:  113:            float t_3 = -B - 6.0f * C;
+        -:  114:            float t_2 = 6.0f * B + 30.0f * C;
+        -:  115:            float t_1 = -12.0f * B - 48.0f * C;
+        -:  116:            float c   = 8.0f * B + 24.0f * C;
+        -:  117:            return (t_3 * y_sq * y + t_2 * y_sq + t_1 * y + c) / 6.0f;
+        -:  118:        } else {
+        -:  119:            return 0.0f;
+        -:  120:        }
+        -:  121:    }
+        -:  122:}
+        -:  123:
+        -:  124:/**
+        -:  125: * @brief Bicubic
+        -:  126: * @param x
+        -:  127: * @return
+        -:  128: */
+    #####:  129:inline float Bicubic(float x)
+        -:  130:{
+    #####:  131:    float y = fabsf(x);
+    #####:  132:    if(y < 1.0f) {
+    %%%%%:  132-block  0
+    #####:  133:        float y_sq = y * y;
+    #####:  134:        return (3.0f * y_sq * y -6.0f * y_sq + 4.0f) / 6.0f;
+    %%%%%:  134-block  0
+        -:  135:    } else {
+    #####:  136:        if(y < 2.0f) {
+    %%%%%:  136-block  0
+    #####:  137:            float y_sq = y * y;
+    #####:  138:            return (-1.0f * y_sq * y + 6.0f * y_sq - 12.0f * y + 8.0f) / 6.0f;
+    %%%%%:  138-block  0
+        -:  139:        } else {
+        -:  140:            return 0.0f;
+        -:  141:        }
+        -:  142:    }
+        -:  143:}
+        -:  144:
+        -:  145:/**
+        -:  146: * @brief CatmullRom
+        -:  147: * @param x
+        -:  148: * @return
+        -:  149: */
+    #####:  150:inline float CatmullRom(float x)
+        -:  151:{
+    #####:  152:    float y = fabsf(x);
+    #####:  153:    if(y < 1.0f) {
+    %%%%%:  153-block  0
+    #####:  154:        float y_sq = y * y;
+    #####:  155:        return (9.0f * y_sq * y - 15.0f * y_sq + 6.0f) / 6.0f;
+    %%%%%:  155-block  0
+        -:  156:    } else {
+    #####:  157:        if(y < 2.0f) {
+    %%%%%:  157-block  0
+    #####:  158:            float y_sq = y * y;
+    #####:  159:            return (-3.0f * y_sq * y + 15.0f * y_sq -24.0f * y + 12.0f) / 6.0f;
+    %%%%%:  159-block  0
+        -:  160:        } else {
+        -:  161:            return 0.0f;
+        -:  162:        }
+        -:  163:    }
+        -:  164:}
+        -:  165:
+        -:  166:/**
+        -:  167: * @brief Lanczos
+        -:  168: * @param x
+        -:  169: * @param a
+        -:  170: * @return
+        -:  171: */
+    #####:  172:inline float Lanczos(float x, float a)
+        -:  173:{
+    #####:  174:    float y = fabsf(x);
+        -:  175:
+    #####:  176:    if(y > 0.0f && y < a) {
+    %%%%%:  176-block  0
+    #####:  177:        float t = C_PI * x;
+    #####:  178:        float d = C_PI_2 * x * x;
+        -:  179:
+    #####:  180:        return (a * sinf(t) * sinf(t / a)) / d;
+    %%%%%:  180-block  0
+        -:  181:    } else {
+    #####:  182:        if(y > 0.0f) {
+    %%%%%:  182-block  0
+        -:  183:            return 0.0f;
+        -:  184:        } else {
+    #####:  185:            return 1.0f;
+    %%%%%:  185-block  0
+        -:  186:        }
+        -:  187:    }
+        -:  188:}
+        -:  189:
+        -:  190:} // end namespace pic
+        -:  191:
+        -:  192:#endif /* PIC_UTIL_IMAGE_SAMPLER_HPP */
+        -:  193:

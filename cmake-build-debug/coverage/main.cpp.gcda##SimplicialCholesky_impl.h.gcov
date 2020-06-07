@@ -1,0 +1,536 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/SparseCholesky/SimplicialCholesky_impl.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2008-2012 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5:
+        -:    6:/*
+        -:    7:
+        -:    8:NOTE: thes functions vave been adapted from the LDL library:
+        -:    9:
+        -:   10:LDL Copyright (c) 2005 by Timothy A. Davis.  All Rights Reserved.
+        -:   11:
+        -:   12:LDL License:
+        -:   13:
+        -:   14:    Your use or distribution of LDL or any modified version of
+        -:   15:    LDL implies that you agree to this License.
+        -:   16:
+        -:   17:    This library is free software; you can redistribute it and/or
+        -:   18:    modify it under the terms of the GNU Lesser General Public
+        -:   19:    License as published by the Free Software Foundation; either
+        -:   20:    version 2.1 of the License, or (at your option) any later version.
+        -:   21:
+        -:   22:    This library is distributed in the hope that it will be useful,
+        -:   23:    but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   24:    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+        -:   25:    Lesser General Public License for more details.
+        -:   26:
+        -:   27:    You should have received a copy of the GNU Lesser General Public
+        -:   28:    License along with this library; if not, write to the Free Software
+        -:   29:    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
+        -:   30:    USA
+        -:   31:
+        -:   32:    Permission is hereby granted to use or copy this program under the
+        -:   33:    terms of the GNU LGPL, provided that the Copyright, this License,
+        -:   34:    and the Availability of the original version is retained on all copies.
+        -:   35:    User documentation of any code that uses this code or any modified
+        -:   36:    version of this code must cite the Copyright, this License, the
+        -:   37:    Availability note, and "Used by permission." Permission to modify
+        -:   38:    the code and to distribute modified code is granted, provided the
+        -:   39:    Copyright, this License, and the Availability note are retained,
+        -:   40:    and a notice that the code was modified is included.
+        -:   41: */
+        -:   42:
+        -:   43:#include "../Core/util/NonMPL2.h"
+        -:   44:
+        -:   45:#ifndef EIGEN_SIMPLICIAL_CHOLESKY_IMPL_H
+        -:   46:#define EIGEN_SIMPLICIAL_CHOLESKY_IMPL_H
+        -:   47:
+        -:   48:namespace Eigen {
+        -:   49:
+        -:   50:template<typename Derived>
+    #####:   51:void SimplicialCholeskyBase<Derived>::analyzePattern_preordered(const CholMatrixType& ap, bool doLDLT)
+        -:   52:{
+    #####:   53:  const StorageIndex size = StorageIndex(ap.rows());
+    %%%%%:   53-block  0
+    #####:   54:  m_matrix.resize(size, size);
+    %%%%%:   54-block  0
+    #####:   55:  m_parent.resize(size);
+    #####:   56:  m_nonZerosPerCol.resize(size);
+        -:   57:
+    #####:   58:  ei_declare_aligned_stack_constructed_variable(StorageIndex, tags, size, 0);
+    %%%%%:   58-block  0
+    %%%%%:   58-block  1
+    %%%%%:   58-block  2
+    %%%%%:   58-block  3
+        -:   59:
+    #####:   60:  for(StorageIndex k = 0; k < size; ++k)
+    %%%%%:   60-block  0
+    %%%%%:   60-block  1
+    %%%%%:   60-block  2
+        -:   61:  {
+        -:   62:    /* L(k,:) pattern: all nodes reachable in etree from nz in A(0:k-1,k) */
+    #####:   63:    m_parent[k] = -1;             /* parent of k is not yet known */
+    %%%%%:   63-block  0
+    #####:   64:    tags[k] = k;                  /* mark node k as visited */
+    #####:   65:    m_nonZerosPerCol[k] = 0;      /* count of nonzeros in column k of L */
+    #####:   66:    for(typename CholMatrixType::InnerIterator it(ap,k); it; ++it)
+    %%%%%:   66-block  0
+    %%%%%:   66-block  1
+        -:   67:    {
+    #####:   68:      StorageIndex i = it.index();
+    %%%%%:   68-block  0
+    #####:   69:      if(i < k)
+    %%%%%:   69-block  0
+        -:   70:      {
+        -:   71:        /* follow path from i to root of etree, stop at flagged node */
+    #####:   72:        for(; tags[i] != k; i = m_parent[i])
+    %%%%%:   72-block  0
+        -:   73:        {
+        -:   74:          /* find parent of i if not yet determined */
+    #####:   75:          if (m_parent[i] == -1)
+    %%%%%:   75-block  0
+    #####:   76:            m_parent[i] = k;
+    %%%%%:   76-block  0
+    #####:   77:          m_nonZerosPerCol[i]++;        /* L (k,i) is nonzero */
+    %%%%%:   77-block  0
+    #####:   78:          tags[i] = k;                  /* mark i as visited */
+        -:   79:        }
+        -:   80:      }
+        -:   81:    }
+        -:   82:  }
+        -:   83:
+        -:   84:  /* construct Lp index array from m_nonZerosPerCol column counts */
+    #####:   85:  StorageIndex* Lp = m_matrix.outerIndexPtr();
+    %%%%%:   85-block  0
+    #####:   86:  Lp[0] = 0;
+    #####:   87:  for(StorageIndex k = 0; k < size; ++k)
+    %%%%%:   87-block  0
+    %%%%%:   87-block  1
+    #####:   88:    Lp[k+1] = Lp[k] + m_nonZerosPerCol[k] + (doLDLT ? 0 : 1);
+    %%%%%:   88-block  0
+    %%%%%:   88-block  1
+        -:   89:
+    #####:   90:  m_matrix.resizeNonZeros(Lp[size]);
+    %%%%%:   90-block  0
+        -:   91:
+    #####:   92:  m_isInitialized     = true;
+    #####:   93:  m_info              = Success;
+    #####:   94:  m_analysisIsOk      = true;
+    #####:   95:  m_factorizationIsOk = false;
+    %%%%%:   95-block  0
+    #####:   96:}
+    %%%%%:   96-block  0
+        -:   97:
+        -:   98:
+        -:   99:template<typename Derived>
+        -:  100:template<bool DoLDLT>
+    #####:  101:void SimplicialCholeskyBase<Derived>::factorize_preordered(const CholMatrixType& ap)
+        -:  102:{
+        -:  103:  using std::sqrt;
+        -:  104:
+    #####:  105:  eigen_assert(m_analysisIsOk && "You must first call analyzePattern()");
+    #####:  106:  eigen_assert(ap.rows()==ap.cols());
+    #####:  107:  eigen_assert(m_parent.size()==ap.rows());
+    #####:  108:  eigen_assert(m_nonZerosPerCol.size()==ap.rows());
+        -:  109:
+    #####:  110:  const StorageIndex size = StorageIndex(ap.rows());
+    #####:  111:  const StorageIndex* Lp = m_matrix.outerIndexPtr();
+    #####:  112:  StorageIndex* Li = m_matrix.innerIndexPtr();
+    #####:  113:  Scalar* Lx = m_matrix.valuePtr();
+        -:  114:
+    #####:  115:  ei_declare_aligned_stack_constructed_variable(Scalar, y, size, 0);
+    #####:  116:  ei_declare_aligned_stack_constructed_variable(StorageIndex,  pattern, size, 0);
+    #####:  117:  ei_declare_aligned_stack_constructed_variable(StorageIndex,  tags, size, 0);
+        -:  118:
+    #####:  119:  bool ok = true;
+    #####:  120:  m_diag.resize(DoLDLT ? size : 0);
+        -:  121:
+    #####:  122:  for(StorageIndex k = 0; k < size; ++k)
+        -:  123:  {
+        -:  124:    // compute nonzero pattern of kth row of L, in topological order
+    #####:  125:    y[k] = 0.0;                     // Y(0:k) is now all zero
+    #####:  126:    StorageIndex top = size;               // stack for pattern is empty
+    #####:  127:    tags[k] = k;                    // mark node k as visited
+    #####:  128:    m_nonZerosPerCol[k] = 0;        // count of nonzeros in column k of L
+    #####:  129:    for(typename CholMatrixType::InnerIterator it(ap,k); it; ++it)
+        -:  130:    {
+    #####:  131:      StorageIndex i = it.index();
+    #####:  132:      if(i <= k)
+        -:  133:      {
+    #####:  134:        y[i] += numext::conj(it.value());            /* scatter A(i,k) into Y (sum duplicates) */
+        -:  135:        Index len;
+    #####:  136:        for(len = 0; tags[i] != k; i = m_parent[i])
+        -:  137:        {
+    #####:  138:          pattern[len++] = i;     /* L(k,i) is nonzero */
+    #####:  139:          tags[i] = k;            /* mark i as visited */
+        -:  140:        }
+    #####:  141:        while(len > 0)
+    #####:  142:          pattern[--top] = pattern[--len];
+        -:  143:      }
+        -:  144:    }
+        -:  145:
+        -:  146:    /* compute numerical values kth row of L (a sparse triangular solve) */
+        -:  147:
+    #####:  148:    RealScalar d = numext::real(y[k]) * m_shiftScale + m_shiftOffset;    // get D(k,k), apply the shift function, and clear Y(k)
+    #####:  149:    y[k] = 0.0;
+    #####:  150:    for(; top < size; ++top)
+        -:  151:    {
+    #####:  152:      Index i = pattern[top];       /* pattern[top:n-1] is pattern of L(:,k) */
+    #####:  153:      Scalar yi = y[i];             /* get and clear Y(i) */
+    #####:  154:      y[i] = 0.0;
+        -:  155:
+        -:  156:      /* the nonzero entry L(k,i) */
+        -:  157:      Scalar l_ki;
+        -:  158:      if(DoLDLT)
+    #####:  159:        l_ki = yi / m_diag[i];
+        -:  160:      else
+    #####:  161:        yi = l_ki = yi / Lx[Lp[i]];
+        -:  162:
+    #####:  163:      Index p2 = Lp[i] + m_nonZerosPerCol[i];
+        -:  164:      Index p;
+    #####:  165:      for(p = Lp[i] + (DoLDLT ? 0 : 1); p < p2; ++p)
+    #####:  166:        y[Li[p]] -= numext::conj(Lx[p]) * yi;
+    #####:  167:      d -= numext::real(l_ki * numext::conj(yi));
+    #####:  168:      Li[p] = k;                          /* store L(k,i) in column form of L */
+    #####:  169:      Lx[p] = l_ki;
+    #####:  170:      ++m_nonZerosPerCol[i];              /* increment count of nonzeros in col i */
+        -:  171:    }
+        -:  172:    if(DoLDLT)
+        -:  173:    {
+    #####:  174:      m_diag[k] = d;
+    #####:  175:      if(d == RealScalar(0))
+        -:  176:      {
+        -:  177:        ok = false;                         /* failure, D(k,k) is zero */
+        -:  178:        break;
+        -:  179:      }
+        -:  180:    }
+        -:  181:    else
+        -:  182:    {
+    #####:  183:      Index p = Lp[k] + m_nonZerosPerCol[k]++;
+    #####:  184:      Li[p] = k ;                /* store L(k,k) = sqrt (d) in column k */
+    #####:  185:      if(d <= RealScalar(0)) {
+        -:  186:        ok = false;              /* failure, matrix is not positive definite */
+        -:  187:        break;
+        -:  188:      }
+    #####:  189:      Lx[p] = sqrt(d) ;
+        -:  190:    }
+        -:  191:  }
+        -:  192:
+    #####:  193:  m_info = ok ? Success : NumericalIssue;
+    #####:  194:  m_factorizationIsOk = true;
+    #####:  195:}
+------------------
+_ZN5Eigen22SimplicialCholeskyBaseINS_18SimplicialCholeskyINS_12SparseMatrixIdLi0EiEELi1ENS_11AMDOrderingIiEEEEE20factorize_preorderedILb0EEEvRKS3_:
+    #####:  101:void SimplicialCholeskyBase<Derived>::factorize_preordered(const CholMatrixType& ap)
+        -:  102:{
+        -:  103:  using std::sqrt;
+        -:  104:
+    #####:  105:  eigen_assert(m_analysisIsOk && "You must first call analyzePattern()");
+    %%%%%:  105-block  0
+    %%%%%:  105-block  1
+    #####:  106:  eigen_assert(ap.rows()==ap.cols());
+    %%%%%:  106-block  0
+    %%%%%:  106-block  1
+    #####:  107:  eigen_assert(m_parent.size()==ap.rows());
+    %%%%%:  107-block  0
+    %%%%%:  107-block  1
+    #####:  108:  eigen_assert(m_nonZerosPerCol.size()==ap.rows());
+    %%%%%:  108-block  0
+    %%%%%:  108-block  1
+        -:  109:
+    #####:  110:  const StorageIndex size = StorageIndex(ap.rows());
+    %%%%%:  110-block  0
+    #####:  111:  const StorageIndex* Lp = m_matrix.outerIndexPtr();
+    %%%%%:  111-block  0
+    #####:  112:  StorageIndex* Li = m_matrix.innerIndexPtr();
+    %%%%%:  112-block  0
+    #####:  113:  Scalar* Lx = m_matrix.valuePtr();
+    %%%%%:  113-block  0
+        -:  114:
+    #####:  115:  ei_declare_aligned_stack_constructed_variable(Scalar, y, size, 0);
+    %%%%%:  115-block  0
+    %%%%%:  115-block  1
+    %%%%%:  115-block  2
+    %%%%%:  115-block  3
+    %%%%%:  115-block  4
+    #####:  116:  ei_declare_aligned_stack_constructed_variable(StorageIndex,  pattern, size, 0);
+    %%%%%:  116-block  0
+    %%%%%:  116-block  1
+    %%%%%:  116-block  2
+    %%%%%:  116-block  3
+    %%%%%:  116-block  4
+    $$$$$:  116-block  5
+    #####:  117:  ei_declare_aligned_stack_constructed_variable(StorageIndex,  tags, size, 0);
+    %%%%%:  117-block  0
+    %%%%%:  117-block  1
+    %%%%%:  117-block  2
+    %%%%%:  117-block  3
+    %%%%%:  117-block  4
+    $$$$$:  117-block  5
+        -:  118:
+    #####:  119:  bool ok = true;
+    #####:  120:  m_diag.resize(DoLDLT ? size : 0);
+    %%%%%:  120-block  0
+        -:  121:
+    #####:  122:  for(StorageIndex k = 0; k < size; ++k)
+    %%%%%:  122-block  0
+        -:  123:  {
+        -:  124:    // compute nonzero pattern of kth row of L, in topological order
+    #####:  125:    y[k] = 0.0;                     // Y(0:k) is now all zero
+    #####:  126:    StorageIndex top = size;               // stack for pattern is empty
+    #####:  127:    tags[k] = k;                    // mark node k as visited
+    #####:  128:    m_nonZerosPerCol[k] = 0;        // count of nonzeros in column k of L
+    %%%%%:  128-block  0
+    #####:  129:    for(typename CholMatrixType::InnerIterator it(ap,k); it; ++it)
+    %%%%%:  129-block  0
+    %%%%%:  129-block  1
+        -:  130:    {
+    #####:  131:      StorageIndex i = it.index();
+    %%%%%:  131-block  0
+    #####:  132:      if(i <= k)
+    %%%%%:  132-block  0
+        -:  133:      {
+    #####:  134:        y[i] += numext::conj(it.value());            /* scatter A(i,k) into Y (sum duplicates) */
+    %%%%%:  134-block  0
+        -:  135:        Index len;
+    #####:  136:        for(len = 0; tags[i] != k; i = m_parent[i])
+    %%%%%:  136-block  0
+    %%%%%:  136-block  1
+        -:  137:        {
+    #####:  138:          pattern[len++] = i;     /* L(k,i) is nonzero */
+    #####:  139:          tags[i] = k;            /* mark i as visited */
+    %%%%%:  139-block  0
+        -:  140:        }
+    #####:  141:        while(len > 0)
+    %%%%%:  141-block  0
+    #####:  142:          pattern[--top] = pattern[--len];
+    %%%%%:  142-block  0
+        -:  143:      }
+        -:  144:    }
+        -:  145:
+        -:  146:    /* compute numerical values kth row of L (a sparse triangular solve) */
+        -:  147:
+    #####:  148:    RealScalar d = numext::real(y[k]) * m_shiftScale + m_shiftOffset;    // get D(k,k), apply the shift function, and clear Y(k)
+    %%%%%:  148-block  0
+    #####:  149:    y[k] = 0.0;
+    %%%%%:  149-block  0
+    #####:  150:    for(; top < size; ++top)
+    %%%%%:  150-block  0
+        -:  151:    {
+    #####:  152:      Index i = pattern[top];       /* pattern[top:n-1] is pattern of L(:,k) */
+    #####:  153:      Scalar yi = y[i];             /* get and clear Y(i) */
+    #####:  154:      y[i] = 0.0;
+        -:  155:
+        -:  156:      /* the nonzero entry L(k,i) */
+        -:  157:      Scalar l_ki;
+        -:  158:      if(DoLDLT)
+        -:  159:        l_ki = yi / m_diag[i];
+        -:  160:      else
+    #####:  161:        yi = l_ki = yi / Lx[Lp[i]];
+        -:  162:
+    #####:  163:      Index p2 = Lp[i] + m_nonZerosPerCol[i];
+    %%%%%:  163-block  0
+        -:  164:      Index p;
+    #####:  165:      for(p = Lp[i] + (DoLDLT ? 0 : 1); p < p2; ++p)
+    %%%%%:  165-block  0
+    %%%%%:  165-block  1
+    #####:  166:        y[Li[p]] -= numext::conj(Lx[p]) * yi;
+    %%%%%:  166-block  0
+    #####:  167:      d -= numext::real(l_ki * numext::conj(yi));
+    %%%%%:  167-block  0
+    #####:  168:      Li[p] = k;                          /* store L(k,i) in column form of L */
+    #####:  169:      Lx[p] = l_ki;
+    #####:  170:      ++m_nonZerosPerCol[i];              /* increment count of nonzeros in col i */
+    %%%%%:  170-block  0
+        -:  171:    }
+        -:  172:    if(DoLDLT)
+        -:  173:    {
+        -:  174:      m_diag[k] = d;
+        -:  175:      if(d == RealScalar(0))
+        -:  176:      {
+        -:  177:        ok = false;                         /* failure, D(k,k) is zero */
+        -:  178:        break;
+        -:  179:      }
+        -:  180:    }
+        -:  181:    else
+        -:  182:    {
+    #####:  183:      Index p = Lp[k] + m_nonZerosPerCol[k]++;
+    %%%%%:  183-block  0
+    #####:  184:      Li[p] = k ;                /* store L(k,k) = sqrt (d) in column k */
+    #####:  185:      if(d <= RealScalar(0)) {
+        -:  186:        ok = false;              /* failure, matrix is not positive definite */
+        -:  187:        break;
+        -:  188:      }
+    #####:  189:      Lx[p] = sqrt(d) ;
+    %%%%%:  189-block  0
+        -:  190:    }
+        -:  191:  }
+        -:  192:
+    #####:  193:  m_info = ok ? Success : NumericalIssue;
+    %%%%%:  193-block  0
+    #####:  194:  m_factorizationIsOk = true;
+    %%%%%:  194-block  0
+    #####:  195:}
+    %%%%%:  195-block  0
+------------------
+_ZN5Eigen22SimplicialCholeskyBaseINS_18SimplicialCholeskyINS_12SparseMatrixIdLi0EiEELi1ENS_11AMDOrderingIiEEEEE20factorize_preorderedILb1EEEvRKS3_:
+    #####:  101:void SimplicialCholeskyBase<Derived>::factorize_preordered(const CholMatrixType& ap)
+        -:  102:{
+        -:  103:  using std::sqrt;
+        -:  104:
+    #####:  105:  eigen_assert(m_analysisIsOk && "You must first call analyzePattern()");
+    %%%%%:  105-block  0
+    %%%%%:  105-block  1
+    #####:  106:  eigen_assert(ap.rows()==ap.cols());
+    %%%%%:  106-block  0
+    %%%%%:  106-block  1
+    #####:  107:  eigen_assert(m_parent.size()==ap.rows());
+    %%%%%:  107-block  0
+    %%%%%:  107-block  1
+    #####:  108:  eigen_assert(m_nonZerosPerCol.size()==ap.rows());
+    %%%%%:  108-block  0
+    %%%%%:  108-block  1
+        -:  109:
+    #####:  110:  const StorageIndex size = StorageIndex(ap.rows());
+    %%%%%:  110-block  0
+    #####:  111:  const StorageIndex* Lp = m_matrix.outerIndexPtr();
+    %%%%%:  111-block  0
+    #####:  112:  StorageIndex* Li = m_matrix.innerIndexPtr();
+    %%%%%:  112-block  0
+    #####:  113:  Scalar* Lx = m_matrix.valuePtr();
+    %%%%%:  113-block  0
+        -:  114:
+    #####:  115:  ei_declare_aligned_stack_constructed_variable(Scalar, y, size, 0);
+    %%%%%:  115-block  0
+    %%%%%:  115-block  1
+    %%%%%:  115-block  2
+    %%%%%:  115-block  3
+    %%%%%:  115-block  4
+    #####:  116:  ei_declare_aligned_stack_constructed_variable(StorageIndex,  pattern, size, 0);
+    %%%%%:  116-block  0
+    %%%%%:  116-block  1
+    %%%%%:  116-block  2
+    %%%%%:  116-block  3
+    %%%%%:  116-block  4
+    $$$$$:  116-block  5
+    #####:  117:  ei_declare_aligned_stack_constructed_variable(StorageIndex,  tags, size, 0);
+    %%%%%:  117-block  0
+    %%%%%:  117-block  1
+    %%%%%:  117-block  2
+    %%%%%:  117-block  3
+    %%%%%:  117-block  4
+    $$$$$:  117-block  5
+        -:  118:
+    #####:  119:  bool ok = true;
+    #####:  120:  m_diag.resize(DoLDLT ? size : 0);
+    %%%%%:  120-block  0
+        -:  121:
+    #####:  122:  for(StorageIndex k = 0; k < size; ++k)
+    %%%%%:  122-block  0
+    %%%%%:  122-block  1
+        -:  123:  {
+        -:  124:    // compute nonzero pattern of kth row of L, in topological order
+    #####:  125:    y[k] = 0.0;                     // Y(0:k) is now all zero
+    #####:  126:    StorageIndex top = size;               // stack for pattern is empty
+    #####:  127:    tags[k] = k;                    // mark node k as visited
+    #####:  128:    m_nonZerosPerCol[k] = 0;        // count of nonzeros in column k of L
+    %%%%%:  128-block  0
+    #####:  129:    for(typename CholMatrixType::InnerIterator it(ap,k); it; ++it)
+    %%%%%:  129-block  0
+    %%%%%:  129-block  1
+        -:  130:    {
+    #####:  131:      StorageIndex i = it.index();
+    %%%%%:  131-block  0
+    #####:  132:      if(i <= k)
+    %%%%%:  132-block  0
+        -:  133:      {
+    #####:  134:        y[i] += numext::conj(it.value());            /* scatter A(i,k) into Y (sum duplicates) */
+    %%%%%:  134-block  0
+        -:  135:        Index len;
+    #####:  136:        for(len = 0; tags[i] != k; i = m_parent[i])
+    %%%%%:  136-block  0
+    %%%%%:  136-block  1
+        -:  137:        {
+    #####:  138:          pattern[len++] = i;     /* L(k,i) is nonzero */
+    #####:  139:          tags[i] = k;            /* mark i as visited */
+    %%%%%:  139-block  0
+        -:  140:        }
+    #####:  141:        while(len > 0)
+    %%%%%:  141-block  0
+    #####:  142:          pattern[--top] = pattern[--len];
+    %%%%%:  142-block  0
+        -:  143:      }
+        -:  144:    }
+        -:  145:
+        -:  146:    /* compute numerical values kth row of L (a sparse triangular solve) */
+        -:  147:
+    #####:  148:    RealScalar d = numext::real(y[k]) * m_shiftScale + m_shiftOffset;    // get D(k,k), apply the shift function, and clear Y(k)
+    %%%%%:  148-block  0
+    #####:  149:    y[k] = 0.0;
+    %%%%%:  149-block  0
+    #####:  150:    for(; top < size; ++top)
+    %%%%%:  150-block  0
+        -:  151:    {
+    #####:  152:      Index i = pattern[top];       /* pattern[top:n-1] is pattern of L(:,k) */
+    #####:  153:      Scalar yi = y[i];             /* get and clear Y(i) */
+    #####:  154:      y[i] = 0.0;
+        -:  155:
+        -:  156:      /* the nonzero entry L(k,i) */
+        -:  157:      Scalar l_ki;
+        -:  158:      if(DoLDLT)
+    #####:  159:        l_ki = yi / m_diag[i];
+    %%%%%:  159-block  0
+        -:  160:      else
+        -:  161:        yi = l_ki = yi / Lx[Lp[i]];
+        -:  162:
+    #####:  163:      Index p2 = Lp[i] + m_nonZerosPerCol[i];
+        -:  164:      Index p;
+    #####:  165:      for(p = Lp[i] + (DoLDLT ? 0 : 1); p < p2; ++p)
+    %%%%%:  165-block  0
+    %%%%%:  165-block  1
+    #####:  166:        y[Li[p]] -= numext::conj(Lx[p]) * yi;
+    %%%%%:  166-block  0
+    #####:  167:      d -= numext::real(l_ki * numext::conj(yi));
+    %%%%%:  167-block  0
+    #####:  168:      Li[p] = k;                          /* store L(k,i) in column form of L */
+    #####:  169:      Lx[p] = l_ki;
+    #####:  170:      ++m_nonZerosPerCol[i];              /* increment count of nonzeros in col i */
+    %%%%%:  170-block  0
+        -:  171:    }
+        -:  172:    if(DoLDLT)
+        -:  173:    {
+    #####:  174:      m_diag[k] = d;
+    %%%%%:  174-block  0
+    #####:  175:      if(d == RealScalar(0))
+        -:  176:      {
+        -:  177:        ok = false;                         /* failure, D(k,k) is zero */
+        -:  178:        break;
+        -:  179:      }
+        -:  180:    }
+        -:  181:    else
+        -:  182:    {
+        -:  183:      Index p = Lp[k] + m_nonZerosPerCol[k]++;
+        -:  184:      Li[p] = k ;                /* store L(k,k) = sqrt (d) in column k */
+        -:  185:      if(d <= RealScalar(0)) {
+        -:  186:        ok = false;              /* failure, matrix is not positive definite */
+        -:  187:        break;
+        -:  188:      }
+        -:  189:      Lx[p] = sqrt(d) ;
+        -:  190:    }
+        -:  191:  }
+        -:  192:
+    #####:  193:  m_info = ok ? Success : NumericalIssue;
+    %%%%%:  193-block  0
+    #####:  194:  m_factorizationIsOk = true;
+    %%%%%:  194-block  0
+    #####:  195:}
+    %%%%%:  195-block  0
+------------------
+        -:  196:
+        -:  197:} // end namespace Eigen
+        -:  198:
+        -:  199:#endif // EIGEN_SIMPLICIAL_CHOLESKY_IMPL_H

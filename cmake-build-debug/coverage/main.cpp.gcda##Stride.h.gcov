@@ -1,0 +1,191 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/Stride.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2010 Benoit Jacob <jacob.benoit.1@gmail.com>
+        -:    5://
+        -:    6:// This Source Code Form is subject to the terms of the Mozilla
+        -:    7:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    8:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:    9:
+        -:   10:#ifndef EIGEN_STRIDE_H
+        -:   11:#define EIGEN_STRIDE_H
+        -:   12:
+        -:   13:namespace Eigen { 
+        -:   14:
+        -:   15:/** \class Stride
+        -:   16:  * \ingroup Core_Module
+        -:   17:  *
+        -:   18:  * \brief Holds strides information for Map
+        -:   19:  *
+        -:   20:  * This class holds the strides information for mapping arrays with strides with class Map.
+        -:   21:  *
+        -:   22:  * It holds two values: the inner stride and the outer stride.
+        -:   23:  *
+        -:   24:  * The inner stride is the pointer increment between two consecutive entries within a given row of a
+        -:   25:  * row-major matrix or within a given column of a column-major matrix.
+        -:   26:  *
+        -:   27:  * The outer stride is the pointer increment between two consecutive rows of a row-major matrix or
+        -:   28:  * between two consecutive columns of a column-major matrix.
+        -:   29:  *
+        -:   30:  * These two values can be passed either at compile-time as template parameters, or at runtime as
+        -:   31:  * arguments to the constructor.
+        -:   32:  *
+        -:   33:  * Indeed, this class takes two template parameters:
+        -:   34:  *  \tparam _OuterStrideAtCompileTime the outer stride, or Dynamic if you want to specify it at runtime.
+        -:   35:  *  \tparam _InnerStrideAtCompileTime the inner stride, or Dynamic if you want to specify it at runtime.
+        -:   36:  *
+        -:   37:  * Here is an example:
+        -:   38:  * \include Map_general_stride.cpp
+        -:   39:  * Output: \verbinclude Map_general_stride.out
+        -:   40:  *
+        -:   41:  * \sa class InnerStride, class OuterStride, \ref TopicStorageOrders
+        -:   42:  */
+        -:   43:template<int _OuterStrideAtCompileTime, int _InnerStrideAtCompileTime>
+        -:   44:class Stride
+        -:   45:{
+        -:   46:  public:
+        -:   47:    typedef Eigen::Index Index; ///< \deprecated since Eigen 3.3
+        -:   48:    enum {
+        -:   49:      InnerStrideAtCompileTime = _InnerStrideAtCompileTime,
+        -:   50:      OuterStrideAtCompileTime = _OuterStrideAtCompileTime
+        -:   51:    };
+        -:   52:
+        -:   53:    /** Default constructor, for use when strides are fixed at compile time */
+        -:   54:    EIGEN_DEVICE_FUNC
+    4536*:   55:    Stride()
+    4536*:   56:      : m_outer(OuterStrideAtCompileTime), m_inner(InnerStrideAtCompileTime)
+     1503:   56-block  0
+    %%%%%:   56-block  1
+    %%%%%:   56-block  2
+    %%%%%:   56-block  3
+    %%%%%:   56-block  4
+     1530:   56-block  5
+        -:   57:    {
+        -:   58:      eigen_assert(InnerStrideAtCompileTime != Dynamic && OuterStrideAtCompileTime != Dynamic);
+        -:   59:    }
+        -:   60:
+        -:   61:    /** Constructor allowing to pass the strides at runtime */
+        -:   62:    EIGEN_DEVICE_FUNC
+     6012:   63:    Stride(Index outerStride, Index innerStride)
+     6012:   64:      : m_outer(outerStride), m_inner(innerStride)
+        -:   65:    {
+    6012*:   66:      eigen_assert(innerStride>=0 && outerStride>=0);
+     6012:   67:    }
+------------------
+_ZN5Eigen6StrideILi0ELin1EEC2Ell:
+     3006:   63:    Stride(Index outerStride, Index innerStride)
+     3006:   64:      : m_outer(outerStride), m_inner(innerStride)
+     3006:   64-block  0
+     3006:   64-block  1
+        -:   65:    {
+    3006*:   66:      eigen_assert(innerStride>=0 && outerStride>=0);
+     3006:   66-block  0
+    %%%%%:   66-block  1
+     3006:   67:    }
+------------------
+_ZN5Eigen6StrideILin1ELi0EEC2Ell:
+     3006:   63:    Stride(Index outerStride, Index innerStride)
+     3006:   64:      : m_outer(outerStride), m_inner(innerStride)
+     3006:   64-block  0
+        -:   65:    {
+    3006*:   66:      eigen_assert(innerStride>=0 && outerStride>=0);
+     3006:   66-block  0
+    %%%%%:   66-block  1
+     3006:   67:    }
+------------------
+        -:   68:
+        -:   69:    /** Copy constructor */
+        -:   70:    EIGEN_DEVICE_FUNC
+  307650*:   71:    Stride(const Stride& other)
+  307650*:   72:      : m_outer(other.outer()), m_inner(other.inner())
+        -:   73:    {}
+        -:   74:
+        -:   75:    /** \returns the outer stride */
+        -:   76:    EIGEN_DEVICE_FUNC
+  179175*:   77:    inline Index outer() const { return m_outer.value(); }
+    %%%%%:   77-block  0
+     1503:   77-block  1
+     3585:   77-block  2
+    30240:   77-block  3
+    %%%%%:   77-block  4
+     1503:   77-block  5
+     5088:   77-block  6
+    35328:   77-block  7
+    %%%%%:   77-block  8
+    %%%%%:   77-block  9
+     1530:   77-block 10
+    %%%%%:   77-block 11
+    %%%%%:   77-block 12
+    %%%%%:   77-block 13
+    %%%%%:   77-block 14
+    %%%%%:   77-block 15
+    %%%%%:   77-block 16
+     1530:   77-block 17
+    %%%%%:   77-block 18
+        -:   78:    /** \returns the inner stride */
+        -:   79:    EIGEN_DEVICE_FUNC
+  318405*:   80:    inline Index inner() const { return m_inner.value(); }
+    %%%%%:   80-block  0
+     1503:   80-block  1
+     1503:   80-block  2
+     3585:   80-block  3
+    30240:   80-block  4
+    %%%%%:   80-block  5
+     1503:   80-block  6
+     1503:   80-block  7
+    30240:   80-block  8
+    35328:   80-block  9
+     5088:   80-block 10
+    %%%%%:   80-block 11
+    %%%%%:   80-block 12
+    35328:   80-block 13
+     1530:   80-block 14
+    %%%%%:   80-block 15
+    %%%%%:   80-block 16
+    %%%%%:   80-block 17
+    %%%%%:   80-block 18
+     1530:   80-block 19
+    %%%%%:   80-block 20
+        -:   81:
+        -:   82:  protected:
+        -:   83:    internal::variable_if_dynamic<Index, OuterStrideAtCompileTime> m_outer;
+        -:   84:    internal::variable_if_dynamic<Index, InnerStrideAtCompileTime> m_inner;
+        -:   85:};
+        -:   86:
+        -:   87:/** \brief Convenience specialization of Stride to specify only an inner stride
+        -:   88:  * See class Map for some examples */
+        -:   89:template<int Value>
+     3006:   90:class InnerStride : public Stride<0, Value>
+     1503:   90-block  0
+     1503:   90-block  1
+        -:   91:{
+        -:   92:    typedef Stride<0, Value> Base;
+        -:   93:  public:
+        -:   94:    EIGEN_DEVICE_FUNC InnerStride() : Base() {}
+     3006:   95:    EIGEN_DEVICE_FUNC InnerStride(Index v) : Base(0, v) {} // FIXME making this explicit could break valid code
+     1503:   95-block  0
+        -:   96:};
+        -:   97:
+        -:   98:/** \brief Convenience specialization of Stride to specify only an outer stride
+        -:   99:  * See class Map for some examples */
+        -:  100:template<int Value>
+  134142*:  101:class OuterStride : public Stride<Value, 0>
+    30240:  101-block  0
+    35328:  101-block  1
+        -:  102:{
+        -:  103:    typedef Stride<Value, 0> Base;
+        -:  104:  public:
+        -:  105:    EIGEN_DEVICE_FUNC OuterStride() : Base() {}
+    3006*:  106:    EIGEN_DEVICE_FUNC OuterStride(Index v) : Base(v,0) {} // FIXME making this explicit could break valid code
+     1503:  106-block  0
+     1503:  106-block  1
+    %%%%%:  106-block  2
+        -:  107:};
+        -:  108:
+        -:  109:} // end namespace Eigen
+        -:  110:
+        -:  111:#endif // EIGEN_STRIDE_H

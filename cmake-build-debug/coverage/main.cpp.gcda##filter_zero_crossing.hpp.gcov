@@ -1,0 +1,141 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_zero_crossing.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_ZERO_CROSSING_HPP
+        -:   19:#define PIC_FILTERING_FILTER_ZERO_CROSSING_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterZeroCrossing class
+        -:   27: */
+        -:   28:class FilterZeroCrossing: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:
+        -:   32:    /**
+        -:   33:     * @brief f
+        -:   34:     * @param data
+        -:   35:     */
+    #####:   36:    void f(FilterFData *data)
+        -:   37:    {
+        -:   38:
+    #####:   39:        float value;
+        -:   40:
+    #####:   41:        float *data_src  = (*data->src[0])(data->x, data->y);
+    %%%%%:   41-block  0
+    #####:   42:        float *data_src0 = (*data->src[0])(data->x, data->y + 1);
+    %%%%%:   42-block  0
+    #####:   43:        float *data_src1 = (*data->src[0])(data->x + 1, data->y);
+    %%%%%:   43-block  0
+        -:   44:
+    #####:   45:        for(int k = 0; k < data->src[0]->channels; k++) {
+    %%%%%:   45-block  0
+    %%%%%:   45-block  1
+    #####:   46:            value = (data_src[k] == 0.0f) ? 1.0f : 0.0f;
+    %%%%%:   46-block  0
+    #####:   47:            value = (data_src[k] > 0.0f && data_src0[k] < 0.0f) ? 1.0f : value;
+    %%%%%:   47-block  0
+    %%%%%:   47-block  1
+    #####:   48:            value = (data_src[k] < 0.0f && data_src0[k] > 0.0f) ? 1.0f : value;
+    %%%%%:   48-block  0
+    %%%%%:   48-block  1
+    #####:   49:            value = (data_src[k] > 0.0f && data_src1[k] < 0.0f) ? 1.0f : value;
+    %%%%%:   49-block  0
+    %%%%%:   49-block  1
+    #####:   50:            value = (data_src[k] < 0.0f && data_src1[k] > 0.0f) ? 1.0f : value;
+    %%%%%:   50-block  0
+    %%%%%:   50-block  1
+    #####:   51:            data->out[k] = value;
+    %%%%%:   51-block  0
+        -:   52:        }
+    #####:   53:    }
+        -:   54:
+        -:   55:    /**
+        -:   56:     * @brief ProcessBBox
+        -:   57:     * @param dst
+        -:   58:     * @param src
+        -:   59:     * @param box
+        -:   60:     */
+        -:   61:    /*
+        -:   62:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   63:    {
+        -:   64:        Image *src_p = src[0];
+        -:   65:
+        -:   66:        int channels = src_p->channels;
+        -:   67:        float value;
+        -:   68:
+        -:   69:        for(int i = box->y0; i < box->y1; i++) {
+        -:   70:
+        -:   71:            for(int j = box->x0; j < box->x1; j++) {
+        -:   72:
+        -:   73:                float *data_src = (*src_p)(j, i);
+        -:   74:                float *data_dst = (*dst)(j, i);
+        -:   75:
+        -:   76:                float *data_src0 = (*src_p)(j, i + 1);
+        -:   77:                float *data_src1 = (*src_p)(j + 1, i);
+        -:   78:
+        -:   79:                for(int k = 0; k < channels; k++) {
+        -:   80:                    value = (data_src[k] == 0.0f) ? 1.0f : 0.0f;
+        -:   81:                    value = (data_src[k] > 0.0f && data_src0[k] < 0.0f) ? 1.0f : value;
+        -:   82:                    value = (data_src[k] < 0.0f && data_src0[k] > 0.0f) ? 1.0f : value;
+        -:   83:                    value = (data_src[k] > 0.0f && data_src1[k] < 0.0f) ? 1.0f : value;
+        -:   84:                    value = (data_src[k] < 0.0f && data_src1[k] > 0.0f) ? 1.0f : value;
+        -:   85:                    data_dst[k] = value;
+        -:   86:                }
+        -:   87:            }
+        -:   88:        }
+        -:   89:    }
+        -:   90:    */
+        -:   91:
+        -:   92:public:
+        -:   93:
+        -:   94:    /**
+        -:   95:     * @brief FilterZeroCrossing
+        -:   96:     * @param type
+        -:   97:     */
+        -:   98:    FilterZeroCrossing() : Filter()
+        -:   99:    {
+        -:  100:    }
+        -:  101:
+        -:  102:    ~FilterZeroCrossing()
+        -:  103:    {
+        -:  104:    }
+        -:  105:
+        -:  106:    /**
+        -:  107:     * @brief execute
+        -:  108:     * @param imgIn
+        -:  109:     * @param imgOut
+        -:  110:     * @return
+        -:  111:     */
+        -:  112:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  113:    {
+        -:  114:        FilterZeroCrossing flt;
+        -:  115:        return flt.Process(Single(imgIn), imgOut);
+        -:  116:    }
+        -:  117:};
+        -:  118:
+        -:  119:} // end namespace pic
+        -:  120:
+        -:  121:#endif /* PIC_FILTERING_FILTER_ZERO_CROSSING_HPP */
+        -:  122:

@@ -1,0 +1,108 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_gaussian_2d.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_GAUSSIAN_2D_HPP
+        -:   19:#define PIC_FILTERING_FILTER_GAUSSIAN_2D_HPP
+        -:   20:
+        -:   21:#include "../util/std_util.hpp"
+        -:   22:
+        -:   23:#include "../filtering/filter_npasses.hpp"
+        -:   24:#include "../filtering/filter_gaussian_1d.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:/**
+        -:   29: * @brief The FilterGaussian2D class
+        -:   30: */
+        -:   31:class FilterGaussian2D: public FilterNPasses
+        -:   32:{
+        -:   33:protected:
+        -:   34:    FilterGaussian1D *filter;
+        -:   35:
+        -:   36:public:
+        -:   37:
+        -:   38:    /**
+        -:   39:     * @brief FilterGaussian2D
+        -:   40:     */
+        -:   41:    FilterGaussian2D() : FilterNPasses()
+        -:   42:    {
+        -:   43:        filter = new FilterGaussian1D(1.0f);
+        -:   44:
+        -:   45:        insertFilter(filter);
+        -:   46:        insertFilter(filter);
+        -:   47:    }
+        -:   48:
+        -:   49:    /**
+        -:   50:     * @brief FilterGaussian2D
+        -:   51:     * @param sigma
+        -:   52:     */
+    #####:   53:    FilterGaussian2D(float sigma) : FilterNPasses()
+    %%%%%:   53-block  0
+    $$$$$:   53-block  1
+        -:   54:    {
+    #####:   55:        filter = new FilterGaussian1D(sigma);
+    %%%%%:   55-block  0
+    %%%%%:   55-block  1
+    $$$$$:   55-block  2
+        -:   56:
+    #####:   57:        insertFilter(filter);
+    %%%%%:   57-block  0
+    #####:   58:        insertFilter(filter);
+    %%%%%:   58-block  0
+    #####:   59:    }
+    %%%%%:   59-block  0
+        -:   60:
+    #####:   61:    ~FilterGaussian2D()
+    #####:   62:    {
+    #####:   63:        release();
+    %%%%%:   63-block  0
+        -:   64:
+    #####:   65:        filter = delete_s(filter);
+    %%%%%:   65-block  0
+    #####:   66:    }
+        -:   67:
+        -:   68:    /**
+        -:   69:     * @brief update
+        -:   70:     * @param sigma
+        -:   71:     */
+        -:   72:    void update(float sigma)
+        -:   73:    {
+        -:   74:        filter->update(sigma, 0);
+        -:   75:    }
+        -:   76:
+        -:   77:    /**
+        -:   78:     * @brief execute
+        -:   79:     * @param imgIn
+        -:   80:     * @param imgOut
+        -:   81:     * @param sigma
+        -:   82:     * @return
+        -:   83:     */
+        -:   84:    static Image *execute(Image *imgIn, Image *imgOut, float sigma)
+        -:   85:    {
+        -:   86:        FilterGaussian2D filter(sigma);
+        -:   87:        return filter.Process(Single(imgIn), imgOut);
+        -:   88:    }
+        -:   89:};
+        -:   90:
+        -:   91:} // end namespace pic
+        -:   92:
+        -:   93:#endif /* PIC_FILTERING_FILTER_GAUSSIAN_2D_HPP */
+        -:   94:

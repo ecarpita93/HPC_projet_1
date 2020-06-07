@@ -1,0 +1,1412 @@
+        -:    0:Source:/usr/include/c++/9/ext/new_allocator.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// Allocator that wraps operator new -*- C++ -*-
+        -:    2:
+        -:    3:// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+        -:    4://
+        -:    5:// This file is part of the GNU ISO C++ Library.  This library is free
+        -:    6:// software; you can redistribute it and/or modify it under the
+        -:    7:// terms of the GNU General Public License as published by the
+        -:    8:// Free Software Foundation; either version 3, or (at your option)
+        -:    9:// any later version.
+        -:   10:
+        -:   11:// This library is distributed in the hope that it will be useful,
+        -:   12:// but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   13:// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        -:   14:// GNU General Public License for more details.
+        -:   15:
+        -:   16:// Under Section 7 of GPL version 3, you are granted additional
+        -:   17:// permissions described in the GCC Runtime Library Exception, version
+        -:   18:// 3.1, as published by the Free Software Foundation.
+        -:   19:
+        -:   20:// You should have received a copy of the GNU General Public License and
+        -:   21:// a copy of the GCC Runtime Library Exception along with this program;
+        -:   22:// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+        -:   23:// <http://www.gnu.org/licenses/>.
+        -:   24:
+        -:   25:/** @file ext/new_allocator.h
+        -:   26: *  This file is a GNU extension to the Standard C++ Library.
+        -:   27: */
+        -:   28:
+        -:   29:#ifndef _NEW_ALLOCATOR_H
+        -:   30:#define _NEW_ALLOCATOR_H 1
+        -:   31:
+        -:   32:#include <bits/c++config.h>
+        -:   33:#include <new>
+        -:   34:#include <bits/functexcept.h>
+        -:   35:#include <bits/move.h>
+        -:   36:#if __cplusplus >= 201103L
+        -:   37:#include <type_traits>
+        -:   38:#endif
+        -:   39:
+        -:   40:namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+        -:   41:{
+        -:   42:_GLIBCXX_BEGIN_NAMESPACE_VERSION
+        -:   43:
+        -:   44:  using std::size_t;
+        -:   45:  using std::ptrdiff_t;
+        -:   46:
+        -:   47:  /**
+        -:   48:   *  @brief  An allocator that uses global new, as per [20.4].
+        -:   49:   *  @ingroup allocators
+        -:   50:   *
+        -:   51:   *  This is precisely the allocator defined in the C++ Standard.
+        -:   52:   *    - all allocation calls operator new
+        -:   53:   *    - all deallocation calls operator delete
+        -:   54:   *
+        -:   55:   *  @tparam  _Tp  Type of allocated object.
+        -:   56:   */
+        -:   57:  template<typename _Tp>
+        -:   58:    class new_allocator
+        -:   59:    {
+        -:   60:    public:
+        -:   61:      typedef size_t     size_type;
+        -:   62:      typedef ptrdiff_t  difference_type;
+        -:   63:      typedef _Tp*       pointer;
+        -:   64:      typedef const _Tp* const_pointer;
+        -:   65:      typedef _Tp&       reference;
+        -:   66:      typedef const _Tp& const_reference;
+        -:   67:      typedef _Tp        value_type;
+        -:   68:
+        -:   69:      template<typename _Tp1>
+        -:   70:	struct rebind
+        -:   71:	{ typedef new_allocator<_Tp1> other; };
+        -:   72:
+        -:   73:#if __cplusplus >= 201103L
+        -:   74:      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        -:   75:      // 2103. propagate_on_container_move_assignment
+        -:   76:      typedef std::true_type propagate_on_container_move_assignment;
+        -:   77:#endif
+        -:   78:
+        -:   79:      _GLIBCXX20_CONSTEXPR
+      59*:   80:      new_allocator() _GLIBCXX_USE_NOEXCEPT { }
+    %%%%%:   80-block  0
+    %%%%%:   80-block  1
+    %%%%%:   80-block  2
+    %%%%%:   80-block  3
+    %%%%%:   80-block  4
+    %%%%%:   80-block  5
+    %%%%%:   80-block  6
+        1:   80-block  7
+        1:   80-block  8
+    %%%%%:   80-block  9
+    %%%%%:   80-block 10
+        1:   80-block 11
+    %%%%%:   80-block 12
+    %%%%%:   80-block 13
+    %%%%%:   80-block 14
+    %%%%%:   80-block 15
+    %%%%%:   80-block 16
+    %%%%%:   80-block 17
+    %%%%%:   80-block 18
+    %%%%%:   80-block 19
+    %%%%%:   80-block 20
+    %%%%%:   80-block 21
+    %%%%%:   80-block 22
+    %%%%%:   80-block 23
+    %%%%%:   80-block 24
+    %%%%%:   80-block 25
+    %%%%%:   80-block 26
+    %%%%%:   80-block 27
+    %%%%%:   80-block 28
+    %%%%%:   80-block 29
+    %%%%%:   80-block 30
+    %%%%%:   80-block 31
+    %%%%%:   80-block 32
+    %%%%%:   80-block 33
+    %%%%%:   80-block 34
+    %%%%%:   80-block 35
+    %%%%%:   80-block 36
+        1:   80-block 37
+        1:   80-block 38
+    %%%%%:   80-block 39
+        1:   80-block 40
+    %%%%%:   80-block 41
+    %%%%%:   80-block 42
+    %%%%%:   80-block 43
+        1:   80-block 44
+    %%%%%:   80-block 45
+    %%%%%:   80-block 46
+        3:   80-block 47
+       21:   80-block 48
+    %%%%%:   80-block 49
+    %%%%%:   80-block 50
+    %%%%%:   80-block 51
+        2:   80-block 52
+        7:   80-block 53
+        4:   80-block 54
+    %%%%%:   80-block 55
+        7:   80-block 56
+    %%%%%:   80-block 57
+        7:   80-block 58
+    %%%%%:   80-block 59
+    %%%%%:   80-block 60
+    %%%%%:   80-block 61
+    %%%%%:   80-block 62
+    %%%%%:   80-block 63
+    %%%%%:   80-block 64
+    %%%%%:   80-block 65
+    %%%%%:   80-block 66
+    %%%%%:   80-block 67
+    %%%%%:   80-block 68
+    %%%%%:   80-block 69
+    %%%%%:   80-block 70
+    %%%%%:   80-block 71
+    %%%%%:   80-block 72
+    %%%%%:   80-block 73
+    %%%%%:   80-block 74
+    %%%%%:   80-block 75
+    %%%%%:   80-block 76
+    %%%%%:   80-block 77
+    %%%%%:   80-block 78
+    %%%%%:   80-block 79
+    %%%%%:   80-block 80
+    %%%%%:   80-block 81
+    %%%%%:   80-block 82
+    %%%%%:   80-block 83
+    %%%%%:   80-block 84
+    %%%%%:   80-block 85
+    %%%%%:   80-block 86
+        -:   81:
+        -:   82:      _GLIBCXX20_CONSTEXPR
+     406*:   83:      new_allocator(const new_allocator&) _GLIBCXX_USE_NOEXCEPT { }
+    %%%%%:   83-block  0
+        7:   83-block  1
+    %%%%%:   83-block  2
+    %%%%%:   83-block  3
+       24:   83-block  4
+      275:   83-block  5
+    %%%%%:   83-block  6
+    %%%%%:   83-block  7
+    %%%%%:   83-block  8
+    %%%%%:   83-block  9
+    %%%%%:   83-block 10
+    %%%%%:   83-block 11
+    %%%%%:   83-block 12
+    %%%%%:   83-block 13
+    %%%%%:   83-block 14
+    %%%%%:   83-block 15
+    %%%%%:   83-block 16
+        3:   83-block 17
+    %%%%%:   83-block 18
+    %%%%%:   83-block 19
+    %%%%%:   83-block 20
+        7:   83-block 21
+    %%%%%:   83-block 22
+        7:   83-block 23
+       21:   83-block 24
+        2:   83-block 25
+    %%%%%:   83-block 26
+        1:   83-block 27
+    %%%%%:   83-block 28
+    %%%%%:   83-block 29
+    %%%%%:   83-block 30
+        1:   83-block 31
+        1:   83-block 32
+    %%%%%:   83-block 33
+    %%%%%:   83-block 34
+    %%%%%:   83-block 35
+    %%%%%:   83-block 36
+    %%%%%:   83-block 37
+    %%%%%:   83-block 38
+    %%%%%:   83-block 39
+    %%%%%:   83-block 40
+    %%%%%:   83-block 41
+        7:   83-block 42
+    %%%%%:   83-block 43
+    %%%%%:   83-block 44
+    %%%%%:   83-block 45
+    %%%%%:   83-block 46
+        7:   83-block 47
+        7:   83-block 48
+        4:   83-block 49
+    %%%%%:   83-block 50
+        7:   83-block 51
+    %%%%%:   83-block 52
+    %%%%%:   83-block 53
+    %%%%%:   83-block 54
+    %%%%%:   83-block 55
+    %%%%%:   83-block 56
+    %%%%%:   83-block 57
+    %%%%%:   83-block 58
+    %%%%%:   83-block 59
+    %%%%%:   83-block 60
+    %%%%%:   83-block 61
+    %%%%%:   83-block 62
+    %%%%%:   83-block 63
+    %%%%%:   83-block 64
+    %%%%%:   83-block 65
+    %%%%%:   83-block 66
+    %%%%%:   83-block 67
+    %%%%%:   83-block 68
+    %%%%%:   83-block 69
+    %%%%%:   83-block 70
+        -:   84:
+        -:   85:      template<typename _Tp1>
+        -:   86:	_GLIBCXX20_CONSTEXPR
+        -:   87:	new_allocator(const new_allocator<_Tp1>&) _GLIBCXX_USE_NOEXCEPT { }
+        -:   88:
+     725*:   89:      ~new_allocator() _GLIBCXX_USE_NOEXCEPT { }
+       24:   89-block  0
+    %%%%%:   89-block  1
+    %%%%%:   89-block  2
+    $$$$$:   89-block  3
+    $$$$$:   89-block  4
+    %%%%%:   89-block  5
+        7:   89-block  6
+    $$$$$:   89-block  7
+    $$$$$:   89-block  8
+    $$$$$:   89-block  9
+    $$$$$:   89-block 10
+       24:   89-block 11
+    %%%%%:   89-block 12
+    %%%%%:   89-block 13
+    %%%%%:   89-block 14
+    %%%%%:   89-block 15
+    %%%%%:   89-block 16
+    %%%%%:   89-block 17
+    %%%%%:   89-block 18
+    %%%%%:   89-block 19
+        3:   89-block 20
+    %%%%%:   89-block 21
+    %%%%%:   89-block 22
+        7:   89-block 23
+        7:   89-block 24
+        7:   89-block 25
+        7:   89-block 26
+        1:   89-block 27
+        1:   89-block 28
+    $$$$$:   89-block 29
+    $$$$$:   89-block 30
+    $$$$$:   89-block 31
+    $$$$$:   89-block 32
+    $$$$$:   89-block 33
+    $$$$$:   89-block 34
+    $$$$$:   89-block 35
+    $$$$$:   89-block 36
+    %%%%%:   89-block 37
+    %%%%%:   89-block 38
+    %%%%%:   89-block 39
+    $$$$$:   89-block 40
+    %%%%%:   89-block 41
+    %%%%%:   89-block 42
+    $$$$$:   89-block 43
+    %%%%%:   89-block 44
+    %%%%%:   89-block 45
+    %%%%%:   89-block 46
+    %%%%%:   89-block 47
+    $$$$$:   89-block 48
+    $$$$$:   89-block 49
+    $$$$$:   89-block 50
+    %%%%%:   89-block 51
+    %%%%%:   89-block 52
+    $$$$$:   89-block 53
+    %%%%%:   89-block 54
+    %%%%%:   89-block 55
+    %%%%%:   89-block 56
+    %%%%%:   89-block 57
+    $$$$$:   89-block 58
+    %%%%%:   89-block 59
+    %%%%%:   89-block 60
+    $$$$$:   89-block 61
+    %%%%%:   89-block 62
+    %%%%%:   89-block 63
+        1:   89-block 64
+    $$$$$:   89-block 65
+        1:   89-block 66
+    %%%%%:   89-block 67
+    %%%%%:   89-block 68
+    %%%%%:   89-block 69
+        1:   89-block 70
+    $$$$$:   89-block 71
+    $$$$$:   89-block 72
+    $$$$$:   89-block 73
+    $$$$$:   89-block 74
+    %%%%%:   89-block 75
+    %%%%%:   89-block 76
+    $$$$$:   89-block 77
+    $$$$$:   89-block 78
+    %%%%%:   89-block 79
+    %%%%%:   89-block 80
+    %%%%%:   89-block 81
+    %%%%%:   89-block 82
+    %%%%%:   89-block 83
+    %%%%%:   89-block 84
+    %%%%%:   89-block 85
+    %%%%%:   89-block 86
+    %%%%%:   89-block 87
+    %%%%%:   89-block 88
+    $$$$$:   89-block 89
+    $$$$$:   89-block 90
+    $$$$$:   89-block 91
+    $$$$$:   89-block 92
+    $$$$$:   89-block 93
+    $$$$$:   89-block 94
+    $$$$$:   89-block 95
+    %%%%%:   89-block 96
+    %%%%%:   89-block 97
+    %%%%%:   89-block 98
+    $$$$$:   89-block 99
+    $$$$$:   89-block 100
+    %%%%%:   89-block 101
+    %%%%%:   89-block 102
+    $$$$$:   89-block 103
+    %%%%%:   89-block 104
+    %%%%%:   89-block 105
+    %%%%%:   89-block 106
+    %%%%%:   89-block 107
+    $$$$$:   89-block 108
+    $$$$$:   89-block 109
+    %%%%%:   89-block 110
+    %%%%%:   89-block 111
+    $$$$$:   89-block 112
+    %%%%%:   89-block 113
+    %%%%%:   89-block 114
+    $$$$$:   89-block 115
+    %%%%%:   89-block 116
+    $$$$$:   89-block 117
+    %%%%%:   89-block 118
+    $$$$$:   89-block 119
+    %%%%%:   89-block 120
+    $$$$$:   89-block 121
+    %%%%%:   89-block 122
+    $$$$$:   89-block 123
+    %%%%%:   89-block 124
+    %%%%%:   89-block 125
+    $$$$$:   89-block 126
+    $$$$$:   89-block 127
+    %%%%%:   89-block 128
+    $$$$$:   89-block 129
+        1:   89-block 130
+    %%%%%:   89-block 131
+    $$$$$:   89-block 132
+    %%%%%:   89-block 133
+    %%%%%:   89-block 134
+    $$$$$:   89-block 135
+    %%%%%:   89-block 136
+    %%%%%:   89-block 137
+    $$$$$:   89-block 138
+    $$$$$:   89-block 139
+    %%%%%:   89-block 140
+    $$$$$:   89-block 141
+    %%%%%:   89-block 142
+    %%%%%:   89-block 143
+    %%%%%:   89-block 144
+    %%%%%:   89-block 145
+    $$$$$:   89-block 146
+    $$$$$:   89-block 147
+    $$$$$:   89-block 148
+    %%%%%:   89-block 149
+    %%%%%:   89-block 150
+    %%%%%:   89-block 151
+    $$$$$:   89-block 152
+    $$$$$:   89-block 153
+        1:   89-block 154
+    %%%%%:   89-block 155
+    %%%%%:   89-block 156
+    %%%%%:   89-block 157
+    $$$$$:   89-block 158
+    $$$$$:   89-block 159
+    %%%%%:   89-block 160
+    %%%%%:   89-block 161
+    %%%%%:   89-block 162
+    %%%%%:   89-block 163
+    %%%%%:   89-block 164
+    $$$$$:   89-block 165
+    $$$$$:   89-block 166
+    %%%%%:   89-block 167
+    %%%%%:   89-block 168
+    %%%%%:   89-block 169
+    $$$$$:   89-block 170
+    $$$$$:   89-block 171
+    %%%%%:   89-block 172
+    %%%%%:   89-block 173
+    %%%%%:   89-block 174
+    %%%%%:   89-block 175
+    $$$$$:   89-block 176
+    $$$$$:   89-block 177
+    $$$$$:   89-block 178
+    %%%%%:   89-block 179
+    %%%%%:   89-block 180
+    %%%%%:   89-block 181
+    $$$$$:   89-block 182
+    $$$$$:   89-block 183
+    %%%%%:   89-block 184
+    %%%%%:   89-block 185
+    %%%%%:   89-block 186
+    $$$$$:   89-block 187
+    $$$$$:   89-block 188
+    $$$$$:   89-block 189
+        7:   89-block 190
+        7:   89-block 191
+    %%%%%:   89-block 192
+        1:   89-block 193
+    %%%%%:   89-block 194
+        1:   89-block 195
+        1:   89-block 196
+        1:   89-block 197
+        1:   89-block 198
+    $$$$$:   89-block 199
+    $$$$$:   89-block 200
+    $$$$$:   89-block 201
+    $$$$$:   89-block 202
+    $$$$$:   89-block 203
+    $$$$$:   89-block 204
+    $$$$$:   89-block 205
+        1:   89-block 206
+    %%%%%:   89-block 207
+    %%%%%:   89-block 208
+    %%%%%:   89-block 209
+    %%%%%:   89-block 210
+    %%%%%:   89-block 211
+    %%%%%:   89-block 212
+    %%%%%:   89-block 213
+    $$$$$:   89-block 214
+    %%%%%:   89-block 215
+    $$$$$:   89-block 216
+        1:   89-block 217
+    %%%%%:   89-block 218
+    %%%%%:   89-block 219
+    %%%%%:   89-block 220
+    %%%%%:   89-block 221
+    $$$$$:   89-block 222
+    $$$$$:   89-block 223
+    $$$$$:   89-block 224
+    %%%%%:   89-block 225
+    %%%%%:   89-block 226
+    %%%%%:   89-block 227
+    $$$$$:   89-block 228
+    $$$$$:   89-block 229
+    %%%%%:   89-block 230
+    %%%%%:   89-block 231
+    %%%%%:   89-block 232
+    $$$$$:   89-block 233
+    $$$$$:   89-block 234
+    %%%%%:   89-block 235
+    %%%%%:   89-block 236
+    $$$$$:   89-block 237
+    $$$$$:   89-block 238
+    %%%%%:   89-block 239
+    %%%%%:   89-block 240
+        3:   89-block 241
+        3:   89-block 242
+    $$$$$:   89-block 243
+    %%%%%:   89-block 244
+       24:   89-block 245
+    $$$$$:   89-block 246
+    $$$$$:   89-block 247
+      210:   89-block 248
+        3:   89-block 249
+        3:   89-block 250
+    $$$$$:   89-block 251
+        4:   89-block 252
+    %%%%%:   89-block 253
+       21:   89-block 254
+        2:   89-block 255
+        2:   89-block 256
+    %%%%%:   89-block 257
+    %%%%%:   89-block 258
+        1:   89-block 259
+        1:   89-block 260
+    %%%%%:   89-block 261
+    %%%%%:   89-block 262
+    %%%%%:   89-block 263
+    %%%%%:   89-block 264
+    %%%%%:   89-block 265
+    %%%%%:   89-block 266
+        1:   89-block 267
+        1:   89-block 268
+        1:   89-block 269
+        1:   89-block 270
+    %%%%%:   89-block 271
+    %%%%%:   89-block 272
+    %%%%%:   89-block 273
+    %%%%%:   89-block 274
+    %%%%%:   89-block 275
+    %%%%%:   89-block 276
+    %%%%%:   89-block 277
+    %%%%%:   89-block 278
+    $$$$$:   89-block 279
+    $$$$$:   89-block 280
+    $$$$$:   89-block 281
+    $$$$$:   89-block 282
+    $$$$$:   89-block 283
+    $$$$$:   89-block 284
+    $$$$$:   89-block 285
+    $$$$$:   89-block 286
+    $$$$$:   89-block 287
+        7:   89-block 288
+    %%%%%:   89-block 289
+    %%%%%:   89-block 290
+    %%%%%:   89-block 291
+    %%%%%:   89-block 292
+    %%%%%:   89-block 293
+    %%%%%:   89-block 294
+    %%%%%:   89-block 295
+    %%%%%:   89-block 296
+    %%%%%:   89-block 297
+    %%%%%:   89-block 298
+        7:   89-block 299
+        7:   89-block 300
+    %%%%%:   89-block 301
+    %%%%%:   89-block 302
+    %%%%%:   89-block 303
+    %%%%%:   89-block 304
+    %%%%%:   89-block 305
+    %%%%%:   89-block 306
+    %%%%%:   89-block 307
+    %%%%%:   89-block 308
+        7:   89-block 309
+        7:   89-block 310
+        7:   89-block 311
+        7:   89-block 312
+        7:   89-block 313
+    $$$$$:   89-block 314
+    $$$$$:   89-block 315
+    $$$$$:   89-block 316
+    $$$$$:   89-block 317
+    $$$$$:   89-block 318
+    $$$$$:   89-block 319
+    $$$$$:   89-block 320
+    $$$$$:   89-block 321
+    $$$$$:   89-block 322
+    $$$$$:   89-block 323
+    $$$$$:   89-block 324
+        4:   89-block 325
+    %%%%%:   89-block 326
+        7:   89-block 327
+        7:   89-block 328
+    %%%%%:   89-block 329
+    %%%%%:   89-block 330
+    %%%%%:   89-block 331
+    %%%%%:   89-block 332
+    %%%%%:   89-block 333
+    %%%%%:   89-block 334
+    $$$$$:   89-block 335
+    %%%%%:   89-block 336
+    %%%%%:   89-block 337
+    %%%%%:   89-block 338
+    %%%%%:   89-block 339
+    $$$$$:   89-block 340
+    %%%%%:   89-block 341
+    %%%%%:   89-block 342
+    %%%%%:   89-block 343
+    %%%%%:   89-block 344
+    %%%%%:   89-block 345
+    %%%%%:   89-block 346
+    %%%%%:   89-block 347
+    %%%%%:   89-block 348
+    %%%%%:   89-block 349
+    %%%%%:   89-block 350
+    %%%%%:   89-block 351
+    %%%%%:   89-block 352
+    %%%%%:   89-block 353
+    %%%%%:   89-block 354
+    %%%%%:   89-block 355
+    $$$$$:   89-block 356
+    $$$$$:   89-block 357
+    $$$$$:   89-block 358
+    $$$$$:   89-block 359
+    %%%%%:   89-block 360
+    %%%%%:   89-block 361
+    %%%%%:   89-block 362
+    %%%%%:   89-block 363
+    %%%%%:   89-block 364
+    %%%%%:   89-block 365
+    %%%%%:   89-block 366
+    %%%%%:   89-block 367
+    %%%%%:   89-block 368
+    %%%%%:   89-block 369
+    %%%%%:   89-block 370
+    %%%%%:   89-block 371
+    $$$$$:   89-block 372
+    $$$$$:   89-block 373
+    $$$$$:   89-block 374
+    $$$$$:   89-block 375
+    $$$$$:   89-block 376
+    %%%%%:   89-block 377
+    %%%%%:   89-block 378
+    %%%%%:   89-block 379
+    %%%%%:   89-block 380
+    %%%%%:   89-block 381
+    %%%%%:   89-block 382
+    %%%%%:   89-block 383
+    %%%%%:   89-block 384
+    %%%%%:   89-block 385
+    %%%%%:   89-block 386
+    %%%%%:   89-block 387
+    %%%%%:   89-block 388
+    %%%%%:   89-block 389
+    %%%%%:   89-block 390
+    $$$$$:   89-block 391
+    $$$$$:   89-block 392
+    $$$$$:   89-block 393
+    $$$$$:   89-block 394
+    %%%%%:   89-block 395
+    %%%%%:   89-block 396
+    %%%%%:   89-block 397
+    %%%%%:   89-block 398
+    %%%%%:   89-block 399
+    %%%%%:   89-block 400
+    %%%%%:   89-block 401
+    $$$$$:   89-block 402
+    $$$$$:   89-block 403
+    %%%%%:   89-block 404
+    %%%%%:   89-block 405
+    %%%%%:   89-block 406
+    %%%%%:   89-block 407
+    %%%%%:   89-block 408
+    %%%%%:   89-block 409
+    %%%%%:   89-block 410
+    %%%%%:   89-block 411
+    %%%%%:   89-block 412
+    %%%%%:   89-block 413
+    %%%%%:   89-block 414
+    %%%%%:   89-block 415
+    %%%%%:   89-block 416
+    %%%%%:   89-block 417
+    $$$$$:   89-block 418
+    $$$$$:   89-block 419
+    $$$$$:   89-block 420
+    $$$$$:   89-block 421
+    $$$$$:   89-block 422
+    %%%%%:   89-block 423
+    %%%%%:   89-block 424
+    %%%%%:   89-block 425
+    %%%%%:   89-block 426
+    %%%%%:   89-block 427
+    %%%%%:   89-block 428
+    %%%%%:   89-block 429
+    %%%%%:   89-block 430
+    %%%%%:   89-block 431
+    %%%%%:   89-block 432
+    %%%%%:   89-block 433
+    %%%%%:   89-block 434
+    %%%%%:   89-block 435
+    %%%%%:   89-block 436
+    $$$$$:   89-block 437
+    $$$$$:   89-block 438
+    $$$$$:   89-block 439
+    $$$$$:   89-block 440
+    $$$$$:   89-block 441
+    $$$$$:   89-block 442
+    $$$$$:   89-block 443
+    $$$$$:   89-block 444
+    %%%%%:   89-block 445
+    %%%%%:   89-block 446
+    %%%%%:   89-block 447
+    %%%%%:   89-block 448
+    %%%%%:   89-block 449
+    $$$$$:   89-block 450
+    $$$$$:   89-block 451
+    $$$$$:   89-block 452
+    $$$$$:   89-block 453
+    %%%%%:   89-block 454
+    %%%%%:   89-block 455
+    %%%%%:   89-block 456
+    %%%%%:   89-block 457
+        -:   90:
+        -:   91:      pointer
+        -:   92:      address(reference __x) const _GLIBCXX_NOEXCEPT
+        -:   93:      { return std::__addressof(__x); }
+        -:   94:
+        -:   95:      const_pointer
+        -:   96:      address(const_reference __x) const _GLIBCXX_NOEXCEPT
+        -:   97:      { return std::__addressof(__x); }
+        -:   98:
+        -:   99:      // NB: __n is permitted to be 0.  The C++ standard says nothing
+        -:  100:      // about what the return value is when __n == 0.
+        -:  101:      _GLIBCXX_NODISCARD pointer
+    #####:  102:      allocate(size_type __n, const void* = static_cast<const void*>(0))
+        -:  103:      {
+    #####:  104:	if (__n > this->max_size())
+        -:  105:	  std::__throw_bad_alloc();
+        -:  106:
+        -:  107:#if __cpp_aligned_new
+        -:  108:	if (alignof(_Tp) > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
+        -:  109:	  {
+        -:  110:	    std::align_val_t __al = std::align_val_t(alignof(_Tp));
+        -:  111:	    return static_cast<_Tp*>(::operator new(__n * sizeof(_Tp), __al));
+        -:  112:	  }
+        -:  113:#endif
+    #####:  114:	return static_cast<_Tp*>(::operator new(__n * sizeof(_Tp)));
+        -:  115:      }
+        -:  116:
+        -:  117:      // __p is not permitted to be a null pointer.
+        -:  118:      void
+     368*:  119:      deallocate(pointer __p, size_type)
+        -:  120:      {
+        -:  121:#if __cpp_aligned_new
+        -:  122:	if (alignof(_Tp) > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
+        -:  123:	  {
+        -:  124:	    ::operator delete(__p, std::align_val_t(alignof(_Tp)));
+        -:  125:	    return;
+        -:  126:	  }
+        -:  127:#endif
+     368*:  128:	::operator delete(__p);
+       24:  128-block  0
+    $$$$$:  128-block  1
+    %%%%%:  128-block  2
+    %%%%%:  128-block  3
+    %%%%%:  128-block  4
+    $$$$$:  128-block  5
+    %%%%%:  128-block  6
+    %%%%%:  128-block  7
+    %%%%%:  128-block  8
+        2:  128-block  9
+    %%%%%:  128-block 10
+    %%%%%:  128-block 11
+    %%%%%:  128-block 12
+    %%%%%:  128-block 13
+    $$$$$:  128-block 14
+    $$$$$:  128-block 15
+    %%%%%:  128-block 16
+    %%%%%:  128-block 17
+    %%%%%:  128-block 18
+    %%%%%:  128-block 19
+    %%%%%:  128-block 20
+    %%%%%:  128-block 21
+    %%%%%:  128-block 22
+    %%%%%:  128-block 23
+    %%%%%:  128-block 24
+       21:  128-block 25
+    $$$$$:  128-block 26
+    %%%%%:  128-block 27
+        6:  128-block 28
+        3:  128-block 29
+        2:  128-block 30
+    %%%%%:  128-block 31
+    %%%%%:  128-block 32
+    %%%%%:  128-block 33
+    $$$$$:  128-block 34
+    $$$$$:  128-block 35
+    %%%%%:  128-block 36
+        3:  128-block 37
+    $$$$$:  128-block 38
+    $$$$$:  128-block 39
+    %%%%%:  128-block 40
+    %%%%%:  128-block 41
+        7:  128-block 42
+        1:  128-block 43
+    $$$$$:  128-block 44
+    $$$$$:  128-block 45
+    $$$$$:  128-block 46
+    $$$$$:  128-block 47
+    %%%%%:  128-block 48
+    $$$$$:  128-block 49
+    %%%%%:  128-block 50
+        3:  128-block 51
+    %%%%%:  128-block 52
+    %%%%%:  128-block 53
+    %%%%%:  128-block 54
+    %%%%%:  128-block 55
+    $$$$$:  128-block 56
+    $$$$$:  128-block 57
+    $$$$$:  128-block 58
+    %%%%%:  128-block 59
+    %%%%%:  128-block 60
+        7:  128-block 61
+        7:  128-block 62
+        1:  128-block 63
+        1:  128-block 64
+    $$$$$:  128-block 65
+    $$$$$:  128-block 66
+    $$$$$:  128-block 67
+    $$$$$:  128-block 68
+    $$$$$:  128-block 69
+    $$$$$:  128-block 70
+    %%%%%:  128-block 71
+    $$$$$:  128-block 72
+    %%%%%:  128-block 73
+    %%%%%:  128-block 74
+    $$$$$:  128-block 75
+    $$$$$:  128-block 76
+    %%%%%:  128-block 77
+    %%%%%:  128-block 78
+    $$$$$:  128-block 79
+    $$$$$:  128-block 80
+    %%%%%:  128-block 81
+    %%%%%:  128-block 82
+    %%%%%:  128-block 83
+    %%%%%:  128-block 84
+    $$$$$:  128-block 85
+    $$$$$:  128-block 86
+    $$$$$:  128-block 87
+    $$$$$:  128-block 88
+    %%%%%:  128-block 89
+    %%%%%:  128-block 90
+    $$$$$:  128-block 91
+    $$$$$:  128-block 92
+    %%%%%:  128-block 93
+    $$$$$:  128-block 94
+    %%%%%:  128-block 95
+    $$$$$:  128-block 96
+    %%%%%:  128-block 97
+    %%%%%:  128-block 98
+    $$$$$:  128-block 99
+    $$$$$:  128-block 100
+    %%%%%:  128-block 101
+    %%%%%:  128-block 102
+    $$$$$:  128-block 103
+    $$$$$:  128-block 104
+    %%%%%:  128-block 105
+    %%%%%:  128-block 106
+    $$$$$:  128-block 107
+        1:  128-block 108
+    $$$$$:  128-block 109
+        1:  128-block 110
+    $$$$$:  128-block 111
+        1:  128-block 112
+    %%%%%:  128-block 113
+    %%%%%:  128-block 114
+    %%%%%:  128-block 115
+        1:  128-block 116
+    $$$$$:  128-block 117
+    $$$$$:  128-block 118
+    $$$$$:  128-block 119
+    $$$$$:  128-block 120
+    $$$$$:  128-block 121
+    %%%%%:  128-block 122
+    %%%%%:  128-block 123
+    $$$$$:  128-block 124
+    $$$$$:  128-block 125
+    %%%%%:  128-block 126
+    $$$$$:  128-block 127
+    %%%%%:  128-block 128
+    $$$$$:  128-block 129
+    %%%%%:  128-block 130
+    %%%%%:  128-block 131
+    %%%%%:  128-block 132
+    %%%%%:  128-block 133
+    %%%%%:  128-block 134
+    %%%%%:  128-block 135
+    %%%%%:  128-block 136
+    %%%%%:  128-block 137
+    $$$$$:  128-block 138
+    $$$$$:  128-block 139
+    $$$$$:  128-block 140
+    $$$$$:  128-block 141
+    $$$$$:  128-block 142
+    $$$$$:  128-block 143
+    $$$$$:  128-block 144
+    $$$$$:  128-block 145
+    %%%%%:  128-block 146
+    %%%%%:  128-block 147
+    %%%%%:  128-block 148
+    $$$$$:  128-block 149
+    $$$$$:  128-block 150
+    $$$$$:  128-block 151
+    %%%%%:  128-block 152
+    $$$$$:  128-block 153
+    %%%%%:  128-block 154
+    $$$$$:  128-block 155
+    %%%%%:  128-block 156
+    $$$$$:  128-block 157
+    %%%%%:  128-block 158
+    %%%%%:  128-block 159
+    %%%%%:  128-block 160
+    $$$$$:  128-block 161
+    $$$$$:  128-block 162
+    $$$$$:  128-block 163
+    %%%%%:  128-block 164
+    %%%%%:  128-block 165
+    $$$$$:  128-block 166
+    $$$$$:  128-block 167
+    %%%%%:  128-block 168
+    %%%%%:  128-block 169
+    $$$$$:  128-block 170
+    $$$$$:  128-block 171
+    %%%%%:  128-block 172
+    $$$$$:  128-block 173
+    %%%%%:  128-block 174
+    $$$$$:  128-block 175
+    %%%%%:  128-block 176
+    $$$$$:  128-block 177
+    %%%%%:  128-block 178
+    $$$$$:  128-block 179
+    %%%%%:  128-block 180
+    %%%%%:  128-block 181
+    $$$$$:  128-block 182
+    $$$$$:  128-block 183
+    %%%%%:  128-block 184
+    $$$$$:  128-block 185
+        1:  128-block 186
+    $$$$$:  128-block 187
+    %%%%%:  128-block 188
+    $$$$$:  128-block 189
+    %%%%%:  128-block 190
+    $$$$$:  128-block 191
+    %%%%%:  128-block 192
+    $$$$$:  128-block 193
+    %%%%%:  128-block 194
+    %%%%%:  128-block 195
+    $$$$$:  128-block 196
+    $$$$$:  128-block 197
+    %%%%%:  128-block 198
+    $$$$$:  128-block 199
+    %%%%%:  128-block 200
+    %%%%%:  128-block 201
+    %%%%%:  128-block 202
+    %%%%%:  128-block 203
+    $$$$$:  128-block 204
+    $$$$$:  128-block 205
+    $$$$$:  128-block 206
+    $$$$$:  128-block 207
+    %%%%%:  128-block 208
+    %%%%%:  128-block 209
+    %%%%%:  128-block 210
+    $$$$$:  128-block 211
+    $$$$$:  128-block 212
+    $$$$$:  128-block 213
+        1:  128-block 214
+    $$$$$:  128-block 215
+    %%%%%:  128-block 216
+    $$$$$:  128-block 217
+    %%%%%:  128-block 218
+    %%%%%:  128-block 219
+    $$$$$:  128-block 220
+    $$$$$:  128-block 221
+    $$$$$:  128-block 222
+    %%%%%:  128-block 223
+    %%%%%:  128-block 224
+    $$$$$:  128-block 225
+    $$$$$:  128-block 226
+    %%%%%:  128-block 227
+    $$$$$:  128-block 228
+    %%%%%:  128-block 229
+    $$$$$:  128-block 230
+    $$$$$:  128-block 231
+    $$$$$:  128-block 232
+    %%%%%:  128-block 233
+    %%%%%:  128-block 234
+    %%%%%:  128-block 235
+    $$$$$:  128-block 236
+    $$$$$:  128-block 237
+    $$$$$:  128-block 238
+    %%%%%:  128-block 239
+    %%%%%:  128-block 240
+    %%%%%:  128-block 241
+    %%%%%:  128-block 242
+    $$$$$:  128-block 243
+    $$$$$:  128-block 244
+    $$$$$:  128-block 245
+    $$$$$:  128-block 246
+    %%%%%:  128-block 247
+    %%%%%:  128-block 248
+    %%%%%:  128-block 249
+    $$$$$:  128-block 250
+    $$$$$:  128-block 251
+    $$$$$:  128-block 252
+    %%%%%:  128-block 253
+    %%%%%:  128-block 254
+    %%%%%:  128-block 255
+    %%%%%:  128-block 256
+    $$$$$:  128-block 257
+    $$$$$:  128-block 258
+    $$$$$:  128-block 259
+    $$$$$:  128-block 260
+    $$$$$:  128-block 261
+        7:  128-block 262
+    %%%%%:  128-block 263
+        1:  128-block 264
+    %%%%%:  128-block 265
+        1:  128-block 266
+    %%%%%:  128-block 267
+    %%%%%:  128-block 268
+        1:  128-block 269
+    $$$$$:  128-block 270
+    $$$$$:  128-block 271
+    $$$$$:  128-block 272
+    $$$$$:  128-block 273
+    $$$$$:  128-block 274
+    $$$$$:  128-block 275
+    $$$$$:  128-block 276
+    $$$$$:  128-block 277
+        1:  128-block 278
+    %%%%%:  128-block 279
+    %%%%%:  128-block 280
+    %%%%%:  128-block 281
+    %%%%%:  128-block 282
+    %%%%%:  128-block 283
+    %%%%%:  128-block 284
+    %%%%%:  128-block 285
+    %%%%%:  128-block 286
+    $$$$$:  128-block 287
+    %%%%%:  128-block 288
+    $$$$$:  128-block 289
+        1:  128-block 290
+    $$$$$:  128-block 291
+    %%%%%:  128-block 292
+    %%%%%:  128-block 293
+    %%%%%:  128-block 294
+    %%%%%:  128-block 295
+    $$$$$:  128-block 296
+    $$$$$:  128-block 297
+    $$$$$:  128-block 298
+    $$$$$:  128-block 299
+    %%%%%:  128-block 300
+    %%%%%:  128-block 301
+    %%%%%:  128-block 302
+    $$$$$:  128-block 303
+    $$$$$:  128-block 304
+    $$$$$:  128-block 305
+    %%%%%:  128-block 306
+    %%%%%:  128-block 307
+    %%%%%:  128-block 308
+    $$$$$:  128-block 309
+    $$$$$:  128-block 310
+    $$$$$:  128-block 311
+    %%%%%:  128-block 312
+    %%%%%:  128-block 313
+    $$$$$:  128-block 314
+    $$$$$:  128-block 315
+    %%%%%:  128-block 316
+    $$$$$:  128-block 317
+    %%%%%:  128-block 318
+        3:  128-block 319
+        3:  128-block 320
+    $$$$$:  128-block 321
+    $$$$$:  128-block 322
+    %%%%%:  128-block 323
+    %%%%%:  128-block 324
+    $$$$$:  128-block 325
+    $$$$$:  128-block 326
+      210:  128-block 327
+    $$$$$:  128-block 328
+        3:  128-block 329
+    $$$$$:  128-block 330
+        3:  128-block 331
+    $$$$$:  128-block 332
+    %%%%%:  128-block 333
+    %%%%%:  128-block 334
+    %%%%%:  128-block 335
+    $$$$$:  128-block 336
+    %%%%%:  128-block 337
+    $$$$$:  128-block 338
+    $$$$$:  128-block 339
+    $$$$$:  128-block 340
+    $$$$$:  128-block 341
+        2:  128-block 342
+    %%%%%:  128-block 343
+        1:  128-block 344
+    %%%%%:  128-block 345
+    %%%%%:  128-block 346
+    %%%%%:  128-block 347
+        1:  128-block 348
+        1:  128-block 349
+    %%%%%:  128-block 350
+    %%%%%:  128-block 351
+    %%%%%:  128-block 352
+    %%%%%:  128-block 353
+    $$$$$:  128-block 354
+    $$$$$:  128-block 355
+    $$$$$:  128-block 356
+    $$$$$:  128-block 357
+    $$$$$:  128-block 358
+    $$$$$:  128-block 359
+    $$$$$:  128-block 360
+    $$$$$:  128-block 361
+    $$$$$:  128-block 362
+    $$$$$:  128-block 363
+        7:  128-block 364
+    %%%%%:  128-block 365
+    %%%%%:  128-block 366
+    %%%%%:  128-block 367
+    %%%%%:  128-block 368
+    %%%%%:  128-block 369
+        7:  128-block 370
+    %%%%%:  128-block 371
+    %%%%%:  128-block 372
+    %%%%%:  128-block 373
+    %%%%%:  128-block 374
+        7:  128-block 375
+    %%%%%:  128-block 376
+        7:  128-block 377
+    $$$$$:  128-block 378
+    $$$$$:  128-block 379
+    $$$$$:  128-block 380
+    $$$$$:  128-block 381
+    $$$$$:  128-block 382
+    $$$$$:  128-block 383
+    $$$$$:  128-block 384
+    $$$$$:  128-block 385
+    $$$$$:  128-block 386
+    $$$$$:  128-block 387
+    $$$$$:  128-block 388
+    $$$$$:  128-block 389
+        7:  128-block 390
+    $$$$$:  128-block 391
+    $$$$$:  128-block 392
+    $$$$$:  128-block 393
+    %%%%%:  128-block 394
+    %%%%%:  128-block 395
+    $$$$$:  128-block 396
+    %%%%%:  128-block 397
+    %%%%%:  128-block 398
+    %%%%%:  128-block 399
+    $$$$$:  128-block 400
+    %%%%%:  128-block 401
+    %%%%%:  128-block 402
+    %%%%%:  128-block 403
+    $$$$$:  128-block 404
+    %%%%%:  128-block 405
+    %%%%%:  128-block 406
+    %%%%%:  128-block 407
+    $$$$$:  128-block 408
+    %%%%%:  128-block 409
+    $$$$$:  128-block 410
+    %%%%%:  128-block 411
+    %%%%%:  128-block 412
+    %%%%%:  128-block 413
+    %%%%%:  128-block 414
+    %%%%%:  128-block 415
+    %%%%%:  128-block 416
+    %%%%%:  128-block 417
+    %%%%%:  128-block 418
+    %%%%%:  128-block 419
+    %%%%%:  128-block 420
+    $$$$$:  128-block 421
+    $$$$$:  128-block 422
+    $$$$$:  128-block 423
+    $$$$$:  128-block 424
+    %%%%%:  128-block 425
+    $$$$$:  128-block 426
+    %%%%%:  128-block 427
+    %%%%%:  128-block 428
+    %%%%%:  128-block 429
+    %%%%%:  128-block 430
+    %%%%%:  128-block 431
+    %%%%%:  128-block 432
+    %%%%%:  128-block 433
+    $$$$$:  128-block 434
+    $$$$$:  128-block 435
+    $$$$$:  128-block 436
+    $$$$$:  128-block 437
+    $$$$$:  128-block 438
+    $$$$$:  128-block 439
+    %%%%%:  128-block 440
+    %%%%%:  128-block 441
+    %%%%%:  128-block 442
+    %%%%%:  128-block 443
+    %%%%%:  128-block 444
+    %%%%%:  128-block 445
+    %%%%%:  128-block 446
+    %%%%%:  128-block 447
+    %%%%%:  128-block 448
+    %%%%%:  128-block 449
+    %%%%%:  128-block 450
+    $$$$$:  128-block 451
+    $$$$$:  128-block 452
+    $$$$$:  128-block 453
+    $$$$$:  128-block 454
+    %%%%%:  128-block 455
+    $$$$$:  128-block 456
+    %%%%%:  128-block 457
+    %%%%%:  128-block 458
+    %%%%%:  128-block 459
+    %%%%%:  128-block 460
+    $$$$$:  128-block 461
+    $$$$$:  128-block 462
+    %%%%%:  128-block 463
+    $$$$$:  128-block 464
+    %%%%%:  128-block 465
+    $$$$$:  128-block 466
+    %%%%%:  128-block 467
+    $$$$$:  128-block 468
+    %%%%%:  128-block 469
+    %%%%%:  128-block 470
+    %%%%%:  128-block 471
+    %%%%%:  128-block 472
+    %%%%%:  128-block 473
+    %%%%%:  128-block 474
+    %%%%%:  128-block 475
+    $$$$$:  128-block 476
+    $$$$$:  128-block 477
+    $$$$$:  128-block 478
+    $$$$$:  128-block 479
+    $$$$$:  128-block 480
+    $$$$$:  128-block 481
+    %%%%%:  128-block 482
+    %%%%%:  128-block 483
+    %%%%%:  128-block 484
+    %%%%%:  128-block 485
+    %%%%%:  128-block 486
+    %%%%%:  128-block 487
+    %%%%%:  128-block 488
+    %%%%%:  128-block 489
+    %%%%%:  128-block 490
+    %%%%%:  128-block 491
+    %%%%%:  128-block 492
+    $$$$$:  128-block 493
+    $$$$$:  128-block 494
+    $$$$$:  128-block 495
+    $$$$$:  128-block 496
+    $$$$$:  128-block 497
+    $$$$$:  128-block 498
+    $$$$$:  128-block 499
+    $$$$$:  128-block 500
+    %%%%%:  128-block 501
+    %%%%%:  128-block 502
+    %%%%%:  128-block 503
+    %%%%%:  128-block 504
+    %%%%%:  128-block 505
+    $$$$$:  128-block 506
+    $$$$$:  128-block 507
+    $$$$$:  128-block 508
+    $$$$$:  128-block 509
+    $$$$$:  128-block 510
+    %%%%%:  128-block 511
+    %%%%%:  128-block 512
+    $$$$$:  128-block 513
+    $$$$$:  128-block 514
+        -:  129:      }
+        -:  130:
+        -:  131:      size_type
+      96*:  132:      max_size() const _GLIBCXX_USE_NOEXCEPT
+    %%%%%:  132-block  0
+    %%%%%:  132-block  1
+    %%%%%:  132-block  2
+    %%%%%:  132-block  3
+    %%%%%:  132-block  4
+    %%%%%:  132-block  5
+    %%%%%:  132-block  6
+    %%%%%:  132-block  7
+    %%%%%:  132-block  8
+    %%%%%:  132-block  9
+    %%%%%:  132-block 10
+    %%%%%:  132-block 11
+    %%%%%:  132-block 12
+    %%%%%:  132-block 13
+    %%%%%:  132-block 14
+    %%%%%:  132-block 15
+    %%%%%:  132-block 16
+    %%%%%:  132-block 17
+       24:  132-block 18
+       24:  132-block 19
+    %%%%%:  132-block 20
+    %%%%%:  132-block 21
+        8:  132-block 22
+        8:  132-block 23
+        9:  132-block 24
+        9:  132-block 25
+        3:  132-block 26
+        3:  132-block 27
+    %%%%%:  132-block 28
+    %%%%%:  132-block 29
+    %%%%%:  132-block 30
+    %%%%%:  132-block 31
+    %%%%%:  132-block 32
+    %%%%%:  132-block 33
+        4:  132-block 34
+        4:  132-block 35
+    %%%%%:  132-block 36
+    %%%%%:  132-block 37
+    %%%%%:  132-block 38
+    %%%%%:  132-block 39
+    %%%%%:  132-block 40
+    %%%%%:  132-block 41
+    %%%%%:  132-block 42
+        -:  133:      {
+        -:  134:#if __PTRDIFF_MAX__ < __SIZE_MAX__
+        -:  135:	return size_t(__PTRDIFF_MAX__) / sizeof(_Tp);
+        -:  136:#else
+        -:  137:	return size_t(-1) / sizeof(_Tp);
+        -:  138:#endif
+        -:  139:      }
+        -:  140:
+        -:  141:#if __cplusplus >= 201103L
+        -:  142:      template<typename _Up, typename... _Args>
+        -:  143:	void
+     253*:  144:	construct(_Up* __p, _Args&&... __args)
+        -:  145:	noexcept(noexcept(::new((void *)__p)
+        -:  146:			    _Up(std::forward<_Args>(__args)...)))
+     257*:  147:	{ ::new((void *)__p) _Up(std::forward<_Args>(__args)...); }
+    %%%%%:  147-block  0
+    %%%%%:  147-block  1
+    %%%%%:  147-block  2
+    %%%%%:  147-block  3
+    %%%%%:  147-block  4
+    %%%%%:  147-block  5
+    %%%%%:  147-block  6
+    %%%%%:  147-block  7
+    %%%%%:  147-block  8
+    %%%%%:  147-block  9
+    %%%%%:  147-block 10
+    %%%%%:  147-block 11
+    %%%%%:  147-block 12
+    %%%%%:  147-block 13
+    %%%%%:  147-block 14
+    %%%%%:  147-block 15
+       11:  147-block 16
+        7:  147-block 17
+        7:  147-block 18
+    %%%%%:  147-block 19
+    %%%%%:  147-block 20
+    %%%%%:  147-block 21
+    %%%%%:  147-block 22
+    %%%%%:  147-block 23
+    %%%%%:  147-block 24
+      186:  147-block 25
+        6:  147-block 26
+        3:  147-block 27
+    %%%%%:  147-block 28
+    %%%%%:  147-block 29
+    %%%%%:  147-block 30
+    %%%%%:  147-block 31
+        3:  147-block 32
+        -:  148:
+        -:  149:      template<typename _Up>
+        -:  150:	void
+       7*:  151:	destroy(_Up* __p)
+    %%%%%:  151-block  0
+    %%%%%:  151-block  1
+    %%%%%:  151-block  2
+    %%%%%:  151-block  3
+    %%%%%:  151-block  4
+    %%%%%:  151-block  5
+    %%%%%:  151-block  6
+    %%%%%:  151-block  7
+    %%%%%:  151-block  8
+    %%%%%:  151-block  9
+    $$$$$:  151-block 10
+        7:  151-block 11
+    %%%%%:  151-block 12
+    $$$$$:  151-block 13
+        -:  152:	noexcept(noexcept( __p->~_Up()))
+       7*:  153:	{ __p->~_Up(); }
+    $$$$$:  153-block  0
+    $$$$$:  153-block  1
+    $$$$$:  153-block  2
+        7:  153-block  3
+    %%%%%:  153-block  4
+    $$$$$:  153-block  5
+        -:  154:#else
+        -:  155:      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        -:  156:      // 402. wrong new expression in [some_] allocator::construct
+        -:  157:      void
+        -:  158:      construct(pointer __p, const _Tp& __val)
+        -:  159:      { ::new((void *)__p) _Tp(__val); }
+        -:  160:
+        -:  161:      void
+        -:  162:      destroy(pointer __p) { __p->~_Tp(); }
+        -:  163:#endif
+        -:  164:
+        -:  165:      template<typename _Up>
+        -:  166:	friend bool
+        -:  167:	operator==(const new_allocator&, const new_allocator<_Up>&)
+        -:  168:	_GLIBCXX_NOTHROW
+        -:  169:	{ return true; }
+        -:  170:
+        -:  171:      template<typename _Up>
+        -:  172:	friend bool
+        -:  173:	operator!=(const new_allocator&, const new_allocator<_Up>&)
+        -:  174:	_GLIBCXX_NOTHROW
+        -:  175:	{ return false; }
+        -:  176:    };
+        -:  177:
+        -:  178:_GLIBCXX_END_NAMESPACE_VERSION
+        -:  179:} // namespace
+        -:  180:
+        -:  181:#endif

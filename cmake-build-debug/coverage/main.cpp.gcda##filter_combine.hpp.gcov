@@ -1,0 +1,217 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_combine.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_COMBINE_HPP
+        -:   19:#define PIC_FILTERING_FILTER_COMBINE_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:#include "../filtering/filter_channel.hpp"
+        -:   24:
+        -:   25:namespace pic {
+        -:   26:
+        -:   27:/**
+        -:   28: * @brief The FilterCombine class
+        -:   29: */
+        -:   30:class FilterCombine: public Filter
+        -:   31:{
+        -:   32:protected:
+        -:   33:
+        -:   34:    /**
+        -:   35:     * @brief f
+        -:   36:     * @param data
+        -:   37:     */
+    #####:   38:    virtual void f(FilterFData *data)
+        -:   39:    {
+    #####:   40:        int k2 = 0;
+        -:   41:
+    #####:   42:        for(auto i = 0; i < data->nSrc; i++) {
+    %%%%%:   42-block  0
+    %%%%%:   42-block  1
+    %%%%%:   42-block  2
+    #####:   43:            float *tmp_src = (*data->src[i])(data->x, data->y);
+    %%%%%:   43-block  0
+        -:   44:
+    #####:   45:            for(int k = 0; k < data->src[i]->channels; k++) {
+    %%%%%:   45-block  0
+    %%%%%:   45-block  1
+    #####:   46:                data->out[k2] = tmp_src[k];
+    #####:   47:                k2++;
+    %%%%%:   47-block  0
+        -:   48:            }
+        -:   49:        }
+    #####:   50:    }
+        -:   51:
+        -:   52:    /**
+        -:   53:     * @brief ProcessBBox
+        -:   54:     * @param dst
+        -:   55:     * @param src
+        -:   56:     * @param box
+        -:   57:     */
+        -:   58:    /*
+        -:   59:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   60:    {
+        -:   61:        for(int p = box->z0; p < box->z1; p++) {
+        -:   62:            for(int j = box->y0; j < box->y1; j++) {
+        -:   63:                for(int i = box->x0; i < box->x1; i++) {
+        -:   64:                    int c  = p * dst->tstride + j * dst->ystride + i * dst->xstride;
+        -:   65:                    int k2 = 0;
+        -:   66:
+        -:   67:                    for(unsigned int im = 0; im < src.size(); im++) {
+        -:   68:                        int c2 = p * src[im]->tstride + j * src[im]->ystride + i * src[im]->xstride;
+        -:   69:
+        -:   70:                        for(int k = 0; k < src[im]->channels; k++) {
+        -:   71:                            dst->data[c + k2] = src[im]->data[c2 + k];
+        -:   72:                            k2++;
+        -:   73:                        }
+        -:   74:                    }
+        -:   75:                }
+        -:   76:            }
+        -:   77:        }
+        -:   78:    }*/
+        -:   79:
+        -:   80:    /**
+        -:   81:     * @brief setupAux
+        -:   82:     * @param imgIn
+        -:   83:     * @param imgOut
+        -:   84:     * @return
+        -:   85:     */
+    #####:   86:    Image *setupAux(ImageVec imgIn, Image *imgOut)
+        -:   87:    {
+    #####:   88:        int channels = imgIn[0]->channels;
+    %%%%%:   88-block  0
+    #####:   89:        for(unsigned int i = 1; i < imgIn.size(); i++) {
+    %%%%%:   89-block  0
+    %%%%%:   89-block  1
+    #####:   90:            channels += imgIn[i]->channels;
+    %%%%%:   90-block  0
+        -:   91:
+    #####:   92:            if(!imgIn[0]->isSimilarType(imgIn[i])) {
+    %%%%%:   92-block  0
+    %%%%%:   92-block  1
+    %%%%%:   92-block  2
+        -:   93:                return NULL;
+        -:   94:            }
+        -:   95:        }
+        -:   96:
+    #####:   97:        if(imgOut == NULL) {
+    %%%%%:   97-block  0
+    #####:   98:            imgOut = new Image(imgIn[0]->frames, imgIn[0]->width, imgIn[0]->height,
+    %%%%%:   98-block  0
+    #####:   99:                                  channels);
+    %%%%%:   99-block  0
+    $$$$$:   99-block  1
+        -:  100:        } else {
+    #####:  101:            bool bAllocate = false;
+    #####:  102:            if(!imgOut->isValid()) {
+    %%%%%:  102-block  0
+        -:  103:                bAllocate = true;
+        -:  104:            } else {
+    #####:  105:                bAllocate = imgOut->channels != channels;
+        -:  106:            }
+        -:  107:
+    #####:  108:            if(bAllocate) {
+    %%%%%:  108-block  0
+    #####:  109:                imgOut = new Image(imgIn[0]->frames, imgIn[0]->width, imgIn[0]->height,
+    %%%%%:  109-block  0
+    #####:  110:                        channels);
+    %%%%%:  110-block  0
+    $$$$$:  110-block  1
+        -:  111:            }
+        -:  112:        }
+        -:  113:
+        -:  114:        return imgOut;
+        -:  115:    }
+        -:  116:
+        -:  117:public:
+        -:  118:
+        -:  119:    /**
+        -:  120:     * @brief FilterCombine
+        -:  121:     */
+        -:  122:    FilterCombine() : Filter()
+        -:  123:    {
+        -:  124:
+        -:  125:    }
+        -:  126:
+        -:  127:    /**
+        -:  128:     * @brief addAlpha
+        -:  129:     * @param imgIn
+        -:  130:     * @param imgOut
+        -:  131:     * @param value
+        -:  132:     * @return
+        -:  133:     */
+        -:  134:    static Image *addAlpha(Image *imgIn, Image *imgOut, float value)
+        -:  135:    {
+        -:  136:        //create an alpha channel
+        -:  137:        Image *alpha = new Image(imgIn->frames, imgIn->width, imgIn->height, 1);
+        -:  138:        *alpha = value;
+        -:  139:
+        -:  140:        //add the channel to the image
+        -:  141:        ImageVec src;
+        -:  142:        src.push_back(imgIn);
+        -:  143:        src.push_back(alpha);
+        -:  144:
+        -:  145:        FilterCombine filterC;
+        -:  146:        imgOut = filterC.Process(src, imgOut);
+        -:  147:
+        -:  148:        delete alpha;
+        -:  149:        return imgOut;
+        -:  150:    }
+        -:  151:
+        -:  152:    /**
+        -:  153:     * @brief execute
+        -:  154:     * @param imgIn
+        -:  155:     * @param imgOut
+        -:  156:     * @return
+        -:  157:     */
+        -:  158:    static Image *execute(ImageVec imgIn, Image *imgOut)
+        -:  159:    {
+        -:  160:        FilterCombine filterC;
+        -:  161:        return filterC.Process(imgIn, imgOut);
+        -:  162:    }
+        -:  163:
+        -:  164:    /**
+        -:  165:     * @brief getOnlyRGB
+        -:  166:     * @param nameIn
+        -:  167:     * @param nameOut
+        -:  168:     * @return
+        -:  169:     */
+        -:  170:    static Image *getOnlyRGB(Image *imgIn, Image *imgOut)
+        -:  171:    {
+        -:  172:        ImageVec src;
+        -:  173:        FilterChannel filter(SingleInt(0));
+        -:  174:
+        -:  175:        for(int i = 0; i < 3; i++) {
+        -:  176:            Image *out = filter.Process(Single(imgIn), NULL);
+        -:  177:            src.push_back(out);
+        -:  178:            filter.update(SingleInt(i + 1));
+        -:  179:        }
+        -:  180:
+        -:  181:        imgOut = execute(src, NULL);
+        -:  182:
+        -:  183:        return imgOut;
+        -:  184:    }
+        -:  185:};
+        -:  186:
+        -:  187:} // end namespace pic
+        -:  188:
+        -:  189:#endif /* PIC_FILTERING_FILTER_COMBINE_HPP */
+        -:  190:

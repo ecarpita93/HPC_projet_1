@@ -1,0 +1,262 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_color_conv.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_COLOR_CONV_HPP
+        -:   19:#define PIC_FILTERING_FILTER_COLOR_CONV_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:#include "../colors/color_conv.hpp"
+        -:   23:#include "../colors/color_conv_rgb_to_xyz.hpp"
+        -:   24:#include "../colors/color_conv_xyz_to_logluv.hpp"
+        -:   25:#include "../colors/color_conv_xyz_to_cielab.hpp"
+        -:   26:
+        -:   27:namespace pic {
+        -:   28:
+        -:   29:struct ColorConvTransform
+        -:   30:{
+        -:   31:    ColorConv *f;
+        -:   32:    bool bDirection;
+        -:   33:};
+        -:   34:
+        -:   35:/**
+        -:   36: * @brief The FilterColorConv class
+        -:   37: */
+        -:   38:class FilterColorConv: public Filter
+        -:   39:{
+        -:   40:protected:
+        -:   41:    std::vector<ColorConvTransform> list;
+        -:   42:    bool bDirection;
+        -:   43:    unsigned int n;
+        -:   44:    bool bEven;
+        -:   45:
+        -:   46:    /**
+        -:   47:     * @brief ProcessBBox
+        -:   48:     * @param dst
+        -:   49:     * @param src
+        -:   50:     * @param box
+        -:   51:     */
+    #####:   52:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   53:    {
+    #####:   54:        if(n < 1) {
+    %%%%%:   54-block  0
+    #####:   55:            return;
+    %%%%%:   55-block  0
+        -:   56:        }
+        -:   57:
+    #####:   58:        int channels = src[0]->channels;
+    %%%%%:   58-block  0
+        -:   59:
+    #####:   60:        float *tmpCol = new float [channels];
+    %%%%%:   60-block  0
+    %%%%%:   60-block  1
+    %%%%%:   60-block  2
+    #####:   61:        float *tmp[2];
+        -:   62:
+    #####:   63:        tmp[1] = tmpCol;
+        -:   64:
+    #####:   65:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   65-block  0
+    %%%%%:   65-block  1
+        -:   66:
+    #####:   67:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   67-block  0
+    %%%%%:   67-block  1
+    %%%%%:   67-block  2
+        -:   68:
+    #####:   69:                float *dataIn  = (*src[0])(i, j);
+    %%%%%:   69-block  0
+    #####:   70:                float *dataOut = (*dst) (i, j);
+    %%%%%:   70-block  0
+        -:   71:
+    #####:   72:                if(bEven) {
+    %%%%%:   72-block  0
+    #####:   73:                    tmp[1] = dataOut;
+    #####:   74:                    tmp[0] = tmpCol;
+    %%%%%:   74-block  0
+        -:   75:                } else {
+    #####:   76:                    tmp[0] = dataOut;
+    #####:   77:                    tmp[1] = tmpCol;
+    %%%%%:   77-block  0
+        -:   78:                }
+        -:   79:
+    #####:   80:                if(bDirection) { //direct color transform
+    %%%%%:   80-block  0
+    #####:   81:                    list[0].f->transform(dataIn, tmp[0], list[0].bDirection);
+    %%%%%:   81-block  0
+    #####:   82:                    for(unsigned int k = 1; k < n; k++) {
+    #####:   83:                        list[k].f->transform(tmp[(k + 1) % 2], tmp[k % 2], list[k].bDirection);
+    %%%%%:   83-block  0
+    %%%%%:   83-block  1
+        -:   84:                    }
+        -:   85:                } else { //inverse color transform
+    #####:   86:                    list[n - 1].f->transform(dataIn, tmp[0], !list[n - 1].bDirection);
+    %%%%%:   86-block  0
+    #####:   87:                    for(unsigned int k = 1; k < n; k++) {
+    #####:   88:                        list[n - k - 1].f->transform(tmp[(k + 1) % 2], tmp[k % 2], !list[n - k - 1].bDirection);
+    %%%%%:   88-block  0
+    %%%%%:   88-block  1
+        -:   89:                    }
+        -:   90:                }
+        -:   91:            }
+        -:   92:        }
+        -:   93:
+    #####:   94:        delete[] tmpCol;
+    %%%%%:   94-block  0
+        -:   95:    }
+        -:   96:
+        -:   97:public:
+        -:   98:
+        -:   99:    /**
+        -:  100:     * @brief FilterColorConv
+        -:  101:     */
+        -:  102:    FilterColorConv()
+        -:  103:    {
+        -:  104:        this->bDirection = true;
+        -:  105:        n = -1;
+        -:  106:    }
+        -:  107:
+        -:  108:    /**
+        -:  109:     * @brief insertColorConv
+        -:  110:     * @param transform
+        -:  111:     * @param bDirection
+        -:  112:     */
+        -:  113:    void insertColorConv(ColorConv *transform, bool bDirection)
+        -:  114:    {
+        -:  115:        if(transform != NULL) {
+        -:  116:            ColorConvTransform entry;
+        -:  117:            entry.f = transform;
+        -:  118:            entry.bDirection = bDirection;
+        -:  119:
+        -:  120:            list.push_back(entry);
+        -:  121:        }
+        -:  122:
+        -:  123:        n = int(list.size());
+        -:  124:        bEven = (n % 2) == 0;
+        -:  125:    }
+        -:  126:
+        -:  127:    /**
+        -:  128:     * @brief update
+        -:  129:     * @param bDirection
+        -:  130:     */
+        -:  131:    void update(bool bDirection)
+        -:  132:    {
+        -:  133:        this->bDirection = bDirection;
+        -:  134:    }
+        -:  135:
+        -:  136:    /**
+        -:  137:     * @brief fromRGBtoXYZ
+        -:  138:     * @param imgIn
+        -:  139:     * @param imgOut
+        -:  140:     * @return
+        -:  141:     */
+        -:  142:    static Image *fromRGBtoXYZ(Image *imgIn, Image *imgOut)
+        -:  143:    {
+        -:  144:        ColorConvRGBtoXYZ    cc_from_RGB_to_XYZ;
+        -:  145:
+        -:  146:        FilterColorConv flt;
+        -:  147:
+        -:  148:        flt.insertColorConv(&cc_from_RGB_to_XYZ,    true);
+        -:  149:        return flt.Process(Single(imgIn), imgOut);
+        -:  150:    }
+        -:  151:
+        -:  152:    /**
+        -:  153:     * @brief fromRGBtoCIELAB
+        -:  154:     * @param imgIn
+        -:  155:     * @param imgOut
+        -:  156:     * @return
+        -:  157:     */
+        -:  158:    static Image *fromRGBtoCIELAB(Image *imgIn, Image *imgOut)
+        -:  159:    {
+        -:  160:        ColorConvRGBtoXYZ    cc_from_RGB_to_XYZ;
+        -:  161:        ColorConvXYZtoCIELAB cc_from_XYZ_to_CIELAB;
+        -:  162:
+        -:  163:        FilterColorConv flt;
+        -:  164:
+        -:  165:        flt.insertColorConv(&cc_from_RGB_to_XYZ,    true);
+        -:  166:        flt.insertColorConv(&cc_from_XYZ_to_CIELAB, true);
+        -:  167:
+        -:  168:        return flt.Process(Single(imgIn), imgOut);
+        -:  169:    }
+        -:  170:
+        -:  171:    /**
+        -:  172:    * @brief fromRGBtoLogLuv
+        -:  173:    * @param imgIn
+        -:  174:    * @param imgOut
+        -:  175:    * @return
+        -:  176:    */
+        -:  177:    static Image *fromRGBtoLogLuv(Image *imgIn, Image *imgOut)
+        -:  178:    {
+        -:  179:        ColorConvRGBtoXYZ    cc_from_RGB_to_XYZ;
+        -:  180:        ColorConvXYZtoLogLuv cc_from_XYZ_to_LogLuv;
+        -:  181:
+        -:  182:        FilterColorConv flt;
+        -:  183:
+        -:  184:        flt.insertColorConv(&cc_from_RGB_to_XYZ, true);
+        -:  185:        flt.insertColorConv(&cc_from_XYZ_to_LogLuv, true);
+        -:  186:
+        -:  187:        return flt.Process(Single(imgIn), imgOut);
+        -:  188:    }
+        -:  189:
+        -:  190:    /**
+        -:  191:     * @brief fromCIELABtoRGB
+        -:  192:     * @param imgIn
+        -:  193:     * @param imgOut
+        -:  194:     * @return
+        -:  195:     */
+        -:  196:    static Image *fromCIELABtoRGB(Image *imgIn, Image *imgOut)
+        -:  197:    {
+        -:  198:        ColorConvRGBtoXYZ    cc_from_RGB_to_XYZ;
+        -:  199:        ColorConvXYZtoCIELAB cc_from_XYZ_to_CIELAB;
+        -:  200:
+        -:  201:        FilterColorConv flt;
+        -:  202:
+        -:  203:        flt.insertColorConv(&cc_from_XYZ_to_CIELAB, false);
+        -:  204:        flt.insertColorConv(&cc_from_RGB_to_XYZ,    false);
+        -:  205:
+        -:  206:        return flt.Process(Single(imgIn), imgOut);
+        -:  207:    }
+        -:  208:
+        -:  209:    /**
+        -:  210:     * @brief fromCIELABtoRGB2
+        -:  211:     * @param imgIn
+        -:  212:     * @param imgOut
+        -:  213:     * @return
+        -:  214:     */
+        -:  215:    static Image *fromCIELABtoRGB2(Image *imgIn, Image *imgOut)
+        -:  216:    {
+        -:  217:        ColorConvRGBtoXYZ    cc_from_RGB_to_XYZ;
+        -:  218:        ColorConvXYZtoCIELAB cc_from_XYZ_to_CIELAB;
+        -:  219:
+        -:  220:        FilterColorConv flt;
+        -:  221:
+        -:  222:        flt.insertColorConv(&cc_from_RGB_to_XYZ,    true);
+        -:  223:        flt.insertColorConv(&cc_from_XYZ_to_CIELAB, true);
+        -:  224:
+        -:  225:        flt.update(false);
+        -:  226:
+        -:  227:        return flt.Process(Single(imgIn), imgOut);
+        -:  228:    }
+        -:  229:};
+        -:  230:
+        -:  231:} // end namespace pic
+        -:  232:
+        -:  233:#endif /* PIC_FILTERING_FILTER_COLOR_CONV_HPP */
+        -:  234:

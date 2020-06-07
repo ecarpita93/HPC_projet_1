@@ -1,0 +1,232 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_rotation.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_ROTATION_HPP
+        -:   19:#define PIC_FILTERING_FILTER_ROTATION_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:#include "../image_samplers/image_sampler_bilinear.hpp"
+        -:   23:
+        -:   24:#ifndef PIC_DISABLE_EIGEN
+        -:   25:
+        -:   26:#ifndef PIC_EIGEN_NOT_BUNDLED
+        -:   27:    #include "../externals/Eigen/Dense"
+        -:   28:    #include "../externals/Eigen/Geometry"
+        -:   29:#else
+        -:   30:    #include <Eigen/Dense>
+        -:   31:    #include <Eigen/Geometry>
+        -:   32:#endif
+        -:   33:
+        -:   34:#endif
+        -:   35:
+        -:   36:namespace pic {
+        -:   37:#ifndef PIC_DISABLE_EIGEN
+        -:   38:
+        -:   39:/**
+        -:   40: * @brief The FilterRotation class
+        -:   41: */
+        -:   42:class FilterRotation: public Filter
+        -:   43:{
+        -:   44:protected:
+        -:   45:
+        -:   46:    ImageSamplerBilinear isb;
+        -:   47:
+        -:   48:    //rotation
+        -:   49:    float angleX, angleY, angleZ;
+        -:   50:
+        -:   51:    //the rotation matrix of (theta, phi)
+        -:   52:    Eigen::Matrix3f mtxRot, mtxRot_inv;
+        -:   53:
+        -:   54:    /**
+        -:   55:     * @brief ProcessBBox
+        -:   56:     * @param dst
+        -:   57:     * @param src
+        -:   58:     * @param box
+        -:   59:     */
+    #####:   60:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   61:    {
+    #####:   62:        float c1 = C_PI   / dst->heightf;
+    #####:   63:        float c2 = C_PI_2 / dst->widthf;
+        -:   64:
+    #####:   65:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   65-block  0
+    %%%%%:   65-block  1
+    %%%%%:   65-block  2
+    #####:   66:            float theta = float(j) * c1;
+    #####:   67:            float sinTheta = sinf(theta);
+    #####:   68:            float cosTheta = cosf(theta);
+        -:   69:
+    #####:   70:            Eigen::Vector3f d;
+    %%%%%:   70-block  0
+        -:   71:
+    #####:   72:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   72-block  0
+    %%%%%:   72-block  1
+    #####:   73:                float phi = float(i) * c2;
+        -:   74:
+    #####:   75:                d[0] = sinTheta * cosf(phi);
+    %%%%%:   75-block  0
+    #####:   76:                d[1] = cosTheta;
+    #####:   77:                d[2] = sinTheta * sinf(phi);
+        -:   78:
+    #####:   79:                auto Rd = (mtxRot_inv * d).normalized();
+    %%%%%:   79-block  0
+        -:   80:
+        -:   81:
+        -:   82:          /*    printf("\nwrong: %f correct: %f Rd: %f\n",
+        -:   83:                       sinTheta * cosf(phi + this->phi),
+        -:   84:                       sinTheta * cosf(phi - this->phi),
+        -:   85:                       Rd[0]
+        -:   86:                       );*/
+        -:   87:
+    #####:   88:                float xt = 1.0f - ((atan2f(Rd[2], -Rd[0]) * C_INV_PI) * 0.5f + 0.5f);
+    #####:   89:                float yt = (acosf(Rd[1]) * C_INV_PI);
+        -:   90:
+    #####:   91:                float *data_dst = (*dst)(i, j);
+    #####:   92:                isb.SampleImage(src[0], xt, yt, data_dst);
+    %%%%%:   92-block  0
+        -:   93:            }
+        -:   94:        }
+    #####:   95:    }
+        -:   96:
+        -:   97:    /**
+        -:   98:     * @brief fromAnglesToVector
+        -:   99:     * @param theta
+        -:  100:     * @param phi
+        -:  101:     * @return
+        -:  102:     */
+        -:  103:    Eigen::Vector3f fromAnglesToVector(float theta, float phi)
+        -:  104:    {
+        -:  105:        Eigen::Vector3f ret;
+        -:  106:        float sinTheta = sinf(theta);
+        -:  107:        float cosTheta = cosf(theta);
+        -:  108:
+        -:  109:        ret[0] = sinTheta * cosf(phi);
+        -:  110:        ret[1] = cosTheta;
+        -:  111:        ret[2] = sinTheta * sinf(phi);
+        -:  112:
+        -:  113:        return ret;
+        -:  114:    }
+        -:  115:
+        -:  116:public:
+        -:  117:
+        -:  118:    /**
+        -:  119:     * @brief FilterRotation
+        -:  120:     */
+        -:  121:    FilterRotation() : Filter()
+        -:  122:    {
+        -:  123:        update(0.0f, 0.0f, 0.0f);
+        -:  124:    }
+        -:  125:
+        -:  126:    /**
+        -:  127:     * @brief FilterRotation
+        -:  128:     * @param angleX
+        -:  129:     * @param angleY
+        -:  130:     * @param angleZ
+        -:  131:     */
+        -:  132:    FilterRotation(float angleX, float angleY, float angleZ) : Filter()
+        -:  133:    {
+        -:  134:        update(angleX, angleY, angleZ);
+        -:  135:    }
+        -:  136:
+        -:  137:    /**
+        -:  138:     * @brief FilterRotation
+        -:  139:     * @param mtx
+        -:  140:     */
+        -:  141:    FilterRotation(Eigen::Matrix3f mtx) : Filter()
+        -:  142:    {
+        -:  143:        update(mtx);
+        -:  144:    }
+        -:  145:
+        -:  146:    /**
+        -:  147:     * @brief update
+        -:  148:     * @param angleX
+        -:  149:     * @param angleY
+        -:  150:     * @param angleZ
+        -:  151:     */
+        -:  152:    void update(float angleX, float angleY, float angleZ)
+        -:  153:    {
+        -:  154:        this->angleX = angleX;
+        -:  155:        this->angleY = angleY;
+        -:  156:        this->angleZ = angleZ;
+        -:  157:
+        -:  158:        Eigen::Matrix3f mtx;
+        -:  159:        mtx = Eigen::AngleAxisf(angleZ, Eigen::Vector3f::UnitZ()) *
+        -:  160:              Eigen::AngleAxisf(angleY, Eigen::Vector3f::UnitY()) *
+        -:  161:              Eigen::AngleAxisf(angleX, Eigen::Vector3f::UnitX());
+        -:  162:
+        -:  163:        update(mtx);
+        -:  164:    }
+        -:  165:
+        -:  166:    /**
+        -:  167:     * @param theta
+        -:  168:     * @brief update
+        -:  169:     * @param phi
+        -:  170:     */
+        -:  171:    void update(Eigen::Matrix3f mtx)
+        -:  172:    {
+        -:  173:        this->mtxRot = mtx;
+        -:  174:        this->mtxRot_inv = Eigen::Transpose< Eigen::Matrix3f >(mtx);
+        -:  175:    }
+        -:  176:
+        -:  177:    /**
+        -:  178:     * @brief getMtxRot
+        -:  179:     * @return
+        -:  180:     */
+        -:  181:    Eigen::Matrix3f getMtxRot()
+        -:  182:    {
+        -:  183:        return mtxRot;
+        -:  184:    }
+        -:  185:
+        -:  186:    /**
+        -:  187:     * @brief execute
+        -:  188:     * @param imgIn
+        -:  189:     * @param imgOut
+        -:  190:     * @param theta
+        -:  191:     * @param phi
+        -:  192:     * @return
+        -:  193:     */
+        -:  194:    static Image *execute(Image *imgIn, Image *imgOut, float angleX, float angleY, float angleZ)
+        -:  195:    {
+        -:  196:        FilterRotation fltRot(angleX, angleY, angleZ);
+        -:  197:        return fltRot.Process(Single(imgIn), imgOut);
+        -:  198:    }
+        -:  199:
+        -:  200:    /**
+        -:  201:     * @brief execute
+        -:  202:     * @param imgIn
+        -:  203:     * @param imgOut
+        -:  204:     * @param mtx
+        -:  205:     * @return
+        -:  206:     */
+        -:  207:    static Image *execute(Image *imgIn, Image *imgOut, Eigen::Matrix3f &mtx)
+        -:  208:    {
+        -:  209:        FilterRotation fltRot(mtx);
+        -:  210:        return fltRot.Process(Single(imgIn), imgOut);
+        -:  211:    }
+        -:  212:};
+        -:  213:
+        -:  214:#endif
+        -:  215:
+        -:  216:} // end namespace pic
+        -:  217:
+        -:  218:#endif /* PIC_FILTERING_FILTER_ROTATION_HPP */
+        -:  219:

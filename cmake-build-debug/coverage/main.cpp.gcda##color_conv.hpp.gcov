@@ -1,0 +1,121 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/colors/color_conv.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_COLORS_COLOR_CONV_HPP
+        -:   19:#define PIC_COLORS_COLOR_CONV_HPP
+        -:   20:
+        -:   21:namespace pic {
+        -:   22:
+        -:   23:/**
+        -:   24: * @brief The ColorConv class
+        -:   25: */
+        -:   26:class ColorConv
+        -:   27:{
+        -:   28:public:
+        -:   29:
+        -:   30:    /**
+        -:   31:     * @brief ColorConv
+        -:   32:     */
+        -:   33:    ColorConv()
+        -:   34:    {
+        -:   35:    }
+        -:   36:
+        -:   37:    /**
+        -:   38:    * @brief direct converts from a color space to another one.
+        -:   39:    * \param colIn a pointer to the input color to be converted.
+        -:   40:    * \param colOut a pointer to the output color.
+        -:   41:    */
+    #####:   42:    virtual void direct(float *colIn, float *colOut) {}
+        -:   43:
+        -:   44:    /**
+        -:   45:    * @brief inverse is the inverse of direct.
+        -:   46:    * \param colIn a pointer to the input color to be converted.
+        -:   47:    * \param colOut a pointer to the output color.
+        -:   48:    */
+    #####:   49:    virtual void inverse(float *colIn, float *colOut) {}
+        -:   50:
+        -:   51:    /**
+        -:   52:     * @brief transform
+        -:   53:     * @param colIn
+        -:   54:     * @param colOut
+        -:   55:     * @param bDirection
+        -:   56:     */
+    #####:   57:    void transform(float *colIn, float *colOut, bool bDirection) {
+    #####:   58:        if(bDirection) {
+    %%%%%:   58-block  0
+    %%%%%:   58-block  1
+    %%%%%:   58-block  2
+    %%%%%:   58-block  3
+    #####:   59:            direct(colIn, colOut);
+    %%%%%:   59-block  0
+    %%%%%:   59-block  1
+    %%%%%:   59-block  2
+    %%%%%:   59-block  3
+        -:   60:        } else {
+    #####:   61:            inverse(colIn, colOut);
+    %%%%%:   61-block  0
+    %%%%%:   61-block  1
+    %%%%%:   61-block  2
+    %%%%%:   61-block  3
+        -:   62:        }
+        -:   63:    }
+        -:   64:
+        -:   65:    /**
+        -:   66:     * @brief apply
+        -:   67:     * @param mtx
+        -:   68:     * @param colIn
+        -:   69:     * @param colOut
+        -:   70:     */
+    #####:   71:    static void apply(const float *mtx, float *colIn, float *colOut)
+        -:   72:    {
+        -:   73:        //working copy
+    #####:   74:        float tmp[3];
+    #####:   75:        tmp[0] = colIn[0];
+    #####:   76:        tmp[1] = colIn[1];
+    #####:   77:        tmp[2] = colIn[2];
+        -:   78:
+        -:   79:        //conversion
+    #####:   80:        colOut[0] = tmp[0] * mtx[0] + tmp[1] * mtx[1] + tmp[2] * mtx[2];
+    #####:   81:        colOut[1] = tmp[0] * mtx[3] + tmp[1] * mtx[4] + tmp[2] * mtx[5];
+    #####:   82:        colOut[2] = tmp[0] * mtx[6] + tmp[1] * mtx[7] + tmp[2] * mtx[8];
+    #####:   83:    }
+        -:   84:
+        -:   85:    /**
+        -:   86:     * @brief apply_s a safe apply
+        -:   87:     * @param mtx
+        -:   88:     * @param colIn
+        -:   89:     * @param colOut
+        -:   90:     */
+        -:   91:    static void apply_s(const float *mtx, float *colIn, float *colOut)
+        -:   92:    {
+        -:   93:        if(mtx == NULL || colIn == NULL || colOut == NULL) {
+        -:   94:            printf("Error in ColorSpaceLinear::ConvertLinearSpace_s");
+        -:   95:            return;
+        -:   96:        }
+        -:   97:
+        -:   98:        apply(mtx, colIn, colOut);
+        -:   99:    }
+        -:  100:};
+        -:  101:
+        -:  102:} // end namespace pic
+        -:  103:
+        -:  104:#endif /* PIC_COLORS_COLOR_CONV_HPP */
+        -:  105:

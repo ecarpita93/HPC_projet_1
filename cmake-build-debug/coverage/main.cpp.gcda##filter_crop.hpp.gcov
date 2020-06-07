@@ -1,0 +1,282 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_crop.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_CROP_HPP
+        -:   19:#define PIC_FILTERING_FILTER_CROP_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:#include "../util/vec.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The FilterCrop class
+        -:   28: */
+        -:   29:class FilterCrop: public Filter
+        -:   30:{
+        -:   31:protected:
+        -:   32:    bool flag;
+        -:   33:    Vec4i mini, maxi;
+        -:   34:    Vec3f minf, maxf;
+        -:   35:
+        -:   36:    /**
+        -:   37:     * @brief ProcessBBox
+        -:   38:     * @param dst
+        -:   39:     * @param src
+        -:   40:     * @param box
+        -:   41:     */
+        -:   42:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   43:
+        -:   44:public:
+        -:   45:
+        -:   46:    /**
+        -:   47:     * @brief FilterCrop
+        -:   48:     * @param min
+        -:   49:     * @param max
+        -:   50:     */
+        -:   51:    FilterCrop(Vec2i min, Vec2i max);
+        -:   52:
+        -:   53:    /**
+        -:   54:     * @brief FilterCrop
+        -:   55:     * @param min
+        -:   56:     * @param max
+        -:   57:     */
+        -:   58:    FilterCrop(Vec3i min, Vec3i max);
+        -:   59:
+        -:   60:    /**
+        -:   61:     * @brief FilterCrop
+        -:   62:     * @param min
+        -:   63:     * @param max
+        -:   64:     */
+        -:   65:    FilterCrop(Vec4i min, Vec4i max);
+        -:   66:
+        -:   67:    /**
+        -:   68:     * @brief FilterCrop
+        -:   69:     * @param min
+        -:   70:     * @param max
+        -:   71:     */
+        -:   72:    FilterCrop(Vec3f min, Vec3f max);
+        -:   73:
+        -:   74:    /**
+        -:   75:     * @brief OutputSize
+        -:   76:     * @param imgIn
+        -:   77:     * @param width
+        -:   78:     * @param height
+        -:   79:     * @param channels
+        -:   80:     * @param frames
+        -:   81:     */
+        -:   82:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames);
+        -:   83:
+        -:   84:    /**
+        -:   85:     * @brief execute
+        -:   86:     * @param imgIn
+        -:   87:     * @param imgOut
+        -:   88:     * @param min
+        -:   89:     * @param max
+        -:   90:     * @return
+        -:   91:     */
+        -:   92:    static Image *execute(Image *imgIn, Image *imgOut, Vec4i min,
+        -:   93:                             Vec4i max)
+        -:   94:    {
+        -:   95:        FilterCrop fltCrop(min, max);
+        -:   96:        return fltCrop.Process(Single(imgIn), imgOut);
+        -:   97:    }
+        -:   98:
+        -:   99:    /**
+        -:  100:     * @brief execute
+        -:  101:     * @param imgIn
+        -:  102:     * @param imgOut
+        -:  103:     * @param min
+        -:  104:     * @param max
+        -:  105:     * @return
+        -:  106:     */
+        -:  107:    static Image *execute(Image *imgIn, Image *imgOut, Vec2i min,
+        -:  108:                             Vec2i max)
+        -:  109:    {
+        -:  110:        FilterCrop fltCrop(min, max);
+        -:  111:        return fltCrop.Process(Single(imgIn), imgOut);
+        -:  112:    }
+        -:  113:
+        -:  114:    /**
+        -:  115:     * @brief test
+        -:  116:     */
+        -:  117:    static void test()
+        -:  118:    {
+        -:  119:        Image img(1, 512, 512, 3);
+        -:  120:        img = 1.0f;
+        -:  121:
+        -:  122:        FilterCrop flt(Vec2i(100, 100), Vec2i(200, 200));
+        -:  123:
+        -:  124:        Image *out = flt.Process(Single(&img), NULL);
+        -:  125:
+        -:  126:        out->Write("test_crop_2d_output.png");
+        -:  127:    }
+        -:  128:};
+        -:  129:
+        -:  130:PIC_INLINE FilterCrop::FilterCrop(Vec2i min, Vec2i max) : Filter()
+        -:  131:{
+        -:  132:    mini[0] = min[0];
+        -:  133:    mini[1] = min[1];
+        -:  134:    mini[2] = 0;
+        -:  135:    mini[3] = 0;
+        -:  136:
+        -:  137:    maxi[0] = max[0];
+        -:  138:    maxi[1] = max[1];
+        -:  139:    maxi[2] = 1;
+        -:  140:    maxi[3] = INT_MAX;
+        -:  141:
+        -:  142:    flag = false;
+        -:  143:}
+        -:  144:
+        -:  145:PIC_INLINE FilterCrop::FilterCrop(Vec3i min, Vec3i max) : Filter()
+        -:  146:{
+        -:  147:    for(int i = 0; i < 3; i++) {
+        -:  148:        this->mini[i] = min[i];
+        -:  149:        this->maxi[i] = max[i];
+        -:  150:    }
+        -:  151:
+        -:  152:    mini[3] = 0;
+        -:  153:    maxi[3] = INT_MAX;
+        -:  154:
+        -:  155:    flag = false;
+        -:  156:}
+        -:  157:
+        -:  158:PIC_INLINE FilterCrop::FilterCrop(Vec4i min, Vec4i max) : Filter()
+        -:  159:{
+        -:  160:    this->mini = min;
+        -:  161:    this->maxi = max;
+        -:  162:
+        -:  163:    flag = false;
+        -:  164:}
+        -:  165:
+        -:  166:PIC_INLINE FilterCrop::FilterCrop(Vec3f min, Vec3f max) : Filter()
+        -:  167:{
+        -:  168:    this->minf = min;
+        -:  169:    this->maxf = max;
+        -:  170:
+        -:  171:    flag = true;
+        -:  172:}
+        -:  173:
+    #####:  174:PIC_INLINE void FilterCrop::OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  175:{
+    #####:  176:    if(flag) {
+    %%%%%:  176-block  0
+    #####:  177:        mini[0] = int(minf[0] * imgIn[0]->widthf);
+    %%%%%:  177-block  0
+    #####:  178:        mini[1] = int(minf[1] * imgIn[0]->heightf);
+    #####:  179:        mini[2] = int(minf[2] * imgIn[0]->framesf);
+        -:  180:
+    #####:  181:        maxi[0] = int(maxf[0] * imgIn[0]->widthf);
+    #####:  182:        maxi[1] = int(maxf[1] * imgIn[0]->heightf);
+    #####:  183:        maxi[2] = int(maxf[2] * imgIn[0]->framesf);
+    %%%%%:  183-block  0
+        -:  184:    }
+        -:  185:
+    #####:  186:    channels = MIN(imgIn[0]->channels, maxi[3]) - mini[3];
+    %%%%%:  186-block  0
+        -:  187:
+    #####:  188:    if(mini[3] > 0) {
+    %%%%%:  188-block  0
+    #####:  189:        channels++;
+    %%%%%:  189-block  0
+        -:  190:    }
+        -:  191:
+        -:  192:    int delta[3];
+    #####:  193:    for(int i = 0; i < 3; i++) {
+    %%%%%:  193-block  0
+    %%%%%:  193-block  1
+    #####:  194:        delta[i] = maxi[i] - mini[i];
+    %%%%%:  194-block  0
+        -:  195:    }
+        -:  196:
+    #####:  197:    if(delta[0] <= 0) {
+    %%%%%:  197-block  0
+    #####:  198:        delta[0] = imgIn[0]->width;
+    %%%%%:  198-block  0
+    #####:  199:        mini[0]  = 0;
+    %%%%%:  199-block  0
+    #####:  200:        maxi[0]  = imgIn[0]->width;
+    %%%%%:  200-block  0
+        -:  201:    }
+        -:  202:
+    #####:  203:    if(delta[1] <= 0) {
+    %%%%%:  203-block  0
+    #####:  204:        delta[1] = imgIn[0]->height;
+    %%%%%:  204-block  0
+    #####:  205:        mini[1]  = 0;
+    %%%%%:  205-block  0
+    #####:  206:        maxi[1]  = imgIn[0]->height;
+    %%%%%:  206-block  0
+        -:  207:    }
+        -:  208:
+    #####:  209:    if(delta[2] <= 0) {
+    %%%%%:  209-block  0
+    #####:  210:        delta[2] = imgIn[0]->frames;
+    %%%%%:  210-block  0
+    #####:  211:        mini[2]  = 0;
+    %%%%%:  211-block  0
+    #####:  212:        maxi[2]  = imgIn[0]->frames;
+    %%%%%:  212-block  0
+        -:  213:    }
+        -:  214:
+    #####:  215:    width = delta[0];
+    #####:  216:    height = delta[1];
+    #####:  217:    frames = delta[2];
+    #####:  218:}
+        -:  219:
+    #####:  220:PIC_INLINE void FilterCrop::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:  221:{
+    #####:  222:    maxi[3] = MIN(maxi[3], src[0]->channels);
+    %%%%%:  222-block  0
+        -:  223:
+    #####:  224:    for(int p = box->z0; p < box->z1; p++) {
+    %%%%%:  224-block  0
+    %%%%%:  224-block  1
+    %%%%%:  224-block  2
+    #####:  225:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  225-block  0
+    %%%%%:  225-block  1
+    %%%%%:  225-block  2
+    #####:  226:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  226-block  0
+    %%%%%:  226-block  1
+    %%%%%:  226-block  2
+    #####:  227:                float *dst_data = (*dst)(i - mini[0], j - mini[1], p - mini[2]);
+    %%%%%:  227-block  0
+    #####:  228:                float *src_data = (*src[0])(i, j, p);
+    %%%%%:  228-block  0
+        -:  229:
+    #####:  230:                for(int k = mini[3]; k <= maxi[3]; k++) {
+    %%%%%:  230-block  0
+    %%%%%:  230-block  1
+    %%%%%:  230-block  2
+    #####:  231:                    dst_data[k - mini[3]] = src_data[k];
+    %%%%%:  231-block  0
+        -:  232:                }
+        -:  233:            }
+        -:  234:        }
+        -:  235:    }
+    #####:  236:}
+        -:  237:
+        -:  238:} // end namespace pic
+        -:  239:
+        -:  240:#endif /* PIC_FILTERING_FILTER_CROP_HPP */
+        -:  241:

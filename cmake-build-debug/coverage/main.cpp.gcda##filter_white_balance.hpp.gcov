@@ -1,0 +1,228 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_white_balance.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_WHITE_BALANCE_HPP
+        -:   19:#define PIC_FILTERING_FILTER_WHITE_BALANCE_HPP
+        -:   20:
+        -:   21:#include "../util/std_util.hpp"
+        -:   22:
+        -:   23:#include "../filtering/filter.hpp"
+        -:   24:#include "../util/array.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:/**
+        -:   29: * @brief The FilterWhiteBalance class
+        -:   30: */
+        -:   31:class FilterWhiteBalance: public Filter
+        -:   32:{
+        -:   33:protected:
+        -:   34:
+        -:   35:    float *white;
+        -:   36:    int nWhite;
+        -:   37:
+        -:   38:    /**
+        -:   39:     * @brief ProcessBBox
+        -:   40:     * @param dst
+        -:   41:     * @param src
+        -:   42:     * @param box
+        -:   43:     */
+    #####:   44:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   45:    {
+    #####:   46:        if(white == NULL) {
+    %%%%%:   46-block  0
+        -:   47:            return;
+        -:   48:        }
+        -:   49:
+    #####:   50:        int width    = src[0]->width;
+    %%%%%:   50-block  0
+    #####:   51:        int channels = src[0]->channels;
+    #####:   52:        float *data  = src[0]->data;
+        -:   53:
+    #####:   54:        int transformChannels = MIN(channels, nWhite);
+        -:   55:
+    #####:   56:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   56-block  0
+    %%%%%:   56-block  1
+    %%%%%:   56-block  2
+    #####:   57:            int c = j * width;
+        -:   58:
+    #####:   59:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   59-block  0
+    %%%%%:   59-block  1
+    %%%%%:   59-block  2
+    #####:   60:                int indOut = c + i;
+    #####:   61:                int ind = indOut * channels;
+        -:   62:
+    #####:   63:                for(int k = 0; k < transformChannels; k++) {
+    %%%%%:   63-block  0
+    %%%%%:   63-block  1
+    #####:   64:                    dst->data[ind + k] = data[ind + k] * white[k];
+    %%%%%:   64-block  0
+        -:   65:                }
+        -:   66:            }
+        -:   67:        }
+        -:   68:    }
+        -:   69:
+        -:   70:public:
+        -:   71:
+        -:   72:    /**
+        -:   73:     * @brief FilterWhiteBalance
+        -:   74:     * @param type
+        -:   75:     */
+        -:   76:    FilterWhiteBalance()
+        -:   77:    {
+        -:   78:        white = NULL;
+        -:   79:        nWhite = -1;
+        -:   80:    }
+        -:   81:
+        -:   82:    /**
+        -:   83:     * @brief FilterWhiteBalance
+        -:   84:     * @param white
+        -:   85:     * @param nWhite
+        -:   86:     * @param bComputeScalingFactors
+        -:   87:     */
+        -:   88:    FilterWhiteBalance(float *white, unsigned int nWhite, bool bComputeScalingFactors)
+        -:   89:    {
+        -:   90:        this->white = NULL;
+        -:   91:        this->nWhite = -1;
+        -:   92:
+        -:   93:        update(white, nWhite, bComputeScalingFactors);
+        -:   94:    }
+        -:   95:
+        -:   96:    ~FilterWhiteBalance()
+        -:   97:    {
+        -:   98:        delete_vec_s(white);
+        -:   99:        nWhite = -1;
+        -:  100:    }
+        -:  101:
+        -:  102:    /**
+        -:  103:     * @brief getScalingFactors
+        -:  104:     * @param white
+        -:  105:     * @param nWhite
+        -:  106:     * @return
+        -:  107:     */
+        -:  108:    static float *getScalingFactors(float *white, int nWhite)
+        -:  109:    {
+        -:  110:        if(white == NULL || nWhite < 1) {
+        -:  111:            return NULL;
+        -:  112:        }
+        -:  113:
+        -:  114:        float white_mean = Arrayf::sum(white, nWhite) / float(nWhite);
+        -:  115:
+        -:  116:        float *out = new float[nWhite];
+        -:  117:
+        -:  118:        for(int i = 0; i < nWhite; i++) {
+        -:  119:            if(white[i] > 0.0f) {
+        -:  120:                out[i] = white_mean / white[i];
+        -:  121:            } else {
+        -:  122:                out[i] = 1.0f;
+        -:  123:            }
+        -:  124:        }
+        -:  125:
+        -:  126:        return out;
+        -:  127:    }
+        -:  128:
+        -:  129:    /**
+        -:  130:     * @brief update
+        -:  131:     * @param white
+        -:  132:     * @param nWhite
+        -:  133:     * @param bComputeScalingFactors
+        -:  134:     */
+        -:  135:    void update(float *white, unsigned int nWhite, bool bComputeScalingFactors)
+        -:  136:    {
+        -:  137:        this->nWhite = nWhite;
+        -:  138:
+        -:  139:        delete_vec_s(this->white);
+        -:  140:
+        -:  141:        if(bComputeScalingFactors) {
+        -:  142:             this->white = getScalingFactors(white, nWhite);
+        -:  143:        } else {
+        -:  144:            this->white = new float[nWhite];
+        -:  145:            memcpy(this->white, white, sizeof(float) * nWhite);
+        -:  146:        }
+        -:  147:
+        -:  148:        for(unsigned int i = 0; i < nWhite; i++) {
+        -:  149:            if(fabsf(this->white[i]) <= 1e-9f) {
+        -:  150:                this->white[i] = 1.0f;
+        -:  151:            }
+        -:  152:        }
+        -:  153:    }
+        -:  154:
+        -:  155:    /**
+        -:  156:     * @brief execute
+        -:  157:     * @param imgIn
+        -:  158:     * @param white_color
+        -:  159:     * @param out
+        -:  160:     * @return
+        -:  161:     */
+        -:  162:    static Image* execute(Image *imgIn, float *white_color, Image *out)
+        -:  163:    {
+        -:  164:        if(imgIn == NULL || white_color == NULL) {
+        -:  165:            return NULL;
+        -:  166:        }
+        -:  167:
+        -:  168:        FilterWhiteBalance flt_wb(white_color, imgIn->channels, true);
+        -:  169:        out = flt_wb.Process(Single(imgIn), out);
+        -:  170:
+        -:  171:        return out;
+        -:  172:    }
+        -:  173:
+        -:  174:    /**
+        -:  175:     * @brief execute
+        -:  176:     * @param imgIn
+        -:  177:     * @param x
+        -:  178:     * @param y
+        -:  179:     * @param bRobust
+        -:  180:     * @param out
+        -:  181:     * @return
+        -:  182:     */
+        -:  183:    static Image* execute(Image *imgIn, int x, int y, bool bRobust = true, Image *out = NULL)
+        -:  184:    {
+        -:  185:        if(imgIn == NULL) {
+        -:  186:            return NULL;
+        -:  187:        }
+        -:  188:
+        -:  189:        float *white_color = NULL;
+        -:  190:
+        -:  191:        int patchSize = 5;
+        -:  192:
+        -:  193:        if(!bRobust) {
+        -:  194:            white_color = (*imgIn)(x, y);
+        -:  195:        } else {
+        -:  196:            BBox patch(x - patchSize, x + patchSize, y - patchSize, y + patchSize);
+        -:  197:            white_color = imgIn->getMeanVal(&patch, NULL);
+        -:  198:        }
+        -:  199:
+        -:  200:        out = execute(imgIn, white_color, out);
+        -:  201:
+        -:  202:        if(bRobust) {
+        -:  203:            delete_vec_s(white_color);
+        -:  204:        }
+        -:  205:
+        -:  206:        return out;
+        -:  207:    }
+        -:  208:};
+        -:  209:
+        -:  210:} // end namespace pic
+        -:  211:
+        -:  212:#endif /* PIC_FILTERING_FILTER_WHITE_BALANCE_HPP */
+        -:  213:

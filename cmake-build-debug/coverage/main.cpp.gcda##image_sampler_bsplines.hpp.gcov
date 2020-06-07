@@ -1,0 +1,114 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/image_samplers/image_sampler_bsplines.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IMAGE_SAMPLERS_IMAGE_SAMPLER_BSPLINES_HPP
+        -:   19:#define PIC_IMAGE_SAMPLERS_IMAGE_SAMPLER_BSPLINES_HPP
+        -:   20:
+        -:   21:#include "../image_samplers/image_sampler.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The ImageSamplerBSplines class
+        -:   27: */
+        -:   28:class ImageSamplerBSplines: public ImageSampler
+        -:   29:{
+        -:   30:public:
+        -:   31:    ImageSamplerBSplines()
+        -:   32:    {
+        -:   33:    }
+        -:   34:
+        -:   35:    /**
+        -:   36:     * @brief SampleImage samples an image in uniform coordiantes.
+        -:   37:     * @param img
+        -:   38:     * @param x
+        -:   39:     * @param y
+        -:   40:     * @param vOut
+        -:   41:     */
+    #####:   42:    void SampleImage(Image *img, float x, float y, float *vOut)
+        -:   43:    {
+        -:   44:        //TODO: there's a reason for this, but I don't know it now
+        -:   45:        //	x = CLAMPi(x, 0.0f, 1.0f);
+        -:   46:        //	y = CLAMPi(y, 0.0f, 1.0f);
+        -:   47:
+    #####:   48:        float xx, yy, dx, dy;
+        -:   49:
+        -:   50:        //Coordiantes in [0,width-1]x[0,height-1]
+    #####:   51:        x *= img->width1f;
+    #####:   52:        y *= img->height1f;
+        -:   53:
+        -:   54:        //Coordinates without fractions
+    #####:   55:        xx = floorf(x);
+    #####:   56:        yy = floorf(y);
+        -:   57:
+        -:   58:        //Interpolation values
+    #####:   59:        dx = (x - xx);
+    #####:   60:        dy = (y - yy);
+        -:   61:
+        -:   62:        //Integer coordinates
+    #####:   63:        int ix = int(xx);
+    #####:   64:        int iy = int(yy);
+        -:   65:
+    #####:   66:        for(int k = 0; k < img->channels; k++) {
+    %%%%%:   66-block  0
+    %%%%%:   66-block  1
+    #####:   67:            vOut[k] = 0.0f;
+    %%%%%:   67-block  0
+        -:   68:        }
+        -:   69:
+        -:   70:        //BSplines interpolation
+        -:   71:        float rx, ry;
+        -:   72:        int ey, ex;
+    #####:   73:        for(int j = -1; j < 3; j++) {
+    %%%%%:   73-block  0
+    %%%%%:   73-block  1
+    #####:   74:            ry = Rx(float(j) - dy);
+    #####:   75:            ey = CLAMP(iy + j, img->height);
+    %%%%%:   75-block  0
+    %%%%%:   75-block  1
+    %%%%%:   75-block  2
+        -:   76:
+    #####:   77:            for(int i = -1; i < 3; i++) {
+    %%%%%:   77-block  0
+    %%%%%:   77-block  1
+    %%%%%:   77-block  2
+    #####:   78:                rx = Rx(float(i) - dx) * ry;
+    #####:   79:                ex = CLAMP(ix + i, img->width);
+    %%%%%:   79-block  0
+    %%%%%:   79-block  1
+    %%%%%:   79-block  2
+    #####:   80:                int ind = (ey * img->width + ex) * img->channels;
+        -:   81:
+    #####:   82:                for(int k = 0; k < img->channels; k++) {
+    %%%%%:   82-block  0
+    %%%%%:   82-block  1
+    #####:   83:                    vOut[k] += img->data[ind + k] * rx;
+    %%%%%:   83-block  0
+        -:   84:                }
+        -:   85:            }
+        -:   86:        }
+    #####:   87:    }
+        -:   88:};
+        -:   89:
+        -:   90:} // end namespace pic
+        -:   91:
+        -:   92:#endif /* PIC_IMAGE_SAMPLERS_IMAGE_SAMPLER_BSPLINES_HPP */
+        -:   93:

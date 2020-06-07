@@ -1,0 +1,177 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_sampling_map.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_SAMPLING_MAP_HPP
+        -:   19:#define PIC_FILTERING_FILTER_SAMPLING_MAP_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter_npasses.hpp"
+        -:   22:#include "../filtering/filter_luminance.hpp"
+        -:   23:#include "../filtering/filter_gradient.hpp"
+        -:   24:#include "../filtering/filter_sigmoid_tmo.hpp"
+        -:   25:#include "../filtering/filter_sampler_2d.hpp"
+        -:   26:#include "../filtering/filter_gaussian_2d.hpp"
+        -:   27:#include "../filtering/filter_channel.hpp"
+        -:   28:
+        -:   29:namespace pic {
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief The FilterSamplingMap class
+        -:   33: */
+        -:   34:class FilterSamplingMap: public FilterNPasses
+        -:   35:{
+        -:   36:protected:
+        -:   37:    ImageSamplerBilinear isb;
+        -:   38:    float scale;
+        -:   39:
+        -:   40:    FilterLuminance *fltL;
+        -:   41:    FilterGradient *fltG;
+        -:   42:    FilterSigmoidTMO *fltS;
+        -:   43:    FilterSampler2D *fltD;
+        -:   44:    FilterGaussian2D *fltG2D;
+        -:   45:    FilterChannel *fltC;
+        -:   46:
+        -:   47:public:
+        -:   48:    /**
+        -:   49:     * @brief FilterSamplingMap
+        -:   50:     * @param sigma
+        -:   51:     */
+        -:   52:    FilterSamplingMap(float sigma);
+        -:   53:
+        -:   54:    /**
+        -:   55:     * @brief FilterSamplingMap
+        -:   56:     * @param sigma
+        -:   57:     * @param scale
+        -:   58:     */
+        -:   59:    FilterSamplingMap(float sigma, float scale);
+        -:   60:
+        -:   61:    ~FilterSamplingMap();
+        -:   62:
+        -:   63:    /**
+        -:   64:     * @brief update
+        -:   65:     * @param sigma
+        -:   66:     * @param scale
+        -:   67:     */
+        -:   68:    void update(float sigma, float scale);
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief getScale
+        -:   72:     * @return
+        -:   73:     */
+        -:   74:    float getScale()
+        -:   75:    {
+        -:   76:        return scale;
+        -:   77:    }
+        -:   78:
+        -:   79:    /**
+        -:   80:     * @brief execute
+        -:   81:     * @param imgIn
+        -:   82:     * @param imgOut
+        -:   83:     * @param sigma
+        -:   84:     * @param scale
+        -:   85:     * @return
+        -:   86:     */
+        -:   87:    static Image *execute(Image *imgIn, Image *imgOut, float sigma)
+        -:   88:    {
+        -:   89:        FilterSamplingMap filter(sigma);
+        -:   90:        imgOut = filter.Process(Single(imgIn), NULL);
+        -:   91:
+        -:   92:        return imgOut;
+        -:   93:    }
+        -:   94:};
+        -:   95:
+    #####:   96:PIC_INLINE FilterSamplingMap::FilterSamplingMap(float sigma) : FilterNPasses()
+    %%%%%:   96-block  0
+    %%%%%:   96-block  1
+    $$$$$:   96-block  2
+        -:   97:{
+    #####:   98:    fltL = NULL;
+    #####:   99:    fltD = NULL;
+    #####:  100:    fltS = NULL;
+    #####:  101:    fltG = NULL;
+    #####:  102:    fltG2D = NULL;
+    #####:  103:    fltC = NULL;
+        -:  104:
+    #####:  105:    float rateScale = 2.0f;
+    #####:  106:    update(rateScale, rateScale / sigma);
+    %%%%%:  106-block  0
+    #####:  107:}
+    %%%%%:  107-block  0
+        -:  108:
+        -:  109:PIC_INLINE FilterSamplingMap::FilterSamplingMap(float sigma, float scale) : FilterNPasses()
+        -:  110:{
+        -:  111:    fltL = NULL;
+        -:  112:    fltD = NULL;
+        -:  113:    fltS = NULL;
+        -:  114:    fltG = NULL;
+        -:  115:    fltG2D = NULL;
+        -:  116:
+        -:  117:    update(sigma * scale, scale);
+        -:  118:}
+        -:  119:
+    #####:  120:PIC_INLINE FilterSamplingMap::~FilterSamplingMap()
+        -:  121:{
+    #####:  122:    delete_s(fltL);
+    %%%%%:  122-block  0
+    #####:  123:    delete_s(fltD);
+    %%%%%:  123-block  0
+    #####:  124:    delete_s(fltS);
+    #####:  125:    delete_s(fltC);
+    %%%%%:  125-block  0
+    #####:  126:    delete_s(fltG);
+    %%%%%:  126-block  0
+    #####:  127:    delete_s(fltG2D);
+    %%%%%:  127-block  0
+    #####:  128:}
+        -:  129:
+    #####:  130:PIC_INLINE void FilterSamplingMap::update(float sigma, float scale)
+        -:  131:{
+    #####:  132:    this->scale = scale;
+        -:  133:
+        -:  134:    //allocate filters
+    #####:  135:    fltL = new FilterLuminance(LT_CIE_LUMINANCE);
+    %%%%%:  135-block  0
+    #####:  136:    fltD = new FilterSampler2D(scale, &isb);
+    $$$$$:  136-block  0
+    #####:  137:    fltS = new FilterSigmoidTMO();
+    %%%%%:  137-block  0
+    #####:  138:    fltG = new FilterGradient();
+    #####:  139:    fltC = new FilterChannel(SingleInt(2));
+    %%%%%:  139-block  0
+    %%%%%:  139-block  1
+    $$$$$:  139-block  2
+    $$$$$:  139-block  3
+    #####:  140:    fltG2D = new FilterGaussian2D(sigma);
+    %%%%%:  140-block  0
+    $$$$$:  140-block  1
+        -:  141:
+    #####:  142:    insertFilter(fltL);     //Luminance
+    %%%%%:  142-block  0
+    #####:  143:    insertFilter(fltD);     //Downsampling
+    #####:  144:    insertFilter(fltS);     //Sigmoid TMO
+    #####:  145:    insertFilter(fltG);     //Gradient
+    #####:  146:    insertFilter(fltC);     //Gradient
+    #####:  147:    insertFilter(fltG2D, true);   //Gaussian
+    #####:  148:}
+        -:  149:
+        -:  150:} // end namespace pic
+        -:  151:
+        -:  152:#endif /* PIC_FILTERING_FILTER_SAMPLING_MAP_HPP */
+        -:  153:

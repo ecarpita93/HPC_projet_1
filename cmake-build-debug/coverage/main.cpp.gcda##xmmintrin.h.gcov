@@ -1,0 +1,1291 @@
+        -:    0:Source:/usr/lib/gcc/x86_64-linux-gnu/9/include/xmmintrin.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/* Copyright (C) 2002-2019 Free Software Foundation, Inc.
+        -:    2:
+        -:    3:   This file is part of GCC.
+        -:    4:
+        -:    5:   GCC is free software; you can redistribute it and/or modify
+        -:    6:   it under the terms of the GNU General Public License as published by
+        -:    7:   the Free Software Foundation; either version 3, or (at your option)
+        -:    8:   any later version.
+        -:    9:
+        -:   10:   GCC is distributed in the hope that it will be useful,
+        -:   11:   but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   12:   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        -:   13:   GNU General Public License for more details.
+        -:   14:
+        -:   15:   Under Section 7 of GPL version 3, you are granted additional
+        -:   16:   permissions described in the GCC Runtime Library Exception, version
+        -:   17:   3.1, as published by the Free Software Foundation.
+        -:   18:
+        -:   19:   You should have received a copy of the GNU General Public License and
+        -:   20:   a copy of the GCC Runtime Library Exception along with this program;
+        -:   21:   see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+        -:   22:   <http://www.gnu.org/licenses/>.  */
+        -:   23:
+        -:   24:/* Implemented from the specification included in the Intel C++ Compiler
+        -:   25:   User Guide and Reference, version 9.0.  */
+        -:   26:
+        -:   27:#ifndef _XMMINTRIN_H_INCLUDED
+        -:   28:#define _XMMINTRIN_H_INCLUDED
+        -:   29:
+        -:   30:/* We need type definitions from the MMX header file.  */
+        -:   31:#include <mmintrin.h>
+        -:   32:
+        -:   33:/* Get _mm_malloc () and _mm_free ().  */
+        -:   34:#include <mm_malloc.h>
+        -:   35:
+        -:   36:/* Constants for use with _mm_prefetch.  */
+        -:   37:enum _mm_hint
+        -:   38:{
+        -:   39:  /* _MM_HINT_ET is _MM_HINT_T with set 3rd bit.  */
+        -:   40:  _MM_HINT_ET0 = 7,
+        -:   41:  _MM_HINT_ET1 = 6,
+        -:   42:  _MM_HINT_T0 = 3,
+        -:   43:  _MM_HINT_T1 = 2,
+        -:   44:  _MM_HINT_T2 = 1,
+        -:   45:  _MM_HINT_NTA = 0
+        -:   46:};
+        -:   47:
+        -:   48:/* Loads one cache line from address P to a location "closer" to the
+        -:   49:   processor.  The selector I specifies the type of prefetch operation.  */
+        -:   50:#ifdef __OPTIMIZE__
+        -:   51:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+15775104*:   52:_mm_prefetch (const void *__P, enum _mm_hint __I)
+        -:   53:{
+11971584*:   54:  __builtin_prefetch (__P, (__I & 0x4) >> 2, __I & 0x3);
+   760704:   54-block  0
+    %%%%%:   54-block  1
+    %%%%%:   54-block  2
+    %%%%%:   54-block  3
+     4224:   54-block  4
+    %%%%%:   54-block  5
+        -:   55:}
+        -:   56:#else
+        -:   57:#define _mm_prefetch(P, I) \
+        -:   58:  __builtin_prefetch ((P), ((I & 0x4) >> 2), (I & 0x3))
+        -:   59:#endif
+        -:   60:
+        -:   61:#ifndef __SSE__
+        -:   62:#pragma GCC push_options
+        -:   63:#pragma GCC target("sse")
+        -:   64:#define __DISABLE_SSE__
+        -:   65:#endif /* __SSE__ */
+        -:   66:
+        -:   67:/* The Intel API is flexible enough that we must allow aliasing with other
+        -:   68:   vector types, and their scalar components.  */
+        -:   69:typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
+        -:   70:
+        -:   71:/* Unaligned version of the same type.  */
+        -:   72:typedef float __m128_u __attribute__ ((__vector_size__ (16), __may_alias__, __aligned__ (1)));
+        -:   73:
+        -:   74:/* Internal data types for implementing the intrinsics.  */
+        -:   75:typedef float __v4sf __attribute__ ((__vector_size__ (16)));
+        -:   76:
+        -:   77:/* Create a selector for use with the SHUFPS instruction.  */
+        -:   78:#define _MM_SHUFFLE(fp3,fp2,fp1,fp0) \
+        -:   79: (((fp3) << 6) | ((fp2) << 4) | ((fp1) << 2) | (fp0))
+        -:   80:
+        -:   81:/* Bits in the MXCSR.  */
+        -:   82:#define _MM_EXCEPT_MASK       0x003f
+        -:   83:#define _MM_EXCEPT_INVALID    0x0001
+        -:   84:#define _MM_EXCEPT_DENORM     0x0002
+        -:   85:#define _MM_EXCEPT_DIV_ZERO   0x0004
+        -:   86:#define _MM_EXCEPT_OVERFLOW   0x0008
+        -:   87:#define _MM_EXCEPT_UNDERFLOW  0x0010
+        -:   88:#define _MM_EXCEPT_INEXACT    0x0020
+        -:   89:
+        -:   90:#define _MM_MASK_MASK         0x1f80
+        -:   91:#define _MM_MASK_INVALID      0x0080
+        -:   92:#define _MM_MASK_DENORM       0x0100
+        -:   93:#define _MM_MASK_DIV_ZERO     0x0200
+        -:   94:#define _MM_MASK_OVERFLOW     0x0400
+        -:   95:#define _MM_MASK_UNDERFLOW    0x0800
+        -:   96:#define _MM_MASK_INEXACT      0x1000
+        -:   97:
+        -:   98:#define _MM_ROUND_MASK        0x6000
+        -:   99:#define _MM_ROUND_NEAREST     0x0000
+        -:  100:#define _MM_ROUND_DOWN        0x2000
+        -:  101:#define _MM_ROUND_UP          0x4000
+        -:  102:#define _MM_ROUND_TOWARD_ZERO 0x6000
+        -:  103:
+        -:  104:#define _MM_FLUSH_ZERO_MASK   0x8000
+        -:  105:#define _MM_FLUSH_ZERO_ON     0x8000
+        -:  106:#define _MM_FLUSH_ZERO_OFF    0x0000
+        -:  107:
+        -:  108:/* Create an undefined vector.  */
+        -:  109:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  110:_mm_undefined_ps (void)
+        -:  111:{
+        -:  112:  __m128 __Y = __Y;
+        -:  113:  return __Y;
+        -:  114:}
+        -:  115:
+        -:  116:/* Create a vector of zeros.  */
+        -:  117:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  118:_mm_setzero_ps (void)
+        -:  119:{
+        -:  120:  return __extension__ (__m128){ 0.0f, 0.0f, 0.0f, 0.0f };
+        -:  121:}
+        -:  122:
+        -:  123:/* Perform the respective operation on the lower SPFP (single-precision
+        -:  124:   floating-point) values of A and B; the upper three SPFP values are
+        -:  125:   passed through from A.  */
+        -:  126:
+        -:  127:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  428307*:  128:_mm_add_ss (__m128 __A, __m128 __B)
+        -:  129:{
+  428307*:  130:  return (__m128) __builtin_ia32_addss ((__v4sf)__A, (__v4sf)__B);
+        -:  131:}
+        -:  132:
+        -:  133:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  134:_mm_sub_ss (__m128 __A, __m128 __B)
+        -:  135:{
+        -:  136:  return (__m128) __builtin_ia32_subss ((__v4sf)__A, (__v4sf)__B);
+        -:  137:}
+        -:  138:
+        -:  139:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  140:_mm_mul_ss (__m128 __A, __m128 __B)
+        -:  141:{
+        -:  142:  return (__m128) __builtin_ia32_mulss ((__v4sf)__A, (__v4sf)__B);
+        -:  143:}
+        -:  144:
+        -:  145:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  146:_mm_div_ss (__m128 __A, __m128 __B)
+        -:  147:{
+        -:  148:  return (__m128) __builtin_ia32_divss ((__v4sf)__A, (__v4sf)__B);
+        -:  149:}
+        -:  150:
+        -:  151:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  390924*:  152:_mm_sqrt_ss (__m128 __A)
+        -:  153:{
+  390924*:  154:  return (__m128) __builtin_ia32_sqrtss ((__v4sf)__A);
+        -:  155:}
+        -:  156:
+        -:  157:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  158:_mm_rcp_ss (__m128 __A)
+        -:  159:{
+        -:  160:  return (__m128) __builtin_ia32_rcpss ((__v4sf)__A);
+        -:  161:}
+        -:  162:
+        -:  163:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  164:_mm_rsqrt_ss (__m128 __A)
+        -:  165:{
+        -:  166:  return (__m128) __builtin_ia32_rsqrtss ((__v4sf)__A);
+        -:  167:}
+        -:  168:
+        -:  169:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  170:_mm_min_ss (__m128 __A, __m128 __B)
+        -:  171:{
+        -:  172:  return (__m128) __builtin_ia32_minss ((__v4sf)__A, (__v4sf)__B);
+        -:  173:}
+        -:  174:
+        -:  175:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  176:_mm_max_ss (__m128 __A, __m128 __B)
+        -:  177:{
+        -:  178:  return (__m128) __builtin_ia32_maxss ((__v4sf)__A, (__v4sf)__B);
+        -:  179:}
+        -:  180:
+        -:  181:/* Perform the respective operation on the four SPFP values in A and B.  */
+        -:  182:
+        -:  183:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  860838*:  184:_mm_add_ps (__m128 __A, __m128 __B)
+        -:  185:{
+  432531*:  186:  return (__m128) ((__v4sf)__A + (__v4sf)__B);
+        -:  187:}
+        -:  188:
+        -:  189:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  190:_mm_sub_ps (__m128 __A, __m128 __B)
+        -:  191:{
+        -:  192:  return (__m128) ((__v4sf)__A - (__v4sf)__B);
+        -:  193:}
+        -:  194:
+        -:  195:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+    4224*:  196:_mm_mul_ps (__m128 __A, __m128 __B)
+        -:  197:{
+    8448*:  198:  return (__m128) ((__v4sf)__A * (__v4sf)__B);
+        -:  199:}
+        -:  200:
+        -:  201:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  202:_mm_div_ps (__m128 __A, __m128 __B)
+        -:  203:{
+        -:  204:  return (__m128) ((__v4sf)__A / (__v4sf)__B);
+        -:  205:}
+        -:  206:
+        -:  207:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  208:_mm_sqrt_ps (__m128 __A)
+        -:  209:{
+        -:  210:  return (__m128) __builtin_ia32_sqrtps ((__v4sf)__A);
+        -:  211:}
+        -:  212:
+        -:  213:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  214:_mm_rcp_ps (__m128 __A)
+        -:  215:{
+        -:  216:  return (__m128) __builtin_ia32_rcpps ((__v4sf)__A);
+        -:  217:}
+        -:  218:
+        -:  219:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  220:_mm_rsqrt_ps (__m128 __A)
+        -:  221:{
+        -:  222:  return (__m128) __builtin_ia32_rsqrtps ((__v4sf)__A);
+        -:  223:}
+        -:  224:
+        -:  225:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  226:_mm_min_ps (__m128 __A, __m128 __B)
+        -:  227:{
+        -:  228:  return (__m128) __builtin_ia32_minps ((__v4sf)__A, (__v4sf)__B);
+        -:  229:}
+        -:  230:
+        -:  231:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  232:_mm_max_ps (__m128 __A, __m128 __B)
+        -:  233:{
+        -:  234:  return (__m128) __builtin_ia32_maxps ((__v4sf)__A, (__v4sf)__B);
+        -:  235:}
+        -:  236:
+        -:  237:/* Perform logical bit-wise operations on 128-bit values.  */
+        -:  238:
+        -:  239:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  240:_mm_and_ps (__m128 __A, __m128 __B)
+        -:  241:{
+        -:  242:  return __builtin_ia32_andps (__A, __B);
+        -:  243:}
+        -:  244:
+        -:  245:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  246:_mm_andnot_ps (__m128 __A, __m128 __B)
+        -:  247:{
+        -:  248:  return __builtin_ia32_andnps (__A, __B);
+        -:  249:}
+        -:  250:
+        -:  251:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  252:_mm_or_ps (__m128 __A, __m128 __B)
+        -:  253:{
+        -:  254:  return __builtin_ia32_orps (__A, __B);
+        -:  255:}
+        -:  256:
+        -:  257:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  258:_mm_xor_ps (__m128 __A, __m128 __B)
+        -:  259:{
+        -:  260:  return __builtin_ia32_xorps (__A, __B);
+        -:  261:}
+        -:  262:
+        -:  263:/* Perform a comparison on the lower SPFP values of A and B.  If the
+        -:  264:   comparison is true, place a mask of all ones in the result, otherwise a
+        -:  265:   mask of zeros.  The upper three SPFP values are passed through from A.  */
+        -:  266:
+        -:  267:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  268:_mm_cmpeq_ss (__m128 __A, __m128 __B)
+        -:  269:{
+        -:  270:  return (__m128) __builtin_ia32_cmpeqss ((__v4sf)__A, (__v4sf)__B);
+        -:  271:}
+        -:  272:
+        -:  273:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  274:_mm_cmplt_ss (__m128 __A, __m128 __B)
+        -:  275:{
+        -:  276:  return (__m128) __builtin_ia32_cmpltss ((__v4sf)__A, (__v4sf)__B);
+        -:  277:}
+        -:  278:
+        -:  279:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  280:_mm_cmple_ss (__m128 __A, __m128 __B)
+        -:  281:{
+        -:  282:  return (__m128) __builtin_ia32_cmpless ((__v4sf)__A, (__v4sf)__B);
+        -:  283:}
+        -:  284:
+        -:  285:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  286:_mm_cmpgt_ss (__m128 __A, __m128 __B)
+        -:  287:{
+        -:  288:  return (__m128) __builtin_ia32_movss ((__v4sf) __A,
+        -:  289:					(__v4sf)
+        -:  290:					__builtin_ia32_cmpltss ((__v4sf) __B,
+        -:  291:								(__v4sf)
+        -:  292:								__A));
+        -:  293:}
+        -:  294:
+        -:  295:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  296:_mm_cmpge_ss (__m128 __A, __m128 __B)
+        -:  297:{
+        -:  298:  return (__m128) __builtin_ia32_movss ((__v4sf) __A,
+        -:  299:					(__v4sf)
+        -:  300:					__builtin_ia32_cmpless ((__v4sf) __B,
+        -:  301:								(__v4sf)
+        -:  302:								__A));
+        -:  303:}
+        -:  304:
+        -:  305:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  306:_mm_cmpneq_ss (__m128 __A, __m128 __B)
+        -:  307:{
+        -:  308:  return (__m128) __builtin_ia32_cmpneqss ((__v4sf)__A, (__v4sf)__B);
+        -:  309:}
+        -:  310:
+        -:  311:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  312:_mm_cmpnlt_ss (__m128 __A, __m128 __B)
+        -:  313:{
+        -:  314:  return (__m128) __builtin_ia32_cmpnltss ((__v4sf)__A, (__v4sf)__B);
+        -:  315:}
+        -:  316:
+        -:  317:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  318:_mm_cmpnle_ss (__m128 __A, __m128 __B)
+        -:  319:{
+        -:  320:  return (__m128) __builtin_ia32_cmpnless ((__v4sf)__A, (__v4sf)__B);
+        -:  321:}
+        -:  322:
+        -:  323:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  324:_mm_cmpngt_ss (__m128 __A, __m128 __B)
+        -:  325:{
+        -:  326:  return (__m128) __builtin_ia32_movss ((__v4sf) __A,
+        -:  327:					(__v4sf)
+        -:  328:					__builtin_ia32_cmpnltss ((__v4sf) __B,
+        -:  329:								 (__v4sf)
+        -:  330:								 __A));
+        -:  331:}
+        -:  332:
+        -:  333:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  334:_mm_cmpnge_ss (__m128 __A, __m128 __B)
+        -:  335:{
+        -:  336:  return (__m128) __builtin_ia32_movss ((__v4sf) __A,
+        -:  337:					(__v4sf)
+        -:  338:					__builtin_ia32_cmpnless ((__v4sf) __B,
+        -:  339:								 (__v4sf)
+        -:  340:								 __A));
+        -:  341:}
+        -:  342:
+        -:  343:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  344:_mm_cmpord_ss (__m128 __A, __m128 __B)
+        -:  345:{
+        -:  346:  return (__m128) __builtin_ia32_cmpordss ((__v4sf)__A, (__v4sf)__B);
+        -:  347:}
+        -:  348:
+        -:  349:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  350:_mm_cmpunord_ss (__m128 __A, __m128 __B)
+        -:  351:{
+        -:  352:  return (__m128) __builtin_ia32_cmpunordss ((__v4sf)__A, (__v4sf)__B);
+        -:  353:}
+        -:  354:
+        -:  355:/* Perform a comparison on the four SPFP values of A and B.  For each
+        -:  356:   element, if the comparison is true, place a mask of all ones in the
+        -:  357:   result, otherwise a mask of zeros.  */
+        -:  358:
+        -:  359:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  360:_mm_cmpeq_ps (__m128 __A, __m128 __B)
+        -:  361:{
+        -:  362:  return (__m128) __builtin_ia32_cmpeqps ((__v4sf)__A, (__v4sf)__B);
+        -:  363:}
+        -:  364:
+        -:  365:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  366:_mm_cmplt_ps (__m128 __A, __m128 __B)
+        -:  367:{
+        -:  368:  return (__m128) __builtin_ia32_cmpltps ((__v4sf)__A, (__v4sf)__B);
+        -:  369:}
+        -:  370:
+        -:  371:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  372:_mm_cmple_ps (__m128 __A, __m128 __B)
+        -:  373:{
+        -:  374:  return (__m128) __builtin_ia32_cmpleps ((__v4sf)__A, (__v4sf)__B);
+        -:  375:}
+        -:  376:
+        -:  377:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  378:_mm_cmpgt_ps (__m128 __A, __m128 __B)
+        -:  379:{
+        -:  380:  return (__m128) __builtin_ia32_cmpgtps ((__v4sf)__A, (__v4sf)__B);
+        -:  381:}
+        -:  382:
+        -:  383:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  384:_mm_cmpge_ps (__m128 __A, __m128 __B)
+        -:  385:{
+        -:  386:  return (__m128) __builtin_ia32_cmpgeps ((__v4sf)__A, (__v4sf)__B);
+        -:  387:}
+        -:  388:
+        -:  389:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  390:_mm_cmpneq_ps (__m128 __A, __m128 __B)
+        -:  391:{
+        -:  392:  return (__m128) __builtin_ia32_cmpneqps ((__v4sf)__A, (__v4sf)__B);
+        -:  393:}
+        -:  394:
+        -:  395:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  396:_mm_cmpnlt_ps (__m128 __A, __m128 __B)
+        -:  397:{
+        -:  398:  return (__m128) __builtin_ia32_cmpnltps ((__v4sf)__A, (__v4sf)__B);
+        -:  399:}
+        -:  400:
+        -:  401:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  402:_mm_cmpnle_ps (__m128 __A, __m128 __B)
+        -:  403:{
+        -:  404:  return (__m128) __builtin_ia32_cmpnleps ((__v4sf)__A, (__v4sf)__B);
+        -:  405:}
+        -:  406:
+        -:  407:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  408:_mm_cmpngt_ps (__m128 __A, __m128 __B)
+        -:  409:{
+        -:  410:  return (__m128) __builtin_ia32_cmpngtps ((__v4sf)__A, (__v4sf)__B);
+        -:  411:}
+        -:  412:
+        -:  413:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  414:_mm_cmpnge_ps (__m128 __A, __m128 __B)
+        -:  415:{
+        -:  416:  return (__m128) __builtin_ia32_cmpngeps ((__v4sf)__A, (__v4sf)__B);
+        -:  417:}
+        -:  418:
+        -:  419:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  420:_mm_cmpord_ps (__m128 __A, __m128 __B)
+        -:  421:{
+        -:  422:  return (__m128) __builtin_ia32_cmpordps ((__v4sf)__A, (__v4sf)__B);
+        -:  423:}
+        -:  424:
+        -:  425:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  426:_mm_cmpunord_ps (__m128 __A, __m128 __B)
+        -:  427:{
+        -:  428:  return (__m128) __builtin_ia32_cmpunordps ((__v4sf)__A, (__v4sf)__B);
+        -:  429:}
+        -:  430:
+        -:  431:/* Compare the lower SPFP values of A and B and return 1 if true
+        -:  432:   and 0 if false.  */
+        -:  433:
+        -:  434:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  435:_mm_comieq_ss (__m128 __A, __m128 __B)
+        -:  436:{
+        -:  437:  return __builtin_ia32_comieq ((__v4sf)__A, (__v4sf)__B);
+        -:  438:}
+        -:  439:
+        -:  440:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  441:_mm_comilt_ss (__m128 __A, __m128 __B)
+        -:  442:{
+        -:  443:  return __builtin_ia32_comilt ((__v4sf)__A, (__v4sf)__B);
+        -:  444:}
+        -:  445:
+        -:  446:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  447:_mm_comile_ss (__m128 __A, __m128 __B)
+        -:  448:{
+        -:  449:  return __builtin_ia32_comile ((__v4sf)__A, (__v4sf)__B);
+        -:  450:}
+        -:  451:
+        -:  452:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  453:_mm_comigt_ss (__m128 __A, __m128 __B)
+        -:  454:{
+        -:  455:  return __builtin_ia32_comigt ((__v4sf)__A, (__v4sf)__B);
+        -:  456:}
+        -:  457:
+        -:  458:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  459:_mm_comige_ss (__m128 __A, __m128 __B)
+        -:  460:{
+        -:  461:  return __builtin_ia32_comige ((__v4sf)__A, (__v4sf)__B);
+        -:  462:}
+        -:  463:
+        -:  464:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  465:_mm_comineq_ss (__m128 __A, __m128 __B)
+        -:  466:{
+        -:  467:  return __builtin_ia32_comineq ((__v4sf)__A, (__v4sf)__B);
+        -:  468:}
+        -:  469:
+        -:  470:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  471:_mm_ucomieq_ss (__m128 __A, __m128 __B)
+        -:  472:{
+        -:  473:  return __builtin_ia32_ucomieq ((__v4sf)__A, (__v4sf)__B);
+        -:  474:}
+        -:  475:
+        -:  476:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  477:_mm_ucomilt_ss (__m128 __A, __m128 __B)
+        -:  478:{
+        -:  479:  return __builtin_ia32_ucomilt ((__v4sf)__A, (__v4sf)__B);
+        -:  480:}
+        -:  481:
+        -:  482:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  483:_mm_ucomile_ss (__m128 __A, __m128 __B)
+        -:  484:{
+        -:  485:  return __builtin_ia32_ucomile ((__v4sf)__A, (__v4sf)__B);
+        -:  486:}
+        -:  487:
+        -:  488:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  489:_mm_ucomigt_ss (__m128 __A, __m128 __B)
+        -:  490:{
+        -:  491:  return __builtin_ia32_ucomigt ((__v4sf)__A, (__v4sf)__B);
+        -:  492:}
+        -:  493:
+        -:  494:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  495:_mm_ucomige_ss (__m128 __A, __m128 __B)
+        -:  496:{
+        -:  497:  return __builtin_ia32_ucomige ((__v4sf)__A, (__v4sf)__B);
+        -:  498:}
+        -:  499:
+        -:  500:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  501:_mm_ucomineq_ss (__m128 __A, __m128 __B)
+        -:  502:{
+        -:  503:  return __builtin_ia32_ucomineq ((__v4sf)__A, (__v4sf)__B);
+        -:  504:}
+        -:  505:
+        -:  506:/* Convert the lower SPFP value to a 32-bit integer according to the current
+        -:  507:   rounding mode.  */
+        -:  508:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  509:_mm_cvtss_si32 (__m128 __A)
+        -:  510:{
+        -:  511:  return __builtin_ia32_cvtss2si ((__v4sf) __A);
+        -:  512:}
+        -:  513:
+        -:  514:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  515:_mm_cvt_ss2si (__m128 __A)
+        -:  516:{
+        -:  517:  return _mm_cvtss_si32 (__A);
+        -:  518:}
+        -:  519:
+        -:  520:#ifdef __x86_64__
+        -:  521:/* Convert the lower SPFP value to a 32-bit integer according to the
+        -:  522:   current rounding mode.  */
+        -:  523:
+        -:  524:/* Intel intrinsic.  */
+        -:  525:extern __inline long long __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  526:_mm_cvtss_si64 (__m128 __A)
+        -:  527:{
+        -:  528:  return __builtin_ia32_cvtss2si64 ((__v4sf) __A);
+        -:  529:}
+        -:  530:
+        -:  531:/* Microsoft intrinsic.  */
+        -:  532:extern __inline long long __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  533:_mm_cvtss_si64x (__m128 __A)
+        -:  534:{
+        -:  535:  return __builtin_ia32_cvtss2si64 ((__v4sf) __A);
+        -:  536:}
+        -:  537:#endif
+        -:  538:
+        -:  539:/* Convert the two lower SPFP values to 32-bit integers according to the
+        -:  540:   current rounding mode.  Return the integers in packed form.  */
+        -:  541:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  542:_mm_cvtps_pi32 (__m128 __A)
+        -:  543:{
+        -:  544:  return (__m64) __builtin_ia32_cvtps2pi ((__v4sf) __A);
+        -:  545:}
+        -:  546:
+        -:  547:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  548:_mm_cvt_ps2pi (__m128 __A)
+        -:  549:{
+        -:  550:  return _mm_cvtps_pi32 (__A);
+        -:  551:}
+        -:  552:
+        -:  553:/* Truncate the lower SPFP value to a 32-bit integer.  */
+        -:  554:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  555:_mm_cvttss_si32 (__m128 __A)
+        -:  556:{
+        -:  557:  return __builtin_ia32_cvttss2si ((__v4sf) __A);
+        -:  558:}
+        -:  559:
+        -:  560:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  561:_mm_cvtt_ss2si (__m128 __A)
+        -:  562:{
+        -:  563:  return _mm_cvttss_si32 (__A);
+        -:  564:}
+        -:  565:
+        -:  566:#ifdef __x86_64__
+        -:  567:/* Truncate the lower SPFP value to a 32-bit integer.  */
+        -:  568:
+        -:  569:/* Intel intrinsic.  */
+        -:  570:extern __inline long long __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  571:_mm_cvttss_si64 (__m128 __A)
+        -:  572:{
+        -:  573:  return __builtin_ia32_cvttss2si64 ((__v4sf) __A);
+        -:  574:}
+        -:  575:
+        -:  576:/* Microsoft intrinsic.  */
+        -:  577:extern __inline long long __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  578:_mm_cvttss_si64x (__m128 __A)
+        -:  579:{
+        -:  580:  return __builtin_ia32_cvttss2si64 ((__v4sf) __A);
+        -:  581:}
+        -:  582:#endif
+        -:  583:
+        -:  584:/* Truncate the two lower SPFP values to 32-bit integers.  Return the
+        -:  585:   integers in packed form.  */
+        -:  586:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  587:_mm_cvttps_pi32 (__m128 __A)
+        -:  588:{
+        -:  589:  return (__m64) __builtin_ia32_cvttps2pi ((__v4sf) __A);
+        -:  590:}
+        -:  591:
+        -:  592:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  593:_mm_cvtt_ps2pi (__m128 __A)
+        -:  594:{
+        -:  595:  return _mm_cvttps_pi32 (__A);
+        -:  596:}
+        -:  597:
+        -:  598:/* Convert B to a SPFP value and insert it as element zero in A.  */
+        -:  599:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  600:_mm_cvtsi32_ss (__m128 __A, int __B)
+        -:  601:{
+        -:  602:  return (__m128) __builtin_ia32_cvtsi2ss ((__v4sf) __A, __B);
+        -:  603:}
+        -:  604:
+        -:  605:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  606:_mm_cvt_si2ss (__m128 __A, int __B)
+        -:  607:{
+        -:  608:  return _mm_cvtsi32_ss (__A, __B);
+        -:  609:}
+        -:  610:
+        -:  611:#ifdef __x86_64__
+        -:  612:/* Convert B to a SPFP value and insert it as element zero in A.  */
+        -:  613:
+        -:  614:/* Intel intrinsic.  */
+        -:  615:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  616:_mm_cvtsi64_ss (__m128 __A, long long __B)
+        -:  617:{
+        -:  618:  return (__m128) __builtin_ia32_cvtsi642ss ((__v4sf) __A, __B);
+        -:  619:}
+        -:  620:
+        -:  621:/* Microsoft intrinsic.  */
+        -:  622:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  623:_mm_cvtsi64x_ss (__m128 __A, long long __B)
+        -:  624:{
+        -:  625:  return (__m128) __builtin_ia32_cvtsi642ss ((__v4sf) __A, __B);
+        -:  626:}
+        -:  627:#endif
+        -:  628:
+        -:  629:/* Convert the two 32-bit values in B to SPFP form and insert them
+        -:  630:   as the two lower elements in A.  */
+        -:  631:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  632:_mm_cvtpi32_ps (__m128 __A, __m64 __B)
+        -:  633:{
+        -:  634:  return (__m128) __builtin_ia32_cvtpi2ps ((__v4sf) __A, (__v2si)__B);
+        -:  635:}
+        -:  636:
+        -:  637:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  638:_mm_cvt_pi2ps (__m128 __A, __m64 __B)
+        -:  639:{
+        -:  640:  return _mm_cvtpi32_ps (__A, __B);
+        -:  641:}
+        -:  642:
+        -:  643:/* Convert the four signed 16-bit values in A to SPFP form.  */
+        -:  644:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  645:_mm_cvtpi16_ps (__m64 __A)
+        -:  646:{
+        -:  647:  __v4hi __sign;
+        -:  648:  __v2si __hisi, __losi;
+        -:  649:  __v4sf __zero, __ra, __rb;
+        -:  650:
+        -:  651:  /* This comparison against zero gives us a mask that can be used to
+        -:  652:     fill in the missing sign bits in the unpack operations below, so
+        -:  653:     that we get signed values after unpacking.  */
+        -:  654:  __sign = __builtin_ia32_pcmpgtw ((__v4hi)0LL, (__v4hi)__A);
+        -:  655:
+        -:  656:  /* Convert the four words to doublewords.  */
+        -:  657:  __losi = (__v2si) __builtin_ia32_punpcklwd ((__v4hi)__A, __sign);
+        -:  658:  __hisi = (__v2si) __builtin_ia32_punpckhwd ((__v4hi)__A, __sign);
+        -:  659:
+        -:  660:  /* Convert the doublewords to floating point two at a time.  */
+        -:  661:  __zero = (__v4sf) _mm_setzero_ps ();
+        -:  662:  __ra = __builtin_ia32_cvtpi2ps (__zero, __losi);
+        -:  663:  __rb = __builtin_ia32_cvtpi2ps (__ra, __hisi);
+        -:  664:
+        -:  665:  return (__m128) __builtin_ia32_movlhps (__ra, __rb);
+        -:  666:}
+        -:  667:
+        -:  668:/* Convert the four unsigned 16-bit values in A to SPFP form.  */
+        -:  669:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  670:_mm_cvtpu16_ps (__m64 __A)
+        -:  671:{
+        -:  672:  __v2si __hisi, __losi;
+        -:  673:  __v4sf __zero, __ra, __rb;
+        -:  674:
+        -:  675:  /* Convert the four words to doublewords.  */
+        -:  676:  __losi = (__v2si) __builtin_ia32_punpcklwd ((__v4hi)__A, (__v4hi)0LL);
+        -:  677:  __hisi = (__v2si) __builtin_ia32_punpckhwd ((__v4hi)__A, (__v4hi)0LL);
+        -:  678:
+        -:  679:  /* Convert the doublewords to floating point two at a time.  */
+        -:  680:  __zero = (__v4sf) _mm_setzero_ps ();
+        -:  681:  __ra = __builtin_ia32_cvtpi2ps (__zero, __losi);
+        -:  682:  __rb = __builtin_ia32_cvtpi2ps (__ra, __hisi);
+        -:  683:
+        -:  684:  return (__m128) __builtin_ia32_movlhps (__ra, __rb);
+        -:  685:}
+        -:  686:
+        -:  687:/* Convert the low four signed 8-bit values in A to SPFP form.  */
+        -:  688:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  689:_mm_cvtpi8_ps (__m64 __A)
+        -:  690:{
+        -:  691:  __v8qi __sign;
+        -:  692:
+        -:  693:  /* This comparison against zero gives us a mask that can be used to
+        -:  694:     fill in the missing sign bits in the unpack operations below, so
+        -:  695:     that we get signed values after unpacking.  */
+        -:  696:  __sign = __builtin_ia32_pcmpgtb ((__v8qi)0LL, (__v8qi)__A);
+        -:  697:
+        -:  698:  /* Convert the four low bytes to words.  */
+        -:  699:  __A = (__m64) __builtin_ia32_punpcklbw ((__v8qi)__A, __sign);
+        -:  700:
+        -:  701:  return _mm_cvtpi16_ps(__A);
+        -:  702:}
+        -:  703:
+        -:  704:/* Convert the low four unsigned 8-bit values in A to SPFP form.  */
+        -:  705:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  706:_mm_cvtpu8_ps(__m64 __A)
+        -:  707:{
+        -:  708:  __A = (__m64) __builtin_ia32_punpcklbw ((__v8qi)__A, (__v8qi)0LL);
+        -:  709:  return _mm_cvtpu16_ps(__A);
+        -:  710:}
+        -:  711:
+        -:  712:/* Convert the four signed 32-bit values in A and B to SPFP form.  */
+        -:  713:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  714:_mm_cvtpi32x2_ps(__m64 __A, __m64 __B)
+        -:  715:{
+        -:  716:  __v4sf __zero = (__v4sf) _mm_setzero_ps ();
+        -:  717:  __v4sf __sfa = __builtin_ia32_cvtpi2ps (__zero, (__v2si)__A);
+        -:  718:  __v4sf __sfb = __builtin_ia32_cvtpi2ps (__sfa, (__v2si)__B);
+        -:  719:  return (__m128) __builtin_ia32_movlhps (__sfa, __sfb);
+        -:  720:}
+        -:  721:
+        -:  722:/* Convert the four SPFP values in A to four signed 16-bit integers.  */
+        -:  723:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  724:_mm_cvtps_pi16(__m128 __A)
+        -:  725:{
+        -:  726:  __v4sf __hisf = (__v4sf)__A;
+        -:  727:  __v4sf __losf = __builtin_ia32_movhlps (__hisf, __hisf);
+        -:  728:  __v2si __hisi = __builtin_ia32_cvtps2pi (__hisf);
+        -:  729:  __v2si __losi = __builtin_ia32_cvtps2pi (__losf);
+        -:  730:  return (__m64) __builtin_ia32_packssdw (__hisi, __losi);
+        -:  731:}
+        -:  732:
+        -:  733:/* Convert the four SPFP values in A to four signed 8-bit integers.  */
+        -:  734:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  735:_mm_cvtps_pi8(__m128 __A)
+        -:  736:{
+        -:  737:  __v4hi __tmp = (__v4hi) _mm_cvtps_pi16 (__A);
+        -:  738:  return (__m64) __builtin_ia32_packsswb (__tmp, (__v4hi)0LL);
+        -:  739:}
+        -:  740:
+        -:  741:/* Selects four specific SPFP values from A and B based on MASK.  */
+        -:  742:#ifdef __OPTIMIZE__
+        -:  743:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  440979*:  744:_mm_shuffle_ps (__m128 __A, __m128 __B, int const __mask)
+        -:  745:{
+  432531*:  746:  return (__m128) __builtin_ia32_shufps ((__v4sf)__A, (__v4sf)__B, __mask);
+     4224:  746-block  0
+        -:  747:}
+        -:  748:#else
+        -:  749:#define _mm_shuffle_ps(A, B, MASK)					\
+        -:  750:  ((__m128) __builtin_ia32_shufps ((__v4sf)(__m128)(A),			\
+        -:  751:				   (__v4sf)(__m128)(B), (int)(MASK)))
+        -:  752:#endif
+        -:  753:
+        -:  754:/* Selects and interleaves the upper two SPFP values from A and B.  */
+        -:  755:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  756:_mm_unpackhi_ps (__m128 __A, __m128 __B)
+        -:  757:{
+        -:  758:  return (__m128) __builtin_ia32_unpckhps ((__v4sf)__A, (__v4sf)__B);
+        -:  759:}
+        -:  760:
+        -:  761:/* Selects and interleaves the lower two SPFP values from A and B.  */
+        -:  762:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  763:_mm_unpacklo_ps (__m128 __A, __m128 __B)
+        -:  764:{
+        -:  765:  return (__m128) __builtin_ia32_unpcklps ((__v4sf)__A, (__v4sf)__B);
+        -:  766:}
+        -:  767:
+        -:  768:/* Sets the upper two SPFP values with 64-bits of data loaded from P;
+        -:  769:   the lower two values are passed through from A.  */
+        -:  770:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  771:_mm_loadh_pi (__m128 __A, __m64 const *__P)
+        -:  772:{
+        -:  773:  return (__m128) __builtin_ia32_loadhps ((__v4sf)__A, (const __v2sf *)__P);
+        -:  774:}
+        -:  775:
+        -:  776:/* Stores the upper two SPFP values of A into P.  */
+        -:  777:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  778:_mm_storeh_pi (__m64 *__P, __m128 __A)
+        -:  779:{
+        -:  780:  __builtin_ia32_storehps ((__v2sf *)__P, (__v4sf)__A);
+        -:  781:}
+        -:  782:
+        -:  783:/* Moves the upper two values of B into the lower two values of A.  */
+        -:  784:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  428307*:  785:_mm_movehl_ps (__m128 __A, __m128 __B)
+        -:  786:{
+  428307*:  787:  return (__m128) __builtin_ia32_movhlps ((__v4sf)__A, (__v4sf)__B);
+        -:  788:}
+        -:  789:
+        -:  790:/* Moves the lower two values of B into the upper two values of A.  */
+        -:  791:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  792:_mm_movelh_ps (__m128 __A, __m128 __B)
+        -:  793:{
+        -:  794:  return (__m128) __builtin_ia32_movlhps ((__v4sf)__A, (__v4sf)__B);
+        -:  795:}
+        -:  796:
+        -:  797:/* Sets the lower two SPFP values with 64-bits of data loaded from P;
+        -:  798:   the upper two values are passed through from A.  */
+        -:  799:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  800:_mm_loadl_pi (__m128 __A, __m64 const *__P)
+        -:  801:{
+        -:  802:  return (__m128) __builtin_ia32_loadlps ((__v4sf)__A, (const __v2sf *)__P);
+        -:  803:}
+        -:  804:
+        -:  805:/* Stores the lower two SPFP values of A into P.  */
+        -:  806:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  807:_mm_storel_pi (__m64 *__P, __m128 __A)
+        -:  808:{
+        -:  809:  __builtin_ia32_storelps ((__v2sf *)__P, (__v4sf)__A);
+        -:  810:}
+        -:  811:
+        -:  812:/* Creates a 4-bit mask from the most significant bits of the SPFP values.  */
+        -:  813:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  814:_mm_movemask_ps (__m128 __A)
+        -:  815:{
+        -:  816:  return __builtin_ia32_movmskps ((__v4sf)__A);
+        -:  817:}
+        -:  818:
+        -:  819:/* Return the contents of the control register.  */
+        -:  820:extern __inline unsigned int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  821:_mm_getcsr (void)
+        -:  822:{
+        -:  823:  return __builtin_ia32_stmxcsr ();
+        -:  824:}
+        -:  825:
+        -:  826:/* Read exception bits from the control register.  */
+        -:  827:extern __inline unsigned int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  828:_MM_GET_EXCEPTION_STATE (void)
+        -:  829:{
+        -:  830:  return _mm_getcsr() & _MM_EXCEPT_MASK;
+        -:  831:}
+        -:  832:
+        -:  833:extern __inline unsigned int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  834:_MM_GET_EXCEPTION_MASK (void)
+        -:  835:{
+        -:  836:  return _mm_getcsr() & _MM_MASK_MASK;
+        -:  837:}
+        -:  838:
+        -:  839:extern __inline unsigned int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  840:_MM_GET_ROUNDING_MODE (void)
+        -:  841:{
+        -:  842:  return _mm_getcsr() & _MM_ROUND_MASK;
+        -:  843:}
+        -:  844:
+        -:  845:extern __inline unsigned int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  846:_MM_GET_FLUSH_ZERO_MODE (void)
+        -:  847:{
+        -:  848:  return _mm_getcsr() & _MM_FLUSH_ZERO_MASK;
+        -:  849:}
+        -:  850:
+        -:  851:/* Set the control register to I.  */
+        -:  852:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  853:_mm_setcsr (unsigned int __I)
+        -:  854:{
+        -:  855:  __builtin_ia32_ldmxcsr (__I);
+        -:  856:}
+        -:  857:
+        -:  858:/* Set exception bits in the control register.  */
+        -:  859:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  860:_MM_SET_EXCEPTION_STATE(unsigned int __mask)
+        -:  861:{
+        -:  862:  _mm_setcsr((_mm_getcsr() & ~_MM_EXCEPT_MASK) | __mask);
+        -:  863:}
+        -:  864:
+        -:  865:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  866:_MM_SET_EXCEPTION_MASK (unsigned int __mask)
+        -:  867:{
+        -:  868:  _mm_setcsr((_mm_getcsr() & ~_MM_MASK_MASK) | __mask);
+        -:  869:}
+        -:  870:
+        -:  871:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  872:_MM_SET_ROUNDING_MODE (unsigned int __mode)
+        -:  873:{
+        -:  874:  _mm_setcsr((_mm_getcsr() & ~_MM_ROUND_MASK) | __mode);
+        -:  875:}
+        -:  876:
+        -:  877:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  878:_MM_SET_FLUSH_ZERO_MODE (unsigned int __mode)
+        -:  879:{
+        -:  880:  _mm_setcsr((_mm_getcsr() & ~_MM_FLUSH_ZERO_MASK) | __mode);
+        -:  881:}
+        -:  882:
+        -:  883:/* Create a vector with element 0 as F and the rest zero.  */
+        -:  884:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  390924*:  885:_mm_set_ss (float __F)
+        -:  886:{
+  390924*:  887:  return __extension__ (__m128)(__v4sf){ __F, 0.0f, 0.0f, 0.0f };
+   389385:  887-block  0
+    %%%%%:  887-block  1
+        -:  888:}
+        -:  889:
+        -:  890:/* Create a vector with all four elements equal to F.  */
+        -:  891:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+    4224*:  892:_mm_set1_ps (float __F)
+        -:  893:{
+    4224*:  894:  return __extension__ (__m128)(__v4sf){ __F, __F, __F, __F };
+        -:  895:}
+        -:  896:
+        -:  897:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+    4224*:  898:_mm_set_ps1 (float __F)
+        -:  899:{
+    4224*:  900:  return _mm_set1_ps (__F);
+     4224:  900-block  0
+    %%%%%:  900-block  1
+        -:  901:}
+        -:  902:
+        -:  903:/* Create a vector with element 0 as *P and the rest zero.  */
+        -:  904:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  905:_mm_load_ss (float const *__P)
+        -:  906:{
+        -:  907:  return _mm_set_ss (*__P);
+        -:  908:}
+        -:  909:
+        -:  910:/* Create a vector with all four elements equal to *P.  */
+        -:  911:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  912:_mm_load1_ps (float const *__P)
+        -:  913:{
+        -:  914:  return _mm_set1_ps (*__P);
+        -:  915:}
+        -:  916:
+        -:  917:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  918:_mm_load_ps1 (float const *__P)
+        -:  919:{
+        -:  920:  return _mm_load1_ps (__P);
+        -:  921:}
+        -:  922:
+        -:  923:/* Load four SPFP values from P.  The address must be 16-byte aligned.  */
+        -:  924:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  925:_mm_load_ps (float const *__P)
+        -:  926:{
+        -:  927:  return *(__m128 *)__P;
+        -:  928:}
+        -:  929:
+        -:  930:/* Load four SPFP values from P.  The address need not be 16-byte aligned.  */
+        -:  931:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+    #####:  932:_mm_loadu_ps (float const *__P)
+        -:  933:{
+    #####:  934:  return *(__m128_u *)__P;
+    %%%%%:  934-block  0
+        -:  935:}
+        -:  936:
+        -:  937:/* Load four SPFP values in reverse order.  The address must be aligned.  */
+        -:  938:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  939:_mm_loadr_ps (float const *__P)
+        -:  940:{
+        -:  941:  __v4sf __tmp = *(__v4sf *)__P;
+        -:  942:  return (__m128) __builtin_ia32_shufps (__tmp, __tmp, _MM_SHUFFLE (0,1,2,3));
+        -:  943:}
+        -:  944:
+        -:  945:/* Create the vector [Z Y X W].  */
+        -:  946:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+     4224:  947:_mm_set_ps (const float __Z, const float __Y, const float __X, const float __W)
+        -:  948:{
+     4224:  949:  return __extension__ (__m128)(__v4sf){ __W, __X, __Y, __Z };
+     4224:  949-block  0
+        -:  950:}
+        -:  951:
+        -:  952:/* Create the vector [W X Y Z].  */
+        -:  953:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  954:_mm_setr_ps (float __Z, float __Y, float __X, float __W)
+        -:  955:{
+        -:  956:  return __extension__ (__m128)(__v4sf){ __Z, __Y, __X, __W };
+        -:  957:}
+        -:  958:
+        -:  959:/* Stores the lower SPFP value.  */
+        -:  960:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  961:_mm_store_ss (float *__P, __m128 __A)
+        -:  962:{
+        -:  963:  *__P = ((__v4sf)__A)[0];
+        -:  964:}
+        -:  965:
+        -:  966:extern __inline float __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  940965*:  967:_mm_cvtss_f32 (__m128 __A)
+        -:  968:{
+  849669*:  969:  return ((__v4sf)__A)[0];
+     4224:  969-block  0
+        -:  970:}
+        -:  971:
+        -:  972:/* Store four SPFP values.  The address must be 16-byte aligned.  */
+        -:  973:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  974:_mm_store_ps (float *__P, __m128 __A)
+        -:  975:{
+        -:  976:  *(__m128 *)__P = __A;
+        -:  977:}
+        -:  978:
+        -:  979:/* Store four SPFP values.  The address need not be 16-byte aligned.  */
+        -:  980:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  981:_mm_storeu_ps (float *__P, __m128 __A)
+        -:  982:{
+        -:  983:  *(__m128_u *)__P = __A;
+        -:  984:}
+        -:  985:
+        -:  986:/* Store the lower SPFP value across four words.  */
+        -:  987:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  988:_mm_store1_ps (float *__P, __m128 __A)
+        -:  989:{
+        -:  990:  __v4sf __va = (__v4sf)__A;
+        -:  991:  __v4sf __tmp = __builtin_ia32_shufps (__va, __va, _MM_SHUFFLE (0,0,0,0));
+        -:  992:  _mm_storeu_ps (__P, __tmp);
+        -:  993:}
+        -:  994:
+        -:  995:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  996:_mm_store_ps1 (float *__P, __m128 __A)
+        -:  997:{
+        -:  998:  _mm_store1_ps (__P, __A);
+        -:  999:}
+        -: 1000:
+        -: 1001:/* Store four SPFP values in reverse order.  The address must be aligned.  */
+        -: 1002:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1003:_mm_storer_ps (float *__P, __m128 __A)
+        -: 1004:{
+        -: 1005:  __v4sf __va = (__v4sf)__A;
+        -: 1006:  __v4sf __tmp = __builtin_ia32_shufps (__va, __va, _MM_SHUFFLE (0,1,2,3));
+        -: 1007:  _mm_store_ps (__P, __tmp);
+        -: 1008:}
+        -: 1009:
+        -: 1010:/* Sets the low SPFP value of A from the low value of B.  */
+        -: 1011:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1012:_mm_move_ss (__m128 __A, __m128 __B)
+        -: 1013:{
+        -: 1014:  return (__m128) __builtin_shuffle ((__v4sf)__A, (__v4sf)__B,
+        -: 1015:                                     __extension__
+        -: 1016:                                     (__attribute__((__vector_size__ (16))) int)
+        -: 1017:                                     {4,1,2,3});
+        -: 1018:}
+        -: 1019:
+        -: 1020:/* Extracts one of the four words of A.  The selector N must be immediate.  */
+        -: 1021:#ifdef __OPTIMIZE__
+        -: 1022:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1023:_mm_extract_pi16 (__m64 const __A, int const __N)
+        -: 1024:{
+        -: 1025:  return __builtin_ia32_vec_ext_v4hi ((__v4hi)__A, __N);
+        -: 1026:}
+        -: 1027:
+        -: 1028:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1029:_m_pextrw (__m64 const __A, int const __N)
+        -: 1030:{
+        -: 1031:  return _mm_extract_pi16 (__A, __N);
+        -: 1032:}
+        -: 1033:#else
+        -: 1034:#define _mm_extract_pi16(A, N)	\
+        -: 1035:  ((int) __builtin_ia32_vec_ext_v4hi ((__v4hi)(__m64)(A), (int)(N)))
+        -: 1036:
+        -: 1037:#define _m_pextrw(A, N) _mm_extract_pi16(A, N)
+        -: 1038:#endif
+        -: 1039:
+        -: 1040:/* Inserts word D into one of four words of A.  The selector N must be
+        -: 1041:   immediate.  */
+        -: 1042:#ifdef __OPTIMIZE__
+        -: 1043:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1044:_mm_insert_pi16 (__m64 const __A, int const __D, int const __N)
+        -: 1045:{
+        -: 1046:  return (__m64) __builtin_ia32_vec_set_v4hi ((__v4hi)__A, __D, __N);
+        -: 1047:}
+        -: 1048:
+        -: 1049:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1050:_m_pinsrw (__m64 const __A, int const __D, int const __N)
+        -: 1051:{
+        -: 1052:  return _mm_insert_pi16 (__A, __D, __N);
+        -: 1053:}
+        -: 1054:#else
+        -: 1055:#define _mm_insert_pi16(A, D, N)				\
+        -: 1056:  ((__m64) __builtin_ia32_vec_set_v4hi ((__v4hi)(__m64)(A),	\
+        -: 1057:					(int)(D), (int)(N)))
+        -: 1058:
+        -: 1059:#define _m_pinsrw(A, D, N) _mm_insert_pi16(A, D, N)
+        -: 1060:#endif
+        -: 1061:
+        -: 1062:/* Compute the element-wise maximum of signed 16-bit values.  */
+        -: 1063:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1064:_mm_max_pi16 (__m64 __A, __m64 __B)
+        -: 1065:{
+        -: 1066:  return (__m64) __builtin_ia32_pmaxsw ((__v4hi)__A, (__v4hi)__B);
+        -: 1067:}
+        -: 1068:
+        -: 1069:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1070:_m_pmaxsw (__m64 __A, __m64 __B)
+        -: 1071:{
+        -: 1072:  return _mm_max_pi16 (__A, __B);
+        -: 1073:}
+        -: 1074:
+        -: 1075:/* Compute the element-wise maximum of unsigned 8-bit values.  */
+        -: 1076:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1077:_mm_max_pu8 (__m64 __A, __m64 __B)
+        -: 1078:{
+        -: 1079:  return (__m64) __builtin_ia32_pmaxub ((__v8qi)__A, (__v8qi)__B);
+        -: 1080:}
+        -: 1081:
+        -: 1082:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1083:_m_pmaxub (__m64 __A, __m64 __B)
+        -: 1084:{
+        -: 1085:  return _mm_max_pu8 (__A, __B);
+        -: 1086:}
+        -: 1087:
+        -: 1088:/* Compute the element-wise minimum of signed 16-bit values.  */
+        -: 1089:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1090:_mm_min_pi16 (__m64 __A, __m64 __B)
+        -: 1091:{
+        -: 1092:  return (__m64) __builtin_ia32_pminsw ((__v4hi)__A, (__v4hi)__B);
+        -: 1093:}
+        -: 1094:
+        -: 1095:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1096:_m_pminsw (__m64 __A, __m64 __B)
+        -: 1097:{
+        -: 1098:  return _mm_min_pi16 (__A, __B);
+        -: 1099:}
+        -: 1100:
+        -: 1101:/* Compute the element-wise minimum of unsigned 8-bit values.  */
+        -: 1102:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1103:_mm_min_pu8 (__m64 __A, __m64 __B)
+        -: 1104:{
+        -: 1105:  return (__m64) __builtin_ia32_pminub ((__v8qi)__A, (__v8qi)__B);
+        -: 1106:}
+        -: 1107:
+        -: 1108:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1109:_m_pminub (__m64 __A, __m64 __B)
+        -: 1110:{
+        -: 1111:  return _mm_min_pu8 (__A, __B);
+        -: 1112:}
+        -: 1113:
+        -: 1114:/* Create an 8-bit mask of the signs of 8-bit values.  */
+        -: 1115:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1116:_mm_movemask_pi8 (__m64 __A)
+        -: 1117:{
+        -: 1118:  return __builtin_ia32_pmovmskb ((__v8qi)__A);
+        -: 1119:}
+        -: 1120:
+        -: 1121:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1122:_m_pmovmskb (__m64 __A)
+        -: 1123:{
+        -: 1124:  return _mm_movemask_pi8 (__A);
+        -: 1125:}
+        -: 1126:
+        -: 1127:/* Multiply four unsigned 16-bit values in A by four unsigned 16-bit values
+        -: 1128:   in B and produce the high 16 bits of the 32-bit results.  */
+        -: 1129:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1130:_mm_mulhi_pu16 (__m64 __A, __m64 __B)
+        -: 1131:{
+        -: 1132:  return (__m64) __builtin_ia32_pmulhuw ((__v4hi)__A, (__v4hi)__B);
+        -: 1133:}
+        -: 1134:
+        -: 1135:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1136:_m_pmulhuw (__m64 __A, __m64 __B)
+        -: 1137:{
+        -: 1138:  return _mm_mulhi_pu16 (__A, __B);
+        -: 1139:}
+        -: 1140:
+        -: 1141:/* Return a combination of the four 16-bit values in A.  The selector
+        -: 1142:   must be an immediate.  */
+        -: 1143:#ifdef __OPTIMIZE__
+        -: 1144:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1145:_mm_shuffle_pi16 (__m64 __A, int const __N)
+        -: 1146:{
+        -: 1147:  return (__m64) __builtin_ia32_pshufw ((__v4hi)__A, __N);
+        -: 1148:}
+        -: 1149:
+        -: 1150:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1151:_m_pshufw (__m64 __A, int const __N)
+        -: 1152:{
+        -: 1153:  return _mm_shuffle_pi16 (__A, __N);
+        -: 1154:}
+        -: 1155:#else
+        -: 1156:#define _mm_shuffle_pi16(A, N) \
+        -: 1157:  ((__m64) __builtin_ia32_pshufw ((__v4hi)(__m64)(A), (int)(N)))
+        -: 1158:
+        -: 1159:#define _m_pshufw(A, N) _mm_shuffle_pi16 (A, N)
+        -: 1160:#endif
+        -: 1161:
+        -: 1162:/* Conditionally store byte elements of A into P.  The high bit of each
+        -: 1163:   byte in the selector N determines whether the corresponding byte from
+        -: 1164:   A is stored.  */
+        -: 1165:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1166:_mm_maskmove_si64 (__m64 __A, __m64 __N, char *__P)
+        -: 1167:{
+        -: 1168:  __builtin_ia32_maskmovq ((__v8qi)__A, (__v8qi)__N, __P);
+        -: 1169:}
+        -: 1170:
+        -: 1171:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1172:_m_maskmovq (__m64 __A, __m64 __N, char *__P)
+        -: 1173:{
+        -: 1174:  _mm_maskmove_si64 (__A, __N, __P);
+        -: 1175:}
+        -: 1176:
+        -: 1177:/* Compute the rounded averages of the unsigned 8-bit values in A and B.  */
+        -: 1178:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1179:_mm_avg_pu8 (__m64 __A, __m64 __B)
+        -: 1180:{
+        -: 1181:  return (__m64) __builtin_ia32_pavgb ((__v8qi)__A, (__v8qi)__B);
+        -: 1182:}
+        -: 1183:
+        -: 1184:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1185:_m_pavgb (__m64 __A, __m64 __B)
+        -: 1186:{
+        -: 1187:  return _mm_avg_pu8 (__A, __B);
+        -: 1188:}
+        -: 1189:
+        -: 1190:/* Compute the rounded averages of the unsigned 16-bit values in A and B.  */
+        -: 1191:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1192:_mm_avg_pu16 (__m64 __A, __m64 __B)
+        -: 1193:{
+        -: 1194:  return (__m64) __builtin_ia32_pavgw ((__v4hi)__A, (__v4hi)__B);
+        -: 1195:}
+        -: 1196:
+        -: 1197:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1198:_m_pavgw (__m64 __A, __m64 __B)
+        -: 1199:{
+        -: 1200:  return _mm_avg_pu16 (__A, __B);
+        -: 1201:}
+        -: 1202:
+        -: 1203:/* Compute the sum of the absolute differences of the unsigned 8-bit
+        -: 1204:   values in A and B.  Return the value in the lower 16-bit word; the
+        -: 1205:   upper words are cleared.  */
+        -: 1206:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1207:_mm_sad_pu8 (__m64 __A, __m64 __B)
+        -: 1208:{
+        -: 1209:  return (__m64) __builtin_ia32_psadbw ((__v8qi)__A, (__v8qi)__B);
+        -: 1210:}
+        -: 1211:
+        -: 1212:extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1213:_m_psadbw (__m64 __A, __m64 __B)
+        -: 1214:{
+        -: 1215:  return _mm_sad_pu8 (__A, __B);
+        -: 1216:}
+        -: 1217:
+        -: 1218:/* Stores the data in A to the address P without polluting the caches.  */
+        -: 1219:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1220:_mm_stream_pi (__m64 *__P, __m64 __A)
+        -: 1221:{
+        -: 1222:  __builtin_ia32_movntq ((unsigned long long *)__P, (unsigned long long)__A);
+        -: 1223:}
+        -: 1224:
+        -: 1225:/* Likewise.  The address must be 16-byte aligned.  */
+        -: 1226:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1227:_mm_stream_ps (float *__P, __m128 __A)
+        -: 1228:{
+        -: 1229:  __builtin_ia32_movntps (__P, (__v4sf)__A);
+        -: 1230:}
+        -: 1231:
+        -: 1232:/* Guarantees that every preceding store is globally visible before
+        -: 1233:   any subsequent store.  */
+        -: 1234:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1235:_mm_sfence (void)
+        -: 1236:{
+        -: 1237:  __builtin_ia32_sfence ();
+        -: 1238:}
+        -: 1239:
+        -: 1240:/* Transpose the 4x4 matrix composed of row[0-3].  */
+        -: 1241:#define _MM_TRANSPOSE4_PS(row0, row1, row2, row3)			\
+        -: 1242:do {									\
+        -: 1243:  __v4sf __r0 = (row0), __r1 = (row1), __r2 = (row2), __r3 = (row3);	\
+        -: 1244:  __v4sf __t0 = __builtin_ia32_unpcklps (__r0, __r1);			\
+        -: 1245:  __v4sf __t1 = __builtin_ia32_unpcklps (__r2, __r3);			\
+        -: 1246:  __v4sf __t2 = __builtin_ia32_unpckhps (__r0, __r1);			\
+        -: 1247:  __v4sf __t3 = __builtin_ia32_unpckhps (__r2, __r3);			\
+        -: 1248:  (row0) = __builtin_ia32_movlhps (__t0, __t1);				\
+        -: 1249:  (row1) = __builtin_ia32_movhlps (__t1, __t0);				\
+        -: 1250:  (row2) = __builtin_ia32_movlhps (__t2, __t3);				\
+        -: 1251:  (row3) = __builtin_ia32_movhlps (__t3, __t2);				\
+        -: 1252:} while (0)
+        -: 1253:
+        -: 1254:/* For backward source compatibility.  */
+        -: 1255:# include <emmintrin.h>
+        -: 1256:
+        -: 1257:#ifdef __DISABLE_SSE__
+        -: 1258:#undef __DISABLE_SSE__
+        -: 1259:#pragma GCC pop_options
+        -: 1260:#endif /* __DISABLE_SSE__ */
+        -: 1261:
+        -: 1262:/* The execution of the next instruction is delayed by an implementation
+        -: 1263:   specific amount of time.  The instruction does not modify the
+        -: 1264:   architectural state.  This is after the pop_options pragma because
+        -: 1265:   it does not require SSE support in the processor--the encoding is a
+        -: 1266:   nop on processors that do not support it.  */
+        -: 1267:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1268:_mm_pause (void)
+        -: 1269:{
+        -: 1270:  __builtin_ia32_pause ();
+        -: 1271:}
+        -: 1272:
+        -: 1273:#endif /* _XMMINTRIN_H_INCLUDED */

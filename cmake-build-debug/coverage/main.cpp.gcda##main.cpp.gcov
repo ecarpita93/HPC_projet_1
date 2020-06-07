@@ -1,0 +1,106 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/main.cpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE Examples
+        -:    4:The hottest examples of Piccante:
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This program is free software: you can redistribute it and/or modify
+        -:   13:    it under the terms of the GNU General Public License as published by
+        -:   14:    the Free Software Foundation, either version 3.0 of the License, or
+        -:   15:    (at your option) any later version.
+        -:   16:
+        -:   17:    This program is distributed in the hope that it will be useful,
+        -:   18:    but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   19:    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        -:   20:    GNU General Public License for more details.
+        -:   21:
+        -:   22:    See the GNU Lesser General Public License
+        -:   23:    ( http://www.gnu.org/licenses/lgpl-3.0.html ) for more details.
+        -:   24:*/
+        -:   25:
+        -:   26://This means that OpenGL acceleration layer is disabled
+        -:   27:#define PIC_DISABLE_OPENGL
+        -:   28:
+        -:   29:#include "include/piccante.hpp"
+        -:   30:
+        1:   31:int main(int argc, char *argv[])
+        -:   32:{
+        -:   33:
+        -:   34://    char cwd[PATH_MAX];
+        -:   35://    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        -:   36://        printf("Current working dir: %s\n", cwd);
+        -:   37://    } else {
+        -:   38://        perror("getcwd() error");
+        -:   39://        return 1;
+        -:   40://    }
+        -:   41:
+        1:   42:    printf("Adding file names to the merger...");
+        1:   42-block  0
+        1:   43:    pic::HDRMerger merger;
+        -:   44:
+        8:   45:    for(int i = 0; i < 7; i++) {
+        8:   45-block  0
+       21:   46:        std::string name = "../data/input/stack/stack_room_exp_" + pic::fromNumberToString(i) + ".jpg";
+        7:   46-block  0
+        7:   46-block  1
+        7:   46-block  2
+        7:   46-block  3
+        7:   46-block  4
+    $$$$$:   46-block  5
+    $$$$$:   46-block  6
+    $$$$$:   46-block  7
+       28:   47:        merger.addFile(name);
+        7:   47-block  0
+        7:   47-block  1
+        7:   47-block  2
+        7:   47-block  3
+    $$$$$:   47-block  4
+    $$$$$:   47-block  5
+        -:   48:    }
+        -:   49:
+        1:   50:    printf("\nOk one\n");
+        1:   50-block  0
+        -:   51:
+        1:   52:    printf("Merging LDR images into an HDR image...");
+        1:   52-block  0
+        1:   53:    pic::Image *imgOut = merger.execute(NULL);
+        1:   53-block  0
+        1:   54:    printf("\nOk two\n");
+        1:   54-block  0
+        -:   55:
+        1:   56:    if(imgOut != NULL) {
+        1:   56-block  0
+        1:   57:        if(imgOut->isValid()) {
+        1:   57-block  0
+        1:   58:            imgOut->Write("../data/output/image_debevec_crf.hdr");
+        1:   58-block  0
+        1:   58-block  1
+    $$$$$:   58-block  2
+    $$$$$:   58-block  3
+        1:   59:            pic::Image *imgTmo = pic::ReinhardTMO::executeGlobal1(imgOut, NULL);
+        1:   59-block  0
+        1:   60:            imgTmo->Write("../data/output/image_debevec_crf_tmo.png", pic::LT_NOR_GAMMA);
+        1:   60-block  0
+        1:   60-block  1
+    $$$$$:   60-block  2
+    $$$$$:   60-block  3
+        1:   61:            delete imgTmo;
+        1:   61-block  0
+        1:   61-block  1
+        1:   62:            delete imgOut;
+        1:   62-block  0
+        -:   63:        }
+        -:   64:    }
+        -:   65:
+        1:   66:    return 0;
+        1:   66-block  0
+        -:   67:}

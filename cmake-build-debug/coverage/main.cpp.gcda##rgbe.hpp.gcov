@@ -1,0 +1,144 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/colors/rgbe.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_COLORS_RGBE_HPP
+        -:   19:#define PIC_COLORS_RGBE_HPP
+        -:   20:
+        -:   21:/**
+        -:   22:*
+        -:   23:*	Note:
+        -:   24:*	- colFloat has to be an array of 3 floats
+        -:   25:*	- colRGBE has to be an array of 4 unsigned char
+        -:   26:*
+        -:   27:**/
+        -:   28:
+        -:   29:#include "../base.hpp"
+        -:   30:
+        -:   31:namespace pic {
+        -:   32:
+        -:   33:/**
+        -:   34: * @brief fromFloatToRGBE
+        -:   35: * @param colFloat
+        -:   36: * @param colRGBE
+        -:   37: */
+   273280:   38:PIC_INLINE void fromFloatToRGBE(float *colFloat, unsigned char *colRGBE)
+        -:   39:{
+   273280:   40:    float v;
+   273280:   41:    int e;
+        -:   42:
+   273280:   43:    v = *colFloat;
+        -:   44:
+   273280:   45:    if(v < * (colFloat + 1)) {
+        -:   46:        v = *(colFloat + 1);
+        -:   47:    }
+        -:   48:
+   273280:   49:    if(v < * (colFloat + 2)) {
+        -:   50:        v = *(colFloat + 2);
+        -:   51:    }
+        -:   52:
+   273280:   53:    if(v < 1e-32f) { //is it too small?
+   273280:   53-block  0
+    #####:   54:        *(colRGBE) = 0;
+    #####:   55:        *(colRGBE + 1) = 0;
+    #####:   56:        *(colRGBE + 2) = 0;
+    #####:   57:        *(colRGBE + 3) = 0;
+    #####:   58:        return;
+    %%%%%:   58-block  0
+        -:   59:    }
+        -:   60:
+   273280:   61:    v = frexp(v, &e) * 256.0f / v;
+   273280:   61-block  0
+        -:   62:
+   273280:   63:    *(colRGBE) = int((*(colFloat)) * v);
+   273280:   64:    *(colRGBE + 1) = int((*(colFloat + 1)) * v);
+   273280:   65:    *(colRGBE + 2) = int((*(colFloat + 2)) * v);
+   273280:   66:    *(colRGBE + 3) = (e + 128);
+   273280:   66-block  0
+        -:   67:}
+        -:   68:
+        -:   69:/**
+        -:   70: * @brief fromSingleFloatToRGBE
+        -:   71: * @param colFloat
+        -:   72: * @param colRGBE
+        -:   73: */
+    #####:   74:PIC_INLINE void fromSingleFloatToRGBE(float *colFloat, unsigned char *colRGBE)
+        -:   75:{
+    #####:   76:    float v;
+    #####:   77:    int e;
+        -:   78:
+    #####:   79:    v = *colFloat;
+        -:   80:
+    #####:   81:    if(v < 1e-32f) { //is it too small?
+    %%%%%:   81-block  0
+    #####:   82:        *(colRGBE) = 0;
+    #####:   83:        *(colRGBE + 1) = 0;
+    #####:   84:        *(colRGBE + 2) = 0;
+    #####:   85:        *(colRGBE + 3) = 0;
+    #####:   86:        return;
+    %%%%%:   86-block  0
+        -:   87:    }
+        -:   88:
+    #####:   89:    v = frexp(v, &e) * 256.0f / v;
+    %%%%%:   89-block  0
+        -:   90:
+    #####:   91:    *(colRGBE) = int((*(colFloat)) * v);
+    #####:   92:    *(colRGBE + 1) = *colRGBE;
+    #####:   93:    *(colRGBE + 2) = *colRGBE;
+    #####:   94:    *(colRGBE + 3) = (e + 128);
+    %%%%%:   94-block  0
+        -:   95:}
+        -:   96:
+        -:   97:/**
+        -:   98: * @brief fromRGBEToFloat
+        -:   99: * @param colRGBE
+        -:  100: * @param colFloat
+        -:  101: */
+    #####:  102:PIC_INLINE void fromRGBEToFloat(unsigned char *colRGBE, float *colFloat)
+        -:  103:{
+        -:  104:
+    #####:  105:    if((*(colRGBE) == 0) && (*(colRGBE + 1) == 0) &&
+    %%%%%:  105-block  0
+    %%%%%:  105-block  1
+    #####:  106:       (*(colRGBE + 2) == 0)) { //if it is small
+    %%%%%:  106-block  0
+    #####:  107:        *(colFloat) = 0;
+    #####:  108:        *(colFloat + 1) = 0;
+    #####:  109:        *(colFloat + 2) = 0;
+    #####:  110:        return;
+    %%%%%:  110-block  0
+        -:  111:    }
+        -:  112:
+    #####:  113:    int E;
+    #####:  114:    float f;
+        -:  115:
+    #####:  116:    E = *(colRGBE + 3) - 128 - 8;
+    #####:  117:    f = ldexpf(1.0f, E);
+        -:  118:
+    #####:  119:    *(colFloat) = (float(*(colRGBE)) + 0.5f) * f;
+    #####:  120:    *(colFloat + 1) = (float(*(colRGBE + 1)) + 0.5f) * f;
+    #####:  121:    *(colFloat + 2) = (float(*(colRGBE + 2)) + 0.5f) * f;
+    %%%%%:  121-block  0
+        -:  122:}
+        -:  123:
+        -:  124:} // end namespace pic
+        -:  125:
+        -:  126:#endif /* PIC_COLORS_RGBE_HPP */
+        -:  127:

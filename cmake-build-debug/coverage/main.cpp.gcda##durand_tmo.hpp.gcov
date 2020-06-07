@@ -1,0 +1,133 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/durand_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_DURAND_TMO_HPP
+        -:   19:#define PIC_TONE_MAPPING_DURAND_TMO_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:#include "../util/string.hpp"
+        -:   24:#include "../filtering/filter.hpp"
+        -:   25:#include "../filtering/filter_luminance.hpp"
+        -:   26:#include "../algorithms/bilateral_separation.hpp"
+        -:   27:#include "../tone_mapping/tone_mapping_operator.hpp"
+        -:   28:
+        -:   29:namespace pic {
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief The DurandTMO class
+        -:   33: */
+        -:   34:class DurandTMO: public ToneMappingOperator
+        -:   35:{
+        -:   36:public:
+        -:   37:
+        -:   38:    FilterLuminance flt_lum;
+        -:   39:    float target_contrast;
+        -:   40:
+        -:   41:    /**
+        -:   42:     * @brief DurandTMO
+        -:   43:     */
+        -:   44:    DurandTMO(float target_contrast = 5.0f)
+        -:   45:    {
+        -:   46:        images.push_back(NULL);
+        -:   47:        images.push_back(NULL);
+        -:   48:        images.push_back(NULL);
+        -:   49:        update(target_contrast);
+        -:   50:    }
+        -:   51:
+        -:   52:    ~DurandTMO()
+        -:   53:    {
+        -:   54:        release();
+        -:   55:    }
+        -:   56:
+        -:   57:    /**
+        -:   58:     * @brief update
+        -:   59:     * @param target_contrast
+        -:   60:     */
+        -:   61:    void update(float target_contrast = 5.0f)
+        -:   62:    {
+        -:   63:        if(target_contrast <= 0.0f) {
+        -:   64:            target_contrast = 5.0f;
+        -:   65:        }
+        -:   66:
+        -:   67:        this->target_contrast = target_contrast;
+        -:   68:    }
+        -:   69:
+        -:   70:    /**
+        -:   71:     * @brief ProcessAux
+        -:   72:     * @param imgIn
+        -:   73:     * @param imgOut
+        -:   74:     * @return
+        -:   75:     */
+    #####:   76:    Image *ProcessAux(ImageVec imgIn, Image *imgOut)
+        -:   77:    {
+    #####:   78:        updateImage(imgIn[0]);
+    %%%%%:   78-block  0
+        -:   79:
+        -:   80:        //luminance image
+    #####:   81:        images[2] = flt_lum.Process(imgIn, images[2]);
+    %%%%%:   81-block  0
+        -:   82:
+        -:   83:        //bilateral filter seperation
+    #####:   84:        bilateralSeparation(images[2], images, -1.0f, 0.4f, true);
+    %%%%%:   84-block  0
+        -:   85:
+    #####:   86:        Image *base = images[0];
+    #####:   87:        Image *detail = images[1];
+        -:   88:
+    #####:   89:        float min_log_base, max_log_base;
+    #####:   90:        base->getMinVal(NULL, &min_log_base);
+    #####:   91:        base->getMaxVal(NULL, &max_log_base);
+        -:   92:
+    #####:   93:        float compression_factor = log10fPlusEpsilon(target_contrast) / (max_log_base - min_log_base);
+    #####:   94:        float log_absoulte = compression_factor * max_log_base;
+        -:   95:
+    #####:   96:        *base *= compression_factor;
+    #####:   97:        *base += detail;
+    #####:   98:        *base -= log_absoulte;
+    #####:   99:        base->applyFunction(powf10fMinusEpsilon);
+        -:  100:
+    #####:  101:        *imgOut = *imgIn[0];
+    #####:  102:        *imgOut *= base;
+    #####:  103:        *imgOut /= images[2];
+        -:  104:
+    #####:  105:        imgOut->removeSpecials();
+        -:  106:
+    #####:  107:        return imgOut;
+        -:  108:    }
+        -:  109:
+        -:  110:    /**
+        -:  111:     * @brief execute
+        -:  112:     * @param imgIn
+        -:  113:     * @param imgOut
+        -:  114:     * @return
+        -:  115:     */
+        -:  116:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  117:    {
+        -:  118:        DurandTMO dtmo(5.0f);
+        -:  119:        return dtmo.Process(Single(imgIn), imgOut);
+        -:  120:    }
+        -:  121:};
+        -:  122:
+        -:  123:} // end namespace pic
+        -:  124:
+        -:  125:#endif /* PIC_TONE_MAPPING_DURAND_TMO_HPP */
+        -:  126:

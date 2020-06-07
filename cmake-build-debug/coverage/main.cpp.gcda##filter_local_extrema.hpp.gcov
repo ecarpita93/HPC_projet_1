@@ -1,0 +1,185 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_local_extrema.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_LOCAL_EXTREMA_HPP
+        -:   19:#define PIC_FILTERING_FILTER_LOCAL_EXTREMA_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterLocalExtrema class
+        -:   27: */
+        -:   28:class FilterLocalExtrema: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:
+        -:   32:    /**
+        -:   33:     * @brief ProcessBBox
+        -:   34:     * @param dst
+        -:   35:     * @param src
+        -:   36:     * @param box
+        -:   37:     */
+    #####:   38:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   39:    {
+    #####:   40:        Image *img  = src[0];
+    %%%%%:   40-block  0
+        -:   41:
+    #####:   42:        int channels = dst->channels;
+        -:   43:
+    #####:   44:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   44-block  0
+    %%%%%:   44-block  1
+    %%%%%:   44-block  2
+    #####:   45:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   45-block  0
+    %%%%%:   45-block  1
+    %%%%%:   45-block  2
+    #####:   46:                float *dst_data = (*dst)(i, j);
+    %%%%%:   46-block  0
+        -:   47:
+    #####:   48:                float *img_data  = (*img)(i, j);
+    %%%%%:   48-block  0
+        -:   49:
+    #####:   50:                float val = 0.0f;
+        -:   51:
+    #####:   52:                for(int c = 0; c < channels; c++) {
+    %%%%%:   52-block  0
+    %%%%%:   52-block  1
+    #####:   53:                    val += img_data[c];
+    %%%%%:   53-block  0
+        -:   54:                }
+        -:   55:
+    #####:   56:                int counter_higher = 0;
+    #####:   57:                int counter_lower = 0;
+    #####:   58:                for(int k = -halfKernelSize; k <= halfKernelSize; k++) {
+    %%%%%:   58-block  0
+    %%%%%:   58-block  1
+    %%%%%:   58-block  2
+    #####:   59:                    for(int l = -halfKernelSize; l <= halfKernelSize; l++) {
+    %%%%%:   59-block  0
+    %%%%%:   59-block  1
+    #####:   60:                        if(l == k) {
+    %%%%%:   60-block  0
+    #####:   61:                            continue;
+    %%%%%:   61-block  0
+        -:   62:                        }
+        -:   63:
+    #####:   64:                        float *img_data_lk  = (*img)(i + l, j + k);
+    %%%%%:   64-block  0
+        -:   65:
+        -:   66:                        //accumulation
+    #####:   67:                        float val_lk = 0.0f;
+    #####:   68:                        for(int c = 0; c < channels; c++) {
+    %%%%%:   68-block  0
+    %%%%%:   68-block  1
+    #####:   69:                            val_lk += img_data_lk[c];
+    %%%%%:   69-block  0
+        -:   70:                        }
+        -:   71:
+    #####:   72:                        if(val_lk >= val) {
+    %%%%%:   72-block  0
+    #####:   73:                            counter_higher++;
+    %%%%%:   73-block  0
+        -:   74:                        }
+        -:   75:
+    #####:   76:                        if(val_lk <= val) {
+    %%%%%:   76-block  0
+    #####:   77:                            counter_lower++;
+    %%%%%:   77-block  0
+        -:   78:                        }
+        -:   79:                    }
+        -:   80:                }
+        -:   81:
+    #####:   82:                if(counter_higher < kernelSize) {
+    %%%%%:   82-block  0
+    #####:   83:                    dst_data[0] = 1.0f;
+    %%%%%:   83-block  0
+        -:   84:                } else {
+    #####:   85:                    if(counter_lower < kernelSize) {
+    %%%%%:   85-block  0
+    #####:   86:                        dst_data[0] = -1.0f;
+    %%%%%:   86-block  0
+        -:   87:                    } else {
+    #####:   88:                        dst_data[0] = 0.0f;
+    %%%%%:   88-block  0
+        -:   89:                    }
+        -:   90:                }
+        -:   91:            }
+        -:   92:        }
+    #####:   93:    }
+        -:   94:
+        -:   95:    int kernelSize, halfKernelSize;
+        -:   96:
+        -:   97:public:
+        -:   98:
+        -:   99:    /**
+        -:  100:     * @brief FilterLocalExtrema
+        -:  101:     */
+        -:  102:    FilterLocalExtrema(int kernelSize = 3) : Filter()
+        -:  103:    {
+        -:  104:        if(kernelSize < 2) {
+        -:  105:            kernelSize = 3;
+        -:  106:        }
+        -:  107:
+        -:  108:        if((kernelSize % 2) == 0) {
+        -:  109:            kernelSize++;
+        -:  110:        }
+        -:  111:
+        -:  112:        this->kernelSize = kernelSize;
+        -:  113:        this->halfKernelSize = kernelSize >> 1;
+        -:  114:    }
+        -:  115:
+        -:  116:    /**
+        -:  117:     * @brief OutputSize
+        -:  118:     * @param imgIn
+        -:  119:     * @param width
+        -:  120:     * @param height
+        -:  121:     * @param channels
+        -:  122:     * @param frames
+        -:  123:     */
+    #####:  124:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  125:    {
+    #####:  126:        width       = imgIn[0]->width;
+    #####:  127:        height      = imgIn[0]->height;
+    #####:  128:        channels    = 1;
+    #####:  129:        frames      = imgIn[0]->frames;
+    #####:  130:    }
+        -:  131:
+        -:  132:    /**
+        -:  133:     * @brief execute
+        -:  134:     * @param img
+        -:  135:     * @param conv
+        -:  136:     * @param imgOut
+        -:  137:     * @return
+        -:  138:     */
+        -:  139:    static Image *execute(Image *img, Image *imgOut, int kernelSize = 3)
+        -:  140:    {
+        -:  141:        FilterLocalExtrema flt(kernelSize);
+        -:  142:        return flt.Process(Single(img), imgOut);
+        -:  143:    }
+        -:  144:};
+        -:  145:
+        -:  146:} // end namespace pic
+        -:  147:
+        -:  148:#endif /* PIC_FILTERING_FILTER_LOCAL_EXTREMA_HPP */
+        -:  149:

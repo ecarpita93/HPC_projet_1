@@ -1,0 +1,244 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_bilateral_1d.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_BILATERAL_1D_HPP
+        -:   19:#define PIC_FILTERING_FILTER_BILATERAL_1D_HPP
+        -:   20:
+        -:   21:#include "../util/precomputed_gaussian.hpp"
+        -:   22:#include "../util/std_util.hpp"
+        -:   23:#include "../util/array.hpp"
+        -:   24:
+        -:   25:#include "../filtering/filter.hpp"
+        -:   26:
+        -:   27:namespace pic {
+        -:   28:
+        -:   29:/**
+        -:   30: * @brief The FilterBilateral1D class
+        -:   31: */
+        -:   32:class FilterBilateral1D: public Filter
+        -:   33:{
+        -:   34:protected:
+        -:   35:    PrecomputedGaussian *pg;
+        -:   36:    int dirs[3];
+        -:   37:    float sigma_r_sq_2;
+        -:   38:
+        -:   39:    /**
+        -:   40:     * @brief ProcessBBox
+        -:   41:     * @param dst
+        -:   42:     * @param src
+        -:   43:     * @param box
+        -:   44:     */
+        -:   45:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   46:
+        -:   47:public:
+        -:   48:
+        -:   49:    float sigma_s, sigma_r;
+        -:   50:
+        -:   51:    /**
+        -:   52:     * @brief FilterBilateral1D
+        -:   53:     * @param sigma_s
+        -:   54:     * @param sigma_r
+        -:   55:     */
+        -:   56:    FilterBilateral1D(float sigma_s, float sigma_r);
+        -:   57:
+        -:   58:    /**
+        -:   59:     * @brief update
+        -:   60:     * @param sigma_s
+        -:   61:     * @param sigma_r
+        -:   62:     */
+        -:   63:    void update(float sigma_s, float sigma_r);
+        -:   64:
+        -:   65:    /**
+        -:   66:     * @brief signature
+        -:   67:     * @return
+        -:   68:     */
+    #####:   69:    std::string signature()
+        -:   70:    {
+    #####:   71:        return genBilString("1D", sigma_s, sigma_r);
+    %%%%%:   71-block  0
+    %%%%%:   71-block  1
+    %%%%%:   71-block  2
+    $$$$$:   71-block  3
+        -:   72:    }
+        -:   73:
+        -:   74:    /**
+        -:   75:     * @brief changePass
+        -:   76:     * @param pass
+        -:   77:     * @param tPass
+        -:   78:     */
+        -:   79:    void changePass(int pass, int tPass);
+        -:   80:};
+        -:   81:
+        -:   82:PIC_INLINE FilterBilateral1D::FilterBilateral1D(float sigma_s, float sigma_r) : Filter()
+        -:   83:{
+        -:   84:    pg = NULL;
+        -:   85:    update(sigma_s, sigma_r);
+        -:   86:}
+        -:   87:
+        -:   88:PIC_INLINE void FilterBilateral1D::update(float sigma_s, float sigma_r)
+        -:   89:{
+        -:   90:    //protected values are assigned/computed
+        -:   91:    this->sigma_s = sigma_s > 0.0f ? sigma_s : 1.0f;
+        -:   92:    this->sigma_r = sigma_r > 0.0f ? sigma_r : 0.01f;
+        -:   93:    this->sigma_r_sq_2 = this->sigma_r * this->sigma_r * 2.0f;
+        -:   94:
+        -:   95:    //Precomputation of the Gaussian filter
+        -:   96:    dirs[0] = dirs[1] = dirs[2] = 0;
+        -:   97:
+        -:   98:    pg = delete_s(pg);
+        -:   99:
+        -:  100:    pg = new PrecomputedGaussian(sigma_s);
+        -:  101:}
+        -:  102:
+    #####:  103:PIC_INLINE void FilterBilateral1D::changePass(int pass, int tPass)
+        -:  104:{
+        -:  105:    /*	tPass++;
+        -:  106:    	dirs[ pass%tPass] = 1;
+        -:  107:    	for(int i=1;i<tPass;i++)
+        -:  108:    		dirs[(pass+i)%tPass] = 0;
+        -:  109:    */
+    #####:  110:    int tMod;
+        -:  111:
+    #####:  112:    if(tPass > 1) {
+    %%%%%:  112-block  0
+        -:  113:        tMod = 3;
+        -:  114:    } else {
+    #####:  115:        if(tPass == 1) {
+    %%%%%:  115-block  0
+        -:  116:            tMod = 2;
+        -:  117:        } else {
+    #####:  118:            printf("ERROR: FilterGaussian1D::ChangePass\n");
+    %%%%%:  118-block  0
+    #####:  119:            return;
+    %%%%%:  119-block  0
+        -:  120:        }
+        -:  121:    }
+        -:  122:
+    #####:  123:    dirs[ pass % tMod] = 1;
+        -:  124:
+    #####:  125:    for(int i = 1; i < tMod; i++) {
+    %%%%%:  125-block  0
+    %%%%%:  125-block  1
+    #####:  126:        dirs[(pass + i) % tMod] = 0;
+    %%%%%:  126-block  0
+        -:  127:    }
+        -:  128:
+        -:  129:#ifdef PIC_DEBUG
+        -:  130:    printf("%d %d %d\n", dirs[0], dirs[1], dirs[2]);
+        -:  131:#endif
+        -:  132:}
+        -:  133:
+    #####:  134:PIC_INLINE void FilterBilateral1D::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:  135:{
+    #####:  136:    Image *edge, *base;
+        -:  137:
+    #####:  138:    if(src.size() == 2) {
+    %%%%%:  138-block  0
+        -:  139:        //Joint/Cross Bilateral Filtering
+    #####:  140:        base = src[0];
+    %%%%%:  140-block  0
+    #####:  141:        edge = src[1];
+    %%%%%:  141-block  0
+        -:  142:    } else {
+    #####:  143:        base = src[0];
+    %%%%%:  143-block  0
+    #####:  144:        edge = src[0];
+    %%%%%:  144-block  0
+        -:  145:    }
+        -:  146:
+    #####:  147:    for(int m = box->z0; m < box->z1; m++) {
+    %%%%%:  147-block  0
+    %%%%%:  147-block  1
+    %%%%%:  147-block  2
+    #####:  148:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  148-block  0
+    %%%%%:  148-block  1
+    %%%%%:  148-block  2
+    #####:  149:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  149-block  0
+    %%%%%:  149-block  1
+        -:  150:
+    #####:  151:                float *tmpDst  = (*dst )(i, j, m);
+    #####:  152:                float *tmpEdge = (*edge)(i, j, m);
+        -:  153:
+    #####:  154:                Arrayf::assign(0.0f, tmpDst, dst->channels);
+    %%%%%:  154-block  0
+        -:  155:
+        -:  156:                float sum = 0.0f;
+        -:  157:
+    #####:  158:                for(int k = 0; k < pg->kernelSize; k++) {
+    %%%%%:  158-block  0
+        -:  159:                    //Spatial filtering
+    #####:  160:                    float weight = pg->coeff[k];
+        -:  161:
+    #####:  162:                    int tmpCoord = k - pg->halfKernelSize;
+        -:  163:
+        -:  164:                    //Address cj
+    #####:  165:                    int cj = j + tmpCoord * dirs[0];
+        -:  166:                    //Address ci
+    #####:  167:                    int ci = i + tmpCoord * dirs[1];
+        -:  168:                    //Address cm
+    #####:  169:                    int cm = m + tmpCoord * dirs[2];
+        -:  170:
+        -:  171:
+        -:  172:                    //Range filtering
+    #####:  173:                    float *curEdge = (*edge)(ci, cj, cm); 
+        -:  174:
+    #####:  175:                    float edgeDist = Arrayf::distanceSq(curEdge, tmpEdge, dst->channels);
+    %%%%%:  175-block  0
+    #####:  176:                    edgeDist = expf(-edgeDist / sigma_r_sq_2);
+        -:  177:
+        -:  178:                    //Weight
+    #####:  179:                    weight *= edgeDist;
+        -:  180:
+        -:  181:                    //filter
+    #####:  182:                    float *curBase = (*base)(ci, cj, cm);
+    #####:  183:                    for(int l = 0; l < dst->channels; l++) {
+    %%%%%:  183-block  0
+    %%%%%:  183-block  1
+    #####:  184:                        tmpDst[l] += curBase[l] * weight;
+    %%%%%:  184-block  0
+        -:  185:                    }
+        -:  186:
+    #####:  187:                    sum += weight;
+    %%%%%:  187-block  0
+        -:  188:                }
+        -:  189:
+        -:  190:                //Normalization
+    #####:  191:                if(sum > 0.0f) {
+    %%%%%:  191-block  0
+    #####:  192:                    Arrayf::div(tmpDst, dst->channels, sum);
+    %%%%%:  192-block  0
+        -:  193:                } else {
+    #####:  194:                    float *base = (*edge)(i, j, m);
+    #####:  195:                    Arrayf::assign(base, dst->channels, tmpDst);
+    %%%%%:  195-block  0
+    %%%%%:  195-block  1
+        -:  196:                }
+        -:  197:            }
+        -:  198:        }
+        -:  199:    }
+    #####:  200:}
+        -:  201:
+        -:  202:} // end namespace pic
+        -:  203:
+        -:  204:#endif /* PIC_FILTERING_FILTER_BILATERAL_1D_HPP */
+        -:  205:

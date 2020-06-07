@@ -1,0 +1,81 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_absolute_difference.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_ABSOLUTE_DIFFERENCE_HPP
+        -:   19:#define PIC_FILTERING_FILTER_ABSOLUTE_DIFFERENCE_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterAbsoluteDifference class
+        -:   27: */
+        -:   28:class FilterAbsoluteDifference: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:
+        -:   32:    /**
+        -:   33:     * @brief f
+        -:   34:     * @param data
+        -:   35:     */
+    #####:   36:    void f(FilterFData *data)
+        -:   37:    {
+    #####:   38:        float *dataIn0 = (*data->src[0])(data->x, data->y);
+    %%%%%:   38-block  0
+    #####:   39:        float *dataIn1 = (*data->src[1])(data->x, data->y);
+    %%%%%:   39-block  0
+        -:   40:
+    #####:   41:        for(int k = 0; k < data->dst->channels; k++) {
+    %%%%%:   41-block  0
+    %%%%%:   41-block  1
+    #####:   42:            data->out[k] = fabsf(dataIn1[k] - dataIn0[k]);
+    %%%%%:   42-block  0
+        -:   43:        }
+    #####:   44:    }
+        -:   45:
+        -:   46:public:
+        -:   47:
+        -:   48:    /**
+        -:   49:     * @brief FilterAbsoluteDifference
+        -:   50:     */
+        -:   51:    FilterAbsoluteDifference() : Filter()
+        -:   52:    {
+        -:   53:
+        -:   54:    }
+        -:   55:
+        -:   56:    /**
+        -:   57:     * @brief execute
+        -:   58:     * @param imgIn1
+        -:   59:     * @param imgIn2
+        -:   60:     * @return
+        -:   61:     */
+        -:   62:    static Image *execute(Image *imgIn1, Image *imgIn2)
+        -:   63:    {
+        -:   64:        FilterAbsoluteDifference filter;
+        -:   65:        return filter.Process(Double(imgIn1, imgIn2), NULL);
+        -:   66:    }
+        -:   67:};
+        -:   68:
+        -:   69:} // end namespace pic
+        -:   70:
+        -:   71:#endif /* PIC_FILTERING_FILTER_ABSOLUTE_DIFFERENCE_HPP */
+        -:   72:

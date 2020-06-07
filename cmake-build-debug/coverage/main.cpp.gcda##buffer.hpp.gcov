@@ -1,0 +1,983 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/buffer.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_BUFFER_HPP
+        -:   19:#define PIC_UTIL_BUFFER_HPP
+        -:   20:
+        -:   21:#include <string.h>
+        -:   22:
+        -:   23:#include "../base.hpp"
+        -:   24:#include "../util/math.hpp"
+        -:   25:#include "../util/array.hpp"
+        -:   26:
+        -:   27:namespace pic {
+        -:   28:
+        -:   29:template<class T>
+        -:   30:class Buffer
+        -:   31:{
+        -:   32:public:
+        -:   33:    Buffer()
+        -:   34:    {
+        -:   35:
+        -:   36:    }
+        -:   37:
+        -:   38:    /**
+        -:   39:     * @brief assign assigns value to buffer
+        -:   40:     * @param buffer is the output buffer
+        -:   41:     * @param n is the number of elements of the buffer
+        -:   42:     * @param value is the value to be assigned to all values of buffer
+        -:   43:     * @return it returns the pointer to buffer
+        -:   44:     */
+    #####:   45:    static T *assign(T *buffer, int n, T value)
+        -:   46:    {
+    #####:   47:        if(buffer == NULL) {
+    #####:   48:            if(n > 0) {
+    #####:   49:                buffer = new T[n];
+        -:   50:            } else {
+        -:   51:                return buffer;
+        -:   52:            }
+        -:   53:        }
+        -:   54:
+    #####:   55:        #pragma omp parallel for
+        -:   56:        for(int i = 0; i < n; i++) {
+        -:   57:            buffer[i] = value;
+        -:   58:        }
+        -:   59:
+    #####:   60:        return buffer;
+        -:   61:    }
+------------------
+_ZN3pic6BufferIjE6assignEPjij:
+    #####:   45:    static T *assign(T *buffer, int n, T value)
+        -:   46:    {
+    #####:   47:        if(buffer == NULL) {
+    %%%%%:   47-block  0
+    #####:   48:            if(n > 0) {
+    %%%%%:   48-block  0
+    #####:   49:                buffer = new T[n];
+    %%%%%:   49-block  0
+        -:   50:            } else {
+        -:   51:                return buffer;
+        -:   52:            }
+        -:   53:        }
+        -:   54:
+    #####:   55:        #pragma omp parallel for
+        -:   56:        for(int i = 0; i < n; i++) {
+        -:   57:            buffer[i] = value;
+        -:   58:        }
+        -:   59:
+    #####:   60:        return buffer;
+    %%%%%:   60-block  0
+        -:   61:    }
+------------------
+_ZN3pic6BufferIfE6assignEPfif:
+    #####:   45:    static T *assign(T *buffer, int n, T value)
+        -:   46:    {
+    #####:   47:        if(buffer == NULL) {
+    %%%%%:   47-block  0
+    #####:   48:            if(n > 0) {
+    %%%%%:   48-block  0
+    #####:   49:                buffer = new T[n];
+    %%%%%:   49-block  0
+        -:   50:            } else {
+        -:   51:                return buffer;
+        -:   52:            }
+        -:   53:        }
+        -:   54:
+    #####:   55:        #pragma omp parallel for
+        -:   56:        for(int i = 0; i < n; i++) {
+        -:   57:            buffer[i] = value;
+        -:   58:        }
+        -:   59:
+    #####:   60:        return buffer;
+    %%%%%:   60-block  0
+        -:   61:    }
+------------------
+        -:   62:
+        -:   63:    /**
+        -:   64:     * @brief assign assigns bufferIn to bufferOut
+        -:   65:     * @param bufferOut is the output buffer
+        -:   66:     * @param bufferIn is the input buffer
+        -:   67:     * @param n is the number of elements of bufferIn and bufferOut
+        -:   68:     * (they have to be of same length)
+        -:   69:     * @return it returns the pointer to buffer
+        -:   70:     */
+        -:   71:    static T *assign(T *bufferOut, T *bufferIn, int n)
+        -:   72:    {
+        -:   73:        memcpy(bufferOut, bufferIn, n * sizeof(T));
+        -:   74:        return bufferOut;
+        -:   75:    }
+        -:   76:
+        -:   77:    /**
+        -:   78:     * @brief add peforms addition
+        -:   79:     * @param buffer is the output buffer
+        -:   80:     * @param n is the number of elements of the buffer
+        -:   81:     * @param value is the value to be added to all values of buffer
+        -:   82:     * @return it returns the pointer to buffer
+        -:   83:     */
+        -:   84:    static T *add(T *buffer, int n, T value)
+        -:   85:    {
+        -:   86:        #pragma omp parallel for
+        -:   87:
+        -:   88:        for(int i = 0; i < n; i++) {
+        -:   89:            buffer[i] += value;
+        -:   90:        }
+        -:   91:
+        -:   92:        return buffer;
+        -:   93:    }
+        -:   94:
+        -:   95:    /**
+        -:   96:     * @brief add
+        -:   97:     * @param bufferOut
+        -:   98:     * @param bufferIn0
+        -:   99:     * @param bufferIn1
+        -:  100:     * @param n
+        -:  101:     * @return
+        -:  102:     */
+        -:  103:    static T *add(T *bufferOut, T *bufferIn0, T *bufferIn1, int n)
+        -:  104:    {
+        -:  105:        #pragma omp parallel for
+        -:  106:        for(int i = 0; i < n; i++) {
+        -:  107:            bufferOut[i] = bufferIn0[i] + bufferIn1[i];
+        -:  108:        }
+        -:  109:
+        -:  110:        return bufferOut;
+        -:  111:    }
+        -:  112:
+    #####:  113:    static T *add(T *bufferOut, T *bufferIn, int n)
+        -:  114:    {
+    #####:  115:        #pragma omp parallel for
+        -:  116:
+        -:  117:        for(int i = 0; i < n; i++) {
+        -:  118:            bufferOut[i] += bufferIn[i];
+        -:  119:        }
+        -:  120:
+    #####:  121:        return bufferOut;
+    %%%%%:  121-block  0
+        -:  122:    }
+        -:  123:
+        -:  124:
+    #####:  125:    static T *addS(T *bufferOut, T *bufferIn, int n, int channels)
+        -:  126:    {
+    #####:  127:        #pragma omp parallel for
+        -:  128:        for(int ind = 0; ind < n; ind++) {
+        -:  129:            int i = ind * channels;
+        -:  130:
+        -:  131:            float val = bufferIn[ind];
+        -:  132:
+        -:  133:            for(int j = 0; j < channels; j++) {
+        -:  134:                bufferOut[i + j] += val;
+        -:  135:            }
+        -:  136:        }
+        -:  137:
+    #####:  138:        return bufferOut;
+    %%%%%:  138-block  0
+        -:  139:    }
+        -:  140:
+        -:  141:     /**
+        -:  142:     * @brief mul multiplies a constant value
+        -:  143:     * @param buffer
+        -:  144:     * @param n
+        -:  145:     * @param value
+        -:  146:     * @return
+        -:  147:     */
+        -:  148:    static T *mul(T *buffer, int n, T value)
+        -:  149:    {
+        -:  150:        #pragma omp parallel for
+        -:  151:        for(int i = 0; i < n; i++) {
+        -:  152:            buffer[i] *= value;
+        -:  153:        }
+        -:  154:
+        -:  155:        return buffer;
+        -:  156:    }
+        -:  157:
+        -:  158:
+        -:  159:    /**
+        -:  160:     * @brief mul
+        -:  161:     * @param bufferOut
+        -:  162:     * @param bufferIn0
+        -:  163:     * @param bufferIn1
+        -:  164:     * @param n
+        -:  165:     * @return
+        -:  166:     */
+        -:  167:    static T *mul(T *bufferOut, T *bufferIn0, T *bufferIn1, int n)
+        -:  168:    {
+        -:  169:        #pragma omp parallel for
+        -:  170:
+        -:  171:        for(int i = 0; i < n; i++) {
+        -:  172:            bufferOut[i] = bufferIn0[i] * bufferIn1[i];
+        -:  173:        }
+        -:  174:
+        -:  175:        return bufferOut;
+        -:  176:    }
+        -:  177:
+        -:  178:    /**
+        -:  179:     * @brief BufferMul
+        -:  180:     * @param bufferOut
+        -:  181:     * @param bufferIn
+        -:  182:     * @param n
+        -:  183:     * @return
+        -:  184:     */
+    #####:  185:    static T *mul(T *bufferOut, T *bufferIn, int n)
+        -:  186:    {
+    #####:  187:        #pragma omp parallel for
+        -:  188:
+        -:  189:        for(int i = 0; i < n; i++) {
+        -:  190:            bufferOut[i] *= bufferIn[i];
+        -:  191:        }
+        -:  192:
+    #####:  193:        return bufferOut;
+    %%%%%:  193-block  0
+        -:  194:    }
+        -:  195:
+        -:  196:    /**
+        -:  197:     * @brief mulS
+        -:  198:     * @param bufferOut
+        -:  199:     * @param bufferIn
+        -:  200:     * @param n
+        -:  201:     * @param channels
+        -:  202:     * @return
+        -:  203:     */
+        1:  204:    static T *mulS(T *bufferOut, T *bufferIn, int n, int channels)
+        -:  205:    {
+        1:  206:        #pragma omp parallel for
+        -:  207:        for(int ind = 0; ind < n; ind++) {
+        -:  208:            int i = ind * channels;
+        -:  209:
+        -:  210:            float val = bufferIn[ind];
+        -:  211:
+        -:  212:            for(int j = 0; j < channels; j++) {
+        -:  213:                bufferOut[i + j] *= val;
+        -:  214:            }
+        -:  215:        }
+        -:  216:
+        1:  217:        return bufferOut;
+        1:  217-block  0
+        -:  218:    }
+        -:  219:
+        -:  220:    /**
+        -:  221:     * @brief sub
+        -:  222:     * @param buffer
+        -:  223:     * @param n
+        -:  224:     * @param value
+        -:  225:     * @return
+        -:  226:     */
+        -:  227:    static T *sub(T *buffer, int n, T value)
+        -:  228:    {
+        -:  229:        #pragma omp parallel for
+        -:  230:        for(int i = 0; i < n; i++) {
+        -:  231:            buffer[i] -= value;
+        -:  232:        }
+        -:  233:
+        -:  234:        return buffer;
+        -:  235:    }
+        -:  236:
+        -:  237:    /**
+        -:  238:     * @brief sub
+        -:  239:     * @param bufferOut
+        -:  240:     * @param bufferIn0
+        -:  241:     * @param bufferIn1
+        -:  242:     * @param n
+        -:  243:     * @return
+        -:  244:     */
+        -:  245:    static T *sub(T *bufferOut, T *bufferIn0, T *bufferIn1, int n)
+        -:  246:    {
+        -:  247:        #pragma omp parallel for
+        -:  248:        for(int i = 0; i < n; i++) {
+        -:  249:            bufferOut[i] = bufferIn0[i] - bufferIn1[i];
+        -:  250:        }
+        -:  251:
+        -:  252:        return bufferOut;
+        -:  253:    }
+        -:  254:
+        -:  255:    /**
+        -:  256:     * @brief sub
+        -:  257:     * @param bufferOut
+        -:  258:     * @param bufferIn
+        -:  259:     * @param n
+        -:  260:     * @return
+        -:  261:     */
+    #####:  262:    static T *sub(T *bufferOut, T *bufferIn, int n)
+        -:  263:    {
+    #####:  264:        #pragma omp parallel for
+        -:  265:        for(int i = 0; i < n; i++) {
+        -:  266:            bufferOut[i] -= bufferIn[i];
+        -:  267:        }
+        -:  268:
+    #####:  269:        return bufferOut;
+    %%%%%:  269-block  0
+        -:  270:    }
+        -:  271:
+        -:  272:    /**
+        -:  273:     * @brief subS
+        -:  274:     * @param bufferOut
+        -:  275:     * @param bufferIn
+        -:  276:     * @param n
+        -:  277:     * @param channels
+        -:  278:     * @return
+        -:  279:     */
+    #####:  280:    static T *subS(T *bufferOut, T *bufferIn, int n, int channels)
+        -:  281:    {
+    #####:  282:        #pragma omp parallel for
+        -:  283:        for(int ind = 0; ind < n; ind++) {
+        -:  284:            int i = ind * channels;
+        -:  285:
+        -:  286:            float val = bufferIn[ind];
+        -:  287:
+        -:  288:            for(int j = 0; j < channels; j++) {
+        -:  289:                bufferOut[i + j] -= val;
+        -:  290:            }
+        -:  291:        }
+        -:  292:
+    #####:  293:        return bufferOut;
+    %%%%%:  293-block  0
+        -:  294:    }
+        -:  295:
+        -:  296:    /**
+        -:  297:     * @brief div divides by a constant value
+        -:  298:     * @param buffer
+        -:  299:     * @param n
+        -:  300:     * @param value
+        -:  301:     * @return
+        -:  302:     */
+        -:  303:    static T *div(T *buffer, int n, T value)
+        -:  304:    {
+        -:  305:        #pragma omp parallel for
+        -:  306:        for(int i = 0; i < n; i++) {
+        -:  307:            buffer[i] /= value;
+        -:  308:        }
+        -:  309:
+        -:  310:        return buffer;
+        -:  311:    }
+        -:  312:
+        -:  313:    /**
+        -:  314:     * @brief div
+        -:  315:     * @param bufferOut
+        -:  316:     * @param bufferIn0
+        -:  317:     * @param bufferIn1
+        -:  318:     * @param n
+        -:  319:     * @return
+        -:  320:     */
+        -:  321:    static T *div(T *bufferOut, T *bufferIn0, T *bufferIn1, int n)
+        -:  322:    {
+        -:  323:        #pragma omp parallel for
+        -:  324:
+        -:  325:        for(int i = 0; i < n; i++) {
+        -:  326:            bufferOut[i] = bufferIn0[i] / bufferIn1[i];
+        -:  327:        }
+        -:  328:
+        -:  329:        return bufferOut;
+        -:  330:    }
+        -:  331:
+        -:  332:    /**
+        -:  333:     * @brief div
+        -:  334:     * @param bufferOut
+        -:  335:     * @param bufferIn
+        -:  336:     * @param n
+        -:  337:     * @return
+        -:  338:     */
+    #####:  339:    static T *div(T *bufferOut, T *bufferIn, int n)
+        -:  340:    {
+    #####:  341:        #pragma omp parallel for
+        -:  342:
+        -:  343:        for(int i = 0; i < n; i++) {
+        -:  344:            bufferOut[i] /= bufferIn[i];
+        -:  345:        }
+        -:  346:
+    #####:  347:        return bufferOut;
+    %%%%%:  347-block  0
+        -:  348:    }
+        -:  349:
+        -:  350:    /**
+        -:  351:     * @brief divS
+        -:  352:     * @param bufferOut
+        -:  353:     * @param bufferIn
+        -:  354:     * @param n
+        -:  355:     * @param channels
+        -:  356:     * @return
+        -:  357:     */
+        1:  358:    static T *divS(T *bufferOut, T *bufferIn, int n, int channels)
+        -:  359:    {
+        1:  360:        #pragma omp parallel for
+        -:  361:        for(int ind = 0; ind < n; ind++) {
+        -:  362:            int i = ind * channels;
+        -:  363:
+        -:  364:            float val = bufferIn[ind];
+        -:  365:
+        -:  366:            for(int j = 0; j < channels; j++) {
+        -:  367:                bufferOut[i + j] /= val;
+        -:  368:            }
+        -:  369:        }
+        -:  370:
+        1:  371:        return bufferOut;
+        1:  371-block  0
+        -:  372:    }
+        -:  373:
+        -:  374:    /**
+        -:  375:     * @brief flipH flips a buffer horizontally
+        -:  376:     * @param buffer
+        -:  377:     * @param width
+        -:  378:     * @param height
+        -:  379:     * @param channels
+        -:  380:     * @param frames
+        -:  381:     */
+    #####:  382:    static void flipH(T *buffer, int width, int height, int channels,
+        -:  383:                            int frames)
+        -:  384:    {
+    #####:  385:        int steps = width >> 1;
+        -:  386:
+        -:  387:    //	for(int l=0;l<frames;l++)
+    #####:  388:        #pragma omp parallel for
+        -:  389:
+        -:  390:        for(int i = 0; i < height; i++) {
+        -:  391:            int ind = i * width;
+        -:  392:
+        -:  393:            for(int j = 0; j < steps; j++) {
+        -:  394:                int i0 = (ind + j) * channels;
+        -:  395:                int i1 = (ind + width - j - 1) * channels;
+        -:  396:
+        -:  397:                for(int k = 0; k < channels; k++) { //swap
+        -:  398:                    T tmp        = buffer[i0 + k];
+        -:  399:                    buffer[i0 + k] = buffer[i1 + k];
+        -:  400:                    buffer[i1 + k] = tmp;
+        -:  401:                }
+        -:  402:            }
+        -:  403:        }
+        -:  404:    }
+        -:  405:
+        -:  406:    /**
+        -:  407:     * @brief flipV flips an image vertically
+        -:  408:     * @param buffer
+        -:  409:     * @param width
+        -:  410:     * @param height
+        -:  411:     * @param channels
+        -:  412:     * @param frames
+        -:  413:     */
+    #####:  414:    static void flipV(T *buffer, int width, int height, int channels,
+        -:  415:                                int frames)
+        -:  416:    {
+    #####:  417:        int steps = height >> 1;
+        -:  418:
+        -:  419:    //	for(int l=0;l<frames;l++)
+    #####:  420:        #pragma omp parallel for
+    %%%%%:  420-block  0
+        -:  421:
+        -:  422:        for(int i = 0; i < steps; i++) {
+        -:  423:            int ind0 = i * width;
+        -:  424:            int ind1 = (height - i - 1) * width;
+        -:  425:
+        -:  426:            for(int j = 0; j < width; j++) {
+        -:  427:                int i0 = (ind0 + j) * channels;
+        -:  428:                int i1 = (ind1 + j) * channels;
+        -:  429:
+        -:  430:                for(int k = 0; k < channels; k++) { //swap
+        -:  431:                    T tmp          = buffer[i0 + k];
+        -:  432:                    buffer[i0 + k] = buffer[i1 + k];
+        -:  433:                    buffer[i1 + k] = tmp;
+        -:  434:                }
+        -:  435:            }
+        -:  436:        }
+    #####:  437:    }
+    %%%%%:  437-block  0
+        -:  438:
+        -:  439:
+        -:  440:    /**
+        -:  441:     * @brief rotate90CW rotates an image 90 CW
+        -:  442:     * @param buffer
+        -:  443:     * @param width
+        -:  444:     * @param height
+        -:  445:     * @param channels
+        -:  446:     */
+        -:  447:    static void rotate90CW(T *buffer, int &width, int &height, int channels)
+        -:  448:    {
+        -:  449:        if(buffer==NULL) {
+        -:  450:            return;
+        -:  451:        }
+        -:  452:
+        -:  453:        if(width == height) { //in place rotation
+        -:  454:          //  #pragma omp parallel for
+        -:  455:            int n = width;
+        -:  456:            for(int i = 0; i < n/2; i++) {
+        -:  457:                int i_n = n - i  - 1 ;
+        -:  458:
+        -:  459:                for(int j = i; j < (n - i - 1); j++) {
+        -:  460:                    int j_n = n - j  - 1 ;
+        -:  461:
+        -:  462:                    int i0 = (i   * n + j  ) * channels;
+        -:  463:                    int i1 = (j_n * n + i  ) * channels;
+        -:  464:                    int i2 = (i_n * n + j_n) * channels;
+        -:  465:                    int i3 = (j   * n + i_n) * channels;
+        -:  466:
+        -:  467:
+        -:  468:                    for(int k = 0; k < channels; k++) { //swap
+        -:  469:                        T tmp          = buffer[i0 + k];
+        -:  470:                        buffer[i0 + k] = buffer[i1 + k];
+        -:  471:                        buffer[i1 + k] = buffer[i2 + k];
+        -:  472:                        buffer[i2 + k] = buffer[i3 + k];
+        -:  473:                        buffer[i3 + k] = tmp;
+        -:  474:                    }
+        -:  475:                }
+        -:  476:            }
+        -:  477:        } else {
+        -:  478:            T *tmpBuffer = new T[width * height * channels];
+        -:  479:            memcpy(tmpBuffer, buffer, sizeof(T) * width * height * channels);
+        -:  480:
+        -:  481:            #pragma omp parallel for
+        -:  482:            for(int i = 0; i < height; i++) {
+        -:  483:                for(int j = 0; j < width; j++) {
+        -:  484:                    int i0 = (i * width + j) * channels;
+        -:  485:                    int i1 = (j * height + height - i - 1) * channels;
+        -:  486:
+        -:  487:                    for(int k = 0; k < channels; k++) {
+        -:  488:                        buffer[i1 + k] = tmpBuffer[i0 + k];
+        -:  489:                    }
+        -:  490:                }
+        -:  491:            }
+        -:  492:
+        -:  493:            delete[] tmpBuffer;
+        -:  494:
+        -:  495:            int tmp = width;
+        -:  496:            width   = height;
+        -:  497:            height  = tmp;
+        -:  498:        }
+        -:  499:    }
+        -:  500:
+        -:  501:    /**
+        -:  502:     * @brief rotate90CCW rotates an image 90 CCW
+        -:  503:     * @param buffer
+        -:  504:     * @param width
+        -:  505:     * @param height
+        -:  506:     * @param channels
+        -:  507:     */
+        -:  508:    static void rotate90CCW(T *buffer, int &width, int &height, int channels)
+        -:  509:    {
+        -:  510:        if(buffer==NULL) {
+        -:  511:            return;
+        -:  512:        }
+        -:  513:
+        -:  514:        if(width == height) { //in place rotation
+        -:  515:            #pragma omp parallel for
+        -:  516:            for(int i = 0; i < (height - 2); i++) {
+        -:  517:
+        -:  518:                for(int j = (i + 1); j < (width - 1); j++) {
+        -:  519:
+        -:  520:                    int i0 = (i * width + j) * channels;
+        -:  521:                    int i1 = (j * width + i) * channels;
+        -:  522:
+        -:  523:                    for(int k = 0; k < channels; k++) { //swap
+        -:  524:                        T tmp          = buffer[i0 + k];
+        -:  525:                        buffer[i0 + k] = buffer[i1 + k];
+        -:  526:                        buffer[i1 + k] = tmp;
+        -:  527:                    }
+        -:  528:                }
+        -:  529:            }
+        -:  530:        } else {
+        -:  531:            T *tmpBuffer = new T[width * height * channels];
+        -:  532:            memcpy(tmpBuffer, buffer, sizeof(T) * width * height * channels);
+        -:  533:
+        -:  534:            #pragma omp parallel for
+        -:  535:            for(int i = 0; i < height; i++) {
+        -:  536:                for(int j = 0; j < width; j++) {
+        -:  537:                    int i0 = (i * width  + j) * channels;
+        -:  538:                    int i1 = ((width-j-1) * height + i) * channels;
+        -:  539:
+        -:  540:                    for(int k = 0; k < channels; k++) {
+        -:  541:                        buffer[i1 + k] = tmpBuffer[i0 + k];
+        -:  542:                    }
+        -:  543:                }
+        -:  544:            }
+        -:  545:
+        -:  546:            delete[] tmpBuffer;
+        -:  547:
+        -:  548:            int tmp = width;
+        -:  549:            width   = height;
+        -:  550:            height  = tmp;
+        -:  551:        }
+        -:  552:    }
+        -:  553:
+        -:  554:    /**
+        -:  555:     * @brief shift
+        -:  556:     * @param bufferOut
+        -:  557:     * @param bufferIn
+        -:  558:     * @param dx
+        -:  559:     * @param dy
+        -:  560:     * @param width
+        -:  561:     * @param height
+        -:  562:     * @param channels
+        -:  563:     * @param frames
+        -:  564:     * @return
+        -:  565:     */
+    #####:  566:    static T *shift(T *bufferOut, T *bufferIn, int dx, int dy, int width,
+        -:  567:                              int height, int channels, int frames)
+        -:  568:    {
+    #####:  569:        if(bufferOut == NULL) {
+    #####:  570:            bufferOut = new T[width * height * channels * frames];
+        -:  571:        }
+        -:  572:
+    #####:  573:        #pragma omp parallel for
+        -:  574:
+        -:  575:        for(int i = 0; i < height; i++) {
+        -:  576:            int tmp1 = i * width;
+        -:  577:            int i2 = i + dy;
+        -:  578:
+        -:  579:            if((i2) < 0 || (i2 >= height)) {
+        -:  580:
+        -:  581:                for(int j=0; j<width; j++){
+        -:  582:                    int ind1 = (tmp1 + j) * channels;
+        -:  583:                    for(int k = 0; k < channels; k++) {
+        -:  584:                        bufferOut[ind1 + k] = T(0);
+        -:  585:                    }
+        -:  586:                }
+        -:  587:
+        -:  588:            } else {
+        -:  589:                int tmp2 = i2 * width;
+        -:  590:
+        -:  591:                for(int j = 0; j < width; j++) {
+        -:  592:                    int j2 = j + dx;
+        -:  593:                    int ind1 = (tmp1 + j) * channels;
+        -:  594:
+        -:  595:                    if((j2) < 0 || (j2 >= width)) {
+        -:  596:                        for(int k = 0; k < channels; k++) {
+        -:  597:                            bufferOut[ind1 + k] = T(0);
+        -:  598:                        }
+        -:  599:                    } else {
+        -:  600:
+        -:  601:                        int ind2 = (tmp2 + j2) * channels;
+        -:  602:
+        -:  603:                        for(int k = 0; k < channels; k++) {
+        -:  604:                            bufferOut[ind1 + k] = bufferIn[ind2 + k];
+        -:  605:                        }
+        -:  606:                    }
+        -:  607:                }
+        -:  608:            }
+        -:  609:        }
+        -:  610:
+    #####:  611:        return bufferOut;
+        -:  612:    }
+------------------
+_ZN3pic6BufferIfE5shiftEPfS2_iiiiii:
+    #####:  566:    static T *shift(T *bufferOut, T *bufferIn, int dx, int dy, int width,
+        -:  567:                              int height, int channels, int frames)
+        -:  568:    {
+    #####:  569:        if(bufferOut == NULL) {
+    %%%%%:  569-block  0
+    #####:  570:            bufferOut = new T[width * height * channels * frames];
+    %%%%%:  570-block  0
+    %%%%%:  570-block  1
+    %%%%%:  570-block  2
+        -:  571:        }
+        -:  572:
+    #####:  573:        #pragma omp parallel for
+        -:  574:
+        -:  575:        for(int i = 0; i < height; i++) {
+        -:  576:            int tmp1 = i * width;
+        -:  577:            int i2 = i + dy;
+        -:  578:
+        -:  579:            if((i2) < 0 || (i2 >= height)) {
+        -:  580:
+        -:  581:                for(int j=0; j<width; j++){
+        -:  582:                    int ind1 = (tmp1 + j) * channels;
+        -:  583:                    for(int k = 0; k < channels; k++) {
+        -:  584:                        bufferOut[ind1 + k] = T(0);
+        -:  585:                    }
+        -:  586:                }
+        -:  587:
+        -:  588:            } else {
+        -:  589:                int tmp2 = i2 * width;
+        -:  590:
+        -:  591:                for(int j = 0; j < width; j++) {
+        -:  592:                    int j2 = j + dx;
+        -:  593:                    int ind1 = (tmp1 + j) * channels;
+        -:  594:
+        -:  595:                    if((j2) < 0 || (j2 >= width)) {
+        -:  596:                        for(int k = 0; k < channels; k++) {
+        -:  597:                            bufferOut[ind1 + k] = T(0);
+        -:  598:                        }
+        -:  599:                    } else {
+        -:  600:
+        -:  601:                        int ind2 = (tmp2 + j2) * channels;
+        -:  602:
+        -:  603:                        for(int k = 0; k < channels; k++) {
+        -:  604:                            bufferOut[ind1 + k] = bufferIn[ind2 + k];
+        -:  605:                        }
+        -:  606:                    }
+        -:  607:                }
+        -:  608:            }
+        -:  609:        }
+        -:  610:
+    #####:  611:        return bufferOut;
+        -:  612:    }
+------------------
+_ZN3pic6BufferIbE5shiftEPbS2_iiiiii:
+    #####:  566:    static T *shift(T *bufferOut, T *bufferIn, int dx, int dy, int width,
+        -:  567:                              int height, int channels, int frames)
+        -:  568:    {
+    #####:  569:        if(bufferOut == NULL) {
+    %%%%%:  569-block  0
+    #####:  570:            bufferOut = new T[width * height * channels * frames];
+    %%%%%:  570-block  0
+        -:  571:        }
+        -:  572:
+    #####:  573:        #pragma omp parallel for
+        -:  574:
+        -:  575:        for(int i = 0; i < height; i++) {
+        -:  576:            int tmp1 = i * width;
+        -:  577:            int i2 = i + dy;
+        -:  578:
+        -:  579:            if((i2) < 0 || (i2 >= height)) {
+        -:  580:
+        -:  581:                for(int j=0; j<width; j++){
+        -:  582:                    int ind1 = (tmp1 + j) * channels;
+        -:  583:                    for(int k = 0; k < channels; k++) {
+        -:  584:                        bufferOut[ind1 + k] = T(0);
+        -:  585:                    }
+        -:  586:                }
+        -:  587:
+        -:  588:            } else {
+        -:  589:                int tmp2 = i2 * width;
+        -:  590:
+        -:  591:                for(int j = 0; j < width; j++) {
+        -:  592:                    int j2 = j + dx;
+        -:  593:                    int ind1 = (tmp1 + j) * channels;
+        -:  594:
+        -:  595:                    if((j2) < 0 || (j2 >= width)) {
+        -:  596:                        for(int k = 0; k < channels; k++) {
+        -:  597:                            bufferOut[ind1 + k] = T(0);
+        -:  598:                        }
+        -:  599:                    } else {
+        -:  600:
+        -:  601:                        int ind2 = (tmp2 + j2) * channels;
+        -:  602:
+        -:  603:                        for(int k = 0; k < channels; k++) {
+        -:  604:                            bufferOut[ind1 + k] = bufferIn[ind2 + k];
+        -:  605:                        }
+        -:  606:                    }
+        -:  607:                }
+        -:  608:            }
+        -:  609:        }
+        -:  610:
+    #####:  611:        return bufferOut;
+        -:  612:    }
+------------------
+        -:  613:
+        -:  614:    /**
+        -:  615:     * @brief transpose transposes a buffer
+        -:  616:     * @param bufferOut
+        -:  617:     * @param bufferIn
+        -:  618:     * @param width
+        -:  619:     * @param height
+        -:  620:     * @param channels
+        -:  621:     * @param frames
+        -:  622:     * @return
+        -:  623:     */
+        -:  624:    static T* transpose(T *bufferOut, T *bufferIn, int width, int height,
+        -:  625:                        int channels, int frames)
+        -:  626:    {
+        -:  627:        if(bufferIn == NULL) {
+        -:  628:            return bufferOut;
+        -:  629:        }
+        -:  630:
+        -:  631:        if(bufferOut == NULL) {
+        -:  632:            bufferOut = new T[width * height * channels * frames];
+        -:  633:        }
+        -:  634:
+        -:  635:        for(int i = 0; i < height; i++) {
+        -:  636:            int indIn = i * width;
+        -:  637:
+        -:  638:            for(int j = i; j < width; j++) {
+        -:  639:                indIn = (indIn + j) * channels;
+        -:  640:
+        -:  641:                int indOut = ((j * height) + i) *  channels;
+        -:  642:
+        -:  643:                for(int k = 0; k < channels; k++) {
+        -:  644:                    bufferOut[indOut + k] = bufferIn[indIn + k];
+        -:  645:                }
+        -:  646:            }
+        -:  647:        }
+        -:  648:    }
+        -:  649:
+        -:  650:    /**
+        -:  651:     * @brief BGRtoRGB swizzles from BGR to RGB a buffer
+        -:  652:     * @param buffer
+        -:  653:     * @param width
+        -:  654:     * @param height
+        -:  655:     * @param channels
+        -:  656:     * @param frames
+        -:  657:     * @return
+        -:  658:     */
+    #####:  659:    static T* BGRtoRGB(T *buffer, int width, int height,
+        -:  660:                       int channels, int frames)
+        -:  661:    {
+    #####:  662:        int size = width * height * channels * frames;
+    #####:  663:        for(int i = 0; i < size; i += channels) {
+    %%%%%:  663-block  0
+    %%%%%:  663-block  1
+    %%%%%:  663-block  2
+    %%%%%:  663-block  3
+    #####:  664:            T tmp         = buffer[i];
+    #####:  665:            buffer[i    ] = buffer[i + 2];
+    #####:  666:            buffer[i + 2] = tmp;
+    %%%%%:  666-block  0
+    %%%%%:  666-block  1
+        -:  667:        }
+        -:  668:
+        -:  669:        return buffer;
+        -:  670:    }
+        -:  671:
+        -:  672:    /**
+        -:  673:     * @brief BufferFromLayerToIntervaleaved change from RGB RGB RGB... to RRR... GGG... BBB...
+        -:  674:     * @param bufferOut
+        -:  675:     * @param bufferIn
+        -:  676:     * @param n
+        -:  677:     * @param channels
+        -:  678:     * @return
+        -:  679:     */
+        -:  680:    static T* BufferFromLayerToIntervaleaved(T *bufferOut, T *bufferIn, int n, int channels)
+        -:  681:    {
+        -:  682:        #pragma omp parallel for
+        -:  683:        for(int i = 0; i < n; i++) {
+        -:  684:
+        -:  685:                for(int k = 0; k < channels; k++) {
+        -:  686:
+        -:  687:                    int iIn  = k * n + i;
+        -:  688:                    int iOut = i * channels + k;
+        -:  689:
+        -:  690:                    bufferOut[iOut] = bufferIn[iIn];
+        -:  691:                }
+        -:  692:
+        -:  693:        }
+        -:  694:    }
+        -:  695:
+        -:  696:    /**
+        -:  697:     * @brief clone
+        -:  698:     * @param bufferOut
+        -:  699:     * @param bufferIn
+        -:  700:     * @param n
+        -:  701:     * @param channels
+        -:  702:     * @return
+        -:  703:     */
+        -:  704:    static T *clone(T *bufferOut, T *bufferIn, int n, int channels)
+        -:  705:    {
+        -:  706:        if(bufferIn == NULL) {
+        -:  707:            return bufferOut;
+        -:  708:        }
+        -:  709:
+        -:  710:        if(bufferOut == NULL) {
+        -:  711:            bufferOut = new T[n * channels];
+        -:  712:        }
+        -:  713:
+        -:  714:        memcpy(bufferOut, bufferIn, n * channels * sizeof(T));
+        -:  715:
+        -:  716:        return bufferOut;
+        -:  717:    }
+        -:  718:
+        -:  719:    /**
+        -:  720:     * @brief unique
+        -:  721:     * @param buffer
+        -:  722:     * @param n
+        -:  723:     * @param uniqueValues
+        -:  724:     * @return
+        -:  725:     */
+        -:  726:    static void unique(T *buffer, int n, std::set<T> &uniqueValues)
+        -:  727:    {
+        -:  728:        for(int i = 0; i < n; i++) {
+        -:  729:            uniqueValues.insert(buffer[i]);
+        -:  730:        }
+        -:  731:    }
+        -:  732:
+        -:  733:    /**
+        -:  734:     * @brief copySubBuffer
+        -:  735:     * @param bufIn
+        -:  736:     * @param bi_width
+        -:  737:     * @param bi_height
+        -:  738:     * @param bi_channels
+        -:  739:     * @param startX
+        -:  740:     * @param startY
+        -:  741:     * @param bufOut
+        -:  742:     * @param bo_width
+        -:  743:     * @param bo_height
+        -:  744:     * @param bo_channels
+        -:  745:     */
+        -:  746:    static void copySubBuffer(T *bufIn,
+        -:  747:                              int bi_width,
+        -:  748:                              int bi_height,
+        -:  749:                              int bi_channels,
+        -:  750:                              int startX,
+        -:  751:                              int startY,
+        -:  752:                              T *bufOut,
+        -:  753:                              int bo_width,
+        -:  754:                              int bo_height,
+        -:  755:                              int bo_channels)
+        -:  756:    {
+        -:  757:        if(bufIn == NULL || bufOut == NULL || bi_channels != bo_channels) {
+        -:  758:            return;
+        -:  759:        }
+        -:  760:
+        -:  761:        //check bounds
+        -:  762:        int sX, sY, eX, eY, dX, dY, shiftX, shiftY;
+        -:  763:
+        -:  764:        //start
+        -:  765:        sX = MIN(startX, bo_width);
+        -:  766:        sX = MAX(sX, 0);
+        -:  767:
+        -:  768:        sY = MIN(startY, bo_height);
+        -:  769:        sY = MAX(startY, 0);
+        -:  770:
+        -:  771:        dX = sX - startX;
+        -:  772:
+        -:  773:        if(dX < 0) {
+        -:  774:            shiftX = dX;
+        -:  775:        } else {
+        -:  776:            shiftX = -sX;
+        -:  777:        }
+        -:  778:
+        -:  779:        //end
+        -:  780:        eX = MIN(startX + bi_width, bo_width);
+        -:  781:        eX = MAX(eX, 0);
+        -:  782:
+        -:  783:        eY = MIN(startY + bi_height, bo_height);
+        -:  784:        eY = MAX(eY, 0);
+        -:  785:
+        -:  786:        dY = sY - startY;
+        -:  787:
+        -:  788:        if(dY < 0) {
+        -:  789:            shiftY = dY;
+        -:  790:        } else {
+        -:  791:            shiftY = -sY;
+        -:  792:        }
+        -:  793:
+        -:  794:        #pragma omp parallel for
+        -:  795:        for(int j = sY; j < eY; j++) {
+        -:  796:            int index_bi = (j + shiftY) * bi_width;
+        -:  797:            int index_bo = j * bo_width;
+        -:  798:
+        -:  799:            for(int i = sX; i < eX; i++) {
+        -:  800:                Array<T>::assign(bufIn + index_bi + i + shiftY,
+        -:  801:                                 bi_channels,
+        -:  802:                                 bufOut + index_bo + i);
+        -:  803:            }
+        -:  804:        }
+        -:  805:    }
+        -:  806:};
+        -:  807:
+        -:  808:} // end namespace pic
+        -:  809:
+        -:  810:#endif /* PIC_UTIL_BUFFER_HPP */
+        -:  811:

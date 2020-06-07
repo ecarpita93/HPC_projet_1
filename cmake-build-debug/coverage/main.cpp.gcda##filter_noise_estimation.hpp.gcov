@@ -1,0 +1,165 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_noise_estimation.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_NOISE_ESTIMATION_HPP
+        -:   19:#define PIC_FILTERING_FILTER_NOISE_ESTIMATION_HPP
+        -:   20:
+        -:   21:#include "../util/math.hpp"
+        -:   22:
+        -:   23:#include "../filtering/filter.hpp"
+        -:   24:
+        -:   25:#include "../filtering/filter_conv_2d.hpp"
+        -:   26:
+        -:   27:namespace pic {
+        -:   28:
+        -:   29:/**
+        -:   30: * @brief The FilterNoiseEstimation class
+        -:   31: */
+        -:   32:class FilterNoiseEstimation: public Filter
+        -:   33:{
+        -:   34:protected:
+        -:   35:    FilterConv2D flt;
+        -:   36:    Image *img_conv;
+        -:   37:    float *data;
+        -:   38:
+        -:   39:public:
+        -:   40:
+        -:   41:    /**
+        -:   42:     * @brief FilterNoiseEstimation
+        -:   43:     * @param type
+        -:   44:     */
+        -:   45:    FilterNoiseEstimation() : Filter()
+        -:   46:    {
+        -:   47:        data = new float[9];
+        -:   48:
+        -:   49:        data[0] =  1.0f;
+        -:   50:        data[1] = -2.0f;
+        -:   51:        data[2] =  1.0f;
+        -:   52:
+        -:   53:        data[3] = -2.0f;
+        -:   54:        data[4] =  4.0f;
+        -:   55:        data[5] = -2.0f;
+        -:   56:
+        -:   57:        data[6] =  1.0f;
+        -:   58:        data[7] = -2.0f;
+        -:   59:        data[8] =  1.0f;
+        -:   60:
+        -:   61:        img_conv = new Image(1, 3, 3, 1, data);
+        -:   62:    }
+        -:   63:
+        -:   64:    ~FilterNoiseEstimation()
+        -:   65:    {
+        -:   66:        if(img_conv != NULL) {
+        -:   67:            delete img_conv;
+        -:   68:        }
+        -:   69:
+        -:   70:        if(data != NULL) {
+        -:   71:            delete[] data;
+        -:   72:        }
+        -:   73:    }
+        -:   74:
+        -:   75:    /**
+        -:   76:     * @brief Process
+        -:   77:     * @param imgIn
+        -:   78:     * @param imgOut
+        -:   79:     * @return
+        -:   80:     */
+    #####:   81:    Image *Process(ImageVec imgIn, Image *imgOut)
+        -:   82:    {
+    #####:   83:        if(!checkInput(imgIn)) {
+    %%%%%:   83-block  0
+        -:   84:            return imgOut;
+        -:   85:        }
+        -:   86:
+    #####:   87:        imgOut = flt.Process(Double(imgIn[0], img_conv), imgOut);
+    %%%%%:   87-block  0
+    %%%%%:   87-block  1
+        -:   88:
+    #####:   89:        if(imgOut == NULL) {
+    %%%%%:   89-block  0
+        -:   90:            return imgOut;
+        -:   91:        }
+        -:   92:
+    #####:   93:        imgOut->applyFunction(square);
+    %%%%%:   93-block  0
+        -:   94:
+    #####:   95:        *imgOut /= 36.0f;
+        -:   96:
+    #####:   97:        return imgOut;
+        -:   98:    }
+        -:   99:
+        -:  100:    /**
+        -:  101:     * @brief getNoiseEstimation
+        -:  102:     * @param imgNoise
+        -:  103:     * @return
+        -:  104:     */
+        -:  105:    static float *getNoiseEstimation(Image *imgNoise, float *ret)
+        -:  106:    {
+        -:  107:        if(ret == NULL) {
+        -:  108:            ret = new float[imgNoise->channels];
+        -:  109:        }
+        -:  110:
+        -:  111:        BBox box = imgNoise->getFullBox();
+        -:  112:
+        -:  113:        box.x0++;
+        -:  114:        box.x1--;
+        -:  115:        box.y0++;
+        -:  116:        box.y1--;
+        -:  117:
+        -:  118:        ret = imgNoise->getMeanVal(&box, ret);
+        -:  119:
+        -:  120:        return ret;
+        -:  121:    }
+        -:  122:
+        -:  123:
+        -:  124:    /**
+        -:  125:     * @brief getNoiseEstimation
+        -:  126:     * @param imgNoise
+        -:  127:     * @return
+        -:  128:     */
+        -:  129:    static float *getNoiseEstimation(Image *img, Image *imgNoise, float *ret)
+        -:  130:    {
+        -:  131:
+        -:  132:        FilterNoiseEstimation flt;
+        -:  133:        imgNoise = flt.execute(img, imgNoise);
+        -:  134:
+        -:  135:        ret = getNoiseEstimation(imgNoise, ret);
+        -:  136:
+        -:  137:        return ret;
+        -:  138:    }
+        -:  139:
+        -:  140:    /**
+        -:  141:     * @brief execute
+        -:  142:     * @param imgIn
+        -:  143:     * @param imgOut
+        -:  144:     * @return
+        -:  145:     */
+        -:  146:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  147:    {
+        -:  148:        FilterNoiseEstimation flt;
+        -:  149:        return flt.Process(Single(imgIn), imgOut);
+        -:  150:    }
+        -:  151:};
+        -:  152:
+        -:  153:} // end namespace pic
+        -:  154:
+        -:  155:#endif /* PIC_FILTERING_FILTER_NOISE_ESTIMATION_HPP */
+        -:  156:

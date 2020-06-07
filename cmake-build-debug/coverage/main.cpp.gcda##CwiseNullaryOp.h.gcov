@@ -1,0 +1,1208 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/CwiseNullaryOp.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2008-2010 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5://
+        -:    6:// This Source Code Form is subject to the terms of the Mozilla
+        -:    7:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    8:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:    9:
+        -:   10:#ifndef EIGEN_CWISE_NULLARY_OP_H
+        -:   11:#define EIGEN_CWISE_NULLARY_OP_H
+        -:   12:
+        -:   13:namespace Eigen {
+        -:   14:
+        -:   15:namespace internal {
+        -:   16:template<typename NullaryOp, typename PlainObjectType>
+        -:   17:struct traits<CwiseNullaryOp<NullaryOp, PlainObjectType> > : traits<PlainObjectType>
+        -:   18:{
+        -:   19:  enum {
+        -:   20:    Flags = traits<PlainObjectType>::Flags & RowMajorBit
+        -:   21:  };
+        -:   22:};
+        -:   23:
+        -:   24:} // namespace internal
+        -:   25:
+        -:   26:/** \class CwiseNullaryOp
+        -:   27:  * \ingroup Core_Module
+        -:   28:  *
+        -:   29:  * \brief Generic expression of a matrix where all coefficients are defined by a functor
+        -:   30:  *
+        -:   31:  * \tparam NullaryOp template functor implementing the operator
+        -:   32:  * \tparam PlainObjectType the underlying plain matrix/array type
+        -:   33:  *
+        -:   34:  * This class represents an expression of a generic nullary operator.
+        -:   35:  * It is the return type of the Ones(), Zero(), Constant(), Identity() and Random() methods,
+        -:   36:  * and most of the time this is the only way it is used.
+        -:   37:  *
+        -:   38:  * However, if you want to write a function returning such an expression, you
+        -:   39:  * will need to use this class.
+        -:   40:  *
+        -:   41:  * The functor NullaryOp must expose one of the following method:
+        -:   42:    <table class="manual">
+        -:   43:    <tr            ><td>\c operator()() </td><td>if the procedural generation does not depend on the coefficient entries (e.g., random numbers)</td></tr>
+        -:   44:    <tr class="alt"><td>\c operator()(Index i)</td><td>if the procedural generation makes sense for vectors only and that it depends on the coefficient index \c i (e.g., linspace) </td></tr>
+        -:   45:    <tr            ><td>\c operator()(Index i,Index j)</td><td>if the procedural generation depends on the matrix coordinates \c i, \c j (e.g., to generate a checkerboard with 0 and 1)</td></tr>
+        -:   46:    </table>
+        -:   47:  * It is also possible to expose the last two operators if the generation makes sense for matrices but can be optimized for vectors.
+        -:   48:  *
+        -:   49:  * See DenseBase::NullaryExpr(Index,const CustomNullaryOp&) for an example binding
+        -:   50:  * C++11 random number generators.
+        -:   51:  *
+        -:   52:  * A nullary expression can also be used to implement custom sophisticated matrix manipulations
+        -:   53:  * that cannot be covered by the existing set of natively supported matrix manipulations.
+        -:   54:  * See this \ref TopicCustomizing_NullaryExpr "page" for some examples and additional explanations
+        -:   55:  * on the behavior of CwiseNullaryOp.
+        -:   56:  *
+        -:   57:  * \sa class CwiseUnaryOp, class CwiseBinaryOp, DenseBase::NullaryExpr
+        -:   58:  */
+        -:   59:template<typename NullaryOp, typename PlainObjectType>
+   44430*:   60:class CwiseNullaryOp : public internal::dense_xpr_base< CwiseNullaryOp<NullaryOp, PlainObjectType> >::type, internal::no_assignment_operator
+    %%%%%:   60-block  0
+    %%%%%:   60-block  1
+    %%%%%:   60-block  2
+     1503:   60-block  3
+    35328:   60-block  4
+     1503:   60-block  5
+     1503:   60-block  6
+     1530:   60-block  7
+    %%%%%:   60-block  8
+     1530:   60-block  9
+    %%%%%:   60-block 10
+        3:   60-block 11
+        -:   61:{
+        -:   62:  public:
+        -:   63:
+        -:   64:    typedef typename internal::dense_xpr_base<CwiseNullaryOp>::type Base;
+        -:   65:    EIGEN_DENSE_PUBLIC_INTERFACE(CwiseNullaryOp)
+        -:   66:
+        -:   67:    EIGEN_DEVICE_FUNC
+  438624*:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+  438624*:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+        3:   69-block  0
+        3:   69-block  1
+        -:   70:    {
+  438426*:   71:      eigen_assert(rows >= 0
+        3:   71-block  0
+    %%%%%:   71-block  1
+        3:   71-block  2
+    %%%%%:   71-block  3
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+  438618*:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIfEENS_6MatrixIfLi32ELi32ELi1ELi32ELi32EEEEC2EllRKS3_:
+       66:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+       66:   68-block  0
+       66:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+       66:   69-block  0
+       66:   69-block  1
+        -:   70:    {
+        -:   71:      eigen_assert(rows >= 0
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+       66:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIbEENS_6MatrixIbLin1ELi1ELi0ELin1ELi1EEEEC2EllRKS3_:
+    #####:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+    %%%%%:   68-block  0
+    #####:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+    %%%%%:   69-block  0
+    %%%%%:   69-block  1
+        -:   70:    {
+    #####:   71:      eigen_assert(rows >= 0
+    %%%%%:   71-block  0
+    %%%%%:   71-block  1
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+    #####:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIfEENS_6MatrixIfLi32ELi1ELi0ELi32ELi1EEEEC2EllRKS3_:
+       99:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+       99:   68-block  0
+       99:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+       99:   69-block  0
+       99:   69-block  1
+        -:   70:    {
+        -:   71:      eigen_assert(rows >= 0
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+       99:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIfEENS_6MatrixIfLi32ELi32ELi0ELi32ELi32EEEEC2EllRKS3_:
+       33:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+       33:   68-block  0
+       33:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+       33:   69-block  0
+       33:   69-block  1
+        -:   70:    {
+        -:   71:      eigen_assert(rows >= 0
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+       33:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIfEENS_6MatrixIfLi1ELin1ELi1ELi1ELin1EEEEC2EllRKS3_:
+     4536:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+     4536:   68-block  0
+     4536:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+     4536:   69-block  0
+     4536:   69-block  1
+        -:   70:    {
+    4536*:   71:      eigen_assert(rows >= 0
+     4536:   71-block  0
+    %%%%%:   71-block  1
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+     4536:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIfEEKNS_6MatrixIfLi1ELi1ELi1ELi1ELi1EEEEC2EllRKS3_:
+    #####:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+    %%%%%:   68-block  0
+    #####:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+    %%%%%:   69-block  0
+    %%%%%:   69-block  1
+        -:   70:    {
+        -:   71:      eigen_assert(rows >= 0
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+    #####:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIfEENS_6MatrixIfLi1ELi1ELi0ELi1ELi1EEEEC2EllRKS3_:
+    #####:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+    %%%%%:   68-block  0
+    #####:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+    %%%%%:   69-block  0
+    %%%%%:   69-block  1
+        -:   70:    {
+        -:   71:      eigen_assert(rows >= 0
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+    #####:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIiEENS_6MatrixIiLin1ELi1ELi0ELin1ELi1EEEEC2EllRKS3_:
+    #####:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+    %%%%%:   68-block  0
+    #####:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+    %%%%%:   69-block  0
+    %%%%%:   69-block  1
+        -:   70:    {
+    #####:   71:      eigen_assert(rows >= 0
+    %%%%%:   71-block  0
+    %%%%%:   71-block  1
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+    #####:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIfEEKNS_6MatrixIfLin1ELi1ELi0ELin1ELi1EEEEC2EllRKS3_:
+   430833:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+   430833:   68-block  0
+   430833:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+   430833:   69-block  0
+   430833:   69-block  1
+        -:   70:    {
+  430833*:   71:      eigen_assert(rows >= 0
+   430833:   71-block  0
+    %%%%%:   71-block  1
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+   430833:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIfEEKNS_6MatrixIfLi1ELin1ELi1ELi1ELin1EEEEC2EllRKS3_:
+     3033:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+     3033:   68-block  0
+     3033:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+     3033:   69-block  0
+     3033:   69-block  1
+        -:   70:    {
+    3033*:   71:      eigen_assert(rows >= 0
+     3033:   71-block  0
+    %%%%%:   71-block  1
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+     3033:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIdEENS_6MatrixIdLin1ELi1ELi0ELin1ELi1EEEEC2EllRKS3_:
+    #####:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+    %%%%%:   68-block  0
+    #####:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+    %%%%%:   69-block  0
+    %%%%%:   69-block  1
+        -:   70:    {
+    #####:   71:      eigen_assert(rows >= 0
+    %%%%%:   71-block  0
+    %%%%%:   71-block  1
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+    #####:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIfEENS_6MatrixIfLin1ELi1ELi0ELin1ELi1EEEEC2EllRKS3_:
+       18:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+       18:   68-block  0
+       18:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+       18:   69-block  0
+       18:   69-block  1
+        -:   70:    {
+      18*:   71:      eigen_assert(rows >= 0
+       18:   71-block  0
+    %%%%%:   71-block  1
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+       18:   75:    }
+------------------
+_ZN5Eigen14CwiseNullaryOpINS_8internal18scalar_constant_opIfEEKNS_6MatrixIfLi3ELi1ELi0ELi3ELi1EEEEC2EllRKS3_:
+    #####:   68:    CwiseNullaryOp(Index rows, Index cols, const NullaryOp& func = NullaryOp())
+    %%%%%:   68-block  0
+    #####:   69:      : m_rows(rows), m_cols(cols), m_functor(func)
+    %%%%%:   69-block  0
+    %%%%%:   69-block  1
+        -:   70:    {
+        -:   71:      eigen_assert(rows >= 0
+        -:   72:            && (RowsAtCompileTime == Dynamic || RowsAtCompileTime == rows)
+        -:   73:            &&  cols >= 0
+        -:   74:            && (ColsAtCompileTime == Dynamic || ColsAtCompileTime == cols));
+    #####:   75:    }
+------------------
+        -:   76:
+        -:   77:    EIGEN_DEVICE_FUNC
+   47508*:   78:    EIGEN_STRONG_INLINE Index rows() const { return m_rows.value(); }
+     1503:   78-block  0
+    %%%%%:   78-block  1
+     1530:   78-block  2
+    %%%%%:   78-block  3
+        6:   78-block  4
+     1503:   78-block  5
+    %%%%%:   78-block  6
+    %%%%%:   78-block  7
+    35328:   78-block  8
+     1530:   78-block  9
+    %%%%%:   78-block 10
+    %%%%%:   78-block 11
+     1530:   78-block 12
+     1503:   78-block 13
+     1530:   78-block 14
+        3:   78-block 15
+    %%%%%:   78-block 16
+     1530:   78-block 17
+    %%%%%:   78-block 18
+        3:   78-block 19
+        3:   78-block 20
+        3:   78-block 21
+        3:   78-block 22
+        -:   79:    EIGEN_DEVICE_FUNC
+  472248*:   80:    EIGEN_STRONG_INLINE Index cols() const { return m_cols.value(); }
+    35328:   80-block  0
+     1503:   80-block  1
+    %%%%%:   80-block  2
+    %%%%%:   80-block  3
+     1530:   80-block  4
+   392445:   80-block  5
+    %%%%%:   80-block  6
+    %%%%%:   80-block  7
+    %%%%%:   80-block  8
+        6:   80-block  9
+    %%%%%:   80-block 10
+    %%%%%:   80-block 11
+    35328:   80-block 12
+    %%%%%:   80-block 13
+    %%%%%:   80-block 14
+    %%%%%:   80-block 15
+     1503:   80-block 16
+     1530:   80-block 17
+        3:   80-block 18
+    %%%%%:   80-block 19
+     1530:   80-block 20
+    %%%%%:   80-block 21
+        3:   80-block 22
+        3:   80-block 23
+        3:   80-block 24
+        3:   80-block 25
+        -:   81:
+        -:   82:    /** \returns the functor representing the nullary operation */
+        -:   83:    EIGEN_DEVICE_FUNC
+  438498*:   84:    const NullaryOp& functor() const { return m_functor; }
+    %%%%%:   84-block  0
+    35328:   84-block  1
+     1503:   84-block  2
+     1503:   84-block  3
+    %%%%%:   84-block  4
+    %%%%%:   84-block  5
+     1530:   84-block  6
+    %%%%%:   84-block  7
+    %%%%%:   84-block  8
+   392445:   84-block  9
+     1530:   84-block 10
+    %%%%%:   84-block 11
+    %%%%%:   84-block 12
+        6:   84-block 13
+        3:   84-block 14
+    %%%%%:   84-block 15
+    %%%%%:   84-block 16
+     1530:   84-block 17
+    %%%%%:   84-block 18
+    %%%%%:   84-block 19
+    %%%%%:   84-block 20
+    %%%%%:   84-block 21
+     1530:   84-block 22
+    %%%%%:   84-block 23
+    %%%%%:   84-block 24
+        3:   84-block 25
+    %%%%%:   84-block 26
+        3:   84-block 27
+       72:   84-block 28
+        9:   84-block 29
+        -:   85:
+        -:   86:  protected:
+        -:   87:    const internal::variable_if_dynamic<Index, RowsAtCompileTime> m_rows;
+        -:   88:    const internal::variable_if_dynamic<Index, ColsAtCompileTime> m_cols;
+        -:   89:    const NullaryOp m_functor;
+        -:   90:};
+        -:   91:
+        -:   92:
+        -:   93:/** \returns an expression of a matrix defined by a custom functor \a func
+        -:   94:  *
+        -:   95:  * The parameters \a rows and \a cols are the number of rows and of columns of
+        -:   96:  * the returned matrix. Must be compatible with this MatrixBase type.
+        -:   97:  *
+        -:   98:  * This variant is meant to be used for dynamic-size matrix types. For fixed-size types,
+        -:   99:  * it is redundant to pass \a rows and \a cols as arguments, so Zero() should be used
+        -:  100:  * instead.
+        -:  101:  *
+        -:  102:  * The template parameter \a CustomNullaryOp is the type of the functor.
+        -:  103:  *
+        -:  104:  * \sa class CwiseNullaryOp
+        -:  105:  */
+        -:  106:template<typename Derived>
+        -:  107:template<typename CustomNullaryOp>
+        -:  108:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const CwiseNullaryOp<CustomNullaryOp, typename DenseBase<Derived>::PlainObject>
+       6*:  109:DenseBase<Derived>::NullaryExpr(Index rows, Index cols, const CustomNullaryOp& func)
+        -:  110:{
+       6*:  111:  return CwiseNullaryOp<CustomNullaryOp, PlainObject>(rows, cols, func);
+        -:  112:}
+        -:  113:
+        -:  114:/** \returns an expression of a matrix defined by a custom functor \a func
+        -:  115:  *
+        -:  116:  * The parameter \a size is the size of the returned vector.
+        -:  117:  * Must be compatible with this MatrixBase type.
+        -:  118:  *
+        -:  119:  * \only_for_vectors
+        -:  120:  *
+        -:  121:  * This variant is meant to be used for dynamic-size vector types. For fixed-size types,
+        -:  122:  * it is redundant to pass \a size as argument, so Zero() should be used
+        -:  123:  * instead.
+        -:  124:  *
+        -:  125:  * The template parameter \a CustomNullaryOp is the type of the functor.
+        -:  126:  *
+        -:  127:  * Here is an example with C++11 random generators: \include random_cpp11.cpp
+        -:  128:  * Output: \verbinclude random_cpp11.out
+        -:  129:  * 
+        -:  130:  * \sa class CwiseNullaryOp
+        -:  131:  */
+        -:  132:template<typename Derived>
+        -:  133:template<typename CustomNullaryOp>
+        -:  134:EIGEN_STRONG_INLINE const CwiseNullaryOp<CustomNullaryOp, typename DenseBase<Derived>::PlainObject>
+       3*:  135:DenseBase<Derived>::NullaryExpr(Index size, const CustomNullaryOp& func)
+        -:  136:{
+        -:  137:  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
+        -:  138:  if(RowsAtCompileTime == 1) return CwiseNullaryOp<CustomNullaryOp, PlainObject>(1, size, func);
+       3*:  139:  else return CwiseNullaryOp<CustomNullaryOp, PlainObject>(size, 1, func);
+        -:  140:}
+        -:  141:
+        -:  142:/** \returns an expression of a matrix defined by a custom functor \a func
+        -:  143:  *
+        -:  144:  * This variant is only for fixed-size DenseBase types. For dynamic-size types, you
+        -:  145:  * need to use the variants taking size arguments.
+        -:  146:  *
+        -:  147:  * The template parameter \a CustomNullaryOp is the type of the functor.
+        -:  148:  *
+        -:  149:  * \sa class CwiseNullaryOp
+        -:  150:  */
+        -:  151:template<typename Derived>
+        -:  152:template<typename CustomNullaryOp>
+        -:  153:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const CwiseNullaryOp<CustomNullaryOp, typename DenseBase<Derived>::PlainObject>
+        -:  154:DenseBase<Derived>::NullaryExpr(const CustomNullaryOp& func)
+        -:  155:{
+        -:  156:  return CwiseNullaryOp<CustomNullaryOp, PlainObject>(RowsAtCompileTime, ColsAtCompileTime, func);
+        -:  157:}
+        -:  158:
+        -:  159:/** \returns an expression of a constant matrix of value \a value
+        -:  160:  *
+        -:  161:  * The parameters \a rows and \a cols are the number of rows and of columns of
+        -:  162:  * the returned matrix. Must be compatible with this DenseBase type.
+        -:  163:  *
+        -:  164:  * This variant is meant to be used for dynamic-size matrix types. For fixed-size types,
+        -:  165:  * it is redundant to pass \a rows and \a cols as arguments, so Zero() should be used
+        -:  166:  * instead.
+        -:  167:  *
+        -:  168:  * The template parameter \a CustomNullaryOp is the type of the functor.
+        -:  169:  *
+        -:  170:  * \sa class CwiseNullaryOp
+        -:  171:  */
+        -:  172:template<typename Derived>
+        -:  173:EIGEN_STRONG_INLINE const typename DenseBase<Derived>::ConstantReturnType
+    #####:  174:DenseBase<Derived>::Constant(Index rows, Index cols, const Scalar& value)
+        -:  175:{
+       3*:  176:  return DenseBase<Derived>::NullaryExpr(rows, cols, internal::scalar_constant_op<Scalar>(value));
+        3:  176-block  0
+        -:  177:}
+        -:  178:
+        -:  179:/** \returns an expression of a constant matrix of value \a value
+        -:  180:  *
+        -:  181:  * The parameter \a size is the size of the returned vector.
+        -:  182:  * Must be compatible with this DenseBase type.
+        -:  183:  *
+        -:  184:  * \only_for_vectors
+        -:  185:  *
+        -:  186:  * This variant is meant to be used for dynamic-size vector types. For fixed-size types,
+        -:  187:  * it is redundant to pass \a size as argument, so Zero() should be used
+        -:  188:  * instead.
+        -:  189:  *
+        -:  190:  * The template parameter \a CustomNullaryOp is the type of the functor.
+        -:  191:  *
+        -:  192:  * \sa class CwiseNullaryOp
+        -:  193:  */
+        -:  194:template<typename Derived>
+        -:  195:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::ConstantReturnType
+       3*:  196:DenseBase<Derived>::Constant(Index size, const Scalar& value)
+        -:  197:{
+       3*:  198:  return DenseBase<Derived>::NullaryExpr(size, internal::scalar_constant_op<Scalar>(value));
+    %%%%%:  198-block  0
+    %%%%%:  198-block  1
+    %%%%%:  198-block  2
+        -:  199:}
+        -:  200:
+        -:  201:/** \returns an expression of a constant matrix of value \a value
+        -:  202:  *
+        -:  203:  * This variant is only for fixed-size DenseBase types. For dynamic-size types, you
+        -:  204:  * need to use the variants taking size arguments.
+        -:  205:  *
+        -:  206:  * The template parameter \a CustomNullaryOp is the type of the functor.
+        -:  207:  *
+        -:  208:  * \sa class CwiseNullaryOp
+        -:  209:  */
+        -:  210:template<typename Derived>
+        -:  211:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::ConstantReturnType
+        -:  212:DenseBase<Derived>::Constant(const Scalar& value)
+        -:  213:{
+        -:  214:  EIGEN_STATIC_ASSERT_FIXED_SIZE(Derived)
+        -:  215:  return DenseBase<Derived>::NullaryExpr(RowsAtCompileTime, ColsAtCompileTime, internal::scalar_constant_op<Scalar>(value));
+        -:  216:}
+        -:  217:
+        -:  218:/** \deprecated because of accuracy loss. In Eigen 3.3, it is an alias for LinSpaced(Index,const Scalar&,const Scalar&)
+        -:  219:  *
+        -:  220:  * \sa LinSpaced(Index,Scalar,Scalar), setLinSpaced(Index,const Scalar&,const Scalar&)
+        -:  221:  */
+        -:  222:template<typename Derived>
+        -:  223:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::RandomAccessLinSpacedReturnType
+        -:  224:DenseBase<Derived>::LinSpaced(Sequential_t, Index size, const Scalar& low, const Scalar& high)
+        -:  225:{
+        -:  226:  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
+        -:  227:  return DenseBase<Derived>::NullaryExpr(size, internal::linspaced_op<Scalar,PacketScalar>(low,high,size));
+        -:  228:}
+        -:  229:
+        -:  230:/** \deprecated because of accuracy loss. In Eigen 3.3, it is an alias for LinSpaced(const Scalar&,const Scalar&)
+        -:  231:  *
+        -:  232:  * \sa LinSpaced(Scalar,Scalar)
+        -:  233:  */
+        -:  234:template<typename Derived>
+        -:  235:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::RandomAccessLinSpacedReturnType
+        -:  236:DenseBase<Derived>::LinSpaced(Sequential_t, const Scalar& low, const Scalar& high)
+        -:  237:{
+        -:  238:  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
+        -:  239:  EIGEN_STATIC_ASSERT_FIXED_SIZE(Derived)
+        -:  240:  return DenseBase<Derived>::NullaryExpr(Derived::SizeAtCompileTime, internal::linspaced_op<Scalar,PacketScalar>(low,high,Derived::SizeAtCompileTime));
+        -:  241:}
+        -:  242:
+        -:  243:/**
+        -:  244:  * \brief Sets a linearly spaced vector.
+        -:  245:  *
+        -:  246:  * The function generates 'size' equally spaced values in the closed interval [low,high].
+        -:  247:  * When size is set to 1, a vector of length 1 containing 'high' is returned.
+        -:  248:  *
+        -:  249:  * \only_for_vectors
+        -:  250:  *
+        -:  251:  * Example: \include DenseBase_LinSpaced.cpp
+        -:  252:  * Output: \verbinclude DenseBase_LinSpaced.out
+        -:  253:  *
+        -:  254:  * For integer scalar types, an even spacing is possible if and only if the length of the range,
+        -:  255:  * i.e., \c high-low is a scalar multiple of \c size-1, or if \c size is a scalar multiple of the
+        -:  256:  * number of values \c high-low+1 (meaning each value can be repeated the same number of time).
+        -:  257:  * If one of these two considions is not satisfied, then \c high is lowered to the largest value
+        -:  258:  * satisfying one of this constraint.
+        -:  259:  * Here are some examples:
+        -:  260:  *
+        -:  261:  * Example: \include DenseBase_LinSpacedInt.cpp
+        -:  262:  * Output: \verbinclude DenseBase_LinSpacedInt.out
+        -:  263:  *
+        -:  264:  * \sa setLinSpaced(Index,const Scalar&,const Scalar&), CwiseNullaryOp
+        -:  265:  */
+        -:  266:template<typename Derived>
+        -:  267:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::RandomAccessLinSpacedReturnType
+        -:  268:DenseBase<Derived>::LinSpaced(Index size, const Scalar& low, const Scalar& high)
+        -:  269:{
+        -:  270:  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
+        -:  271:  return DenseBase<Derived>::NullaryExpr(size, internal::linspaced_op<Scalar,PacketScalar>(low,high,size));
+        -:  272:}
+        -:  273:
+        -:  274:/**
+        -:  275:  * \copydoc DenseBase::LinSpaced(Index, const Scalar&, const Scalar&)
+        -:  276:  * Special version for fixed size types which does not require the size parameter.
+        -:  277:  */
+        -:  278:template<typename Derived>
+        -:  279:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::RandomAccessLinSpacedReturnType
+        -:  280:DenseBase<Derived>::LinSpaced(const Scalar& low, const Scalar& high)
+        -:  281:{
+        -:  282:  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
+        -:  283:  EIGEN_STATIC_ASSERT_FIXED_SIZE(Derived)
+        -:  284:  return DenseBase<Derived>::NullaryExpr(Derived::SizeAtCompileTime, internal::linspaced_op<Scalar,PacketScalar>(low,high,Derived::SizeAtCompileTime));
+        -:  285:}
+        -:  286:
+        -:  287:/** \returns true if all coefficients in this matrix are approximately equal to \a val, to within precision \a prec */
+        -:  288:template<typename Derived>
+        -:  289:EIGEN_DEVICE_FUNC bool DenseBase<Derived>::isApproxToConstant
+        -:  290:(const Scalar& val, const RealScalar& prec) const
+        -:  291:{
+        -:  292:  typename internal::nested_eval<Derived,1>::type self(derived());
+        -:  293:  for(Index j = 0; j < cols(); ++j)
+        -:  294:    for(Index i = 0; i < rows(); ++i)
+        -:  295:      if(!internal::isApprox(self.coeff(i, j), val, prec))
+        -:  296:        return false;
+        -:  297:  return true;
+        -:  298:}
+        -:  299:
+        -:  300:/** This is just an alias for isApproxToConstant().
+        -:  301:  *
+        -:  302:  * \returns true if all coefficients in this matrix are approximately equal to \a value, to within precision \a prec */
+        -:  303:template<typename Derived>
+        -:  304:EIGEN_DEVICE_FUNC bool DenseBase<Derived>::isConstant
+        -:  305:(const Scalar& val, const RealScalar& prec) const
+        -:  306:{
+        -:  307:  return isApproxToConstant(val, prec);
+        -:  308:}
+        -:  309:
+        -:  310:/** Alias for setConstant(): sets all coefficients in this expression to \a val.
+        -:  311:  *
+        -:  312:  * \sa setConstant(), Constant(), class CwiseNullaryOp
+        -:  313:  */
+        -:  314:template<typename Derived>
+    #####:  315:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void DenseBase<Derived>::fill(const Scalar& val)
+        -:  316:{
+    #####:  317:  setConstant(val);
+    #####:  318:}
+    %%%%%:  318-block  0
+    %%%%%:  318-block  1
+        -:  319:
+        -:  320:/** Sets all coefficients in this expression to value \a val.
+        -:  321:  *
+        -:  322:  * \sa fill(), setConstant(Index,const Scalar&), setConstant(Index,Index,const Scalar&), setZero(), setOnes(), Constant(), class CwiseNullaryOp, setZero(), setOnes()
+        -:  323:  */
+        -:  324:template<typename Derived>
+    #####:  325:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& DenseBase<Derived>::setConstant(const Scalar& val)
+        -:  326:{
+    #####:  327:  return derived() = Constant(rows(), cols(), val);
+        -:  328:}
+        -:  329:
+        -:  330:/** Resizes to the given \a size, and sets all coefficients in this expression to the given value \a val.
+        -:  331:  *
+        -:  332:  * \only_for_vectors
+        -:  333:  *
+        -:  334:  * Example: \include Matrix_setConstant_int.cpp
+        -:  335:  * Output: \verbinclude Matrix_setConstant_int.out
+        -:  336:  *
+        -:  337:  * \sa MatrixBase::setConstant(const Scalar&), setConstant(Index,Index,const Scalar&), class CwiseNullaryOp, MatrixBase::Constant(const Scalar&)
+        -:  338:  */
+        -:  339:template<typename Derived>
+        -:  340:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived&
+        -:  341:PlainObjectBase<Derived>::setConstant(Index size, const Scalar& val)
+        -:  342:{
+        -:  343:  resize(size);
+        -:  344:  return setConstant(val);
+        -:  345:}
+        -:  346:
+        -:  347:/** Resizes to the given size, and sets all coefficients in this expression to the given value \a val.
+        -:  348:  *
+        -:  349:  * \param rows the new number of rows
+        -:  350:  * \param cols the new number of columns
+        -:  351:  * \param val the value to which all coefficients are set
+        -:  352:  *
+        -:  353:  * Example: \include Matrix_setConstant_int_int.cpp
+        -:  354:  * Output: \verbinclude Matrix_setConstant_int_int.out
+        -:  355:  *
+        -:  356:  * \sa MatrixBase::setConstant(const Scalar&), setConstant(Index,const Scalar&), class CwiseNullaryOp, MatrixBase::Constant(const Scalar&)
+        -:  357:  */
+        -:  358:template<typename Derived>
+        -:  359:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived&
+        -:  360:PlainObjectBase<Derived>::setConstant(Index rows, Index cols, const Scalar& val)
+        -:  361:{
+        -:  362:  resize(rows, cols);
+        -:  363:  return setConstant(val);
+        -:  364:}
+        -:  365:
+        -:  366:/**
+        -:  367:  * \brief Sets a linearly spaced vector.
+        -:  368:  *
+        -:  369:  * The function generates 'size' equally spaced values in the closed interval [low,high].
+        -:  370:  * When size is set to 1, a vector of length 1 containing 'high' is returned.
+        -:  371:  *
+        -:  372:  * \only_for_vectors
+        -:  373:  *
+        -:  374:  * Example: \include DenseBase_setLinSpaced.cpp
+        -:  375:  * Output: \verbinclude DenseBase_setLinSpaced.out
+        -:  376:  *
+        -:  377:  * For integer scalar types, do not miss the explanations on the definition
+        -:  378:  * of \link LinSpaced(Index,const Scalar&,const Scalar&) even spacing \endlink.
+        -:  379:  *
+        -:  380:  * \sa LinSpaced(Index,const Scalar&,const Scalar&), CwiseNullaryOp
+        -:  381:  */
+        -:  382:template<typename Derived>
+        -:  383:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& DenseBase<Derived>::setLinSpaced(Index newSize, const Scalar& low, const Scalar& high)
+        -:  384:{
+        -:  385:  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
+        -:  386:  return derived() = Derived::NullaryExpr(newSize, internal::linspaced_op<Scalar,PacketScalar>(low,high,newSize));
+        -:  387:}
+        -:  388:
+        -:  389:/**
+        -:  390:  * \brief Sets a linearly spaced vector.
+        -:  391:  *
+        -:  392:  * The function fills \c *this with equally spaced values in the closed interval [low,high].
+        -:  393:  * When size is set to 1, a vector of length 1 containing 'high' is returned.
+        -:  394:  *
+        -:  395:  * \only_for_vectors
+        -:  396:  *
+        -:  397:  * For integer scalar types, do not miss the explanations on the definition
+        -:  398:  * of \link LinSpaced(Index,const Scalar&,const Scalar&) even spacing \endlink.
+        -:  399:  *
+        -:  400:  * \sa LinSpaced(Index,const Scalar&,const Scalar&), setLinSpaced(Index, const Scalar&, const Scalar&), CwiseNullaryOp
+        -:  401:  */
+        -:  402:template<typename Derived>
+        -:  403:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& DenseBase<Derived>::setLinSpaced(const Scalar& low, const Scalar& high)
+        -:  404:{
+        -:  405:  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
+        -:  406:  return setLinSpaced(size(), low, high);
+        -:  407:}
+        -:  408:
+        -:  409:// zero:
+        -:  410:
+        -:  411:/** \returns an expression of a zero matrix.
+        -:  412:  *
+        -:  413:  * The parameters \a rows and \a cols are the number of rows and of columns of
+        -:  414:  * the returned matrix. Must be compatible with this MatrixBase type.
+        -:  415:  *
+        -:  416:  * This variant is meant to be used for dynamic-size matrix types. For fixed-size types,
+        -:  417:  * it is redundant to pass \a rows and \a cols as arguments, so Zero() should be used
+        -:  418:  * instead.
+        -:  419:  *
+        -:  420:  * Example: \include MatrixBase_zero_int_int.cpp
+        -:  421:  * Output: \verbinclude MatrixBase_zero_int_int.out
+        -:  422:  *
+        -:  423:  * \sa Zero(), Zero(Index)
+        -:  424:  */
+        -:  425:template<typename Derived>
+        -:  426:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::ConstantReturnType
+        3:  427:DenseBase<Derived>::Zero(Index rows, Index cols)
+        -:  428:{
+        3:  429:  return Constant(rows, cols, Scalar(0));
+        3:  429-block  0
+        3:  429-block  1
+        -:  430:}
+        -:  431:
+        -:  432:/** \returns an expression of a zero vector.
+        -:  433:  *
+        -:  434:  * The parameter \a size is the size of the returned vector.
+        -:  435:  * Must be compatible with this MatrixBase type.
+        -:  436:  *
+        -:  437:  * \only_for_vectors
+        -:  438:  *
+        -:  439:  * This variant is meant to be used for dynamic-size vector types. For fixed-size types,
+        -:  440:  * it is redundant to pass \a size as argument, so Zero() should be used
+        -:  441:  * instead.
+        -:  442:  *
+        -:  443:  * Example: \include MatrixBase_zero_int.cpp
+        -:  444:  * Output: \verbinclude MatrixBase_zero_int.out
+        -:  445:  *
+        -:  446:  * \sa Zero(), Zero(Index,Index)
+        -:  447:  */
+        -:  448:template<typename Derived>
+        -:  449:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::ConstantReturnType
+       3*:  450:DenseBase<Derived>::Zero(Index size)
+        -:  451:{
+       3*:  452:  return Constant(size, Scalar(0));
+    %%%%%:  452-block  0
+    %%%%%:  452-block  1
+    %%%%%:  452-block  2
+        -:  453:}
+        -:  454:
+        -:  455:/** \returns an expression of a fixed-size zero matrix or vector.
+        -:  456:  *
+        -:  457:  * This variant is only for fixed-size MatrixBase types. For dynamic-size types, you
+        -:  458:  * need to use the variants taking size arguments.
+        -:  459:  *
+        -:  460:  * Example: \include MatrixBase_zero.cpp
+        -:  461:  * Output: \verbinclude MatrixBase_zero.out
+        -:  462:  *
+        -:  463:  * \sa Zero(Index), Zero(Index,Index)
+        -:  464:  */
+        -:  465:template<typename Derived>
+        -:  466:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::ConstantReturnType
+        -:  467:DenseBase<Derived>::Zero()
+        -:  468:{
+        -:  469:  return Constant(Scalar(0));
+        -:  470:}
+        -:  471:
+        -:  472:/** \returns true if *this is approximately equal to the zero matrix,
+        -:  473:  *          within the precision given by \a prec.
+        -:  474:  *
+        -:  475:  * Example: \include MatrixBase_isZero.cpp
+        -:  476:  * Output: \verbinclude MatrixBase_isZero.out
+        -:  477:  *
+        -:  478:  * \sa class CwiseNullaryOp, Zero()
+        -:  479:  */
+        -:  480:template<typename Derived>
+        -:  481:EIGEN_DEVICE_FUNC bool DenseBase<Derived>::isZero(const RealScalar& prec) const
+        -:  482:{
+        -:  483:  typename internal::nested_eval<Derived,1>::type self(derived());
+        -:  484:  for(Index j = 0; j < cols(); ++j)
+        -:  485:    for(Index i = 0; i < rows(); ++i)
+        -:  486:      if(!internal::isMuchSmallerThan(self.coeff(i, j), static_cast<Scalar>(1), prec))
+        -:  487:        return false;
+        -:  488:  return true;
+        -:  489:}
+        -:  490:
+        -:  491:/** Sets all coefficients in this expression to zero.
+        -:  492:  *
+        -:  493:  * Example: \include MatrixBase_setZero.cpp
+        -:  494:  * Output: \verbinclude MatrixBase_setZero.out
+        -:  495:  *
+        -:  496:  * \sa class CwiseNullaryOp, Zero()
+        -:  497:  */
+        -:  498:template<typename Derived>
+    4713*:  499:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& DenseBase<Derived>::setZero()
+        -:  500:{
+    4713*:  501:  return setConstant(Scalar(0));
+    %%%%%:  501-block  0
+       33:  501-block  1
+    %%%%%:  501-block  2
+       33:  501-block  3
+       33:  501-block  4
+     1503:  501-block  5
+       33:  501-block  6
+        3:  501-block  7
+       33:  501-block  8
+    %%%%%:  501-block  9
+        3:  501-block 10
+     1503:  501-block 11
+    %%%%%:  501-block 12
+     1530:  501-block 13
+    %%%%%:  501-block 14
+    %%%%%:  501-block 15
+        6:  501-block 16
+    %%%%%:  501-block 17
+    %%%%%:  501-block 18
+    %%%%%:  501-block 19
+        -:  502:}
+        -:  503:
+        -:  504:/** Resizes to the given \a size, and sets all coefficients in this expression to zero.
+        -:  505:  *
+        -:  506:  * \only_for_vectors
+        -:  507:  *
+        -:  508:  * Example: \include Matrix_setZero_int.cpp
+        -:  509:  * Output: \verbinclude Matrix_setZero_int.out
+        -:  510:  *
+        -:  511:  * \sa DenseBase::setZero(), setZero(Index,Index), class CwiseNullaryOp, DenseBase::Zero()
+        -:  512:  */
+        -:  513:template<typename Derived>
+        -:  514:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived&
+        -:  515:PlainObjectBase<Derived>::setZero(Index newSize)
+        -:  516:{
+        -:  517:  resize(newSize);
+        -:  518:  return setConstant(Scalar(0));
+        -:  519:}
+        -:  520:
+        -:  521:/** Resizes to the given size, and sets all coefficients in this expression to zero.
+        -:  522:  *
+        -:  523:  * \param rows the new number of rows
+        -:  524:  * \param cols the new number of columns
+        -:  525:  *
+        -:  526:  * Example: \include Matrix_setZero_int_int.cpp
+        -:  527:  * Output: \verbinclude Matrix_setZero_int_int.out
+        -:  528:  *
+        -:  529:  * \sa DenseBase::setZero(), setZero(Index), class CwiseNullaryOp, DenseBase::Zero()
+        -:  530:  */
+        -:  531:template<typename Derived>
+        -:  532:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived&
+        -:  533:PlainObjectBase<Derived>::setZero(Index rows, Index cols)
+        -:  534:{
+        -:  535:  resize(rows, cols);
+        -:  536:  return setConstant(Scalar(0));
+        -:  537:}
+        -:  538:
+        -:  539:// ones:
+        -:  540:
+        -:  541:/** \returns an expression of a matrix where all coefficients equal one.
+        -:  542:  *
+        -:  543:  * The parameters \a rows and \a cols are the number of rows and of columns of
+        -:  544:  * the returned matrix. Must be compatible with this MatrixBase type.
+        -:  545:  *
+        -:  546:  * This variant is meant to be used for dynamic-size matrix types. For fixed-size types,
+        -:  547:  * it is redundant to pass \a rows and \a cols as arguments, so Ones() should be used
+        -:  548:  * instead.
+        -:  549:  *
+        -:  550:  * Example: \include MatrixBase_ones_int_int.cpp
+        -:  551:  * Output: \verbinclude MatrixBase_ones_int_int.out
+        -:  552:  *
+        -:  553:  * \sa Ones(), Ones(Index), isOnes(), class Ones
+        -:  554:  */
+        -:  555:template<typename Derived>
+        -:  556:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::ConstantReturnType
+        -:  557:DenseBase<Derived>::Ones(Index rows, Index cols)
+        -:  558:{
+        -:  559:  return Constant(rows, cols, Scalar(1));
+        -:  560:}
+        -:  561:
+        -:  562:/** \returns an expression of a vector where all coefficients equal one.
+        -:  563:  *
+        -:  564:  * The parameter \a newSize is the size of the returned vector.
+        -:  565:  * Must be compatible with this MatrixBase type.
+        -:  566:  *
+        -:  567:  * \only_for_vectors
+        -:  568:  *
+        -:  569:  * This variant is meant to be used for dynamic-size vector types. For fixed-size types,
+        -:  570:  * it is redundant to pass \a size as argument, so Ones() should be used
+        -:  571:  * instead.
+        -:  572:  *
+        -:  573:  * Example: \include MatrixBase_ones_int.cpp
+        -:  574:  * Output: \verbinclude MatrixBase_ones_int.out
+        -:  575:  *
+        -:  576:  * \sa Ones(), Ones(Index,Index), isOnes(), class Ones
+        -:  577:  */
+        -:  578:template<typename Derived>
+        -:  579:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::ConstantReturnType
+        -:  580:DenseBase<Derived>::Ones(Index newSize)
+        -:  581:{
+        -:  582:  return Constant(newSize, Scalar(1));
+        -:  583:}
+        -:  584:
+        -:  585:/** \returns an expression of a fixed-size matrix or vector where all coefficients equal one.
+        -:  586:  *
+        -:  587:  * This variant is only for fixed-size MatrixBase types. For dynamic-size types, you
+        -:  588:  * need to use the variants taking size arguments.
+        -:  589:  *
+        -:  590:  * Example: \include MatrixBase_ones.cpp
+        -:  591:  * Output: \verbinclude MatrixBase_ones.out
+        -:  592:  *
+        -:  593:  * \sa Ones(Index), Ones(Index,Index), isOnes(), class Ones
+        -:  594:  */
+        -:  595:template<typename Derived>
+        -:  596:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename DenseBase<Derived>::ConstantReturnType
+        -:  597:DenseBase<Derived>::Ones()
+        -:  598:{
+        -:  599:  return Constant(Scalar(1));
+        -:  600:}
+        -:  601:
+        -:  602:/** \returns true if *this is approximately equal to the matrix where all coefficients
+        -:  603:  *          are equal to 1, within the precision given by \a prec.
+        -:  604:  *
+        -:  605:  * Example: \include MatrixBase_isOnes.cpp
+        -:  606:  * Output: \verbinclude MatrixBase_isOnes.out
+        -:  607:  *
+        -:  608:  * \sa class CwiseNullaryOp, Ones()
+        -:  609:  */
+        -:  610:template<typename Derived>
+        -:  611:EIGEN_DEVICE_FUNC bool DenseBase<Derived>::isOnes
+        -:  612:(const RealScalar& prec) const
+        -:  613:{
+        -:  614:  return isApproxToConstant(Scalar(1), prec);
+        -:  615:}
+        -:  616:
+        -:  617:/** Sets all coefficients in this expression to one.
+        -:  618:  *
+        -:  619:  * Example: \include MatrixBase_setOnes.cpp
+        -:  620:  * Output: \verbinclude MatrixBase_setOnes.out
+        -:  621:  *
+        -:  622:  * \sa class CwiseNullaryOp, Ones()
+        -:  623:  */
+        -:  624:template<typename Derived>
+      99*:  625:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& DenseBase<Derived>::setOnes()
+        -:  626:{
+      99*:  627:  return setConstant(Scalar(1));
+    %%%%%:  627-block  0
+    %%%%%:  627-block  1
+        -:  628:}
+        -:  629:
+        -:  630:/** Resizes to the given \a newSize, and sets all coefficients in this expression to one.
+        -:  631:  *
+        -:  632:  * \only_for_vectors
+        -:  633:  *
+        -:  634:  * Example: \include Matrix_setOnes_int.cpp
+        -:  635:  * Output: \verbinclude Matrix_setOnes_int.out
+        -:  636:  *
+        -:  637:  * \sa MatrixBase::setOnes(), setOnes(Index,Index), class CwiseNullaryOp, MatrixBase::Ones()
+        -:  638:  */
+        -:  639:template<typename Derived>
+        -:  640:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived&
+        -:  641:PlainObjectBase<Derived>::setOnes(Index newSize)
+        -:  642:{
+        -:  643:  resize(newSize);
+        -:  644:  return setConstant(Scalar(1));
+        -:  645:}
+        -:  646:
+        -:  647:/** Resizes to the given size, and sets all coefficients in this expression to one.
+        -:  648:  *
+        -:  649:  * \param rows the new number of rows
+        -:  650:  * \param cols the new number of columns
+        -:  651:  *
+        -:  652:  * Example: \include Matrix_setOnes_int_int.cpp
+        -:  653:  * Output: \verbinclude Matrix_setOnes_int_int.out
+        -:  654:  *
+        -:  655:  * \sa MatrixBase::setOnes(), setOnes(Index), class CwiseNullaryOp, MatrixBase::Ones()
+        -:  656:  */
+        -:  657:template<typename Derived>
+        -:  658:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived&
+        -:  659:PlainObjectBase<Derived>::setOnes(Index rows, Index cols)
+        -:  660:{
+        -:  661:  resize(rows, cols);
+        -:  662:  return setConstant(Scalar(1));
+        -:  663:}
+        -:  664:
+        -:  665:// Identity:
+        -:  666:
+        -:  667:/** \returns an expression of the identity matrix (not necessarily square).
+        -:  668:  *
+        -:  669:  * The parameters \a rows and \a cols are the number of rows and of columns of
+        -:  670:  * the returned matrix. Must be compatible with this MatrixBase type.
+        -:  671:  *
+        -:  672:  * This variant is meant to be used for dynamic-size matrix types. For fixed-size types,
+        -:  673:  * it is redundant to pass \a rows and \a cols as arguments, so Identity() should be used
+        -:  674:  * instead.
+        -:  675:  *
+        -:  676:  * Example: \include MatrixBase_identity_int_int.cpp
+        -:  677:  * Output: \verbinclude MatrixBase_identity_int_int.out
+        -:  678:  *
+        -:  679:  * \sa Identity(), setIdentity(), isIdentity()
+        -:  680:  */
+        -:  681:template<typename Derived>
+        -:  682:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename MatrixBase<Derived>::IdentityReturnType
+        3:  683:MatrixBase<Derived>::Identity(Index rows, Index cols)
+        3:  683-block  0
+        -:  684:{
+        3:  685:  return DenseBase<Derived>::NullaryExpr(rows, cols, internal::scalar_identity_op<Scalar>());
+        3:  685-block  0
+        -:  686:}
+        -:  687:
+        -:  688:/** \returns an expression of the identity matrix (not necessarily square).
+        -:  689:  *
+        -:  690:  * This variant is only for fixed-size MatrixBase types. For dynamic-size types, you
+        -:  691:  * need to use the variant taking size arguments.
+        -:  692:  *
+        -:  693:  * Example: \include MatrixBase_identity.cpp
+        -:  694:  * Output: \verbinclude MatrixBase_identity.out
+        -:  695:  *
+        -:  696:  * \sa Identity(Index,Index), setIdentity(), isIdentity()
+        -:  697:  */
+        -:  698:template<typename Derived>
+        -:  699:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename MatrixBase<Derived>::IdentityReturnType
+        -:  700:MatrixBase<Derived>::Identity()
+        -:  701:{
+        -:  702:  EIGEN_STATIC_ASSERT_FIXED_SIZE(Derived)
+        -:  703:  return MatrixBase<Derived>::NullaryExpr(RowsAtCompileTime, ColsAtCompileTime, internal::scalar_identity_op<Scalar>());
+        -:  704:}
+        -:  705:
+        -:  706:/** \returns true if *this is approximately equal to the identity matrix
+        -:  707:  *          (not necessarily square),
+        -:  708:  *          within the precision given by \a prec.
+        -:  709:  *
+        -:  710:  * Example: \include MatrixBase_isIdentity.cpp
+        -:  711:  * Output: \verbinclude MatrixBase_isIdentity.out
+        -:  712:  *
+        -:  713:  * \sa class CwiseNullaryOp, Identity(), Identity(Index,Index), setIdentity()
+        -:  714:  */
+        -:  715:template<typename Derived>
+        -:  716:bool MatrixBase<Derived>::isIdentity
+        -:  717:(const RealScalar& prec) const
+        -:  718:{
+        -:  719:  typename internal::nested_eval<Derived,1>::type self(derived());
+        -:  720:  for(Index j = 0; j < cols(); ++j)
+        -:  721:  {
+        -:  722:    for(Index i = 0; i < rows(); ++i)
+        -:  723:    {
+        -:  724:      if(i == j)
+        -:  725:      {
+        -:  726:        if(!internal::isApprox(self.coeff(i, j), static_cast<Scalar>(1), prec))
+        -:  727:          return false;
+        -:  728:      }
+        -:  729:      else
+        -:  730:      {
+        -:  731:        if(!internal::isMuchSmallerThan(self.coeff(i, j), static_cast<RealScalar>(1), prec))
+        -:  732:          return false;
+        -:  733:      }
+        -:  734:    }
+        -:  735:  }
+        -:  736:  return true;
+        -:  737:}
+        -:  738:
+        -:  739:namespace internal {
+        -:  740:
+        -:  741:template<typename Derived, bool Big = (Derived::SizeAtCompileTime>=16)>
+        -:  742:struct setIdentity_impl
+        -:  743:{
+        -:  744:  EIGEN_DEVICE_FUNC
+        3:  745:  static EIGEN_STRONG_INLINE Derived& run(Derived& m)
+        -:  746:  {
+        3:  747:    return m = Derived::Identity(m.rows(), m.cols());
+        3:  747-block  0
+        3:  747-block  1
+        -:  748:  }
+        -:  749:};
+        -:  750:
+        -:  751:template<typename Derived>
+        -:  752:struct setIdentity_impl<Derived, true>
+        -:  753:{
+        -:  754:  EIGEN_DEVICE_FUNC
+        -:  755:  static EIGEN_STRONG_INLINE Derived& run(Derived& m)
+        -:  756:  {
+        -:  757:    m.setZero();
+        -:  758:    const Index size = numext::mini(m.rows(), m.cols());
+        -:  759:    for(Index i = 0; i < size; ++i) m.coeffRef(i,i) = typename Derived::Scalar(1);
+        -:  760:    return m;
+        -:  761:  }
+        -:  762:};
+        -:  763:
+        -:  764:} // end namespace internal
+        -:  765:
+        -:  766:/** Writes the identity expression (not necessarily square) into *this.
+        -:  767:  *
+        -:  768:  * Example: \include MatrixBase_setIdentity.cpp
+        -:  769:  * Output: \verbinclude MatrixBase_setIdentity.out
+        -:  770:  *
+        -:  771:  * \sa class CwiseNullaryOp, Identity(), Identity(Index,Index), isIdentity()
+        -:  772:  */
+        -:  773:template<typename Derived>
+       3*:  774:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& MatrixBase<Derived>::setIdentity()
+        -:  775:{
+       3*:  776:  return internal::setIdentity_impl<Derived>::run(derived());
+        -:  777:}
+        -:  778:
+        -:  779:/** \brief Resizes to the given size, and writes the identity expression (not necessarily square) into *this.
+        -:  780:  *
+        -:  781:  * \param rows the new number of rows
+        -:  782:  * \param cols the new number of columns
+        -:  783:  *
+        -:  784:  * Example: \include Matrix_setIdentity_int_int.cpp
+        -:  785:  * Output: \verbinclude Matrix_setIdentity_int_int.out
+        -:  786:  *
+        -:  787:  * \sa MatrixBase::setIdentity(), class CwiseNullaryOp, MatrixBase::Identity()
+        -:  788:  */
+        -:  789:template<typename Derived>
+       3*:  790:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Derived& MatrixBase<Derived>::setIdentity(Index rows, Index cols)
+    %%%%%:  790-block  0
+    %%%%%:  790-block  1
+        3:  790-block  2
+    %%%%%:  790-block  3
+    %%%%%:  790-block  4
+    %%%%%:  790-block  5
+    %%%%%:  790-block  6
+    %%%%%:  790-block  7
+        -:  791:{
+       3*:  792:  derived().resize(rows, cols);
+    %%%%%:  792-block  0
+    %%%%%:  792-block  1
+        3:  792-block  2
+    %%%%%:  792-block  3
+    %%%%%:  792-block  4
+    %%%%%:  792-block  5
+    %%%%%:  792-block  6
+    %%%%%:  792-block  7
+       6*:  793:  return setIdentity();
+    %%%%%:  793-block  0
+    %%%%%:  793-block  1
+    %%%%%:  793-block  2
+        3:  793-block  3
+        -:  794:}
+        -:  795:
+        -:  796:/** \returns an expression of the i-th unit (basis) vector.
+        -:  797:  *
+        -:  798:  * \only_for_vectors
+        -:  799:  *
+        -:  800:  * \sa MatrixBase::Unit(Index), MatrixBase::UnitX(), MatrixBase::UnitY(), MatrixBase::UnitZ(), MatrixBase::UnitW()
+        -:  801:  */
+        -:  802:template<typename Derived>
+        -:  803:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename MatrixBase<Derived>::BasisReturnType MatrixBase<Derived>::Unit(Index newSize, Index i)
+        -:  804:{
+        -:  805:  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
+        -:  806:  return BasisReturnType(SquareMatrixType::Identity(newSize,newSize), i);
+        -:  807:}
+        -:  808:
+        -:  809:/** \returns an expression of the i-th unit (basis) vector.
+        -:  810:  *
+        -:  811:  * \only_for_vectors
+        -:  812:  *
+        -:  813:  * This variant is for fixed-size vector only.
+        -:  814:  *
+        -:  815:  * \sa MatrixBase::Unit(Index,Index), MatrixBase::UnitX(), MatrixBase::UnitY(), MatrixBase::UnitZ(), MatrixBase::UnitW()
+        -:  816:  */
+        -:  817:template<typename Derived>
+        -:  818:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename MatrixBase<Derived>::BasisReturnType MatrixBase<Derived>::Unit(Index i)
+        -:  819:{
+        -:  820:  EIGEN_STATIC_ASSERT_VECTOR_ONLY(Derived)
+        -:  821:  return BasisReturnType(SquareMatrixType::Identity(),i);
+        -:  822:}
+        -:  823:
+        -:  824:/** \returns an expression of the X axis unit vector (1{,0}^*)
+        -:  825:  *
+        -:  826:  * \only_for_vectors
+        -:  827:  *
+        -:  828:  * \sa MatrixBase::Unit(Index,Index), MatrixBase::Unit(Index), MatrixBase::UnitY(), MatrixBase::UnitZ(), MatrixBase::UnitW()
+        -:  829:  */
+        -:  830:template<typename Derived>
+        -:  831:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename MatrixBase<Derived>::BasisReturnType MatrixBase<Derived>::UnitX()
+        -:  832:{ return Derived::Unit(0); }
+        -:  833:
+        -:  834:/** \returns an expression of the Y axis unit vector (0,1{,0}^*)
+        -:  835:  *
+        -:  836:  * \only_for_vectors
+        -:  837:  *
+        -:  838:  * \sa MatrixBase::Unit(Index,Index), MatrixBase::Unit(Index), MatrixBase::UnitY(), MatrixBase::UnitZ(), MatrixBase::UnitW()
+        -:  839:  */
+        -:  840:template<typename Derived>
+        -:  841:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename MatrixBase<Derived>::BasisReturnType MatrixBase<Derived>::UnitY()
+        -:  842:{ return Derived::Unit(1); }
+        -:  843:
+        -:  844:/** \returns an expression of the Z axis unit vector (0,0,1{,0}^*)
+        -:  845:  *
+        -:  846:  * \only_for_vectors
+        -:  847:  *
+        -:  848:  * \sa MatrixBase::Unit(Index,Index), MatrixBase::Unit(Index), MatrixBase::UnitY(), MatrixBase::UnitZ(), MatrixBase::UnitW()
+        -:  849:  */
+        -:  850:template<typename Derived>
+        -:  851:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename MatrixBase<Derived>::BasisReturnType MatrixBase<Derived>::UnitZ()
+        -:  852:{ return Derived::Unit(2); }
+        -:  853:
+        -:  854:/** \returns an expression of the W axis unit vector (0,0,0,1)
+        -:  855:  *
+        -:  856:  * \only_for_vectors
+        -:  857:  *
+        -:  858:  * \sa MatrixBase::Unit(Index,Index), MatrixBase::Unit(Index), MatrixBase::UnitY(), MatrixBase::UnitZ(), MatrixBase::UnitW()
+        -:  859:  */
+        -:  860:template<typename Derived>
+        -:  861:EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const typename MatrixBase<Derived>::BasisReturnType MatrixBase<Derived>::UnitW()
+        -:  862:{ return Derived::Unit(3); }
+        -:  863:
+        -:  864:} // end namespace Eigen
+        -:  865:
+        -:  866:#endif // EIGEN_CWISE_NULLARY_OP_H

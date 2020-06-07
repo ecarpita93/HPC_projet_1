@@ -1,0 +1,356 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Core/functors/AssignmentFunctors.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2008-2010 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5://
+        -:    6:// This Source Code Form is subject to the terms of the Mozilla
+        -:    7:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    8:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:    9:
+        -:   10:#ifndef EIGEN_ASSIGNMENT_FUNCTORS_H
+        -:   11:#define EIGEN_ASSIGNMENT_FUNCTORS_H
+        -:   12:
+        -:   13:namespace Eigen {
+        -:   14:
+        -:   15:namespace internal {
+        -:   16:  
+        -:   17:/** \internal
+        -:   18:  * \brief Template functor for scalar/packet assignment
+        -:   19:  *
+        -:   20:  */
+        -:   21:template<typename DstScalar,typename SrcScalar> struct assign_op {
+        -:   22:
+    9992*:   23:  EIGEN_EMPTY_STRUCT_CTOR(assign_op)
+        3:   23-block  0
+    %%%%%:   23-block  1
+    %%%%%:   23-block  2
+     1530:   23-block  3
+    %%%%%:   23-block  4
+       33:   23-block  5
+     1503:   23-block  6
+    %%%%%:   23-block  7
+    %%%%%:   23-block  8
+    %%%%%:   23-block  9
+    %%%%%:   23-block 10
+    %%%%%:   23-block 11
+       33:   23-block 12
+        3:   23-block 13
+    %%%%%:   23-block 14
+    %%%%%:   23-block 15
+        3:   23-block 16
+    %%%%%:   23-block 17
+    %%%%%:   23-block 18
+        3:   23-block 19
+        3:   23-block 20
+        3:   23-block 21
+    %%%%%:   23-block 22
+    %%%%%:   23-block 23
+    %%%%%:   23-block 24
+    %%%%%:   23-block 25
+ 3978308*:   24:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignCoeff(DstScalar& a, const SrcScalar& b) const { a = b; }
+       66:   24-block  0
+       33:   24-block  1
+       66:   24-block  2
+       33:   24-block  3
+       66:   24-block  4
+       33:   24-block  5
+       66:   24-block  6
+       33:   24-block  7
+       66:   24-block  8
+       33:   24-block  9
+       66:   24-block 10
+       33:   24-block 11
+       66:   24-block 12
+       33:   24-block 13
+       66:   24-block 14
+     5376:   24-block 15
+       33:   24-block 16
+     5376:   24-block 17
+    %%%%%:   24-block 18
+    %%%%%:   24-block 19
+    %%%%%:   24-block 20
+     5373:   24-block 21
+    %%%%%:   24-block 22
+    %%%%%:   24-block 23
+    %%%%%:   24-block 24
+     5367:   24-block 25
+       12:   24-block 26
+       21:   24-block 27
+    %%%%%:   24-block 28
+    %%%%%:   24-block 29
+       18:   24-block 30
+    %%%%%:   24-block 31
+  3147264:   24-block 32
+     5376:   24-block 33
+    %%%%%:   24-block 34
+    %%%%%:   24-block 35
+    %%%%%:   24-block 36
+    %%%%%:   24-block 37
+     6132:   24-block 38
+     5355:   24-block 39
+    %%%%%:   24-block 40
+    %%%%%:   24-block 41
+    %%%%%:   24-block 42
+   392448:   24-block 43
+     1536:   24-block 44
+   392448:   24-block 45
+    %%%%%:   24-block 46
+    %%%%%:   24-block 47
+    %%%%%:   24-block 48
+    %%%%%:   24-block 49
+    %%%%%:   24-block 50
+    %%%%%:   24-block 51
+    %%%%%:   24-block 52
+    %%%%%:   24-block 53
+     2705:   24-block 54
+     2688:   24-block 55
+    %%%%%:   24-block 56
+    %%%%%:   24-block 57
+       21:   24-block 58
+    %%%%%:   24-block 59
+    %%%%%:   24-block 60
+    %%%%%:   24-block 61
+        -:   25:  
+        -:   26:  template<int Alignment, typename Packet>
+ 2517047*:   27:  EIGEN_STRONG_INLINE void assignPacket(DstScalar* a, const Packet& b) const
+     2112:   27-block  0
+     3744:   27-block  1
+     1056:   27-block  2
+     3744:   27-block  3
+    %%%%%:   27-block  4
+    48384:   27-block  5
+    %%%%%:   27-block  6
+    %%%%%:   27-block  7
+   342336:   27-block  8
+     1149:   27-block  9
+    %%%%%:   27-block 10
+    %%%%%:   27-block 11
+      189:   27-block 12
+    %%%%%:   27-block 13
+     3744:   27-block 14
+    %%%%%:   27-block 15
+   341571:   27-block 16
+    %%%%%:   27-block 17
+    %%%%%:   27-block 18
+    %%%%%:   27-block 19
+   393408:   27-block 20
+   194237:   27-block 21
+    %%%%%:   27-block 22
+   688320:   27-block 23
+     1149:   27-block 24
+   491712:   27-block 25
+      192:   27-block 26
+ 2517047*:   28:  { internal::pstoret<DstScalar,Packet,Alignment>(a,b); }
+     2112:   28-block  0
+     3744:   28-block  1
+     1056:   28-block  2
+     3744:   28-block  3
+    %%%%%:   28-block  4
+    48384:   28-block  5
+    %%%%%:   28-block  6
+    %%%%%:   28-block  7
+   342336:   28-block  8
+     1149:   28-block  9
+    %%%%%:   28-block 10
+    %%%%%:   28-block 11
+      189:   28-block 12
+    %%%%%:   28-block 13
+     3744:   28-block 14
+    %%%%%:   28-block 15
+   341571:   28-block 16
+    %%%%%:   28-block 17
+    %%%%%:   28-block 18
+    %%%%%:   28-block 19
+   393408:   28-block 20
+   194237:   28-block 21
+    %%%%%:   28-block 22
+   688320:   28-block 23
+     1149:   28-block 24
+   491712:   28-block 25
+      192:   28-block 26
+        -:   29:};
+        -:   30:
+        -:   31:// Empty overload for void type (used by PermutationMatrix)
+        -:   32:template<typename DstScalar> struct assign_op<DstScalar,void> {};
+        -:   33:
+        -:   34:template<typename DstScalar,typename SrcScalar>
+        -:   35:struct functor_traits<assign_op<DstScalar,SrcScalar> > {
+        -:   36:  enum {
+        -:   37:    Cost = NumTraits<DstScalar>::ReadCost,
+        -:   38:    PacketAccess = is_same<DstScalar,SrcScalar>::value && packet_traits<DstScalar>::Vectorizable && packet_traits<SrcScalar>::Vectorizable
+        -:   39:  };
+        -:   40:};
+        -:   41:
+        -:   42:/** \internal
+        -:   43:  * \brief Template functor for scalar/packet assignment with addition
+        -:   44:  *
+        -:   45:  */
+        -:   46:template<typename DstScalar,typename SrcScalar> struct add_assign_op {
+        -:   47:
+   36858*:   48:  EIGEN_EMPTY_STRUCT_CTOR(add_assign_op)
+  513405*:   49:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignCoeff(DstScalar& a, const SrcScalar& b) const { a += b; }
+   115584:   49-block  0
+     5376:   49-block  1
+    %%%%%:   49-block  2
+    %%%%%:   49-block  3
+   392445:   49-block  4
+        -:   50:  
+        -:   51:  template<int Alignment, typename Packet>
+    3744*:   52:  EIGEN_STRONG_INLINE void assignPacket(DstScalar* a, const Packet& b) const
+     3744:   52-block  0
+    %%%%%:   52-block  1
+    3744*:   53:  { internal::pstoret<DstScalar,Packet,Alignment>(a,internal::padd(internal::ploadt<Packet,Alignment>(a),b)); }
+     3744:   53-block  0
+    %%%%%:   53-block  1
+        -:   54:};
+        -:   55:template<typename DstScalar,typename SrcScalar>
+        -:   56:struct functor_traits<add_assign_op<DstScalar,SrcScalar> > {
+        -:   57:  enum {
+        -:   58:    Cost = NumTraits<DstScalar>::ReadCost + NumTraits<DstScalar>::AddCost,
+        -:   59:    PacketAccess = is_same<DstScalar,SrcScalar>::value && packet_traits<DstScalar>::HasAdd
+        -:   60:  };
+        -:   61:};
+        -:   62:
+        -:   63:/** \internal
+        -:   64:  * \brief Template functor for scalar/packet assignment with subtraction
+        -:   65:  *
+        -:   66:  */
+        -:   67:template<typename DstScalar,typename SrcScalar> struct sub_assign_op {
+        -:   68:
+  395538*:   69:  EIGEN_EMPTY_STRUCT_CTOR(sub_assign_op)
+    %%%%%:   69-block  0
+ 3141879*:   70:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignCoeff(DstScalar& a, const SrcScalar& b) const { a -= b; }
+  1373178:   70-block  0
+  1376256:   70-block  1
+    %%%%%:   70-block  2
+    %%%%%:   70-block  3
+    %%%%%:   70-block  4
+    %%%%%:   70-block  5
+   392445:   70-block  6
+        -:   71:  
+        -:   72:  template<int Alignment, typename Packet>
+91782912*:   73:  EIGEN_STRONG_INLINE void assignPacket(DstScalar* a, const Packet& b) const
+    %%%%%:   73-block  0
+ 91782912:   73-block  1
+    %%%%%:   73-block  2
+    %%%%%:   73-block  3
+91782912*:   74:  { internal::pstoret<DstScalar,Packet,Alignment>(a,internal::psub(internal::ploadt<Packet,Alignment>(a),b)); }
+    %%%%%:   74-block  0
+ 91782912:   74-block  1
+    %%%%%:   74-block  2
+    %%%%%:   74-block  3
+        -:   75:};
+        -:   76:template<typename DstScalar,typename SrcScalar>
+        -:   77:struct functor_traits<sub_assign_op<DstScalar,SrcScalar> > {
+        -:   78:  enum {
+        -:   79:    Cost = NumTraits<DstScalar>::ReadCost + NumTraits<DstScalar>::AddCost,
+        -:   80:    PacketAccess = is_same<DstScalar,SrcScalar>::value && packet_traits<DstScalar>::HasSub
+        -:   81:  };
+        -:   82:};
+        -:   83:
+        -:   84:/** \internal
+        -:   85:  * \brief Template functor for scalar/packet assignment with multiplication
+        -:   86:  *
+        -:   87:  */
+        -:   88:template<typename DstScalar, typename SrcScalar=DstScalar>
+        -:   89:struct mul_assign_op {
+        -:   90:
+        -:   91:  EIGEN_EMPTY_STRUCT_CTOR(mul_assign_op)
+    #####:   92:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignCoeff(DstScalar& a, const SrcScalar& b) const { a *= b; }
+    %%%%%:   92-block  0
+    %%%%%:   92-block  1
+    %%%%%:   92-block  2
+    %%%%%:   92-block  3
+    %%%%%:   92-block  4
+    %%%%%:   92-block  5
+        -:   93:  
+        -:   94:  template<int Alignment, typename Packet>
+     192*:   95:  EIGEN_STRONG_INLINE void assignPacket(DstScalar* a, const Packet& b) const
+    %%%%%:   95-block  0
+    %%%%%:   95-block  1
+      192:   95-block  2
+     192*:   96:  { internal::pstoret<DstScalar,Packet,Alignment>(a,internal::pmul(internal::ploadt<Packet,Alignment>(a),b)); }
+    %%%%%:   96-block  0
+    %%%%%:   96-block  1
+      192:   96-block  2
+        -:   97:};
+        -:   98:template<typename DstScalar, typename SrcScalar>
+        -:   99:struct functor_traits<mul_assign_op<DstScalar,SrcScalar> > {
+        -:  100:  enum {
+        -:  101:    Cost = NumTraits<DstScalar>::ReadCost + NumTraits<DstScalar>::MulCost,
+        -:  102:    PacketAccess = is_same<DstScalar,SrcScalar>::value && packet_traits<DstScalar>::HasMul
+        -:  103:  };
+        -:  104:};
+        -:  105:
+        -:  106:/** \internal
+        -:  107:  * \brief Template functor for scalar/packet assignment with diviving
+        -:  108:  *
+        -:  109:  */
+        -:  110:template<typename DstScalar, typename SrcScalar=DstScalar> struct div_assign_op {
+        -:  111:
+        -:  112:  EIGEN_EMPTY_STRUCT_CTOR(div_assign_op)
+        -:  113:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignCoeff(DstScalar& a, const SrcScalar& b) const { a /= b; }
+        -:  114:  
+        -:  115:  template<int Alignment, typename Packet>
+        -:  116:  EIGEN_STRONG_INLINE void assignPacket(DstScalar* a, const Packet& b) const
+        -:  117:  { internal::pstoret<DstScalar,Packet,Alignment>(a,internal::pdiv(internal::ploadt<Packet,Alignment>(a),b)); }
+        -:  118:};
+        -:  119:template<typename DstScalar, typename SrcScalar>
+        -:  120:struct functor_traits<div_assign_op<DstScalar,SrcScalar> > {
+        -:  121:  enum {
+        -:  122:    Cost = NumTraits<DstScalar>::ReadCost + NumTraits<DstScalar>::MulCost,
+        -:  123:    PacketAccess = is_same<DstScalar,SrcScalar>::value && packet_traits<DstScalar>::HasDiv
+        -:  124:  };
+        -:  125:};
+        -:  126:
+        -:  127:/** \internal
+        -:  128:  * \brief Template functor for scalar/packet assignment with swapping
+        -:  129:  *
+        -:  130:  * It works as follow. For a non-vectorized evaluation loop, we have:
+        -:  131:  *   for(i) func(A.coeffRef(i), B.coeff(i));
+        -:  132:  * where B is a SwapWrapper expression. The trick is to make SwapWrapper::coeff behaves like a non-const coeffRef.
+        -:  133:  * Actually, SwapWrapper might not even be needed since even if B is a plain expression, since it has to be writable
+        -:  134:  * B.coeff already returns a const reference to the underlying scalar value.
+        -:  135:  * 
+        -:  136:  * The case of a vectorized loop is more tricky:
+        -:  137:  *   for(i,j) func.assignPacket<A_Align>(&A.coeffRef(i,j), B.packet<B_Align>(i,j));
+        -:  138:  * Here, B must be a SwapWrapper whose packet function actually returns a proxy object holding a Scalar*,
+        -:  139:  * the actual alignment and Packet type.
+        -:  140:  *
+        -:  141:  */
+        -:  142:template<typename Scalar> struct swap_assign_op {
+        -:  143:
+    4428*:  144:  EIGEN_EMPTY_STRUCT_CTOR(swap_assign_op)
+     4428:  144-block  0
+   20810*:  145:  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void assignCoeff(Scalar& a, const Scalar& b) const
+    10426:  145-block  0
+    10384:  145-block  1
+        -:  146:  {
+        -:  147:#ifdef __CUDACC__
+        -:  148:    // FIXME is there some kind of cuda::swap?
+        -:  149:    Scalar t=b; const_cast<Scalar&>(b)=a; a=t;
+        -:  150:#else
+        -:  151:    using std::swap;
+   20810*:  152:    swap(a,const_cast<Scalar&>(b));
+    10426:  152-block  0
+    10384:  152-block  1
+        -:  153:#endif
+        -:  154:  }
+        -:  155:};
+        -:  156:template<typename Scalar>
+        -:  157:struct functor_traits<swap_assign_op<Scalar> > {
+        -:  158:  enum {
+        -:  159:    Cost = 3 * NumTraits<Scalar>::ReadCost,
+        -:  160:    PacketAccess = packet_traits<Scalar>::Vectorizable
+        -:  161:  };
+        -:  162:};
+        -:  163:
+        -:  164:} // namespace internal
+        -:  165:
+        -:  166:} // namespace Eigen
+        -:  167:
+        -:  168:#endif // EIGEN_ASSIGNMENT_FUNCTORS_H

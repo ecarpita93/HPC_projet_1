@@ -1,0 +1,123 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_conv_2d.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_CONV_2D_HPP
+        -:   19:#define PIC_FILTERING_FILTER_CONV_2D_HPP
+        -:   20:
+        -:   21:#include "../util/array.hpp"
+        -:   22:
+        -:   23:#include "../filtering/filter.hpp"
+        -:   24:
+        -:   25:namespace pic {
+        -:   26:
+        -:   27:/**
+        -:   28: * @brief The FilterConv2D class
+        -:   29: */
+        -:   30:class FilterConv2D: public Filter
+        -:   31:{
+        -:   32:protected:
+        -:   33:
+        -:   34:    /**
+        -:   35:     * @brief ProcessBBox
+        -:   36:     * @param dst
+        -:   37:     * @param src
+        -:   38:     * @param box
+        -:   39:     */
+    #####:   40:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   41:    {
+    #####:   42:        Image *img  = src[0];
+    %%%%%:   42-block  0
+    #####:   43:        Image *conv = src[1];
+        -:   44:
+    #####:   45:        int channels = dst->channels;
+        -:   46:
+    #####:   47:        int c_w_h = (conv->width >> 1);
+    #####:   48:        int c_h_h = (conv->height >> 1);
+        -:   49:
+    #####:   50:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   50-block  0
+    %%%%%:   50-block  1
+    %%%%%:   50-block  2
+    #####:   51:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   51-block  0
+    %%%%%:   51-block  1
+    %%%%%:   51-block  2
+    #####:   52:                float *dst_data = (*dst)(i, j);
+    %%%%%:   52-block  0
+        -:   53:
+    #####:   54:                Arrayf::assign(0.0f, dst_data, channels);
+    %%%%%:   54-block  0
+        -:   55:
+    #####:   56:                for(int k = -c_h_h; k <= c_h_h; k++) {
+    %%%%%:   56-block  0
+    %%%%%:   56-block  1
+    %%%%%:   56-block  2
+    #####:   57:                    for(int l = -c_w_h; l <= c_w_h; l++) {
+    %%%%%:   57-block  0
+    %%%%%:   57-block  1
+    %%%%%:   57-block  2
+        -:   58:
+    #####:   59:                        float *img_data  = (*img)(i + l, j + k);
+    %%%%%:   59-block  0
+    #####:   60:                        float *conv_data = (*conv)(l + c_w_h, k + c_h_h);
+    %%%%%:   60-block  0
+        -:   61:
+    #####:   62:                        for(int c = 0; c < channels; c++) {
+    %%%%%:   62-block  0
+    %%%%%:   62-block  1
+    #####:   63:                            int c2 = c % conv->channels;
+    #####:   64:                            dst_data[c] += img_data[c] * conv_data[c2];
+    %%%%%:   64-block  0
+        -:   65:                        }
+        -:   66:                    }
+        -:   67:                }
+        -:   68:            }
+        -:   69:        }
+    #####:   70:    }
+        -:   71:
+        -:   72:public:
+        -:   73:
+        -:   74:    /**
+        -:   75:     * @brief FilterConv2D
+        -:   76:     */
+        -:   77:    FilterConv2D() : Filter()
+        -:   78:    {
+        -:   79:        minInputImages = 2;
+        -:   80:    }
+        -:   81:
+        -:   82:    /**
+        -:   83:     * @brief execute
+        -:   84:     * @param img
+        -:   85:     * @param conv
+        -:   86:     * @param imgOut
+        -:   87:     * @return
+        -:   88:     */
+        -:   89:    static Image *execute(Image *img, Image *conv, Image *imgOut)
+        -:   90:    {
+        -:   91:        FilterConv2D flt;
+        -:   92:        return flt.Process(Double(img, conv), imgOut);
+        -:   93:    }
+        -:   94:};
+        -:   95:
+        -:   96:} // end namespace pic
+        -:   97:
+        -:   98:#endif /* PIC_FILTERING_FILTER_CONV_2D_HPP */
+        -:   99:

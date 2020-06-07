@@ -1,0 +1,216 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_normal.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_NORMAL_HPP
+        -:   19:#define PIC_FILTERING_FILTER_NORMAL_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterNormal class
+        -:   27: */
+        -:   28:class FilterNormal: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:    int colorChannel;
+        -:   32:
+        -:   33:    /**
+        -:   34:     * @brief ProcessBBox
+        -:   35:     * @param dst
+        -:   36:     * @param src
+        -:   37:     * @param box
+        -:   38:     */
+        -:   39:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   40:
+        -:   41:public:
+        -:   42:    /**
+        -:   43:     * @brief FilterNormal
+        -:   44:     */
+        -:   45:    FilterNormal();
+        -:   46:
+        -:   47:    /**
+        -:   48:     * @brief FilterNormal
+        -:   49:     * @param colorChannel
+        -:   50:     */
+        -:   51:    FilterNormal(int colorChannel);
+        -:   52:
+        -:   53:    /**
+        -:   54:     * @brief update
+        -:   55:     * @param colorChannel
+        -:   56:     */
+        -:   57:    void update(int colorChannel);
+        -:   58:
+        -:   59:    /**
+        -:   60:     * @brief OutputSize
+        -:   61:     * @param imgIn
+        -:   62:     * @param width
+        -:   63:     * @param height
+        -:   64:     * @param channels
+        -:   65:     * @param frames
+        -:   66:     */
+    #####:   67:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:   68:    {
+    #####:   69:        width       = imgIn[0]->width;
+    #####:   70:        height      = imgIn[0]->height;
+    #####:   71:        channels    = 3;
+    #####:   72:        frames      = imgIn[0]->frames;
+    #####:   73:    }
+        -:   74:};
+        -:   75:
+        -:   76:PIC_INLINE FilterNormal::FilterNormal() : Filter()
+        -:   77:{
+        -:   78:    update(0);
+        -:   79:}
+        -:   80:
+        -:   81:PIC_INLINE FilterNormal::FilterNormal(int colorChannel) : Filter()
+        -:   82:{
+        -:   83:    update(colorChannel);
+        -:   84:}
+        -:   85:
+        -:   86:PIC_INLINE void FilterNormal::update(int colorChannel)
+        -:   87:{
+        -:   88:    if(colorChannel<0) {
+        -:   89:        colorChannel = 0;
+        -:   90:    }
+        -:   91:
+        -:   92:    this->colorChannel = colorChannel;
+        -:   93:}
+        -:   94:
+    #####:   95:PIC_INLINE void FilterNormal::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   96:{
+    #####:   97:    int width    = dst->width;
+    #####:   98:    int height   = dst->height;
+    #####:   99:    int channels = src[0]->channels;
+    %%%%%:   99-block  0
+        -:  100:
+    #####:  101:    if(colorChannel>(channels - 1)) {
+    %%%%%:  101-block  0
+    #####:  102:        colorChannel = 0;
+    %%%%%:  102-block  0
+        -:  103:    }
+        -:  104:
+    #####:  105:    float *data = src[0]->data;
+    %%%%%:  105-block  0
+    #####:  106:    float gradX, gradY;
+        -:  107:
+        -:  108:
+    #####:  109:    for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  109-block  0
+    %%%%%:  109-block  1
+    %%%%%:  109-block  2
+    #####:  110:        int ind = j * width;
+        -:  111:
+    #####:  112:        for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  112-block  0
+    %%%%%:  112-block  1
+        -:  113:            //Convolution kernel
+    #####:  114:            int ind2 = (ind + i) * 3;
+        -:  115:
+        -:  116:            //Positions
+    #####:  117:            int ci  = CLAMP(i + 1, width);
+    %%%%%:  117-block  0
+    %%%%%:  117-block  1
+    %%%%%:  117-block  2
+    #####:  118:            int cj  = CLAMP(j + 1, height);
+    %%%%%:  118-block  0
+    %%%%%:  118-block  1
+    %%%%%:  118-block  2
+    #####:  119:            int ci1 = CLAMP(i - 1, width);
+    %%%%%:  119-block  0
+    %%%%%:  119-block  1
+    %%%%%:  119-block  2
+    #####:  120:            int cj1 = CLAMP(j - 1, height);
+    %%%%%:  120-block  0
+    %%%%%:  120-block  1
+    %%%%%:  120-block  2
+        -:  121:
+        -:  122:            //Grad X
+    #####:  123:            int tmpc  = (ind + ci) * channels;
+    #####:  124:            gradX = data[tmpc + colorChannel];
+        -:  125:
+    #####:  126:            tmpc   = (ind + ci1) * channels;
+    #####:  127:            gradX -= data[tmpc + colorChannel];
+        -:  128:
+        -:  129:            //Grad Y
+    #####:  130:            tmpc  = (cj * width + i) * channels;
+    #####:  131:            gradY = data[tmpc + colorChannel];
+        -:  132:
+    #####:  133:            tmpc   = (cj1 * width + i) * channels;
+    #####:  134:            gradY -= data[tmpc + colorChannel];
+        -:  135:
+        -:  136:            /*gx[0]=1.0f; gx[1]=0.0f; gx[2]=gradX;
+        -:  137:            gy[1]=1.0f; gy[0]=0.0f; gy[2]=gradY;
+        -:  138:
+        -:  139:            dst->data[ind2  ] = gx[1] * gy[2] - gy[1] * gx[2];
+        -:  140:            dst->data[ind2+1] = gx[2] * gy[0] - gy[2] * gx[0];
+        -:  141:            dst->data[ind2+2] = gx[0] * gy[1] - gy[0] * gx[1];*/
+        -:  142:
+    #####:  143:            dst->data[ind2    ] = gradX;
+    #####:  144:            dst->data[ind2 + 1] = gradY;
+    #####:  145:            dst->data[ind2 + 2] = 1.0f;
+        -:  146:
+    #####:  147:            float norm = gradX * gradX + gradY * gradY + 1.0f;
+        -:  148:
+    #####:  149:            if(norm > 0.0f) {
+    %%%%%:  149-block  0
+    #####:  150:                norm = sqrtf(norm);
+    #####:  151:                dst->data[ind2    ] /= norm;
+    #####:  152:                dst->data[ind2 + 1] /= norm;
+    #####:  153:                dst->data[ind2 + 2] /= norm;
+    %%%%%:  153-block  0
+        -:  154:            } else {
+    #####:  155:                dst->data[ind2    ] = 0.0f;
+    #####:  156:                dst->data[ind2 + 1] = 0.0f;
+    #####:  157:                dst->data[ind2 + 2] = 0.0f;
+    %%%%%:  157-block  0
+        -:  158:            }
+        -:  159:        }
+        -:  160:    }
+    #####:  161:}
+        -:  162:
+        -:  163:/*
+        -:  164:void genLight(float *L, int x, int y, int width, int height)
+        -:  165:{
+        -:  166:    float xf = float(x) / float(width);
+        -:  167:    float yf = float(y) / float(height);
+        -:  168:
+        -:  169:    L[0] = (xf - 0.5f) * 2.0f;
+        -:  170:    L[1] = (yf - 0.5f) * 2.0f;
+        -:  171:    L[2] = 1.0f;
+        -:  172:
+        -:  173:    float norm = L[0] * L[0] + L[1] * L[1] + L[2] * L[2];
+        -:  174:
+        -:  175:    if(norm > 0.0f) {
+        -:  176:        norm = 1.0f / sqrtf(norm);
+        -:  177:        L[0] *= norm;
+        -:  178:        L[1] *= norm;
+        -:  179:        L[2] *= norm;
+        -:  180:    };
+        -:  181:};
+        -:  182:*/
+        -:  183:
+        -:  184:
+        -:  185:} // end namespace pic
+        -:  186:
+        -:  187:#endif /* PIC_FILTERING_FILTER_NORMAL_HPP */
+        -:  188:

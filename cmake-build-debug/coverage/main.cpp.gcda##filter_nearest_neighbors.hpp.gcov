@@ -1,0 +1,151 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_nearest_neighbors.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_NEAREST_NEIGHBORS_HPP
+        -:   19:#define PIC_FILTERING_FILTER_NEAREST_NEIGHBORS_HPP
+        -:   20:
+        -:   21:#include "../features_matching/patch_comp.hpp"
+        -:   22:#include "../filtering/filter.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The FilterNearestNeighbors class
+        -:   28: */
+        -:   29:class FilterNearestNeighbors: public Filter
+        -:   30:{
+        -:   31:protected:
+        -:   32:
+        -:   33:    PatchComp *pc;
+        -:   34:    int patchSize, halfPatchSize, stride;
+        -:   35:    int width_ps, height_ps;
+        -:   36:
+        -:   37:    /**
+        -:   38:     * @brief f
+        -:   39:     * @param data
+        -:   40:     */
+    #####:   41:    void f(FilterFData *data)
+        -:   42:    {
+    #####:   43:        int xb, yb;
+    #####:   44:        float db = FLT_MAX;
+    #####:   45:        for(int i = halfPatchSize; i < height_ps; i+= stride) {
+    %%%%%:   45-block  0
+    %%%%%:   45-block  1
+    %%%%%:   45-block  2
+    #####:   46:            for(int j = halfPatchSize; j < width_ps; j+= stride) {
+    %%%%%:   46-block  0
+    %%%%%:   46-block  1
+        -:   47:
+    #####:   48:                float tmp_d = pc->getSSD(data->x, data->y, j, i);
+        -:   49:
+    #####:   50:                if(tmp_d < db) {
+    %%%%%:   50-block  0
+    #####:   51:                    db = tmp_d;
+    #####:   52:                    xb = j;
+    #####:   53:                    yb = i;
+    %%%%%:   53-block  0
+        -:   54:                }
+        -:   55:            }
+        -:   56:        }
+    #####:   57:        data->out[0] = float(xb);
+    #####:   58:        data->out[1] = float(yb);
+    #####:   59:        data->out[1] = db;
+    #####:   60:    }
+        -:   61:
+        -:   62:    /**
+        -:   63:     * @brief setupAux
+        -:   64:     * @param imgIn
+        -:   65:     * @param imgOut
+        -:   66:     * @return
+        -:   67:     */
+    #####:   68:    Image *setupAux(ImageVec imgIn, Image *imgOut)
+        -:   69:    {
+    #####:   70:        height_ps = imgIn[1]->height - halfPatchSize;
+    %%%%%:   70-block  0
+    #####:   71:        width_ps = imgIn[1]->width - halfPatchSize;
+        -:   72:
+    #####:   73:        pc = new PatchComp(imgIn[0], imgIn[1], patchSize);
+    %%%%%:   73-block  0
+        -:   74:
+    #####:   75:        return allocateOutputMemory(imgIn, imgOut, bDelete);
+    %%%%%:   75-block  0
+    %%%%%:   75-block  1
+    %%%%%:   75-block  2
+        -:   76:    }
+        -:   77:
+        -:   78:public:
+        -:   79:
+        -:   80:    /**
+        -:   81:     * @brief FilterNearestNeighbors
+        -:   82:     */
+        -:   83:    FilterNearestNeighbors() : Filter()
+        -:   84:    {
+        -:   85:        pc = NULL;
+        -:   86:        this->minInputImages = 2;
+        -:   87:    }
+        -:   88:
+        -:   89:    ~FilterNearestNeighbors()
+        -:   90:    {
+        -:   91:        delete_s(pc);
+        -:   92:    }
+        -:   93:
+        -:   94:    /**
+        -:   95:     * @brief OutputSize
+        -:   96:     * @param imgIn
+        -:   97:     * @param width
+        -:   98:     * @param height
+        -:   99:     * @param channels
+        -:  100:     * @param frames
+        -:  101:     */
+    #####:  102:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  103:    {
+    #####:  104:        width       = imgIn[0]->width;
+    #####:  105:        height      = imgIn[0]->height;
+    #####:  106:        channels    = 3;
+    #####:  107:        frames      = imgIn[0]->frames;
+    #####:  108:    }
+        -:  109:
+        -:  110:    /**
+        -:  111:     * @brief setup
+        -:  112:     * @param patchSize
+        -:  113:     * @param stride
+        -:  114:     */
+        -:  115:    void setup(int patchSize, int stride)
+        -:  116:    {
+        -:  117:        patchSize = (patchSize > 2) ? patchSize : 3;
+        -:  118:
+        -:  119:        if((patchSize % 2) == 0) {
+        -:  120:            patchSize++;
+        -:  121:        }
+        -:  122:
+        -:  123:        stride = stride > 0 ? stride : 1;
+        -:  124:
+        -:  125:        this->stride = stride;
+        -:  126:        this->patchSize = patchSize;
+        -:  127:
+        -:  128:        pc = delete_s(pc);
+        -:  129:    }
+        -:  130:};
+        -:  131:
+        -:  132:} // end namespace pic
+        -:  133:
+        -:  134:#endif /* PIC_FILTERING_FILTER_NEAREST_NEIGHBORS_HPP */
+        -:  135:

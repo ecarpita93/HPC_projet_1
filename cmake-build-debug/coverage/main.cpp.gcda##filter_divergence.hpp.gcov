@@ -1,0 +1,130 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_divergence.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_DIVERGENCE_HPP
+        -:   19:#define PIC_FILTERING_FILTER_DIVERGENCE_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterDivergence class
+        -:   27: */
+        -:   28:class FilterDivergence: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:
+        -:   32:    /**
+        -:   33:     * @brief ProcessBBox
+        -:   34:     * @param dst
+        -:   35:     * @param src
+        -:   36:     * @param box
+        -:   37:     */
+        -:   38:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   39:
+        -:   40:public:
+        -:   41:    /**
+        -:   42:     * @brief FilterDivergence
+        -:   43:     */
+        -:   44:    FilterDivergence()
+        -:   45:    {
+        -:   46:
+        -:   47:    }
+        -:   48:
+        -:   49:    /**
+        -:   50:     * @brief execute
+        -:   51:     * @param imgIn
+        -:   52:     * @param imgOut
+        -:   53:     * @return
+        -:   54:     */
+        -:   55:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:   56:    {
+        -:   57:        FilterDivergence filter;
+        -:   58:        return filter.Process(Single(imgIn), imgOut);
+        -:   59:    }
+        -:   60:};
+        -:   61:
+    #####:   62:PIC_INLINE void FilterDivergence::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   63:{
+    #####:   64:    int width = dst->width;
+    #####:   65:    int height = dst->height;
+        -:   66:
+    #####:   67:    float *data = src[0]->data;
+    %%%%%:   67-block  0
+    #####:   68:    float gradX, gradY;
+        -:   69:
+    #####:   70:    int channels = src[0]->channels;
+    #####:   71:    int c, ci, cj, ci1, cj1, tmpc, ind;
+        -:   72:
+    #####:   73:    for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   73-block  0
+    %%%%%:   73-block  1
+    %%%%%:   73-block  2
+    #####:   74:        ind = j * width;
+        -:   75:
+    #####:   76:        for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   76-block  0
+    %%%%%:   76-block  1
+    #####:   77:            c = (ind + i) * channels;
+        -:   78:            //Positions
+    #####:   79:            ci  = CLAMP(i + 1, width);
+    %%%%%:   79-block  0
+    %%%%%:   79-block  1
+    %%%%%:   79-block  2
+    #####:   80:            cj  = CLAMP(j + 1, height);
+    %%%%%:   80-block  0
+    %%%%%:   80-block  1
+    %%%%%:   80-block  2
+    #####:   81:            ci1 = CLAMP(i - 1, width);
+    %%%%%:   81-block  0
+    %%%%%:   81-block  1
+    %%%%%:   81-block  2
+    #####:   82:            cj1 = CLAMP(j - 1, height);
+    %%%%%:   82-block  0
+    %%%%%:   82-block  1
+    %%%%%:   82-block  2
+        -:   83:
+        -:   84:            //Grad X
+    #####:   85:            tmpc  = (ind + ci) * channels;
+    #####:   86:            gradX = data[tmpc];
+        -:   87:
+    #####:   88:            tmpc  = (ind + ci1) * channels;
+    #####:   89:            gradX -= data[tmpc];
+        -:   90:
+        -:   91:            //Grad Y
+    #####:   92:            tmpc  = (cj * width + i) * channels;
+    #####:   93:            gradY = data[tmpc];
+        -:   94:
+    #####:   95:            tmpc  = (cj1 * width + i) * channels;
+    #####:   96:            gradY -= data[tmpc];
+        -:   97:
+        -:   98:            //Divergence
+    #####:   99:            dst->data[c] = (gradX + gradY) * 0.5f;
+    %%%%%:   99-block  0
+        -:  100:        }
+        -:  101:    }
+    #####:  102:}
+        -:  103:
+        -:  104:} // end namespace pic
+        -:  105:
+        -:  106:#endif /* PIC_FILTERING_FILTER_DIVERGENCE_HPP */
+        -:  107:

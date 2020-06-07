@@ -1,0 +1,210 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/dynamic_range.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_DYNAMIC_RANGE_HPP
+        -:   19:#define PIC_UTIL_DYNAMIC_RANGE_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:#include "../util/math.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The LDR_type enum
+        -:   28: */
+        -:   29:enum LDR_type {LT_NOR, LT_NOR_GAMMA, LT_LDR, LT_NONE};
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief estimateAverageLuminance estimates the average luminance of the shot.
+        -:   33: * @param shutter_speed is the shutter speed of the camera
+        -:   34: * @param aperture_value is the aperture value of the camera
+        -:   35: * @param iso_value is the ISO value of the camera
+        -:   36: * @param K_value is a value in [10.6, 13.4] depending on the camera
+        -:   37: * @return
+        -:   38: */
+        7:   39:PIC_INLINE float estimateAverageLuminance(float shutter_speed,
+        -:   40:                                          float aperture_value = 1.0f,
+        -:   41:                                          float iso_value = 1.0f,
+        -:   42:                                          float K_value = 12.5f)
+        -:   43:{
+        7:   44:    K_value = CLAMPi(K_value, 10.6f, 13.4f);
+        -:   45:
+        7:   46:    return (iso_value * shutter_speed) / (K_value * aperture_value * aperture_value);
+        7:   46-block  0
+        -:   47:}
+        -:   48:
+        -:   49:/**
+        -:   50: * @brief checkNormalized checks if data is in [0,1].
+        -:   51: * @param data
+        -:   52: * @param size
+        -:   53: * @param delta
+        -:   54: * @return
+        -:   55: */
+        -:   56:PIC_INLINE bool checkNormalized(const float *data, int size, float delta = 1e-6f)
+        -:   57:{
+        -:   58:    float thr = 1.0f + delta;
+        -:   59:
+        -:   60:    for(int i = 0; i < size; i++) {
+        -:   61:        if(data[i] > thr) {
+        -:   62:            return false;
+        -:   63:        }
+        -:   64:    }
+        -:   65:
+        -:   66:    return true;
+        -:   67:}
+        -:   68:
+        -:   69:/**
+        -:   70: * @brief convertLDR2HDR converts a buffer of unsigned char into float.
+        -:   71: * @param dataIn
+        -:   72: * @param dataOut
+        -:   73: * @param size
+        -:   74: * @param type
+        -:   75: * @param gamma
+        -:   76: * @return
+        -:   77: */
+        7:   78:PIC_INLINE float *convertLDR2HDR(unsigned char *dataIn, float *dataOut,
+        -:   79:                                 int size, LDR_type type, float gamma = 2.2f)
+        -:   80:{
+        7:   81:    if(dataIn == NULL) {
+        7:   81-block  0
+        -:   82:        return NULL;
+        -:   83:    }
+        -:   84:
+        7:   85:    if(dataOut == NULL) {
+        7:   85-block  0
+       7*:   86:        dataOut = new float[size];
+        7:   86-block  0
+        7:   86-block  1
+    %%%%%:   86-block  2
+        -:   87:    }
+        -:   88:
+        7:   89:    float LUT[256];
+     1799:   90:    for(int i = 0; i < 256; i++) {
+        7:   90-block  0
+     1799:   90-block  1
+     1792:   91:        float i_f = float(i);
+        -:   92:
+     1792:   93:        switch(type) {
+     1792:   93-block  0
+    #####:   94:        case LT_NONE: {//simple cast
+    #####:   95:            LUT[i] = i_f;
+        -:   96:        }
+    #####:   97:        break;
+    %%%%%:   97-block  0
+        -:   98:
+     1792:   99:        case LT_NOR: {//normalize in [0,1]
+     1792:  100:            LUT[i] = i_f / 255.0f;
+        -:  101:        }
+     1792:  102:        break;
+     1792:  102-block  0
+        -:  103:
+    #####:  104:        case LT_NOR_GAMMA: {//normalize in [0,1] + GAMMA correction removal
+    #####:  105:            LUT[i] = powf(i_f / 255.0f, gamma);
+        -:  106:        }
+    #####:  107:        break;
+    %%%%%:  107-block  0
+        -:  108:
+     1792:  109:        case LT_LDR: {
+     1792:  109-block  0
+        -:  110:            //do nothing
+        -:  111:        }
+        -:  112:        }
+        -:  113:    }
+        -:  114:
+        7:  115:    #pragma omp parallel for
+        -:  116:    for(int i = 0; i < size; i++) {
+        -:  117:        dataOut[i] = LUT[dataIn[i]];
+        -:  118:    }
+        -:  119:
+        7:  120:    return dataOut;
+        7:  120-block  0
+        -:  121:}
+        -:  122:
+        -:  123:/**
+        -:  124: * @brief convertHDR2LDR converts a buffer of float into unsigned char.
+        -:  125: * @param dataIn
+        -:  126: * @param dataOut
+        -:  127: * @param size
+        -:  128: * @param type
+        -:  129: * @param gamma
+        -:  130: * @return
+        -:  131: */
+        1:  132:PIC_INLINE unsigned char *convertHDR2LDR(const float *dataIn, unsigned char *dataOut,
+        -:  133:        int size, LDR_type type, float gamma = 2.2f)
+        -:  134:{
+        1:  135:    if(dataIn == NULL) {
+        1:  135-block  0
+        -:  136:        return NULL;
+        -:  137:    }
+        -:  138:
+        1:  139:    if(dataOut == NULL) {
+        1:  139-block  0
+        1:  140:        dataOut = new unsigned char[size];
+        1:  140-block  0
+        -:  141:    }
+        -:  142:
+        1:  143:    gamma = gamma > 0.0f ? gamma : 2.2f;
+        1:  143-block  0
+        -:  144:
+        1:  145:    float invGamma = 1.0f / gamma;
+        -:  146:
+        1:  147:    switch(type) {
+        1:  147-block  0
+        -:  148:
+    #####:  149:    case LT_NONE: {//simple cast
+    #####:  150:        #pragma omp parallel for
+        -:  151:        for(int i = 0; i < size; i++) {
+        -:  152:            dataOut[i] = CLAMPi(int(lround(dataIn[i])), 0, 255);
+        -:  153:        }
+        -:  154:    }
+    #####:  155:    break;
+    %%%%%:  155-block  0
+        -:  156:
+    #####:  157:    case LT_NOR: {//convert into 8-bit
+    #####:  158:        #pragma omp parallel for
+        -:  159:        for(int i = 0; i < size; i++) {
+        -:  160:            dataOut[i] = CLAMPi(int(lround(dataIn[i] * 255.0f)), 0, 255);
+        -:  161:        }
+        -:  162:    }
+    #####:  163:    break;
+    %%%%%:  163-block  0
+        -:  164:
+        1:  165:    case LT_NOR_GAMMA: {//convert into 8-bit + GAMMA correction application
+        1:  166:        #pragma omp parallel for
+        -:  167:        for(int i = 0; i < size; i++) {
+        -:  168:            float tmp = powf(dataIn[i], invGamma);
+        -:  169:            dataOut[i] = CLAMPi(int(lround(tmp * 255.0f)), 0, 255);
+        -:  170:        }
+        -:  171:    }
+        1:  172:    break;
+        1:  172-block  0
+        -:  173:
+        -:  174:    case LT_LDR: {
+        -:  175:        //do nothing
+        -:  176:    }
+        -:  177:    }
+        -:  178:
+        -:  179:    return dataOut;
+        -:  180:}
+        -:  181:
+        -:  182:} // end namespace pic
+        -:  183:
+        -:  184:#endif //PIC_UTIL_DYNAMIC_RANGE_HPP

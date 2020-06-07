@@ -1,0 +1,251 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_sampler_1d.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_SAMPLER_1D_HPP
+        -:   19:#define PIC_FILTERING_FILTER_SAMPLER_1D_HPP
+        -:   20:
+        -:   21:#define X_DIRECTION 0
+        -:   22:#define Y_DIRECTION 1
+        -:   23:#define Z_DIRECTION 2
+        -:   24:
+        -:   25:#include "../filtering/filter.hpp"
+        -:   26:#include "../image_samplers/image_sampler_bilinear.hpp"
+        -:   27:#include "../image_samplers/image_sampler_bsplines.hpp"
+        -:   28:#include "../image_samplers/image_sampler_gaussian.hpp"
+        -:   29:#include "../image_samplers/image_sampler_nearest.hpp"
+        -:   30:
+        -:   31:namespace pic {
+        -:   32:
+        -:   33:/**
+        -:   34: * @brief The FilterSampler1D class
+        -:   35: */
+    #####:   36:class FilterSampler1D: public Filter
+    %%%%%:   36-block  0
+        -:   37:{
+        -:   38:protected:
+        -:   39:    ImageSamplerNearest isb_default;
+        -:   40:    ImageSampler *isb;
+        -:   41:    int dirs[3];
+        -:   42:    int size;
+        -:   43:    bool swh;
+        -:   44:
+        -:   45:    /**
+        -:   46:     * @brief ProcessBBox
+        -:   47:     * @param dst
+        -:   48:     * @param src
+        -:   49:     * @param box
+        -:   50:     */
+        -:   51:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   52:
+        -:   53:    /**
+        -:   54:     * @brief setDirection
+        -:   55:     * @param direction
+        -:   56:     */
+        -:   57:    void setDirection(int direction);
+        -:   58:
+        -:   59:    /**
+        -:   60:     * @brief setImageSampler
+        -:   61:     * @param isb
+        -:   62:     */
+        -:   63:    void setImageSampler(ImageSampler *isb);
+        -:   64:
+        -:   65:public:
+        -:   66:    /**
+        -:   67:     * @brief FilterSampler1D
+        -:   68:     * @param scale
+        -:   69:     * @param direction
+        -:   70:     * @param isb
+        -:   71:     */
+        -:   72:    FilterSampler1D(float scale, int direction, ImageSampler *isb);
+        -:   73:
+        -:   74:    /**
+        -:   75:     * @brief FilterSampler1D
+        -:   76:     * @param size
+        -:   77:     * @param direction
+        -:   78:     * @param isb
+        -:   79:     */
+        -:   80:    FilterSampler1D(int size, int direction, ImageSampler *isb);
+        -:   81:
+        -:   82:    /**
+        -:   83:     * @brief update
+        -:   84:     * @param scale
+        -:   85:     * @param direction
+        -:   86:     * @param isb
+        -:   87:     */
+        -:   88:    void update(float scale, int direction, ImageSampler *isb);
+        -:   89:
+        -:   90:    /**
+        -:   91:     * @brief update
+        -:   92:     * @param size
+        -:   93:     * @param direction
+        -:   94:     * @param isb
+        -:   95:     */
+        -:   96:    void update(int size, int direction, ImageSampler *isb);
+        -:   97:
+        -:   98:    /**
+        -:   99:     * @brief OutputSize
+        -:  100:     * @param imgIn
+        -:  101:     * @param width
+        -:  102:     * @param height
+        -:  103:     * @param channels
+        -:  104:     * @param frames
+        -:  105:     */
+    #####:  106:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  107:    {
+    #####:  108:        if(swh) {
+    %%%%%:  108-block  0
+    #####:  109:            float scaleX = (dirs[X_DIRECTION] == 1) ? scale : 1.0f;
+    %%%%%:  109-block  0
+    %%%%%:  109-block  1
+    #####:  110:            float scaleY = (dirs[Y_DIRECTION] == 1) ? scale : 1.0f;
+    %%%%%:  110-block  0
+    %%%%%:  110-block  1
+        -:  111:
+    #####:  112:            width  = int(imgIn[0]->width  * scaleX);
+    %%%%%:  112-block  0
+    #####:  113:            height = int(imgIn[0]->height * scaleY);
+    %%%%%:  113-block  0
+        -:  114:        } else {
+    #####:  115:            width  = (dirs[X_DIRECTION] == 1) ? size : imgIn[0]->width;
+    %%%%%:  115-block  0
+    %%%%%:  115-block  1
+    %%%%%:  115-block  2
+    #####:  116:            height = (dirs[Y_DIRECTION] == 1) ? size : imgIn[0]->height;
+    %%%%%:  116-block  0
+    %%%%%:  116-block  1
+    %%%%%:  116-block  2
+    %%%%%:  116-block  3
+        -:  117:        }
+        -:  118:
+    #####:  119:        channels = imgIn[0]->channels;
+    #####:  120:        frames   = imgIn[0]->frames;
+    #####:  121:    }
+        -:  122:
+        -:  123:    /**
+        -:  124:     * @brief execute
+        -:  125:     * @param imgIn
+        -:  126:     * @param imgOut
+        -:  127:     * @param scale
+        -:  128:     * @param direction
+        -:  129:     * @param isb
+        -:  130:     * @return
+        -:  131:     */
+        -:  132:    static Image *execute(Image *imgIn, Image *imgOut, float scale,
+        -:  133:                             int direction, ImageSampler *isb)
+        -:  134:    {
+        -:  135:        FilterSampler1D filter(scale, direction, isb);
+        -:  136:        return filter.Process(Single(imgIn), imgOut);
+        -:  137:    }
+        -:  138:};
+        -:  139:
+    #####:  140:PIC_INLINE FilterSampler1D::FilterSampler1D(float scale, int direction = 0,
+    #####:  141:        ImageSampler *isb = NULL) : Filter()
+        -:  142:{
+    #####:  143:    this->isb = NULL;
+    #####:  144:    update(scale, direction, isb);
+        -:  145:}
+        -:  146:
+        -:  147:PIC_INLINE FilterSampler1D::FilterSampler1D(int size, int direction = 0,
+        -:  148:        ImageSampler *isb = NULL) : Filter()
+        -:  149:{
+        -:  150:    this->isb = NULL;
+        -:  151:    update(size, direction, isb);
+        -:  152:}
+        -:  153:
+    #####:  154:PIC_INLINE void FilterSampler1D::update(float scale, int direction,
+        -:  155:                                        ImageSampler *isb)
+        -:  156:{
+    #####:  157:    this->scale = scale;
+    #####:  158:    this->swh   = true;
+        -:  159:
+    #####:  160:    setDirection(direction);
+    #####:  161:    setImageSampler(isb);
+    %%%%%:  161-block  0
+    %%%%%:  161-block  1
+    %%%%%:  161-block  2
+        -:  162:}
+        -:  163:
+        -:  164:PIC_INLINE void FilterSampler1D::update(int size, int direction,
+        -:  165:                                        ImageSampler *isb)
+        -:  166:{
+        -:  167:    this->size = size;
+        -:  168:    this->swh  = false;
+        -:  169:
+        -:  170:    setDirection(direction);
+        -:  171:    setImageSampler(isb);
+        -:  172:}
+        -:  173:
+    #####:  174:PIC_INLINE void FilterSampler1D::setDirection(int direction = 0)
+        -:  175:{
+    #####:  176:    dirs[ direction      % 3] = 1;
+    #####:  177:    dirs[(direction + 1) % 3] = 0;
+    #####:  178:    dirs[(direction + 2) % 3] = 0;
+        -:  179:}
+        -:  180:
+    #####:  181:PIC_INLINE void FilterSampler1D::setImageSampler(ImageSampler *isb)
+        -:  182:{
+    #####:  183:    if(isb == NULL) {
+    %%%%%:  183-block  0
+    #####:  184:        if(this->isb == NULL) {
+    %%%%%:  184-block  0
+    %%%%%:  184-block  1
+    #####:  185:            this->isb = &isb_default;
+    %%%%%:  185-block  0
+    %%%%%:  185-block  1
+    %%%%%:  185-block  2
+        -:  186:        }
+        -:  187:    } else {
+    #####:  188:        this->isb = isb;
+    %%%%%:  188-block  0
+    %%%%%:  188-block  1
+    %%%%%:  188-block  2
+        -:  189:    }
+        -:  190:}
+        -:  191:
+    #####:  192:PIC_INLINE void FilterSampler1D::ProcessBBox(Image *dst, ImageVec src,
+        -:  193:        BBox *box)
+        -:  194:{
+    #####:  195:    float width1f  = float(box->width  - 1);
+    #####:  196:    float height1f = float(box->height - 1);
+        -:  197:
+    #####:  198:    for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  198-block  0
+    %%%%%:  198-block  1
+    %%%%%:  198-block  2
+    #####:  199:        float y = float(j) / height1f;
+        -:  200:
+    #####:  201:        for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  201-block  0
+    %%%%%:  201-block  1
+    #####:  202:            float x = float(i) / width1f;
+        -:  203:
+    #####:  204:            float *tmp_data = (*dst)(i, j);
+    %%%%%:  204-block  0
+    #####:  205:            isb->SampleImage(src[0], x, y, tmp_data);
+    %%%%%:  205-block  0
+        -:  206:        }
+        -:  207:    }
+    #####:  208:}
+        -:  209:
+        -:  210:} // end namespace pic
+        -:  211:
+        -:  212:#endif /* PIC_FILTERING_FILTER_SAMPLER_1D_HPP */
+        -:  213:

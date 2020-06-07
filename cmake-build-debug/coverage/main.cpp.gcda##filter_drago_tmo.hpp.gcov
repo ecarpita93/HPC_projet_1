@@ -1,0 +1,151 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_drago_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_DRAGO_TMO_HPP
+        -:   19:#define PIC_FILTERING_FILTER_DRAGO_TMO_HPP
+        -:   20:
+        -:   21:#include "../util/array.hpp"
+        -:   22:#include "../filtering/filter.hpp"
+        -:   23:#include "../filtering/filter_luminance.hpp"
+        -:   24:
+        -:   25:namespace pic {
+        -:   26:
+        -:   27:/**
+        -:   28: * @brief The FilterDragoTMO class
+        -:   29: */
+        -:   30:class FilterDragoTMO: public Filter
+        -:   31:{
+        -:   32:protected:
+        -:   33:    float constant1, constant2, Lw_Max_scaled, Lw_a_scaled;
+        -:   34:    float b, Ld_Max, Lw_Max, Lw_a;
+        -:   35:
+        -:   36:    /**
+        -:   37:     * @brief ProcessBBox
+        -:   38:     * @param dst
+        -:   39:     * @param src
+        -:   40:     * @param box
+        -:   41:     */
+        -:   42:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   43:
+        -:   44:public:
+        -:   45:    /**
+        -:   46:     * @brief FilterDragoTMO
+        -:   47:     */
+        -:   48:    FilterDragoTMO();
+        -:   49:
+        -:   50:    /**
+        -:   51:     * @brief FilterDragoTMO
+        -:   52:     * @param Ld_Max
+        -:   53:     * @param b
+        -:   54:     * @param Lw_Max
+        -:   55:     * @param Lwa
+        -:   56:     */
+        -:   57:    FilterDragoTMO(float Ld_Max, float b, float Lw_Max, float Lwa);
+        -:   58:
+        -:   59:    /**
+        -:   60:     * @brief update
+        -:   61:     * @param Ld_Max
+        -:   62:     * @param b
+        -:   63:     * @param Lw_Max
+        -:   64:     * @param Lwa
+        -:   65:     */
+        -:   66:    void update(float Ld_Max, float b, float Lw_Max, float Lwa);
+        -:   67:};
+        -:   68:
+        -:   69:PIC_INLINE FilterDragoTMO::FilterDragoTMO() : Filter()
+        -:   70:{
+        -:   71:    update(100.0f, 0.95f, 1e6f, 0.5f);
+        -:   72:}
+        -:   73:
+        -:   74:PIC_INLINE FilterDragoTMO::FilterDragoTMO(float Ld_Max, float b, float Lw_Max,
+        -:   75:                               float Lw_a) : Filter()
+        -:   76:{
+        -:   77:    update(Ld_Max, b, Lw_Max, Lw_a);
+        -:   78:}
+        -:   79:
+    #####:   80:PIC_INLINE void FilterDragoTMO::update(float Ld_Max, float b, float Lw_Max,
+        -:   81:                            float Lw_a)
+        -:   82:{
+        -:   83:    //protected values are assigned/computed
+    #####:   84:    this->Ld_Max = (Ld_Max > 0.0f) ? Ld_Max : 100.0f;
+    %%%%%:   84-block  0
+    #####:   85:    this->b = (b > 0.0f) ? b : 0.95f;
+    %%%%%:   85-block  0
+    #####:   86:    this->Lw_Max = (Lw_Max > 0.0f) ? Lw_Max : 1e6f;
+    %%%%%:   86-block  0
+    #####:   87:    this->Lw_a = (Lw_a > 0.0f) ? Lw_a : 0.5f;
+    %%%%%:   87-block  0
+        -:   88:
+        -:   89:    //constants
+    #####:   90:    Lw_a_scaled   = this->Lw_a / powf(1.0f + b - 0.85f, 5.0f);
+    #####:   91:    Lw_Max_scaled = this->Lw_Max / Lw_a_scaled;
+        -:   92:
+    #####:   93:    constant1 = logf(b) / logf(0.5f);
+    #####:   94:    constant2 = (Ld_Max / 100.0f) / (log10f(1.0f + Lw_Max_scaled));
+    #####:   95:}
+        -:   96:
+    #####:   97:PIC_INLINE void FilterDragoTMO::ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   98:{
+    #####:   99:    int channels = src[0]->channels;
+    %%%%%:   99-block  0
+        -:  100:
+    #####:  101:    for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  101-block  0
+    %%%%%:  101-block  1
+    %%%%%:  101-block  2
+        -:  102:
+    #####:  103:        for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  103-block  0
+    %%%%%:  103-block  1
+        -:  104:
+    #####:  105:            float *dataIn  = (*src[0])(i, j);
+    %%%%%:  105-block  0
+    #####:  106:            float *dataLum = (*src[1])(i, j);
+    %%%%%:  106-block  0
+    #####:  107:            float *dataOut = (*dst   )(i, j);
+    %%%%%:  107-block  0
+        -:  108:
+    #####:  109:            if(dataLum[0] > 0.0f) {
+    %%%%%:  109-block  0
+    #####:  110:                float L_scaled = dataLum[0] / Lw_a_scaled;
+        -:  111:
+    #####:  112:                float tmp = powf((L_scaled / Lw_Max_scaled), constant1);
+    #####:  113:                float Ld = constant2 * logf(1.0f + L_scaled) / logf(2.0f + 8.0f * tmp);
+        -:  114:
+    #####:  115:                for(int k = 0; k < channels; k++) {
+    %%%%%:  115-block  0
+    %%%%%:  115-block  1
+    #####:  116:                    dataOut[k] = (dataIn[k] * Ld) / dataLum[0];
+    %%%%%:  116-block  0
+        -:  117:                }
+        -:  118:            } else {
+    #####:  119:                Array<float>::assign(0.0f, dataOut, src[0]->channels);
+    %%%%%:  119-block  0
+    %%%%%:  119-block  1
+        -:  120:            }
+        -:  121:        }
+        -:  122:    }
+    #####:  123:}
+        -:  124:
+        -:  125:} // end namespace pic
+        -:  126:
+        -:  127:#endif /* PIC_FILTERING_FILTER_DRAGO_TMO_HPP */
+        -:  128:

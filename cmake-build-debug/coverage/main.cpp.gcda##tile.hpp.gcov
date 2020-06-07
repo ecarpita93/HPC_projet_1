@@ -1,0 +1,98 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/tile.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_TILE_HPP
+        -:   19:#define PIC_UTIL_TILE_HPP
+        -:   20:
+        -:   21:#include <string>
+        -:   22:
+        -:   23:#include "../base.hpp"
+        -:   24:
+        -:   25:#include "../image.hpp"
+        -:   26:#include "../util/bbox.hpp"
+        -:   27:
+        -:   28:namespace pic {
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief The Tile class
+        -:   32: */
+        -:   33:class Tile
+        -:   34:{
+        -:   35:public:
+        -:   36:    int startX, startY;
+        -:   37:    int width,  height;
+        -:   38:    std::string name;
+        -:   39:    Image *tile;
+        -:   40:
+        -:   41:    /**
+        -:   42:     * @brief Tile
+        -:   43:     */
+       21:   44:    Tile()
+       21:   45:    {
+       21:   45-block  0
+    $$$$$:   45-block  1
+       21:   46:        startX = -1;
+       21:   47:        startY = -1;
+       21:   48:        width  = -1;
+       21:   49:        height = -1;
+       21:   50:        name = "";
+       21:   50-block  0
+       21:   51:        tile = NULL;
+       21:   52:    }
+       21:   52-block  0
+        -:   53:
+      612:   54:    ~Tile()
+     1224:   55:    {
+      612:   56:        if(tile != NULL) {
+      612:   56-block  0
+    #####:   57:            delete tile;
+    %%%%%:   57-block  0
+        -:   58:        }
+        -:   59:
+      612:   60:        tile = NULL;
+      612:   60-block  0
+      612:   61:    }
+        -:   62:
+        -:   63:    /**
+        -:   64:     * @brief getBBox
+        -:   65:     * @param img_width
+        -:   66:     * @param img_height
+        -:   67:     * @return
+        -:   68:     */
+      210:   69:    BBox getBBox(int img_width, int img_height)
+        -:   70:    {
+      210:   71:        BBox ret;
+      210:   71-block  0
+      210:   72:        ret.setBox(startX,
+      210:   73:                   startX + width,
+        -:   74:                   startY,
+      210:   75:                   startY + height,
+      210:   75-block  0
+        -:   76:                    0, 1, img_width, img_height, 1);
+      210:   77:        return ret;
+      210:   77-block  0
+        -:   78:    }
+        -:   79:};
+        -:   80:
+        -:   81:} // end namespace pic
+        -:   82:
+        -:   83:#endif /* PIC_UTIL_TILE_HPP */
+        -:   84:

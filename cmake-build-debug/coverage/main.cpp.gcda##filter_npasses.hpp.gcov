@@ -1,0 +1,458 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_npasses.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_NPASSES_HPP
+        -:   19:#define PIC_FILTERING_FILTER_NPASSES_HPP
+        -:   20:
+        -:   21:#include "../util/std_util.hpp"
+        -:   22:
+        -:   23:#include "../filtering/filter.hpp"
+        -:   24:
+        -:   25:namespace pic {
+        -:   26:
+        -:   27:/**
+        -:   28: * @brief The FilterNPasses class
+        -:   29: */
+        -:   30:class FilterNPasses: public Filter
+        -:   31:{
+        -:   32:protected:
+        -:   33:    Image *imgAllocated;
+        -:   34:    Image *imgTmpSame[2];
+        -:   35:    ImageVec imgTmp;
+        -:   36:
+        -:   37:    /**
+        -:   38:     * @brief PreProcess
+        -:   39:     * @param imgIn
+        -:   40:     * @param imgOut
+        -:   41:     */
+    #####:   42:    virtual void PreProcess(ImageVec imgIn, Image *imgOut){}
+        -:   43:
+        -:   44:    /**
+        -:   45:     * @brief setupAuxNGen
+        -:   46:     * @param imgIn
+        -:   47:     * @param imgOut
+        -:   48:     * @return
+        -:   49:     */
+        -:   50:    Image *setupAuxNGen(ImageVec imgIn, Image *imgOut);
+        -:   51:
+        -:   52:    /**
+        -:   53:     * @brief setupAuxNSame
+        -:   54:     * @param imgIn
+        -:   55:     * @param imgOut
+        -:   56:     * @return
+        -:   57:     */
+        -:   58:    Image *setupAuxNSame(ImageVec imgIn, Image *imgOut);
+        -:   59:
+        -:   60:    /**
+        -:   61:     * @brief getFilter
+        -:   62:     * @param i
+        -:   63:     * @return
+        -:   64:     */
+        -:   65:    virtual Filter* getFilter(int i);
+        -:   66:
+        -:   67:    /**
+        -:   68:     * @brief getIterations
+        -:   69:     * @return
+        -:   70:     */
+        -:   71:    virtual int getIterations();
+        -:   72:
+        -:   73:    /**
+        -:   74:     * @brief release
+        -:   75:     */
+        -:   76:    void release();
+        -:   77:
+        -:   78:    /**
+        -:   79:     * @brief ProcessGen
+        -:   80:     * @param imgIn
+        -:   81:     * @param imgOut
+        -:   82:     * @param parallel
+        -:   83:     * @return
+        -:   84:     */
+        -:   85:    Image *ProcessGen(ImageVec imgIn, Image *imgOut, bool parallel);
+        -:   86:
+        -:   87:    /**
+        -:   88:     * @brief ProcessSame
+        -:   89:     * @param imgIn
+        -:   90:     * @param imgOut
+        -:   91:     * @param parallel
+        -:   92:     * @return
+        -:   93:     */
+        -:   94:    Image *ProcessSame(ImageVec imgIn, Image *imgOut, bool parallel);
+        -:   95:
+        -:   96:public:
+        -:   97:
+        -:   98:    /**
+        -:   99:     * @brief FilterNPasses
+        -:  100:     */
+        -:  101:    FilterNPasses();
+        -:  102:
+        -:  103:    ~FilterNPasses();
+        -:  104:
+        -:  105:    /**
+        -:  106:     * @brief OutputSize
+        -:  107:     * @param imgIn
+        -:  108:     * @param width
+        -:  109:     * @param height
+        -:  110:     * @param channels
+        -:  111:     * @param frames
+        -:  112:     */
+        -:  113:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames);
+        -:  114:
+        -:  115:    /**
+        -:  116:     * @brief Process
+        -:  117:     * @param imgIn
+        -:  118:     * @param imgOut
+        -:  119:     * @return
+        -:  120:     */
+        -:  121:    Image *Process(ImageVec imgIn, Image *imgOut);
+        -:  122:};
+        -:  123:
+    #####:  124:PIC_INLINE FilterNPasses::FilterNPasses() : Filter()
+    %%%%%:  124-block  0
+    %%%%%:  124-block  1
+    %%%%%:  124-block  2
+    %%%%%:  124-block  3
+        -:  125:{
+    #####:  126:    imgAllocated = NULL;
+        -:  127:
+    #####:  128:    for(int i = 0; i < 2; i++) {
+    %%%%%:  128-block  0
+    %%%%%:  128-block  1
+    %%%%%:  128-block  2
+    %%%%%:  128-block  3
+    %%%%%:  128-block  4
+    %%%%%:  128-block  5
+    %%%%%:  128-block  6
+    %%%%%:  128-block  7
+    #####:  129:        imgTmpSame[i] = NULL;
+    %%%%%:  129-block  0
+    %%%%%:  129-block  1
+    %%%%%:  129-block  2
+    %%%%%:  129-block  3
+        -:  130:    }
+        -:  131:
+    #####:  132:    imgTmp.clear();
+    %%%%%:  132-block  0
+    %%%%%:  132-block  1
+    %%%%%:  132-block  2
+    %%%%%:  132-block  3
+        -:  133:}
+        -:  134:
+    #####:  135:PIC_INLINE FilterNPasses::~FilterNPasses()
+    %%%%%:  135-block  0
+        -:  136:{
+    #####:  137:    release();
+    %%%%%:  137-block  0
+    #####:  138:}
+        -:  139:
+    #####:  140:PIC_INLINE void FilterNPasses::release()
+        -:  141:{
+    #####:  142:    if(imgAllocated != NULL) {
+    %%%%%:  142-block  0
+    #####:  143:        delete imgAllocated;
+    %%%%%:  143-block  0
+    #####:  144:        imgAllocated = NULL;
+        -:  145:    }
+        -:  146:
+    #####:  147:    imgTmpSame[0] = NULL;
+    #####:  148:    imgTmpSame[1] = NULL;
+        -:  149:
+    #####:  150:    stdVectorClear<Image>(imgTmp);
+    %%%%%:  150-block  0
+    #####:  151:}
+        -:  152:
+    #####:  153:PIC_INLINE Filter* FilterNPasses::getFilter(int i)
+        -:  154:{
+    #####:  155:    int j = i % filters.size();
+    #####:  156:    return filters[j];
+        -:  157:}
+        -:  158:
+    #####:  159:PIC_INLINE int FilterNPasses::getIterations()
+        -:  160:{
+    #####:  161:    return int(filters.size());
+        -:  162:}
+        -:  163:
+    #####:  164:PIC_INLINE void FilterNPasses::OutputSize(ImageVec imgIn, int &width, int &height, int &frames, int &channels)
+        -:  165:{
+    #####:  166:    Image *imgIn0 = new Image(imgIn[0], false);
+    %%%%%:  166-block  0
+    $$$$$:  166-block  1
+        -:  167:
+    #####:  168:    auto *tmp = imgIn[0];
+    %%%%%:  168-block  0
+    #####:  169:    imgIn[0] = imgIn0;
+        -:  170:
+    #####:  171:    int n = getIterations();
+        -:  172:
+    #####:  173:    for(int i = 0; i < n; i++) {
+    %%%%%:  173-block  0
+    %%%%%:  173-block  1
+    #####:  174:        auto flt_i = getFilter(i);
+    %%%%%:  174-block  0
+    #####:  175:        flt_i->changePass(i, n);
+    #####:  176:        flt_i->OutputSize(imgIn, width, height, channels, frames);
+        -:  177:
+    #####:  178:        imgIn0->width = width;
+    #####:  179:        imgIn0->height = height;
+    #####:  180:        imgIn0->channels = channels;
+    #####:  181:        imgIn0->frames = frames;
+    %%%%%:  181-block  0
+        -:  182:    }
+        -:  183:
+    #####:  184:    imgIn[0] = tmp;
+    %%%%%:  184-block  0
+        -:  185:
+    #####:  186:    delete imgIn0;
+    %%%%%:  186-block  0
+    #####:  187:}
+        -:  188:
+    #####:  189:PIC_INLINE Image *FilterNPasses::setupAuxNGen(ImageVec imgIn,
+        -:  190:        Image *imgOut)
+        -:  191:{   
+    #####:  192:    int width, height, frames, channels;
+    #####:  193:    OutputSize(imgIn, width, height, frames, channels);
+    %%%%%:  193-block  0
+    $$$$$:  193-block  1
+        -:  194:
+    #####:  195:    int n = getIterations();
+    %%%%%:  195-block  0
+        -:  196:
+    #####:  197:    if(imgTmp.empty()) {
+    #####:  198:        setToANullVector<Image>(imgTmp, n);
+    %%%%%:  198-block  0
+        -:  199:    } else {
+    #####:  200:        int tw, th, tf, tc;
+        -:  201:
+    #####:  202:        filters[0]->OutputSize(imgIn, tw, th, tf, tc);
+    %%%%%:  202-block  0
+    $$$$$:  202-block  1
+        -:  203:
+    #####:  204:        if(tw != imgTmp[0]->width ||
+    %%%%%:  204-block  0
+    %%%%%:  204-block  1
+    #####:  205:           th != imgTmp[0]->height ||
+    %%%%%:  205-block  0
+    %%%%%:  205-block  1
+    #####:  206:           tf != imgTmp[0]->frames ||
+    %%%%%:  206-block  0
+    %%%%%:  206-block  1
+    %%%%%:  206-block  2
+    #####:  207:           tc != imgTmp[0]->channels) {
+    %%%%%:  207-block  0
+        -:  208:
+    #####:  209:            stdVectorClear<Image>(imgTmp);
+    %%%%%:  209-block  0
+        -:  210:
+    #####:  211:            setToANullVector<Image>(imgTmp, n);
+    %%%%%:  211-block  0
+        -:  212:        }
+        -:  213:    }
+        -:  214:
+        -:  215:    //output
+    #####:  216:    if(imgOut == NULL) {
+    %%%%%:  216-block  0
+    #####:  217:        imgOut = new Image(frames, width, height, channels);
+    %%%%%:  217-block  0
+    $$$$$:  217-block  1
+        -:  218:    } else {
+    #####:  219:        if(imgOut->height != height ||
+    %%%%%:  219-block  0
+    #####:  220:           imgOut->width != width ||
+    %%%%%:  220-block  0
+    #####:  221:           imgOut->channels != channels ||
+    %%%%%:  221-block  0
+    #####:  222:           imgOut->frames != frames) {
+    %%%%%:  222-block  0
+    #####:  223:           imgOut = new Image(frames, width, height, channels);
+    %%%%%:  223-block  0
+    $$$$$:  223-block  1
+        -:  224:        }
+        -:  225:    }
+        -:  226:
+    #####:  227:    return imgOut;
+    %%%%%:  227-block  0
+        -:  228:}
+        -:  229:
+    #####:  230:PIC_INLINE Image *FilterNPasses::setupAuxNSame(ImageVec imgIn,
+        -:  231:        Image *imgOut)
+        -:  232:{
+    #####:  233:    if(imgOut == NULL) {
+    %%%%%:  233-block  0
+    #####:  234:        imgOut = imgIn[0]->allocateSimilarOne();
+    %%%%%:  234-block  0
+        -:  235:    } else {
+    #####:  236:        if(!imgOut->isSimilarType(imgIn[0])) {
+    %%%%%:  236-block  0
+    #####:  237:            imgOut = imgIn[0]->allocateSimilarOne();
+    %%%%%:  237-block  0
+        -:  238:        }
+        -:  239:    }
+        -:  240:
+    #####:  241:    if(imgAllocated == NULL) {
+    %%%%%:  241-block  0
+    #####:  242:        imgAllocated = imgIn[0]->allocateSimilarOne();
+    %%%%%:  242-block  0
+        -:  243:    } else {
+    #####:  244:        if(!imgAllocated->isSimilarType(imgIn[0])) {
+    %%%%%:  244-block  0
+    #####:  245:            delete imgAllocated;
+    %%%%%:  245-block  0
+    #####:  246:            imgAllocated = imgIn[0]->allocateSimilarOne();
+        -:  247:        }
+        -:  248:    }
+        -:  249:
+    #####:  250:    if((getIterations() % 2) == 0) {
+    %%%%%:  250-block  0
+    #####:  251:        imgTmpSame[0] = imgAllocated;
+    #####:  252:        imgTmpSame[1] = imgOut;
+    %%%%%:  252-block  0
+        -:  253:    } else {
+    #####:  254:        imgTmpSame[0] = imgOut;
+    #####:  255:        imgTmpSame[1] = imgAllocated;
+    %%%%%:  255-block  0
+        -:  256:    }
+        -:  257:
+    #####:  258:    return imgOut;
+        -:  259:}
+        -:  260:
+    #####:  261:PIC_INLINE Image *FilterNPasses::ProcessGen(ImageVec imgIn, Image *imgOut,
+        -:  262:        bool parallel = false)
+        -:  263:{
+    #####:  264:    imgOut = setupAuxNGen(imgIn, imgOut);
+    %%%%%:  264-block  0
+    %%%%%:  264-block  1
+    $$$$$:  264-block  2
+        -:  265:
+    #####:  266:    int n = getIterations();
+    %%%%%:  266-block  0
+    #####:  267:    int n2 = n - 1;
+        -:  268:    
+    #####:  269:    for(int i = 0; i < n2; i++) {
+    %%%%%:  269-block  0
+    %%%%%:  269-block  1
+    #####:  270:        auto flt_i = getFilter(i);
+    %%%%%:  270-block  0
+    #####:  271:        flt_i->changePass(i, n);
+        -:  272:
+    #####:  273:        imgTmp[i] = flt_i->Process(imgIn, imgTmp[i]);
+    %%%%%:  273-block  0
+    $$$$$:  273-block  1
+        -:  274:
+    #####:  275:        imgIn[0] = imgTmp[i];
+    %%%%%:  275-block  0
+        -:  276:    }
+        -:  277:
+    #####:  278:    auto flt_n = getFilter(n2);
+    %%%%%:  278-block  0
+    #####:  279:    flt_n->changePass(n2, n);
+        -:  280:
+    #####:  281:    imgOut = filters[n2]->Process(imgIn, imgOut);
+    %%%%%:  281-block  0
+        -:  282:
+    #####:  283:    return imgOut;
+    %%%%%:  283-block  0
+        -:  284:}
+        -:  285:
+    #####:  286:PIC_INLINE Image *FilterNPasses::ProcessSame(ImageVec imgIn, Image *imgOut,
+        -:  287:        bool parallel = false)
+        -:  288:{
+        -:  289:    //setup
+    #####:  290:    imgOut = setupAuxNSame(imgIn, imgOut);
+    %%%%%:  290-block  0
+    %%%%%:  290-block  1
+    $$$$$:  290-block  2
+        -:  291:
+    #####:  292:    int n = getIterations();
+    %%%%%:  292-block  0
+    #####:  293:    auto flt_0 = getFilter(0);
+    #####:  294:    flt_0->changePass(0, n);
+        -:  295:
+    #####:  296:    flt_0->Process(imgIn, imgTmpSame[0]);
+    $$$$$:  296-block  0
+        -:  297:
+    #####:  298:    for(int i = 1; i < n; i++) {
+    %%%%%:  298-block  0
+    %%%%%:  298-block  1
+    #####:  299:        auto flt_i = getFilter(i);
+    %%%%%:  299-block  0
+    #####:  300:        flt_i->changePass(i, n);
+        -:  301:
+    #####:  302:        imgIn[0] = imgTmpSame[(i + 1) % 2];
+        -:  303:
+    #####:  304:        flt_i->Process(imgIn, imgTmpSame[i % 2]);
+    %%%%%:  304-block  0
+        -:  305:    }
+        -:  306:
+    #####:  307:    return imgOut;
+    %%%%%:  307-block  0
+        -:  308:}
+        -:  309:
+    #####:  310:PIC_INLINE Image *FilterNPasses::Process(ImageVec imgIn, 
+        -:  311:        Image *imgOut)
+        -:  312:{
+    #####:  313:    if(imgIn.empty() || filters.empty()) {
+    %%%%%:  313-block  0
+    %%%%%:  313-block  1
+        -:  314:        return imgOut;
+        -:  315:    }
+        -:  316:
+    #####:  317:    PreProcess(imgIn, imgOut);
+    %%%%%:  317-block  0
+    $$$$$:  317-block  1
+        -:  318:
+    #####:  319:    int width, height, frames, channels;
+    #####:  320:    OutputSize(imgIn, width, height, frames, channels);
+    %%%%%:  320-block  0
+    $$$$$:  320-block  1
+        -:  321:
+    #####:  322:    bool bSame = (imgIn[0]->width == width) &&
+    %%%%%:  322-block  0
+    %%%%%:  322-block  1
+    #####:  323:                 (imgIn[0]->height == height) &&
+    %%%%%:  323-block  0
+    %%%%%:  323-block  1
+    #####:  324:                 (imgIn[0]->frames == frames) &&
+    %%%%%:  324-block  0
+    %%%%%:  324-block  1
+    %%%%%:  324-block  2
+    #####:  325:                 (imgIn[0]->channels == channels);
+    %%%%%:  325-block  0
+        -:  326:
+    #####:  327:    if(bSame) {
+    #####:  328:        imgOut = ProcessSame(imgIn, imgOut);
+    %%%%%:  328-block  0
+    %%%%%:  328-block  1
+    %%%%%:  328-block  2
+    $$$$$:  328-block  3
+        -:  329:    } else {
+    #####:  330:        imgOut = ProcessGen(imgIn, imgOut);
+    %%%%%:  330-block  0
+    %%%%%:  330-block  1
+    %%%%%:  330-block  2
+        -:  331:    }
+        -:  332:
+        -:  333:    return imgOut;
+        -:  334:}
+        -:  335:
+        -:  336:} // end namespace pic
+        -:  337:
+        -:  338:#endif /* PIC_FILTERING_FILTER_NPASSES_HPP */
+        -:  339:

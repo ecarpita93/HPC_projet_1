@@ -1,0 +1,79 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/colors/color_conv_rgb_to_xyz.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_COLORS_COLOR_CONV_RGB_TO_XYZ_HPP
+        -:   19:#define PIC_COLORS_COLOR_CONV_RGB_TO_XYZ_HPP
+        -:   20:
+        -:   21:#include "../colors/color_conv.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:const float mtxRGBtoXYZ[] = {	0.4124f, 0.3576f, 0.1805f,
+        -:   26:                                0.2126f, 0.7152f, 0.0722f,
+        -:   27:                                0.0193f, 0.1192f, 0.9505f
+        -:   28:                            };
+        -:   29:
+        -:   30:const float mtxXYZtoRGB[] = {	3.2406f,   -1.5372f,   -0.4986f,
+        -:   31:                               -0.9689f,    1.8758f,    0.0415f,
+        -:   32:                                0.0557f,   -0.2040f,    1.0570f
+        -:   33:                            };
+        -:   34:
+        -:   35:/**
+        -:   36: * @brief The ColorConvRGBtoXYZ class
+        -:   37: */
+        -:   38:class ColorConvRGBtoXYZ: public ColorConv
+        -:   39:{
+        -:   40:public:
+        -:   41:
+        -:   42:    /**
+        -:   43:     * @brief ColorConvRGBtoXYZ
+        -:   44:     */
+        -:   45:    ColorConvRGBtoXYZ()
+        -:   46:    {
+        -:   47:    }
+        -:   48:
+        -:   49:    /**
+        -:   50:     * @brief direct
+        -:   51:     * @param colIn
+        -:   52:     * @param colOut
+        -:   53:     */
+    #####:   54:    void direct(float *colIn, float *colOut)
+        -:   55:    {
+    #####:   56:        apply(mtxRGBtoXYZ, colIn, colOut);
+    %%%%%:   56-block  0
+    #####:   57:    }
+        -:   58:
+        -:   59:    /**
+        -:   60:     * @brief inverse
+        -:   61:     * @param colIn
+        -:   62:     * @param colOut
+        -:   63:     */
+    #####:   64:    void inverse(float *colIn, float *colOut)
+        -:   65:    {
+    #####:   66:        apply(mtxXYZtoRGB, colIn, colOut);
+    %%%%%:   66-block  0
+    #####:   67:    }
+        -:   68:};
+        -:   69:
+        -:   70:} // end namespace pic
+        -:   71:
+        -:   72:#endif /* PIC_COLORS_COLOR_SPACE_XYZ_HPP */
+        -:   73:

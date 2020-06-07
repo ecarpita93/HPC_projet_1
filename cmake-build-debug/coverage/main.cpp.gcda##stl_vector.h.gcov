@@ -1,0 +1,5216 @@
+        -:    0:Source:/usr/include/c++/9/bits/stl_vector.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// Vector implementation -*- C++ -*-
+        -:    2:
+        -:    3:// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+        -:    4://
+        -:    5:// This file is part of the GNU ISO C++ Library.  This library is free
+        -:    6:// software; you can redistribute it and/or modify it under the
+        -:    7:// terms of the GNU General Public License as published by the
+        -:    8:// Free Software Foundation; either version 3, or (at your option)
+        -:    9:// any later version.
+        -:   10:
+        -:   11:// This library is distributed in the hope that it will be useful,
+        -:   12:// but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   13:// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        -:   14:// GNU General Public License for more details.
+        -:   15:
+        -:   16:// Under Section 7 of GPL version 3, you are granted additional
+        -:   17:// permissions described in the GCC Runtime Library Exception, version
+        -:   18:// 3.1, as published by the Free Software Foundation.
+        -:   19:
+        -:   20:// You should have received a copy of the GNU General Public License and
+        -:   21:// a copy of the GCC Runtime Library Exception along with this program;
+        -:   22:// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+        -:   23:// <http://www.gnu.org/licenses/>.
+        -:   24:
+        -:   25:/*
+        -:   26: *
+        -:   27: * Copyright (c) 1994
+        -:   28: * Hewlett-Packard Company
+        -:   29: *
+        -:   30: * Permission to use, copy, modify, distribute and sell this software
+        -:   31: * and its documentation for any purpose is hereby granted without fee,
+        -:   32: * provided that the above copyright notice appear in all copies and
+        -:   33: * that both that copyright notice and this permission notice appear
+        -:   34: * in supporting documentation.  Hewlett-Packard Company makes no
+        -:   35: * representations about the suitability of this software for any
+        -:   36: * purpose.  It is provided "as is" without express or implied warranty.
+        -:   37: *
+        -:   38: *
+        -:   39: * Copyright (c) 1996
+        -:   40: * Silicon Graphics Computer Systems, Inc.
+        -:   41: *
+        -:   42: * Permission to use, copy, modify, distribute and sell this software
+        -:   43: * and its documentation for any purpose is hereby granted without fee,
+        -:   44: * provided that the above copyright notice appear in all copies and
+        -:   45: * that both that copyright notice and this permission notice appear
+        -:   46: * in supporting documentation.  Silicon Graphics makes no
+        -:   47: * representations about the suitability of this  software for any
+        -:   48: * purpose.  It is provided "as is" without express or implied warranty.
+        -:   49: */
+        -:   50:
+        -:   51:/** @file bits/stl_vector.h
+        -:   52: *  This is an internal header file, included by other library headers.
+        -:   53: *  Do not attempt to use it directly. @headername{vector}
+        -:   54: */
+        -:   55:
+        -:   56:#ifndef _STL_VECTOR_H
+        -:   57:#define _STL_VECTOR_H 1
+        -:   58:
+        -:   59:#include <bits/stl_iterator_base_funcs.h>
+        -:   60:#include <bits/functexcept.h>
+        -:   61:#include <bits/concept_check.h>
+        -:   62:#if __cplusplus >= 201103L
+        -:   63:#include <initializer_list>
+        -:   64:#endif
+        -:   65:
+        -:   66:#include <debug/assertions.h>
+        -:   67:
+        -:   68:#if _GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR
+        -:   69:extern "C" void
+        -:   70:__sanitizer_annotate_contiguous_container(const void*, const void*,
+        -:   71:					  const void*, const void*);
+        -:   72:#endif
+        -:   73:
+        -:   74:namespace std _GLIBCXX_VISIBILITY(default)
+        -:   75:{
+        -:   76:_GLIBCXX_BEGIN_NAMESPACE_VERSION
+        -:   77:_GLIBCXX_BEGIN_NAMESPACE_CONTAINER
+        -:   78:
+        -:   79:  /// See bits/stl_deque.h's _Deque_base for an explanation.
+        -:   80:  template<typename _Tp, typename _Alloc>
+        -:   81:    struct _Vector_base
+        -:   82:    {
+        -:   83:      typedef typename __gnu_cxx::__alloc_traits<_Alloc>::template
+        -:   84:	rebind<_Tp>::other _Tp_alloc_type;
+        -:   85:      typedef typename __gnu_cxx::__alloc_traits<_Tp_alloc_type>::pointer
+        -:   86:       	pointer;
+        -:   87:
+        -:   88:      struct _Vector_impl_data
+        -:   89:      {
+        -:   90:	pointer _M_start;
+        -:   91:	pointer _M_finish;
+        -:   92:	pointer _M_end_of_storage;
+        -:   93:
+     286*:   94:	_Vector_impl_data() _GLIBCXX_NOEXCEPT
+    #####:   95:	: _M_start(), _M_finish(), _M_end_of_storage()
+    %%%%%:   95-block  0
+    %%%%%:   95-block  1
+        -:   96:	{ }
+        -:   97:
+        -:   98:#if __cplusplus >= 201103L
+       48:   99:	_Vector_impl_data(_Vector_impl_data&& __x) noexcept
+       48:  100:	: _M_start(__x._M_start), _M_finish(__x._M_finish),
+       48:  101:	  _M_end_of_storage(__x._M_end_of_storage)
+       24:  102:	{ __x._M_start = __x._M_finish = __x._M_end_of_storage = pointer(); }
+       24:  102-block  0
+        -:  103:#endif
+        -:  104:
+        -:  105:	void
+    #####:  106:	_M_copy_data(_Vector_impl_data const& __x) _GLIBCXX_NOEXCEPT
+        -:  107:	{
+    #####:  108:	  _M_start = __x._M_start;
+    #####:  109:	  _M_finish = __x._M_finish;
+    #####:  110:	  _M_end_of_storage = __x._M_end_of_storage;
+        -:  111:	}
+        -:  112:
+        -:  113:	void
+    #####:  114:	_M_swap_data(_Vector_impl_data& __x) _GLIBCXX_NOEXCEPT
+        -:  115:	{
+        -:  116:	  // Do not use std::swap(_M_start, __x._M_start), etc as it loses
+        -:  117:	  // information used by TBAA.
+    #####:  118:	  _Vector_impl_data __tmp;
+    #####:  119:	  __tmp._M_copy_data(*this);
+    #####:  120:	  _M_copy_data(__x);
+    #####:  121:	  __x._M_copy_data(__tmp);
+        -:  122:	}
+        -:  123:      };
+        -:  124:
+     319*:  125:      struct _Vector_impl
+        -:  126:	: public _Tp_alloc_type, public _Vector_impl_data
+        -:  127:      {
+      11*:  128:	_Vector_impl() _GLIBCXX_NOEXCEPT_IF(
+        -:  129:	    is_nothrow_default_constructible<_Tp_alloc_type>::value)
+      11*:  130:	: _Tp_alloc_type()
+    %%%%%:  130-block  0
+    %%%%%:  130-block  1
+    %%%%%:  130-block  2
+        1:  130-block  3
+    %%%%%:  130-block  4
+    %%%%%:  130-block  5
+    %%%%%:  130-block  6
+    %%%%%:  130-block  7
+    %%%%%:  130-block  8
+    %%%%%:  130-block  9
+    %%%%%:  130-block 10
+    %%%%%:  130-block 11
+    %%%%%:  130-block 12
+    %%%%%:  130-block 13
+    %%%%%:  130-block 14
+    %%%%%:  130-block 15
+    %%%%%:  130-block 16
+    %%%%%:  130-block 17
+    %%%%%:  130-block 18
+    %%%%%:  130-block 19
+    %%%%%:  130-block 20
+    %%%%%:  130-block 21
+    %%%%%:  130-block 22
+    %%%%%:  130-block 23
+        1:  130-block 24
+        1:  130-block 25
+    %%%%%:  130-block 26
+        1:  130-block 27
+    %%%%%:  130-block 28
+    %%%%%:  130-block 29
+    %%%%%:  130-block 30
+        1:  130-block 31
+    %%%%%:  130-block 32
+        3:  130-block 33
+    %%%%%:  130-block 34
+    %%%%%:  130-block 35
+        2:  130-block 36
+    %%%%%:  130-block 37
+    %%%%%:  130-block 38
+    %%%%%:  130-block 39
+    %%%%%:  130-block 40
+        -:  131:	{ }
+        -:  132:
+     275*:  133:	_Vector_impl(_Tp_alloc_type const& __a) _GLIBCXX_NOEXCEPT
+     275*:  134:	: _Tp_alloc_type(__a)
+        -:  135:	{ }
+        -:  136:
+        -:  137:#if __cplusplus >= 201103L
+        -:  138:	// Not defaulted, to enforce noexcept(true) even when
+        -:  139:	// !is_nothrow_move_constructible<_Tp_alloc_type>.
+       48:  140:	_Vector_impl(_Vector_impl&& __x) noexcept
+       48:  141:	: _Tp_alloc_type(std::move(__x)), _Vector_impl_data(std::move(__x))
+        -:  142:	{ }
+        -:  143:
+        -:  144:	_Vector_impl(_Tp_alloc_type&& __a) noexcept
+        -:  145:	: _Tp_alloc_type(std::move(__a))
+        -:  146:	{ }
+        -:  147:
+        -:  148:	_Vector_impl(_Tp_alloc_type&& __a, _Vector_impl&& __rv) noexcept
+        -:  149:	: _Tp_alloc_type(std::move(__a)), _Vector_impl_data(std::move(__rv))
+        -:  150:	{ }
+        -:  151:#endif
+        -:  152:
+        -:  153:#if _GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR
+        -:  154:	template<typename = _Tp_alloc_type>
+        -:  155:	  struct _Asan
+        -:  156:	  {
+        -:  157:	    typedef typename __gnu_cxx::__alloc_traits<_Tp_alloc_type>
+        -:  158:	      ::size_type size_type;
+        -:  159:
+        -:  160:	    static void _S_shrink(_Vector_impl&, size_type) { }
+        -:  161:	    static void _S_on_dealloc(_Vector_impl&) { }
+        -:  162:
+        -:  163:	    typedef _Vector_impl& _Reinit;
+        -:  164:
+        -:  165:	    struct _Grow
+        -:  166:	    {
+        -:  167:	      _Grow(_Vector_impl&, size_type) { }
+        -:  168:	      void _M_grew(size_type) { }
+        -:  169:	    };
+        -:  170:	  };
+        -:  171:
+        -:  172:	// Enable ASan annotations for memory obtained from std::allocator.
+        -:  173:	template<typename _Up>
+        -:  174:	  struct _Asan<allocator<_Up> >
+        -:  175:	  {
+        -:  176:	    typedef typename __gnu_cxx::__alloc_traits<_Tp_alloc_type>
+        -:  177:	      ::size_type size_type;
+        -:  178:
+        -:  179:	    // Adjust ASan annotation for [_M_start, _M_end_of_storage) to
+        -:  180:	    // mark end of valid region as __curr instead of __prev.
+        -:  181:	    static void
+        -:  182:	    _S_adjust(_Vector_impl& __impl, pointer __prev, pointer __curr)
+        -:  183:	    {
+        -:  184:	      __sanitizer_annotate_contiguous_container(__impl._M_start,
+        -:  185:		  __impl._M_end_of_storage, __prev, __curr);
+        -:  186:	    }
+        -:  187:
+        -:  188:	    static void
+        -:  189:	    _S_grow(_Vector_impl& __impl, size_type __n)
+        -:  190:	    { _S_adjust(__impl, __impl._M_finish, __impl._M_finish + __n); }
+        -:  191:
+        -:  192:	    static void
+        -:  193:	    _S_shrink(_Vector_impl& __impl, size_type __n)
+        -:  194:	    { _S_adjust(__impl, __impl._M_finish + __n, __impl._M_finish); }
+        -:  195:
+        -:  196:	    static void
+        -:  197:	    _S_on_dealloc(_Vector_impl& __impl)
+        -:  198:	    {
+        -:  199:	      if (__impl._M_start)
+        -:  200:		_S_adjust(__impl, __impl._M_finish, __impl._M_end_of_storage);
+        -:  201:	    }
+        -:  202:
+        -:  203:	    // Used on reallocation to tell ASan unused capacity is invalid.
+        -:  204:	    struct _Reinit
+        -:  205:	    {
+        -:  206:	      explicit _Reinit(_Vector_impl& __impl) : _M_impl(__impl)
+        -:  207:	      {
+        -:  208:		// Mark unused capacity as valid again before deallocating it.
+        -:  209:		_S_on_dealloc(_M_impl);
+        -:  210:	      }
+        -:  211:
+        -:  212:	      ~_Reinit()
+        -:  213:	      {
+        -:  214:		// Mark unused capacity as invalid after reallocation.
+        -:  215:		if (_M_impl._M_start)
+        -:  216:		  _S_adjust(_M_impl, _M_impl._M_end_of_storage,
+        -:  217:			    _M_impl._M_finish);
+        -:  218:	      }
+        -:  219:
+        -:  220:	      _Vector_impl& _M_impl;
+        -:  221:
+        -:  222:#if __cplusplus >= 201103L
+        -:  223:	      _Reinit(const _Reinit&) = delete;
+        -:  224:	      _Reinit& operator=(const _Reinit&) = delete;
+        -:  225:#endif
+        -:  226:	    };
+        -:  227:
+        -:  228:	    // Tell ASan when unused capacity is initialized to be valid.
+        -:  229:	    struct _Grow
+        -:  230:	    {
+        -:  231:	      _Grow(_Vector_impl& __impl, size_type __n)
+        -:  232:	      : _M_impl(__impl), _M_n(__n)
+        -:  233:	      { _S_grow(_M_impl, __n); }
+        -:  234:
+        -:  235:	      ~_Grow() { if (_M_n) _S_shrink(_M_impl, _M_n); }
+        -:  236:
+        -:  237:	      void _M_grew(size_type __n) { _M_n -= __n; }
+        -:  238:
+        -:  239:#if __cplusplus >= 201103L
+        -:  240:	      _Grow(const _Grow&) = delete;
+        -:  241:	      _Grow& operator=(const _Grow&) = delete;
+        -:  242:#endif
+        -:  243:	    private:
+        -:  244:	      _Vector_impl& _M_impl;
+        -:  245:	      size_type _M_n;
+        -:  246:	    };
+        -:  247:	  };
+        -:  248:
+        -:  249:#define _GLIBCXX_ASAN_ANNOTATE_REINIT \
+        -:  250:  typename _Base::_Vector_impl::template _Asan<>::_Reinit const \
+        -:  251:	__attribute__((__unused__)) __reinit_guard(this->_M_impl)
+        -:  252:#define _GLIBCXX_ASAN_ANNOTATE_GROW(n) \
+        -:  253:  typename _Base::_Vector_impl::template _Asan<>::_Grow \
+        -:  254:	__attribute__((__unused__)) __grow_guard(this->_M_impl, (n))
+        -:  255:#define _GLIBCXX_ASAN_ANNOTATE_GREW(n) __grow_guard._M_grew(n)
+        -:  256:#define _GLIBCXX_ASAN_ANNOTATE_SHRINK(n) \
+        -:  257:  _Base::_Vector_impl::template _Asan<>::_S_shrink(this->_M_impl, n)
+        -:  258:#define _GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC \
+        -:  259:  _Base::_Vector_impl::template _Asan<>::_S_on_dealloc(this->_M_impl)
+        -:  260:#else // ! (_GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR)
+        -:  261:#define _GLIBCXX_ASAN_ANNOTATE_REINIT
+        -:  262:#define _GLIBCXX_ASAN_ANNOTATE_GROW(n)
+        -:  263:#define _GLIBCXX_ASAN_ANNOTATE_GREW(n)
+        -:  264:#define _GLIBCXX_ASAN_ANNOTATE_SHRINK(n)
+        -:  265:#define _GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC
+        -:  266:#endif // _GLIBCXX_SANITIZE_STD_ALLOCATOR && _GLIBCXX_SANITIZE_VECTOR
+        -:  267:      };
+        -:  268:
+        -:  269:    public:
+        -:  270:      typedef _Alloc allocator_type;
+        -:  271:
+        -:  272:      _Tp_alloc_type&
+      48*:  273:      _M_get_Tp_allocator() _GLIBCXX_NOEXCEPT
+    %%%%%:  273-block  0
+    %%%%%:  273-block  1
+    %%%%%:  273-block  2
+    %%%%%:  273-block  3
+    %%%%%:  273-block  4
+    %%%%%:  273-block  5
+        3:  273-block  6
+    %%%%%:  273-block  7
+    %%%%%:  273-block  8
+    %%%%%:  273-block  9
+    %%%%%:  273-block 10
+    %%%%%:  273-block 11
+    %%%%%:  273-block 12
+    %%%%%:  273-block 13
+    %%%%%:  273-block 14
+    %%%%%:  273-block 15
+    %%%%%:  273-block 16
+    %%%%%:  273-block 17
+    %%%%%:  273-block 18
+    %%%%%:  273-block 19
+    %%%%%:  273-block 20
+    %%%%%:  273-block 21
+    %%%%%:  273-block 22
+    %%%%%:  273-block 23
+    %%%%%:  273-block 24
+    %%%%%:  273-block 25
+    %%%%%:  273-block 26
+       24:  273-block 27
+        8:  273-block 28
+        6:  273-block 29
+        3:  273-block 30
+    %%%%%:  273-block 31
+    %%%%%:  273-block 32
+        4:  273-block 33
+      55*:  274:      { return this->_M_impl; }
+    %%%%%:  274-block  0
+    %%%%%:  274-block  1
+    %%%%%:  274-block  2
+    $$$$$:  274-block  3
+    %%%%%:  274-block  4
+    %%%%%:  274-block  5
+    %%%%%:  274-block  6
+    %%%%%:  274-block  7
+    %%%%%:  274-block  8
+    %%%%%:  274-block  9
+    %%%%%:  274-block 10
+    %%%%%:  274-block 11
+       24:  274-block 12
+    $$$$$:  274-block 13
+    %%%%%:  274-block 14
+    $$$$$:  274-block 15
+    %%%%%:  274-block 16
+       11:  274-block 17
+    $$$$$:  274-block 18
+    %%%%%:  274-block 19
+    %%%%%:  274-block 20
+        -:  275:
+        -:  276:      const _Tp_alloc_type&
+     371*:  277:      _M_get_Tp_allocator() const _GLIBCXX_NOEXCEPT
+     371*:  278:      { return this->_M_impl; }
+        -:  279:
+        -:  280:      allocator_type
+    #####:  281:      get_allocator() const _GLIBCXX_NOEXCEPT
+    #####:  282:      { return allocator_type(_M_get_Tp_allocator()); }
+        -:  283:
+        -:  284:#if __cplusplus >= 201103L
+      11*:  285:      _Vector_base() = default;
+        -:  286:#else
+        -:  287:      _Vector_base() { }
+        -:  288:#endif
+        -:  289:
+    #####:  290:      _Vector_base(const allocator_type& __a) _GLIBCXX_NOEXCEPT
+    #####:  291:      : _M_impl(__a) { }
+        -:  292:
+        -:  293:      // Kept for ABI compatibility.
+        -:  294:#if !_GLIBCXX_INLINE_VERSION
+        -:  295:      _Vector_base(size_t __n)
+        -:  296:      : _M_impl()
+        -:  297:      { _M_create_storage(__n); }
+        -:  298:#endif
+        -:  299:
+     275*:  300:      _Vector_base(size_t __n, const allocator_type& __a)
+     275*:  301:      : _M_impl(__a)
+     275*:  302:      { _M_create_storage(__n); }
+        -:  303:
+        -:  304:#if __cplusplus >= 201103L
+       48:  305:      _Vector_base(_Vector_base&&) = default;
+        -:  306:
+        -:  307:      // Kept for ABI compatibility.
+        -:  308:# if !_GLIBCXX_INLINE_VERSION
+        -:  309:      _Vector_base(_Tp_alloc_type&& __a) noexcept
+        -:  310:      : _M_impl(std::move(__a)) { }
+        -:  311:
+        -:  312:      _Vector_base(_Vector_base&& __x, const allocator_type& __a)
+        -:  313:      : _M_impl(__a)
+        -:  314:      {
+        -:  315:	if (__x.get_allocator() == __a)
+        -:  316:	  this->_M_impl._M_swap_data(__x._M_impl);
+        -:  317:	else
+        -:  318:	  {
+        -:  319:	    size_t __n = __x._M_impl._M_finish - __x._M_impl._M_start;
+        -:  320:	    _M_create_storage(__n);
+        -:  321:	  }
+        -:  322:      }
+        -:  323:# endif
+        -:  324:
+        -:  325:      _Vector_base(const allocator_type& __a, _Vector_base&& __x)
+        -:  326:      : _M_impl(_Tp_alloc_type(__a), std::move(__x._M_impl))
+        -:  327:      { }
+        -:  328:#endif
+        -:  329:
+     319*:  330:      ~_Vector_base() _GLIBCXX_NOEXCEPT
+        -:  331:      {
+     633*:  332:	_M_deallocate(_M_impl._M_start,
+     319*:  333:		      _M_impl._M_end_of_storage - _M_impl._M_start);
+     319*:  334:      }
+        -:  335:
+        -:  336:    public:
+        -:  337:      _Vector_impl _M_impl;
+        -:  338:
+        -:  339:      pointer
+        -:  340:      _M_allocate(size_t __n)
+        -:  341:      {
+        -:  342:	typedef __gnu_cxx::__alloc_traits<_Tp_alloc_type> _Tr;
+        -:  343:	return __n != 0 ? _Tr::allocate(_M_impl, __n) : pointer();
+        -:  344:      }
+        -:  345:
+        -:  346:      void
+     367*:  347:      _M_deallocate(pointer __p, size_t __n)
+        -:  348:      {
+        -:  349:	typedef __gnu_cxx::__alloc_traits<_Tp_alloc_type> _Tr;
+      53*:  350:	if (__p)
+    %%%%%:  350-block  0
+    %%%%%:  350-block  1
+    %%%%%:  350-block  2
+    $$$$$:  350-block  3
+    %%%%%:  350-block  4
+        3:  350-block  5
+    %%%%%:  350-block  6
+    %%%%%:  350-block  7
+    %%%%%:  350-block  8
+    %%%%%:  350-block  9
+    %%%%%:  350-block 10
+    %%%%%:  350-block 11
+    %%%%%:  350-block 12
+    %%%%%:  350-block 13
+    %%%%%:  350-block 14
+    %%%%%:  350-block 15
+    %%%%%:  350-block 16
+    %%%%%:  350-block 17
+       24:  350-block 18
+    $$$$$:  350-block 19
+        8:  350-block 20
+        6:  350-block 21
+        3:  350-block 22
+    %%%%%:  350-block 23
+    %%%%%:  350-block 24
+    $$$$$:  350-block 25
+    %%%%%:  350-block 26
+        4:  350-block 27
+    $$$$$:  350-block 28
+    %%%%%:  350-block 29
+    %%%%%:  350-block 30
+    %%%%%:  350-block 31
+    %%%%%:  350-block 32
+    %%%%%:  350-block 33
+    %%%%%:  350-block 34
+    %%%%%:  350-block 35
+        1:  350-block 36
+    %%%%%:  350-block 37
+    %%%%%:  350-block 38
+    %%%%%:  350-block 39
+    %%%%%:  350-block 40
+    %%%%%:  350-block 41
+    %%%%%:  350-block 42
+        4:  350-block 43
+    %%%%%:  350-block 44
+    %%%%%:  350-block 45
+    %%%%%:  350-block 46
+    %%%%%:  350-block 47
+     635*:  351:	  _Tr::deallocate(_M_impl, __p, __n);
+       24:  351-block  0
+       24:  351-block  1
+    $$$$$:  351-block  2
+    %%%%%:  351-block  3
+    %%%%%:  351-block  4
+    %%%%%:  351-block  5
+    %%%%%:  351-block  6
+    %%%%%:  351-block  7
+    $$$$$:  351-block  8
+    $$$$$:  351-block  9
+    %%%%%:  351-block 10
+        2:  351-block 11
+    %%%%%:  351-block 12
+    %%%%%:  351-block 13
+    %%%%%:  351-block 14
+    %%%%%:  351-block 15
+    %%%%%:  351-block 16
+    %%%%%:  351-block 17
+    $$$$$:  351-block 18
+    $$$$$:  351-block 19
+    $$$$$:  351-block 20
+    %%%%%:  351-block 21
+    %%%%%:  351-block 22
+    %%%%%:  351-block 23
+    %%%%%:  351-block 24
+    %%%%%:  351-block 25
+    %%%%%:  351-block 26
+    %%%%%:  351-block 27
+    %%%%%:  351-block 28
+    %%%%%:  351-block 29
+    %%%%%:  351-block 30
+    %%%%%:  351-block 31
+    %%%%%:  351-block 32
+    %%%%%:  351-block 33
+       21:  351-block 34
+       24:  351-block 35
+    $$$$$:  351-block 36
+    $$$$$:  351-block 37
+        6:  351-block 38
+        3:  351-block 39
+        2:  351-block 40
+    %%%%%:  351-block 41
+    %%%%%:  351-block 42
+    %%%%%:  351-block 43
+    %%%%%:  351-block 44
+    $$$$$:  351-block 45
+    $$$$$:  351-block 46
+    %%%%%:  351-block 47
+    %%%%%:  351-block 48
+        3:  351-block 49
+        4:  351-block 50
+    $$$$$:  351-block 51
+    $$$$$:  351-block 52
+    %%%%%:  351-block 53
+    %%%%%:  351-block 54
+    %%%%%:  351-block 55
+        1:  351-block 56
+    $$$$$:  351-block 57
+    $$$$$:  351-block 58
+    $$$$$:  351-block 59
+    $$$$$:  351-block 60
+    $$$$$:  351-block 61
+    $$$$$:  351-block 62
+    $$$$$:  351-block 63
+    $$$$$:  351-block 64
+    %%%%%:  351-block 65
+       24:  351-block 66
+    $$$$$:  351-block 67
+    %%%%%:  351-block 68
+    %%%%%:  351-block 69
+        3:  351-block 70
+    %%%%%:  351-block 71
+    %%%%%:  351-block 72
+    %%%%%:  351-block 73
+    %%%%%:  351-block 74
+    %%%%%:  351-block 75
+    %%%%%:  351-block 76
+    $$$$$:  351-block 77
+    %%%%%:  351-block 78
+    %%%%%:  351-block 79
+    %%%%%:  351-block 80
+    %%%%%:  351-block 81
+    $$$$$:  351-block 82
+    $$$$$:  351-block 83
+    $$$$$:  351-block 84
+    %%%%%:  351-block 85
+    %%%%%:  351-block 86
+    %%%%%:  351-block 87
+    %%%%%:  351-block 88
+    $$$$$:  351-block 89
+    $$$$$:  351-block 90
+    $$$$$:  351-block 91
+    %%%%%:  351-block 92
+    %%%%%:  351-block 93
+    %%%%%:  351-block 94
+    %%%%%:  351-block 95
+    %%%%%:  351-block 96
+    %%%%%:  351-block 97
+    %%%%%:  351-block 98
+    %%%%%:  351-block 99
+    $$$$$:  351-block 100
+    $$$$$:  351-block 101
+    $$$$$:  351-block 102
+    $$$$$:  351-block 103
+    $$$$$:  351-block 104
+    $$$$$:  351-block 105
+    $$$$$:  351-block 106
+    %%%%%:  351-block 107
+    %%%%%:  351-block 108
+    %%%%%:  351-block 109
+    %%%%%:  351-block 110
+    $$$$$:  351-block 111
+    $$$$$:  351-block 112
+    $$$$$:  351-block 113
+    %%%%%:  351-block 114
+    %%%%%:  351-block 115
+    $$$$$:  351-block 116
+    %%%%%:  351-block 117
+    %%%%%:  351-block 118
+    $$$$$:  351-block 119
+    %%%%%:  351-block 120
+    %%%%%:  351-block 121
+    %%%%%:  351-block 122
+    %%%%%:  351-block 123
+    $$$$$:  351-block 124
+    $$$$$:  351-block 125
+    $$$$$:  351-block 126
+    %%%%%:  351-block 127
+    %%%%%:  351-block 128
+    %%%%%:  351-block 129
+    %%%%%:  351-block 130
+    $$$$$:  351-block 131
+    $$$$$:  351-block 132
+    $$$$$:  351-block 133
+    %%%%%:  351-block 134
+    %%%%%:  351-block 135
+    %%%%%:  351-block 136
+    %%%%%:  351-block 137
+    $$$$$:  351-block 138
+        1:  351-block 139
+        1:  351-block 140
+    $$$$$:  351-block 141
+    $$$$$:  351-block 142
+        1:  351-block 143
+    $$$$$:  351-block 144
+        1:  351-block 145
+        1:  351-block 146
+    %%%%%:  351-block 147
+    %%%%%:  351-block 148
+    %%%%%:  351-block 149
+    %%%%%:  351-block 150
+    %%%%%:  351-block 151
+    %%%%%:  351-block 152
+        1:  351-block 153
+        1:  351-block 154
+    $$$$$:  351-block 155
+    $$$$$:  351-block 156
+    $$$$$:  351-block 157
+    $$$$$:  351-block 158
+    $$$$$:  351-block 159
+    $$$$$:  351-block 160
+    $$$$$:  351-block 161
+    $$$$$:  351-block 162
+    $$$$$:  351-block 163
+    %%%%%:  351-block 164
+    %%%%%:  351-block 165
+    %%%%%:  351-block 166
+    %%%%%:  351-block 167
+    $$$$$:  351-block 168
+    $$$$$:  351-block 169
+    $$$$$:  351-block 170
+    $$$$$:  351-block 171
+    %%%%%:  351-block 172
+    %%%%%:  351-block 173
+    $$$$$:  351-block 174
+    %%%%%:  351-block 175
+    %%%%%:  351-block 176
+    $$$$$:  351-block 177
+    %%%%%:  351-block 178
+    %%%%%:  351-block 179
+    %%%%%:  351-block 180
+    %%%%%:  351-block 181
+    %%%%%:  351-block 182
+    %%%%%:  351-block 183
+    %%%%%:  351-block 184
+    %%%%%:  351-block 185
+    %%%%%:  351-block 186
+    %%%%%:  351-block 187
+    %%%%%:  351-block 188
+    %%%%%:  351-block 189
+    %%%%%:  351-block 190
+    %%%%%:  351-block 191
+    %%%%%:  351-block 192
+    %%%%%:  351-block 193
+    $$$$$:  351-block 194
+    $$$$$:  351-block 195
+    $$$$$:  351-block 196
+    $$$$$:  351-block 197
+    $$$$$:  351-block 198
+    $$$$$:  351-block 199
+    $$$$$:  351-block 200
+    $$$$$:  351-block 201
+    $$$$$:  351-block 202
+    $$$$$:  351-block 203
+    $$$$$:  351-block 204
+    $$$$$:  351-block 205
+    $$$$$:  351-block 206
+    $$$$$:  351-block 207
+    $$$$$:  351-block 208
+    %%%%%:  351-block 209
+    %%%%%:  351-block 210
+    %%%%%:  351-block 211
+    %%%%%:  351-block 212
+    %%%%%:  351-block 213
+    %%%%%:  351-block 214
+    $$$$$:  351-block 215
+    $$$$$:  351-block 216
+    $$$$$:  351-block 217
+    $$$$$:  351-block 218
+    $$$$$:  351-block 219
+    %%%%%:  351-block 220
+    %%%%%:  351-block 221
+    $$$$$:  351-block 222
+    %%%%%:  351-block 223
+    %%%%%:  351-block 224
+    $$$$$:  351-block 225
+    $$$$$:  351-block 226
+    %%%%%:  351-block 227
+    %%%%%:  351-block 228
+    $$$$$:  351-block 229
+    %%%%%:  351-block 230
+    %%%%%:  351-block 231
+    %%%%%:  351-block 232
+    %%%%%:  351-block 233
+    %%%%%:  351-block 234
+    %%%%%:  351-block 235
+    $$$$$:  351-block 236
+    $$$$$:  351-block 237
+    $$$$$:  351-block 238
+    $$$$$:  351-block 239
+    $$$$$:  351-block 240
+    %%%%%:  351-block 241
+    %%%%%:  351-block 242
+    %%%%%:  351-block 243
+    %%%%%:  351-block 244
+    $$$$$:  351-block 245
+    $$$$$:  351-block 246
+    $$$$$:  351-block 247
+    %%%%%:  351-block 248
+    %%%%%:  351-block 249
+    %%%%%:  351-block 250
+    %%%%%:  351-block 251
+    $$$$$:  351-block 252
+    $$$$$:  351-block 253
+    $$$$$:  351-block 254
+    %%%%%:  351-block 255
+    %%%%%:  351-block 256
+    $$$$$:  351-block 257
+    $$$$$:  351-block 258
+    %%%%%:  351-block 259
+    %%%%%:  351-block 260
+    %%%%%:  351-block 261
+    %%%%%:  351-block 262
+    $$$$$:  351-block 263
+    $$$$$:  351-block 264
+    $$$$$:  351-block 265
+    $$$$$:  351-block 266
+    %%%%%:  351-block 267
+    %%%%%:  351-block 268
+    $$$$$:  351-block 269
+    $$$$$:  351-block 270
+        1:  351-block 271
+        1:  351-block 272
+    $$$$$:  351-block 273
+    %%%%%:  351-block 274
+    %%%%%:  351-block 275
+    $$$$$:  351-block 276
+    %%%%%:  351-block 277
+    %%%%%:  351-block 278
+    $$$$$:  351-block 279
+    $$$$$:  351-block 280
+    %%%%%:  351-block 281
+    %%%%%:  351-block 282
+    %%%%%:  351-block 283
+    %%%%%:  351-block 284
+    $$$$$:  351-block 285
+    $$$$$:  351-block 286
+    $$$$$:  351-block 287
+    $$$$$:  351-block 288
+    %%%%%:  351-block 289
+    %%%%%:  351-block 290
+    %%%%%:  351-block 291
+    %%%%%:  351-block 292
+    %%%%%:  351-block 293
+    %%%%%:  351-block 294
+    %%%%%:  351-block 295
+    %%%%%:  351-block 296
+    $$$$$:  351-block 297
+    $$$$$:  351-block 298
+    $$$$$:  351-block 299
+    $$$$$:  351-block 300
+    $$$$$:  351-block 301
+    $$$$$:  351-block 302
+    $$$$$:  351-block 303
+    %%%%%:  351-block 304
+    %%%%%:  351-block 305
+    %%%%%:  351-block 306
+    %%%%%:  351-block 307
+    %%%%%:  351-block 308
+    %%%%%:  351-block 309
+    $$$$$:  351-block 310
+    $$$$$:  351-block 311
+    $$$$$:  351-block 312
+    $$$$$:  351-block 313
+    $$$$$:  351-block 314
+        1:  351-block 315
+        1:  351-block 316
+    $$$$$:  351-block 317
+    %%%%%:  351-block 318
+    %%%%%:  351-block 319
+    $$$$$:  351-block 320
+    %%%%%:  351-block 321
+    %%%%%:  351-block 322
+    %%%%%:  351-block 323
+    %%%%%:  351-block 324
+    $$$$$:  351-block 325
+    $$$$$:  351-block 326
+    $$$$$:  351-block 327
+    $$$$$:  351-block 328
+    $$$$$:  351-block 329
+    %%%%%:  351-block 330
+    %%%%%:  351-block 331
+    %%%%%:  351-block 332
+    %%%%%:  351-block 333
+    $$$$$:  351-block 334
+    $$$$$:  351-block 335
+    %%%%%:  351-block 336
+    %%%%%:  351-block 337
+    $$$$$:  351-block 338
+    %%%%%:  351-block 339
+    %%%%%:  351-block 340
+    $$$$$:  351-block 341
+    $$$$$:  351-block 342
+    $$$$$:  351-block 343
+    $$$$$:  351-block 344
+    $$$$$:  351-block 345
+    %%%%%:  351-block 346
+    %%%%%:  351-block 347
+    %%%%%:  351-block 348
+    %%%%%:  351-block 349
+    %%%%%:  351-block 350
+    %%%%%:  351-block 351
+    $$$$$:  351-block 352
+    $$$$$:  351-block 353
+    $$$$$:  351-block 354
+    $$$$$:  351-block 355
+    $$$$$:  351-block 356
+    %%%%%:  351-block 357
+    %%%%%:  351-block 358
+    %%%%%:  351-block 359
+    %%%%%:  351-block 360
+    %%%%%:  351-block 361
+    %%%%%:  351-block 362
+    %%%%%:  351-block 363
+    %%%%%:  351-block 364
+    $$$$$:  351-block 365
+    $$$$$:  351-block 366
+    $$$$$:  351-block 367
+    $$$$$:  351-block 368
+    $$$$$:  351-block 369
+    $$$$$:  351-block 370
+    $$$$$:  351-block 371
+    %%%%%:  351-block 372
+    %%%%%:  351-block 373
+    %%%%%:  351-block 374
+    %%%%%:  351-block 375
+    %%%%%:  351-block 376
+    %%%%%:  351-block 377
+    $$$$$:  351-block 378
+    $$$$$:  351-block 379
+    $$$$$:  351-block 380
+    $$$$$:  351-block 381
+    $$$$$:  351-block 382
+    %%%%%:  351-block 383
+    %%%%%:  351-block 384
+    %%%%%:  351-block 385
+    %%%%%:  351-block 386
+    %%%%%:  351-block 387
+    %%%%%:  351-block 388
+    %%%%%:  351-block 389
+    $$$$$:  351-block 390
+    $$$$$:  351-block 391
+    $$$$$:  351-block 392
+    $$$$$:  351-block 393
+    $$$$$:  351-block 394
+    $$$$$:  351-block 395
+    $$$$$:  351-block 396
+    $$$$$:  351-block 397
+    %%%%%:  351-block 398
+    %%%%%:  351-block 399
+        1:  351-block 400
+        1:  351-block 401
+    %%%%%:  351-block 402
+    %%%%%:  351-block 403
+        1:  351-block 404
+        1:  351-block 405
+    %%%%%:  351-block 406
+        1:  351-block 407
+    %%%%%:  351-block 408
+        1:  351-block 409
+        1:  351-block 410
+        1:  351-block 411
+    $$$$$:  351-block 412
+    $$$$$:  351-block 413
+    $$$$$:  351-block 414
+    $$$$$:  351-block 415
+    $$$$$:  351-block 416
+    $$$$$:  351-block 417
+    $$$$$:  351-block 418
+    $$$$$:  351-block 419
+    $$$$$:  351-block 420
+    $$$$$:  351-block 421
+    $$$$$:  351-block 422
+    $$$$$:  351-block 423
+    $$$$$:  351-block 424
+        1:  351-block 425
+        1:  351-block 426
+    %%%%%:  351-block 427
+    %%%%%:  351-block 428
+    %%%%%:  351-block 429
+    %%%%%:  351-block 430
+    %%%%%:  351-block 431
+    %%%%%:  351-block 432
+    %%%%%:  351-block 433
+    %%%%%:  351-block 434
+    %%%%%:  351-block 435
+    %%%%%:  351-block 436
+    %%%%%:  351-block 437
+    %%%%%:  351-block 438
+    %%%%%:  351-block 439
+    %%%%%:  351-block 440
+    %%%%%:  351-block 441
+    $$$$$:  351-block 442
+    $$$$$:  351-block 443
+    %%%%%:  351-block 444
+    %%%%%:  351-block 445
+    $$$$$:  351-block 446
+    $$$$$:  351-block 447
+        1:  351-block 448
+        1:  351-block 449
+    $$$$$:  351-block 450
+    %%%%%:  351-block 451
+    %%%%%:  351-block 452
+    %%%%%:  351-block 453
+    %%%%%:  351-block 454
+    %%%%%:  351-block 455
+    %%%%%:  351-block 456
+    %%%%%:  351-block 457
+    %%%%%:  351-block 458
+    $$$$$:  351-block 459
+    $$$$$:  351-block 460
+    $$$$$:  351-block 461
+    $$$$$:  351-block 462
+    $$$$$:  351-block 463
+    $$$$$:  351-block 464
+    $$$$$:  351-block 465
+    %%%%%:  351-block 466
+    %%%%%:  351-block 467
+    %%%%%:  351-block 468
+    %%%%%:  351-block 469
+    %%%%%:  351-block 470
+    %%%%%:  351-block 471
+    $$$$$:  351-block 472
+    $$$$$:  351-block 473
+    $$$$$:  351-block 474
+    $$$$$:  351-block 475
+    $$$$$:  351-block 476
+    %%%%%:  351-block 477
+    %%%%%:  351-block 478
+    %%%%%:  351-block 479
+    %%%%%:  351-block 480
+    %%%%%:  351-block 481
+    %%%%%:  351-block 482
+    $$$$$:  351-block 483
+    $$$$$:  351-block 484
+    $$$$$:  351-block 485
+    $$$$$:  351-block 486
+    $$$$$:  351-block 487
+    %%%%%:  351-block 488
+    %%%%%:  351-block 489
+    %%%%%:  351-block 490
+    %%%%%:  351-block 491
+    $$$$$:  351-block 492
+    $$$$$:  351-block 493
+    $$$$$:  351-block 494
+    $$$$$:  351-block 495
+    %%%%%:  351-block 496
+    %%%%%:  351-block 497
+    $$$$$:  351-block 498
+    %%%%%:  351-block 499
+    %%%%%:  351-block 500
+        3:  351-block 501
+        3:  351-block 502
+        3:  351-block 503
+        3:  351-block 504
+    $$$$$:  351-block 505
+    $$$$$:  351-block 506
+    $$$$$:  351-block 507
+    %%%%%:  351-block 508
+    %%%%%:  351-block 509
+    %%%%%:  351-block 510
+       24:  351-block 511
+    $$$$$:  351-block 512
+    $$$$$:  351-block 513
+    $$$$$:  351-block 514
+    $$$$$:  351-block 515
+      210:  351-block 516
+      210:  351-block 517
+    $$$$$:  351-block 518
+        3:  351-block 519
+        3:  351-block 520
+    $$$$$:  351-block 521
+        3:  351-block 522
+        3:  351-block 523
+    $$$$$:  351-block 524
+    $$$$$:  351-block 525
+    %%%%%:  351-block 526
+        4:  351-block 527
+    %%%%%:  351-block 528
+    %%%%%:  351-block 529
+    %%%%%:  351-block 530
+    $$$$$:  351-block 531
+    $$$$$:  351-block 532
+    $$$$$:  351-block 533
+    $$$$$:  351-block 534
+    %%%%%:  351-block 535
+    %%%%%:  351-block 536
+    $$$$$:  351-block 537
+    %%%%%:  351-block 538
+    %%%%%:  351-block 539
+    %%%%%:  351-block 540
+    %%%%%:  351-block 541
+    %%%%%:  351-block 542
+    %%%%%:  351-block 543
+    %%%%%:  351-block 544
+    %%%%%:  351-block 545
+    $$$$$:  351-block 546
+    $$$$$:  351-block 547
+    $$$$$:  351-block 548
+    $$$$$:  351-block 549
+    %%%%%:  351-block 550
+    %%%%%:  351-block 551
+    $$$$$:  351-block 552
+    %%%%%:  351-block 553
+    %%%%%:  351-block 554
+    %%%%%:  351-block 555
+    %%%%%:  351-block 556
+    %%%%%:  351-block 557
+    %%%%%:  351-block 558
+    %%%%%:  351-block 559
+    %%%%%:  351-block 560
+    %%%%%:  351-block 561
+    %%%%%:  351-block 562
+    $$$$$:  351-block 563
+    $$$$$:  351-block 564
+    $$$$$:  351-block 565
+    $$$$$:  351-block 566
+    $$$$$:  351-block 567
+    $$$$$:  351-block 568
+    $$$$$:  351-block 569
+    $$$$$:  351-block 570
+    $$$$$:  351-block 571
+    %%%%%:  351-block 572
+    %%%%%:  351-block 573
+    %%%%%:  351-block 574
+    %%%%%:  351-block 575
+    %%%%%:  351-block 576
+    %%%%%:  351-block 577
+    %%%%%:  351-block 578
+    %%%%%:  351-block 579
+    %%%%%:  351-block 580
+    %%%%%:  351-block 581
+    $$$$$:  351-block 582
+    $$$$$:  351-block 583
+    $$$$$:  351-block 584
+    $$$$$:  351-block 585
+    %%%%%:  351-block 586
+    %%%%%:  351-block 587
+    $$$$$:  351-block 588
+    %%%%%:  351-block 589
+    %%%%%:  351-block 590
+    %%%%%:  351-block 591
+    %%%%%:  351-block 592
+    %%%%%:  351-block 593
+    %%%%%:  351-block 594
+    %%%%%:  351-block 595
+    %%%%%:  351-block 596
+    $$$$$:  351-block 597
+    $$$$$:  351-block 598
+    $$$$$:  351-block 599
+    $$$$$:  351-block 600
+    %%%%%:  351-block 601
+    %%%%%:  351-block 602
+    $$$$$:  351-block 603
+    %%%%%:  351-block 604
+    %%%%%:  351-block 605
+    $$$$$:  351-block 606
+        -:  352:      }
+        -:  353:
+        -:  354:    protected:
+        -:  355:      void
+     275*:  356:      _M_create_storage(size_t __n)
+        -:  357:      {
+    #####:  358:	this->_M_impl._M_start = this->_M_allocate(__n);
+    %%%%%:  358-block  0
+    %%%%%:  358-block  1
+    %%%%%:  358-block  2
+    %%%%%:  358-block  3
+    %%%%%:  358-block  4
+     275*:  359:	this->_M_impl._M_finish = this->_M_impl._M_start;
+     275*:  360:	this->_M_impl._M_end_of_storage = this->_M_impl._M_start + __n;
+        -:  361:      }
+        -:  362:    };
+        -:  363:
+        -:  364:  /**
+        -:  365:   *  @brief A standard container which offers fixed time access to
+        -:  366:   *  individual elements in any order.
+        -:  367:   *
+        -:  368:   *  @ingroup sequences
+        -:  369:   *
+        -:  370:   *  @tparam _Tp  Type of element.
+        -:  371:   *  @tparam _Alloc  Allocator type, defaults to allocator<_Tp>.
+        -:  372:   *
+        -:  373:   *  Meets the requirements of a <a href="tables.html#65">container</a>, a
+        -:  374:   *  <a href="tables.html#66">reversible container</a>, and a
+        -:  375:   *  <a href="tables.html#67">sequence</a>, including the
+        -:  376:   *  <a href="tables.html#68">optional sequence requirements</a> with the
+        -:  377:   *  %exception of @c push_front and @c pop_front.
+        -:  378:   *
+        -:  379:   *  In some terminology a %vector can be described as a dynamic
+        -:  380:   *  C-style array, it offers fast and efficient access to individual
+        -:  381:   *  elements in any order and saves the user from worrying about
+        -:  382:   *  memory and size allocation.  Subscripting ( @c [] ) access is
+        -:  383:   *  also provided as with C-style arrays.
+        -:  384:  */
+        -:  385:  template<typename _Tp, typename _Alloc = std::allocator<_Tp> >
+        -:  386:    class vector : protected _Vector_base<_Tp, _Alloc>
+        -:  387:    {
+        -:  388:#ifdef _GLIBCXX_CONCEPT_CHECKS
+        -:  389:      // Concept requirements.
+        -:  390:      typedef typename _Alloc::value_type		_Alloc_value_type;
+        -:  391:# if __cplusplus < 201103L
+        -:  392:      __glibcxx_class_requires(_Tp, _SGIAssignableConcept)
+        -:  393:# endif
+        -:  394:      __glibcxx_class_requires2(_Tp, _Alloc_value_type, _SameTypeConcept)
+        -:  395:#endif
+        -:  396:
+        -:  397:#if __cplusplus >= 201103L
+        -:  398:      static_assert(is_same<typename remove_cv<_Tp>::type, _Tp>::value,
+        -:  399:	  "std::vector must have a non-const, non-volatile value_type");
+        -:  400:# ifdef __STRICT_ANSI__
+        -:  401:      static_assert(is_same<typename _Alloc::value_type, _Tp>::value,
+        -:  402:	  "std::vector must have the same value_type as its allocator");
+        -:  403:# endif
+        -:  404:#endif
+        -:  405:
+        -:  406:      typedef _Vector_base<_Tp, _Alloc>			_Base;
+        -:  407:      typedef typename _Base::_Tp_alloc_type		_Tp_alloc_type;
+        -:  408:      typedef __gnu_cxx::__alloc_traits<_Tp_alloc_type>	_Alloc_traits;
+        -:  409:
+        -:  410:    public:
+        -:  411:      typedef _Tp					value_type;
+        -:  412:      typedef typename _Base::pointer			pointer;
+        -:  413:      typedef typename _Alloc_traits::const_pointer	const_pointer;
+        -:  414:      typedef typename _Alloc_traits::reference		reference;
+        -:  415:      typedef typename _Alloc_traits::const_reference	const_reference;
+        -:  416:      typedef __gnu_cxx::__normal_iterator<pointer, vector> iterator;
+        -:  417:      typedef __gnu_cxx::__normal_iterator<const_pointer, vector>
+        -:  418:      const_iterator;
+        -:  419:      typedef std::reverse_iterator<const_iterator>	const_reverse_iterator;
+        -:  420:      typedef std::reverse_iterator<iterator>		reverse_iterator;
+        -:  421:      typedef size_t					size_type;
+        -:  422:      typedef ptrdiff_t					difference_type;
+        -:  423:      typedef _Alloc					allocator_type;
+        -:  424:
+        -:  425:    private:
+        -:  426:#if __cplusplus >= 201103L
+        -:  427:      static constexpr bool
+        -:  428:      _S_nothrow_relocate(true_type)
+        -:  429:      {
+        -:  430:	return noexcept(std::__relocate_a(std::declval<pointer>(),
+        -:  431:					  std::declval<pointer>(),
+        -:  432:					  std::declval<pointer>(),
+        -:  433:					  std::declval<_Tp_alloc_type&>()));
+        -:  434:      }
+        -:  435:
+        -:  436:      static constexpr bool
+        -:  437:      _S_nothrow_relocate(false_type)
+        -:  438:      { return false; }
+        -:  439:
+        -:  440:      static constexpr bool
+        -:  441:      _S_use_relocate()
+        -:  442:      {
+        -:  443:	// Instantiating std::__relocate_a might cause an error outside the
+        -:  444:	// immediate context (in __relocate_object_a's noexcept-specifier),
+        -:  445:	// so only do it if we know the type can be move-inserted into *this.
+        -:  446:	return _S_nothrow_relocate(__is_move_insertable<_Tp_alloc_type>{});
+        -:  447:      }
+        -:  448:
+        -:  449:      static pointer
+      40*:  450:      _S_do_relocate(pointer __first, pointer __last, pointer __result,
+        -:  451:		     _Tp_alloc_type& __alloc, true_type) noexcept
+        -:  452:      {
+      83*:  453:	return std::__relocate_a(__first, __last, __result, __alloc);
+        -:  454:      }
+        -:  455:
+        -:  456:      static pointer
+        -:  457:      _S_do_relocate(pointer, pointer, pointer __result,
+        -:  458:		     _Tp_alloc_type&, false_type) noexcept
+        -:  459:      { return __result; }
+        -:  460:
+        -:  461:      static pointer
+      24*:  462:      _S_relocate(pointer __first, pointer __last, pointer __result,
+    %%%%%:  462-block  0
+    %%%%%:  462-block  1
+    %%%%%:  462-block  2
+        3:  462-block  3
+    %%%%%:  462-block  4
+    %%%%%:  462-block  5
+    %%%%%:  462-block  6
+    %%%%%:  462-block  7
+    %%%%%:  462-block  8
+    %%%%%:  462-block  9
+    %%%%%:  462-block 10
+        8:  462-block 11
+        6:  462-block 12
+        3:  462-block 13
+    %%%%%:  462-block 14
+    %%%%%:  462-block 15
+        4:  462-block 16
+        -:  463:		  _Tp_alloc_type& __alloc) noexcept
+        -:  464:      {
+        -:  465:	using __do_it = __bool_constant<_S_use_relocate()>;
+      44*:  466:	return _S_do_relocate(__first, __last, __result, __alloc, __do_it{});
+    %%%%%:  466-block  0
+    %%%%%:  466-block  1
+    %%%%%:  466-block  2
+    %%%%%:  466-block  3
+    %%%%%:  466-block  4
+    %%%%%:  466-block  5
+    %%%%%:  466-block  6
+    %%%%%:  466-block  7
+    %%%%%:  466-block  8
+    %%%%%:  466-block  9
+        3:  466-block 10
+        3:  466-block 11
+    %%%%%:  466-block 12
+    %%%%%:  466-block 13
+    %%%%%:  466-block 14
+    %%%%%:  466-block 15
+    %%%%%:  466-block 16
+    %%%%%:  466-block 17
+    %%%%%:  466-block 18
+    %%%%%:  466-block 19
+    %%%%%:  466-block 20
+    %%%%%:  466-block 21
+    %%%%%:  466-block 22
+    %%%%%:  466-block 23
+    %%%%%:  466-block 24
+    %%%%%:  466-block 25
+    %%%%%:  466-block 26
+    %%%%%:  466-block 27
+    %%%%%:  466-block 28
+    %%%%%:  466-block 29
+        8:  466-block 30
+        8:  466-block 31
+        6:  466-block 32
+        6:  466-block 33
+        3:  466-block 34
+        3:  466-block 35
+    %%%%%:  466-block 36
+    %%%%%:  466-block 37
+    %%%%%:  466-block 38
+    %%%%%:  466-block 39
+    %%%%%:  466-block 40
+    %%%%%:  466-block 41
+       11:  466-block 42
+        4:  466-block 43
+        4:  466-block 44
+        4:  466-block 45
+        -:  467:      }
+        -:  468:#endif // C++11
+        -:  469:
+        -:  470:    protected:
+        -:  471:      using _Base::_M_allocate;
+        -:  472:      using _Base::_M_deallocate;
+        -:  473:      using _Base::_M_impl;
+        -:  474:      using _Base::_M_get_Tp_allocator;
+        -:  475:
+        -:  476:    public:
+        -:  477:      // [23.2.4.1] construct/copy/destroy
+        -:  478:      // (assign() and get_allocator() are also listed in this section)
+        -:  479:
+        -:  480:      /**
+        -:  481:       *  @brief  Creates a %vector with no elements.
+        -:  482:       */
+        -:  483:#if __cplusplus >= 201103L
+      11*:  484:      vector() = default;
+    %%%%%:  484-block  0
+    %%%%%:  484-block  1
+    %%%%%:  484-block  2
+    %%%%%:  484-block  3
+        1:  484-block  4
+    %%%%%:  484-block  5
+    %%%%%:  484-block  6
+    %%%%%:  484-block  7
+    %%%%%:  484-block  8
+    %%%%%:  484-block  9
+    %%%%%:  484-block 10
+    %%%%%:  484-block 11
+    %%%%%:  484-block 12
+    %%%%%:  484-block 13
+    %%%%%:  484-block 14
+    %%%%%:  484-block 15
+    %%%%%:  484-block 16
+    %%%%%:  484-block 17
+    %%%%%:  484-block 18
+    %%%%%:  484-block 19
+    %%%%%:  484-block 20
+    %%%%%:  484-block 21
+    %%%%%:  484-block 22
+    %%%%%:  484-block 23
+    %%%%%:  484-block 24
+        1:  484-block 25
+        1:  484-block 26
+    %%%%%:  484-block 27
+        1:  484-block 28
+    %%%%%:  484-block 29
+    %%%%%:  484-block 30
+    %%%%%:  484-block 31
+        1:  484-block 32
+    %%%%%:  484-block 33
+        3:  484-block 34
+    %%%%%:  484-block 35
+    %%%%%:  484-block 36
+        2:  484-block 37
+    %%%%%:  484-block 38
+    %%%%%:  484-block 39
+    %%%%%:  484-block 40
+    %%%%%:  484-block 41
+    %%%%%:  484-block 42
+    %%%%%:  484-block 43
+    %%%%%:  484-block 44
+    %%%%%:  484-block 45
+        -:  485:#else
+        -:  486:      vector() { }
+        -:  487:#endif
+        -:  488:
+        -:  489:      /**
+        -:  490:       *  @brief  Creates a %vector with no elements.
+        -:  491:       *  @param  __a  An allocator object.
+        -:  492:       */
+        -:  493:      explicit
+    #####:  494:      vector(const allocator_type& __a) _GLIBCXX_NOEXCEPT
+    #####:  495:      : _Base(__a) { }
+    %%%%%:  495-block  0
+        -:  496:
+        -:  497:#if __cplusplus >= 201103L
+        -:  498:      /**
+        -:  499:       *  @brief  Creates a %vector with default constructed elements.
+        -:  500:       *  @param  __n  The number of elements to initially create.
+        -:  501:       *  @param  __a  An allocator.
+        -:  502:       *
+        -:  503:       *  This constructor fills the %vector with @a __n default
+        -:  504:       *  constructed elements.
+        -:  505:       */
+        -:  506:      explicit
+    #####:  507:      vector(size_type __n, const allocator_type& __a = allocator_type())
+    #####:  508:      : _Base(_S_check_init_len(__n, __a), __a)
+    #####:  509:      { _M_default_initialize(__n); }
+------------------
+_ZNSt6vectorIS_IhSaIhEESaIS1_EEC2EmRKS2_:
+    #####:  507:      vector(size_type __n, const allocator_type& __a = allocator_type())
+    #####:  508:      : _Base(_S_check_init_len(__n, __a), __a)
+    %%%%%:  508-block  0
+    #####:  509:      { _M_default_initialize(__n); }
+------------------
+_ZNSt6vectorImSaImEEC2EmRKS0_:
+    #####:  507:      vector(size_type __n, const allocator_type& __a = allocator_type())
+    #####:  508:      : _Base(_S_check_init_len(__n, __a), __a)
+    %%%%%:  508-block  0
+    #####:  509:      { _M_default_initialize(__n); }
+------------------
+_ZNSt6vectorItSaItEEC2EmRKS0_:
+    #####:  507:      vector(size_type __n, const allocator_type& __a = allocator_type())
+    #####:  508:      : _Base(_S_check_init_len(__n, __a), __a)
+    %%%%%:  508-block  0
+    #####:  509:      { _M_default_initialize(__n); }
+------------------
+_ZNSt6vectorIxSaIxEEC2EmRKS0_:
+    #####:  507:      vector(size_type __n, const allocator_type& __a = allocator_type())
+    #####:  508:      : _Base(_S_check_init_len(__n, __a), __a)
+    %%%%%:  508-block  0
+    #####:  509:      { _M_default_initialize(__n); }
+------------------
+_ZNSt6vectorIhSaIhEEC2EmRKS0_:
+    #####:  507:      vector(size_type __n, const allocator_type& __a = allocator_type())
+    #####:  508:      : _Base(_S_check_init_len(__n, __a), __a)
+    %%%%%:  508-block  0
+    #####:  509:      { _M_default_initialize(__n); }
+------------------
+        -:  510:
+        -:  511:      /**
+        -:  512:       *  @brief  Creates a %vector with copies of an exemplar element.
+        -:  513:       *  @param  __n  The number of elements to initially create.
+        -:  514:       *  @param  __value  An element to copy.
+        -:  515:       *  @param  __a  An allocator.
+        -:  516:       *
+        -:  517:       *  This constructor fills the %vector with @a __n copies of @a __value.
+        -:  518:       */
+        -:  519:      vector(size_type __n, const value_type& __value,
+        -:  520:	     const allocator_type& __a = allocator_type())
+        -:  521:      : _Base(_S_check_init_len(__n, __a), __a)
+        -:  522:      { _M_fill_initialize(__n, __value); }
+        -:  523:#else
+        -:  524:      /**
+        -:  525:       *  @brief  Creates a %vector with copies of an exemplar element.
+        -:  526:       *  @param  __n  The number of elements to initially create.
+        -:  527:       *  @param  __value  An element to copy.
+        -:  528:       *  @param  __a  An allocator.
+        -:  529:       *
+        -:  530:       *  This constructor fills the %vector with @a __n copies of @a __value.
+        -:  531:       */
+        -:  532:      explicit
+        -:  533:      vector(size_type __n, const value_type& __value = value_type(),
+        -:  534:	     const allocator_type& __a = allocator_type())
+        -:  535:      : _Base(_S_check_init_len(__n, __a), __a)
+        -:  536:      { _M_fill_initialize(__n, __value); }
+        -:  537:#endif
+        -:  538:
+        -:  539:      /**
+        -:  540:       *  @brief  %Vector copy constructor.
+        -:  541:       *  @param  __x  A %vector of identical element and allocator types.
+        -:  542:       *
+        -:  543:       *  All the elements of @a __x are copied, but any unused capacity in
+        -:  544:       *  @a __x  will not be copied
+        -:  545:       *  (i.e. capacity() == size() in the new %vector).
+        -:  546:       *
+        -:  547:       *  The newly-created %vector uses a copy of the allocator object used
+        -:  548:       *  by @a __x (unless the allocator traits dictate a different object).
+        -:  549:       */
+     275*:  550:      vector(const vector& __x)
+        -:  551:      : _Base(__x.size(),
+     275*:  552:	_Alloc_traits::_S_select_on_copy(__x._M_get_Tp_allocator()))
+        -:  553:      {
+     275*:  554:	this->_M_impl._M_finish =
+     550*:  555:	  std::__uninitialized_copy_a(__x.begin(), __x.end(),
+        -:  556:				      this->_M_impl._M_start,
+     275*:  557:				      _M_get_Tp_allocator());
+     275*:  558:      }
+------------------
+_ZNSt6vectorIiSaIiEEC2ERKS1_:
+    #####:  550:      vector(const vector& __x)
+        -:  551:      : _Base(__x.size(),
+    #####:  552:	_Alloc_traits::_S_select_on_copy(__x._M_get_Tp_allocator()))
+    %%%%%:  552-block  0
+        -:  553:      {
+    #####:  554:	this->_M_impl._M_finish =
+    #####:  555:	  std::__uninitialized_copy_a(__x.begin(), __x.end(),
+        -:  556:				      this->_M_impl._M_start,
+    #####:  557:				      _M_get_Tp_allocator());
+    #####:  558:      }
+------------------
+_ZNSt6vectorIPN3pic5ImageESaIS2_EEC2ERKS4_:
+      275:  550:      vector(const vector& __x)
+        -:  551:      : _Base(__x.size(),
+      275:  552:	_Alloc_traits::_S_select_on_copy(__x._M_get_Tp_allocator()))
+      275:  552-block  0
+        -:  553:      {
+      275:  554:	this->_M_impl._M_finish =
+      550:  555:	  std::__uninitialized_copy_a(__x.begin(), __x.end(),
+        -:  556:				      this->_M_impl._M_start,
+      275:  557:				      _M_get_Tp_allocator());
+      275:  558:      }
+------------------
+        -:  559:
+        -:  560:#if __cplusplus >= 201103L
+        -:  561:      /**
+        -:  562:       *  @brief  %Vector move constructor.
+        -:  563:       *
+        -:  564:       *  The newly-created %vector contains the exact contents of the
+        -:  565:       *  moved instance.
+        -:  566:       *  The contents of the moved instance are a valid, but unspecified
+        -:  567:       *  %vector.
+        -:  568:       */
+       48:  569:      vector(vector&&) noexcept = default;
+       24:  569-block  0
+       24:  569-block  1
+        -:  570:
+        -:  571:      /// Copy constructor with alternative allocator
+        -:  572:      vector(const vector& __x, const allocator_type& __a)
+        -:  573:      : _Base(__x.size(), __a)
+        -:  574:      {
+        -:  575:	this->_M_impl._M_finish =
+        -:  576:	  std::__uninitialized_copy_a(__x.begin(), __x.end(),
+        -:  577:				      this->_M_impl._M_start,
+        -:  578:				      _M_get_Tp_allocator());
+        -:  579:      }
+        -:  580:
+        -:  581:    private:
+        -:  582:      vector(vector&& __rv, const allocator_type& __m, true_type) noexcept
+        -:  583:      : _Base(__m, std::move(__rv))
+        -:  584:      { }
+        -:  585:
+        -:  586:      vector(vector&& __rv, const allocator_type& __m, false_type)
+        -:  587:      : _Base(__m)
+        -:  588:      {
+        -:  589:	if (__rv.get_allocator() == __m)
+        -:  590:	  this->_M_impl._M_swap_data(__rv._M_impl);
+        -:  591:	else if (!__rv.empty())
+        -:  592:	  {
+        -:  593:	    this->_M_create_storage(__rv.size());
+        -:  594:	    this->_M_impl._M_finish =
+        -:  595:	      std::__uninitialized_move_a(__rv.begin(), __rv.end(),
+        -:  596:					  this->_M_impl._M_start,
+        -:  597:					  _M_get_Tp_allocator());
+        -:  598:	    __rv.clear();
+        -:  599:	  }
+        -:  600:      }
+        -:  601:
+        -:  602:    public:
+        -:  603:      /// Move constructor with alternative allocator
+        -:  604:      vector(vector&& __rv, const allocator_type& __m)
+        -:  605:      noexcept( noexcept(
+        -:  606:	vector(std::declval<vector&&>(), std::declval<const allocator_type&>(),
+        -:  607:	       std::declval<typename _Alloc_traits::is_always_equal>())) )
+        -:  608:      : vector(std::move(__rv), __m, typename _Alloc_traits::is_always_equal{})
+        -:  609:      { }
+        -:  610:
+        -:  611:      /**
+        -:  612:       *  @brief  Builds a %vector from an initializer list.
+        -:  613:       *  @param  __l  An initializer_list.
+        -:  614:       *  @param  __a  An allocator.
+        -:  615:       *
+        -:  616:       *  Create a %vector consisting of copies of the elements in the
+        -:  617:       *  initializer_list @a __l.
+        -:  618:       *
+        -:  619:       *  This will call the element type's copy constructor N times
+        -:  620:       *  (where N is @a __l.size()) and do no memory reallocation.
+        -:  621:       */
+        -:  622:      vector(initializer_list<value_type> __l,
+        -:  623:	     const allocator_type& __a = allocator_type())
+        -:  624:      : _Base(__a)
+        -:  625:      {
+        -:  626:	_M_range_initialize(__l.begin(), __l.end(),
+        -:  627:			    random_access_iterator_tag());
+        -:  628:      }
+        -:  629:#endif
+        -:  630:
+        -:  631:      /**
+        -:  632:       *  @brief  Builds a %vector from a range.
+        -:  633:       *  @param  __first  An input iterator.
+        -:  634:       *  @param  __last  An input iterator.
+        -:  635:       *  @param  __a  An allocator.
+        -:  636:       *
+        -:  637:       *  Create a %vector consisting of copies of the elements from
+        -:  638:       *  [first,last).
+        -:  639:       *
+        -:  640:       *  If the iterators are forward, bidirectional, or
+        -:  641:       *  random-access, then this will call the elements' copy
+        -:  642:       *  constructor N times (where N is distance(first,last)) and do
+        -:  643:       *  no memory reallocation.  But if only input iterators are
+        -:  644:       *  used, then this will do at most 2N calls to the copy
+        -:  645:       *  constructor, and logN memory reallocations.
+        -:  646:       */
+        -:  647:#if __cplusplus >= 201103L
+        -:  648:      template<typename _InputIterator,
+        -:  649:	       typename = std::_RequireInputIter<_InputIterator>>
+        -:  650:	vector(_InputIterator __first, _InputIterator __last,
+        -:  651:	       const allocator_type& __a = allocator_type())
+        -:  652:	: _Base(__a)
+        -:  653:	{
+        -:  654:	  _M_range_initialize(__first, __last,
+        -:  655:			      std::__iterator_category(__first));
+        -:  656:	}
+        -:  657:#else
+        -:  658:      template<typename _InputIterator>
+        -:  659:	vector(_InputIterator __first, _InputIterator __last,
+        -:  660:	       const allocator_type& __a = allocator_type())
+        -:  661:	: _Base(__a)
+        -:  662:	{
+        -:  663:	  // Check whether it's an integral type.  If so, it's not an iterator.
+        -:  664:	  typedef typename std::__is_integer<_InputIterator>::__type _Integral;
+        -:  665:	  _M_initialize_dispatch(__first, __last, _Integral());
+        -:  666:	}
+        -:  667:#endif
+        -:  668:
+        -:  669:      /**
+        -:  670:       *  The dtor only erases the elements, and note that if the
+        -:  671:       *  elements themselves are pointers, the pointed-to memory is
+        -:  672:       *  not touched in any way.  Managing the pointer is the user's
+        -:  673:       *  responsibility.
+        -:  674:       */
+     319*:  675:      ~vector() _GLIBCXX_NOEXCEPT
+        -:  676:      {
+     323*:  677:	std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+     314*:  678:		      _M_get_Tp_allocator());
+       24:  678-block  0
+    $$$$$:  678-block  1
+    %%%%%:  678-block  2
+    %%%%%:  678-block  3
+    $$$$$:  678-block  4
+    $$$$$:  678-block  5
+    $$$$$:  678-block  6
+    $$$$$:  678-block  7
+    $$$$$:  678-block  8
+    $$$$$:  678-block  9
+       24:  678-block 10
+    $$$$$:  678-block 11
+    %%%%%:  678-block 12
+    $$$$$:  678-block 13
+    %%%%%:  678-block 14
+    $$$$$:  678-block 15
+    $$$$$:  678-block 16
+    %%%%%:  678-block 17
+    $$$$$:  678-block 18
+    $$$$$:  678-block 19
+    %%%%%:  678-block 20
+    %%%%%:  678-block 21
+    %%%%%:  678-block 22
+    $$$$$:  678-block 23
+    $$$$$:  678-block 24
+    $$$$$:  678-block 25
+    $$$$$:  678-block 26
+    %%%%%:  678-block 27
+    %%%%%:  678-block 28
+    $$$$$:  678-block 29
+    $$$$$:  678-block 30
+    %%%%%:  678-block 31
+    $$$$$:  678-block 32
+    %%%%%:  678-block 33
+    $$$$$:  678-block 34
+    %%%%%:  678-block 35
+    %%%%%:  678-block 36
+    $$$$$:  678-block 37
+    $$$$$:  678-block 38
+    %%%%%:  678-block 39
+    %%%%%:  678-block 40
+    $$$$$:  678-block 41
+    $$$$$:  678-block 42
+    %%%%%:  678-block 43
+    %%%%%:  678-block 44
+    $$$$$:  678-block 45
+        1:  678-block 46
+    $$$$$:  678-block 47
+    $$$$$:  678-block 48
+        1:  678-block 49
+    %%%%%:  678-block 50
+    %%%%%:  678-block 51
+    %%%%%:  678-block 52
+        1:  678-block 53
+    $$$$$:  678-block 54
+    $$$$$:  678-block 55
+    $$$$$:  678-block 56
+    $$$$$:  678-block 57
+    $$$$$:  678-block 58
+    %%%%%:  678-block 59
+    %%%%%:  678-block 60
+    $$$$$:  678-block 61
+    $$$$$:  678-block 62
+    %%%%%:  678-block 63
+    $$$$$:  678-block 64
+    %%%%%:  678-block 65
+    $$$$$:  678-block 66
+    %%%%%:  678-block 67
+    %%%%%:  678-block 68
+    %%%%%:  678-block 69
+    %%%%%:  678-block 70
+    %%%%%:  678-block 71
+    %%%%%:  678-block 72
+    %%%%%:  678-block 73
+    %%%%%:  678-block 74
+    $$$$$:  678-block 75
+    $$$$$:  678-block 76
+    $$$$$:  678-block 77
+    $$$$$:  678-block 78
+    $$$$$:  678-block 79
+    $$$$$:  678-block 80
+    $$$$$:  678-block 81
+    $$$$$:  678-block 82
+    %%%%%:  678-block 83
+    %%%%%:  678-block 84
+    %%%%%:  678-block 85
+    $$$$$:  678-block 86
+    $$$$$:  678-block 87
+    $$$$$:  678-block 88
+    $$$$$:  678-block 89
+    $$$$$:  678-block 90
+    %%%%%:  678-block 91
+    $$$$$:  678-block 92
+    %%%%%:  678-block 93
+    %%%%%:  678-block 94
+    %%%%%:  678-block 95
+    $$$$$:  678-block 96
+    $$$$$:  678-block 97
+    $$$$$:  678-block 98
+    %%%%%:  678-block 99
+    %%%%%:  678-block 100
+    $$$$$:  678-block 101
+    $$$$$:  678-block 102
+    %%%%%:  678-block 103
+    %%%%%:  678-block 104
+    $$$$$:  678-block 105
+    $$$$$:  678-block 106
+    %%%%%:  678-block 107
+    $$$$$:  678-block 108
+    %%%%%:  678-block 109
+    %%%%%:  678-block 110
+    $$$$$:  678-block 111
+    $$$$$:  678-block 112
+    %%%%%:  678-block 113
+    $$$$$:  678-block 114
+        1:  678-block 115
+    $$$$$:  678-block 116
+    %%%%%:  678-block 117
+    $$$$$:  678-block 118
+    $$$$$:  678-block 119
+    %%%%%:  678-block 120
+    %%%%%:  678-block 121
+    $$$$$:  678-block 122
+    $$$$$:  678-block 123
+    %%%%%:  678-block 124
+    %%%%%:  678-block 125
+    %%%%%:  678-block 126
+    %%%%%:  678-block 127
+    $$$$$:  678-block 128
+    $$$$$:  678-block 129
+    $$$$$:  678-block 130
+    $$$$$:  678-block 131
+    %%%%%:  678-block 132
+    %%%%%:  678-block 133
+    $$$$$:  678-block 134
+    $$$$$:  678-block 135
+    $$$$$:  678-block 136
+        1:  678-block 137
+    $$$$$:  678-block 138
+    %%%%%:  678-block 139
+    $$$$$:  678-block 140
+    %%%%%:  678-block 141
+    %%%%%:  678-block 142
+    $$$$$:  678-block 143
+    $$$$$:  678-block 144
+    $$$$$:  678-block 145
+    %%%%%:  678-block 146
+    %%%%%:  678-block 147
+    $$$$$:  678-block 148
+    $$$$$:  678-block 149
+    %%%%%:  678-block 150
+    $$$$$:  678-block 151
+    %%%%%:  678-block 152
+    $$$$$:  678-block 153
+    $$$$$:  678-block 154
+    $$$$$:  678-block 155
+    %%%%%:  678-block 156
+    %%%%%:  678-block 157
+    %%%%%:  678-block 158
+    $$$$$:  678-block 159
+    $$$$$:  678-block 160
+    $$$$$:  678-block 161
+    %%%%%:  678-block 162
+    %%%%%:  678-block 163
+    %%%%%:  678-block 164
+    %%%%%:  678-block 165
+    $$$$$:  678-block 166
+    $$$$$:  678-block 167
+    $$$$$:  678-block 168
+    $$$$$:  678-block 169
+    %%%%%:  678-block 170
+    %%%%%:  678-block 171
+    %%%%%:  678-block 172
+    $$$$$:  678-block 173
+    $$$$$:  678-block 174
+    $$$$$:  678-block 175
+    %%%%%:  678-block 176
+    %%%%%:  678-block 177
+    %%%%%:  678-block 178
+    $$$$$:  678-block 179
+    $$$$$:  678-block 180
+    $$$$$:  678-block 181
+    $$$$$:  678-block 182
+    $$$$$:  678-block 183
+    %%%%%:  678-block 184
+        1:  678-block 185
+    %%%%%:  678-block 186
+        1:  678-block 187
+        1:  678-block 188
+        1:  678-block 189
+    $$$$$:  678-block 190
+    $$$$$:  678-block 191
+    $$$$$:  678-block 192
+    $$$$$:  678-block 193
+    $$$$$:  678-block 194
+    $$$$$:  678-block 195
+    $$$$$:  678-block 196
+        1:  678-block 197
+    %%%%%:  678-block 198
+    %%%%%:  678-block 199
+    %%%%%:  678-block 200
+    %%%%%:  678-block 201
+    %%%%%:  678-block 202
+    %%%%%:  678-block 203
+    %%%%%:  678-block 204
+    %%%%%:  678-block 205
+    $$$$$:  678-block 206
+    %%%%%:  678-block 207
+    $$$$$:  678-block 208
+        1:  678-block 209
+    $$$$$:  678-block 210
+    %%%%%:  678-block 211
+    %%%%%:  678-block 212
+    %%%%%:  678-block 213
+    %%%%%:  678-block 214
+    $$$$$:  678-block 215
+    $$$$$:  678-block 216
+    $$$$$:  678-block 217
+    $$$$$:  678-block 218
+    %%%%%:  678-block 219
+    %%%%%:  678-block 220
+    %%%%%:  678-block 221
+    $$$$$:  678-block 222
+    $$$$$:  678-block 223
+    $$$$$:  678-block 224
+    %%%%%:  678-block 225
+    %%%%%:  678-block 226
+    %%%%%:  678-block 227
+    $$$$$:  678-block 228
+    $$$$$:  678-block 229
+    $$$$$:  678-block 230
+    %%%%%:  678-block 231
+    %%%%%:  678-block 232
+    $$$$$:  678-block 233
+    $$$$$:  678-block 234
+    %%%%%:  678-block 235
+    $$$$$:  678-block 236
+        3:  678-block 237
+        3:  678-block 238
+    $$$$$:  678-block 239
+    $$$$$:  678-block 240
+    %%%%%:  678-block 241
+       24:  678-block 242
+    $$$$$:  678-block 243
+    $$$$$:  678-block 244
+      210:  678-block 245
+    $$$$$:  678-block 246
+        3:  678-block 247
+    $$$$$:  678-block 248
+        3:  678-block 249
+    $$$$$:  678-block 250
+        4:  678-block 251
+        4:  678-block 252
+    %%%%%:  678-block 253
+    $$$$$:  678-block 254
+    $$$$$:  678-block 255
+    $$$$$:  678-block 256
+    $$$$$:  678-block 257
+    %%%%%:  678-block 258
+    $$$$$:  678-block 259
+    %%%%%:  678-block 260
+    %%%%%:  678-block 261
+    %%%%%:  678-block 262
+    %%%%%:  678-block 263
+    $$$$$:  678-block 264
+    $$$$$:  678-block 265
+    %%%%%:  678-block 266
+    $$$$$:  678-block 267
+    %%%%%:  678-block 268
+    %%%%%:  678-block 269
+    $$$$$:  678-block 270
+    $$$$$:  678-block 271
+    $$$$$:  678-block 272
+    $$$$$:  678-block 273
+    $$$$$:  678-block 274
+    %%%%%:  678-block 275
+    %%%%%:  678-block 276
+    %%%%%:  678-block 277
+    %%%%%:  678-block 278
+    %%%%%:  678-block 279
+    $$$$$:  678-block 280
+    $$$$$:  678-block 281
+    %%%%%:  678-block 282
+    $$$$$:  678-block 283
+    %%%%%:  678-block 284
+    %%%%%:  678-block 285
+    %%%%%:  678-block 286
+    $$$$$:  678-block 287
+    $$$$$:  678-block 288
+    %%%%%:  678-block 289
+    $$$$$:  678-block 290
+    %%%%%:  678-block 291
+    $$$$$:  678-block 292
+        -:  679:	_GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC;
+     569*:  680:      }
+       24:  680-block  0
+       24:  680-block  1
+    $$$$$:  680-block  2
+    %%%%%:  680-block  3
+    %%%%%:  680-block  4
+    %%%%%:  680-block  5
+    $$$$$:  680-block  6
+    $$$$$:  680-block  7
+    $$$$$:  680-block  8
+    $$$$$:  680-block  9
+    $$$$$:  680-block 10
+    $$$$$:  680-block 11
+    $$$$$:  680-block 12
+    $$$$$:  680-block 13
+    $$$$$:  680-block 14
+    $$$$$:  680-block 15
+    $$$$$:  680-block 16
+       24:  680-block 17
+       24:  680-block 18
+    $$$$$:  680-block 19
+    %%%%%:  680-block 20
+    %%%%%:  680-block 21
+    $$$$$:  680-block 22
+    %%%%%:  680-block 23
+    %%%%%:  680-block 24
+    %%%%%:  680-block 25
+    $$$$$:  680-block 26
+    $$$$$:  680-block 27
+    $$$$$:  680-block 28
+    %%%%%:  680-block 29
+    %%%%%:  680-block 30
+    %%%%%:  680-block 31
+    $$$$$:  680-block 32
+    $$$$$:  680-block 33
+    $$$$$:  680-block 34
+    %%%%%:  680-block 35
+    %%%%%:  680-block 36
+    %%%%%:  680-block 37
+    %%%%%:  680-block 38
+    %%%%%:  680-block 39
+    %%%%%:  680-block 40
+    $$$$$:  680-block 41
+    $$$$$:  680-block 42
+    $$$$$:  680-block 43
+    $$$$$:  680-block 44
+    $$$$$:  680-block 45
+    $$$$$:  680-block 46
+    $$$$$:  680-block 47
+    %%%%%:  680-block 48
+    %%%%%:  680-block 49
+    %%%%%:  680-block 50
+    %%%%%:  680-block 51
+    $$$$$:  680-block 52
+    $$$$$:  680-block 53
+    $$$$$:  680-block 54
+    %%%%%:  680-block 55
+    %%%%%:  680-block 56
+    $$$$$:  680-block 57
+    %%%%%:  680-block 58
+    %%%%%:  680-block 59
+    $$$$$:  680-block 60
+    %%%%%:  680-block 61
+    %%%%%:  680-block 62
+    %%%%%:  680-block 63
+    %%%%%:  680-block 64
+    $$$$$:  680-block 65
+    $$$$$:  680-block 66
+    $$$$$:  680-block 67
+    %%%%%:  680-block 68
+    %%%%%:  680-block 69
+    %%%%%:  680-block 70
+    %%%%%:  680-block 71
+    $$$$$:  680-block 72
+    $$$$$:  680-block 73
+    $$$$$:  680-block 74
+    %%%%%:  680-block 75
+    %%%%%:  680-block 76
+    %%%%%:  680-block 77
+    %%%%%:  680-block 78
+    $$$$$:  680-block 79
+        1:  680-block 80
+        1:  680-block 81
+    $$$$$:  680-block 82
+    $$$$$:  680-block 83
+    $$$$$:  680-block 84
+        1:  680-block 85
+        1:  680-block 86
+    %%%%%:  680-block 87
+    %%%%%:  680-block 88
+    %%%%%:  680-block 89
+    %%%%%:  680-block 90
+    %%%%%:  680-block 91
+        1:  680-block 92
+        1:  680-block 93
+    $$$$$:  680-block 94
+    $$$$$:  680-block 95
+    $$$$$:  680-block 96
+    $$$$$:  680-block 97
+    $$$$$:  680-block 98
+    $$$$$:  680-block 99
+    $$$$$:  680-block 100
+    $$$$$:  680-block 101
+    $$$$$:  680-block 102
+    %%%%%:  680-block 103
+    %%%%%:  680-block 104
+    %%%%%:  680-block 105
+    %%%%%:  680-block 106
+    $$$$$:  680-block 107
+    $$$$$:  680-block 108
+    $$$$$:  680-block 109
+    $$$$$:  680-block 110
+    %%%%%:  680-block 111
+    %%%%%:  680-block 112
+    $$$$$:  680-block 113
+    %%%%%:  680-block 114
+    %%%%%:  680-block 115
+    $$$$$:  680-block 116
+    %%%%%:  680-block 117
+    %%%%%:  680-block 118
+    %%%%%:  680-block 119
+    %%%%%:  680-block 120
+    %%%%%:  680-block 121
+    %%%%%:  680-block 122
+    %%%%%:  680-block 123
+    %%%%%:  680-block 124
+    %%%%%:  680-block 125
+    %%%%%:  680-block 126
+    %%%%%:  680-block 127
+    %%%%%:  680-block 128
+    %%%%%:  680-block 129
+    %%%%%:  680-block 130
+    %%%%%:  680-block 131
+    $$$$$:  680-block 132
+    $$$$$:  680-block 133
+    $$$$$:  680-block 134
+    $$$$$:  680-block 135
+    $$$$$:  680-block 136
+    $$$$$:  680-block 137
+    $$$$$:  680-block 138
+    $$$$$:  680-block 139
+    $$$$$:  680-block 140
+    $$$$$:  680-block 141
+    $$$$$:  680-block 142
+    $$$$$:  680-block 143
+    $$$$$:  680-block 144
+    $$$$$:  680-block 145
+    $$$$$:  680-block 146
+    %%%%%:  680-block 147
+    %%%%%:  680-block 148
+    %%%%%:  680-block 149
+    %%%%%:  680-block 150
+    %%%%%:  680-block 151
+    %%%%%:  680-block 152
+    $$$$$:  680-block 153
+    $$$$$:  680-block 154
+    $$$$$:  680-block 155
+    $$$$$:  680-block 156
+    $$$$$:  680-block 157
+    %%%%%:  680-block 158
+    $$$$$:  680-block 159
+    %%%%%:  680-block 160
+    $$$$$:  680-block 161
+    $$$$$:  680-block 162
+    %%%%%:  680-block 163
+    %%%%%:  680-block 164
+    $$$$$:  680-block 165
+    %%%%%:  680-block 166
+    %%%%%:  680-block 167
+    %%%%%:  680-block 168
+    %%%%%:  680-block 169
+    %%%%%:  680-block 170
+    %%%%%:  680-block 171
+    $$$$$:  680-block 172
+    $$$$$:  680-block 173
+    $$$$$:  680-block 174
+    $$$$$:  680-block 175
+    $$$$$:  680-block 176
+    %%%%%:  680-block 177
+    %%%%%:  680-block 178
+    %%%%%:  680-block 179
+    %%%%%:  680-block 180
+    $$$$$:  680-block 181
+    $$$$$:  680-block 182
+    $$$$$:  680-block 183
+    %%%%%:  680-block 184
+    %%%%%:  680-block 185
+    %%%%%:  680-block 186
+    %%%%%:  680-block 187
+    $$$$$:  680-block 188
+    $$$$$:  680-block 189
+    $$$$$:  680-block 190
+    %%%%%:  680-block 191
+    %%%%%:  680-block 192
+    $$$$$:  680-block 193
+    $$$$$:  680-block 194
+    %%%%%:  680-block 195
+    %%%%%:  680-block 196
+    %%%%%:  680-block 197
+    %%%%%:  680-block 198
+    $$$$$:  680-block 199
+    $$$$$:  680-block 200
+    $$$$$:  680-block 201
+    $$$$$:  680-block 202
+    %%%%%:  680-block 203
+    %%%%%:  680-block 204
+    $$$$$:  680-block 205
+    $$$$$:  680-block 206
+        1:  680-block 207
+        1:  680-block 208
+    $$$$$:  680-block 209
+    %%%%%:  680-block 210
+    %%%%%:  680-block 211
+    $$$$$:  680-block 212
+    %%%%%:  680-block 213
+    $$$$$:  680-block 214
+    $$$$$:  680-block 215
+    %%%%%:  680-block 216
+    %%%%%:  680-block 217
+    %%%%%:  680-block 218
+    %%%%%:  680-block 219
+    $$$$$:  680-block 220
+    $$$$$:  680-block 221
+    $$$$$:  680-block 222
+    $$$$$:  680-block 223
+    %%%%%:  680-block 224
+    %%%%%:  680-block 225
+    %%%%%:  680-block 226
+    %%%%%:  680-block 227
+    %%%%%:  680-block 228
+    %%%%%:  680-block 229
+    %%%%%:  680-block 230
+    %%%%%:  680-block 231
+    $$$$$:  680-block 232
+    $$$$$:  680-block 233
+    $$$$$:  680-block 234
+    $$$$$:  680-block 235
+    $$$$$:  680-block 236
+    $$$$$:  680-block 237
+    $$$$$:  680-block 238
+    %%%%%:  680-block 239
+    %%%%%:  680-block 240
+    %%%%%:  680-block 241
+    %%%%%:  680-block 242
+    %%%%%:  680-block 243
+    $$$$$:  680-block 244
+    $$$$$:  680-block 245
+    $$$$$:  680-block 246
+    $$$$$:  680-block 247
+    $$$$$:  680-block 248
+        1:  680-block 249
+        1:  680-block 250
+    $$$$$:  680-block 251
+    %%%%%:  680-block 252
+    %%%%%:  680-block 253
+    $$$$$:  680-block 254
+    %%%%%:  680-block 255
+    %%%%%:  680-block 256
+    %%%%%:  680-block 257
+    %%%%%:  680-block 258
+    $$$$$:  680-block 259
+    $$$$$:  680-block 260
+    $$$$$:  680-block 261
+    $$$$$:  680-block 262
+    $$$$$:  680-block 263
+    %%%%%:  680-block 264
+    %%%%%:  680-block 265
+    $$$$$:  680-block 266
+    $$$$$:  680-block 267
+    %%%%%:  680-block 268
+    %%%%%:  680-block 269
+    $$$$$:  680-block 270
+    %%%%%:  680-block 271
+    %%%%%:  680-block 272
+    $$$$$:  680-block 273
+    $$$$$:  680-block 274
+    $$$$$:  680-block 275
+    $$$$$:  680-block 276
+    $$$$$:  680-block 277
+    %%%%%:  680-block 278
+    %%%%%:  680-block 279
+    %%%%%:  680-block 280
+    %%%%%:  680-block 281
+    %%%%%:  680-block 282
+    %%%%%:  680-block 283
+    $$$$$:  680-block 284
+    $$$$$:  680-block 285
+    $$$$$:  680-block 286
+    $$$$$:  680-block 287
+    $$$$$:  680-block 288
+    %%%%%:  680-block 289
+    %%%%%:  680-block 290
+    %%%%%:  680-block 291
+    %%%%%:  680-block 292
+    %%%%%:  680-block 293
+    %%%%%:  680-block 294
+    %%%%%:  680-block 295
+    %%%%%:  680-block 296
+    $$$$$:  680-block 297
+    $$$$$:  680-block 298
+    $$$$$:  680-block 299
+    $$$$$:  680-block 300
+    $$$$$:  680-block 301
+    $$$$$:  680-block 302
+    $$$$$:  680-block 303
+    %%%%%:  680-block 304
+    %%%%%:  680-block 305
+    %%%%%:  680-block 306
+    %%%%%:  680-block 307
+    %%%%%:  680-block 308
+    %%%%%:  680-block 309
+    $$$$$:  680-block 310
+    $$$$$:  680-block 311
+    $$$$$:  680-block 312
+    $$$$$:  680-block 313
+    $$$$$:  680-block 314
+    %%%%%:  680-block 315
+    %%%%%:  680-block 316
+    %%%%%:  680-block 317
+    $$$$$:  680-block 318
+    $$$$$:  680-block 319
+    $$$$$:  680-block 320
+    $$$$$:  680-block 321
+    $$$$$:  680-block 322
+    $$$$$:  680-block 323
+    $$$$$:  680-block 324
+    $$$$$:  680-block 325
+    %%%%%:  680-block 326
+    %%%%%:  680-block 327
+        1:  680-block 328
+        1:  680-block 329
+    %%%%%:  680-block 330
+    %%%%%:  680-block 331
+        1:  680-block 332
+        1:  680-block 333
+        1:  680-block 334
+        1:  680-block 335
+        1:  680-block 336
+        1:  680-block 337
+    $$$$$:  680-block 338
+    $$$$$:  680-block 339
+    $$$$$:  680-block 340
+    $$$$$:  680-block 341
+    $$$$$:  680-block 342
+    $$$$$:  680-block 343
+    $$$$$:  680-block 344
+    $$$$$:  680-block 345
+    $$$$$:  680-block 346
+    $$$$$:  680-block 347
+    $$$$$:  680-block 348
+    $$$$$:  680-block 349
+    $$$$$:  680-block 350
+        1:  680-block 351
+        1:  680-block 352
+    %%%%%:  680-block 353
+    %%%%%:  680-block 354
+    %%%%%:  680-block 355
+    %%%%%:  680-block 356
+    %%%%%:  680-block 357
+    %%%%%:  680-block 358
+    %%%%%:  680-block 359
+    %%%%%:  680-block 360
+    %%%%%:  680-block 361
+    $$$$$:  680-block 362
+    $$$$$:  680-block 363
+    %%%%%:  680-block 364
+    %%%%%:  680-block 365
+    $$$$$:  680-block 366
+    $$$$$:  680-block 367
+        1:  680-block 368
+        1:  680-block 369
+    $$$$$:  680-block 370
+    %%%%%:  680-block 371
+    %%%%%:  680-block 372
+    %%%%%:  680-block 373
+    %%%%%:  680-block 374
+    %%%%%:  680-block 375
+    %%%%%:  680-block 376
+    %%%%%:  680-block 377
+    %%%%%:  680-block 378
+    $$$$$:  680-block 379
+    $$$$$:  680-block 380
+    $$$$$:  680-block 381
+    $$$$$:  680-block 382
+    $$$$$:  680-block 383
+    $$$$$:  680-block 384
+    $$$$$:  680-block 385
+    %%%%%:  680-block 386
+    %%%%%:  680-block 387
+    %%%%%:  680-block 388
+    %%%%%:  680-block 389
+    %%%%%:  680-block 390
+    %%%%%:  680-block 391
+    $$$$$:  680-block 392
+    $$$$$:  680-block 393
+    $$$$$:  680-block 394
+    $$$$$:  680-block 395
+    $$$$$:  680-block 396
+    %%%%%:  680-block 397
+    %%%%%:  680-block 398
+    %%%%%:  680-block 399
+    %%%%%:  680-block 400
+    %%%%%:  680-block 401
+    %%%%%:  680-block 402
+    $$$$$:  680-block 403
+    $$$$$:  680-block 404
+    $$$$$:  680-block 405
+    $$$$$:  680-block 406
+    $$$$$:  680-block 407
+    %%%%%:  680-block 408
+    %%%%%:  680-block 409
+    %%%%%:  680-block 410
+    %%%%%:  680-block 411
+    $$$$$:  680-block 412
+    $$$$$:  680-block 413
+    $$$$$:  680-block 414
+    $$$$$:  680-block 415
+    %%%%%:  680-block 416
+    %%%%%:  680-block 417
+    $$$$$:  680-block 418
+    %%%%%:  680-block 419
+        3:  680-block 420
+        3:  680-block 421
+        3:  680-block 422
+        3:  680-block 423
+    $$$$$:  680-block 424
+    $$$$$:  680-block 425
+    $$$$$:  680-block 426
+    %%%%%:  680-block 427
+    %%%%%:  680-block 428
+       24:  680-block 429
+       24:  680-block 430
+    $$$$$:  680-block 431
+    $$$$$:  680-block 432
+    $$$$$:  680-block 433
+    $$$$$:  680-block 434
+      210:  680-block 435
+      210:  680-block 436
+    $$$$$:  680-block 437
+        3:  680-block 438
+        3:  680-block 439
+    $$$$$:  680-block 440
+        3:  680-block 441
+        3:  680-block 442
+    $$$$$:  680-block 443
+    $$$$$:  680-block 444
+        4:  680-block 445
+        4:  680-block 446
+    %%%%%:  680-block 447
+    %%%%%:  680-block 448
+    $$$$$:  680-block 449
+    $$$$$:  680-block 450
+    $$$$$:  680-block 451
+    $$$$$:  680-block 452
+    %%%%%:  680-block 453
+    %%%%%:  680-block 454
+    $$$$$:  680-block 455
+    %%%%%:  680-block 456
+    %%%%%:  680-block 457
+    %%%%%:  680-block 458
+    %%%%%:  680-block 459
+    %%%%%:  680-block 460
+    %%%%%:  680-block 461
+    %%%%%:  680-block 462
+    %%%%%:  680-block 463
+    $$$$$:  680-block 464
+    $$$$$:  680-block 465
+    $$$$$:  680-block 466
+    $$$$$:  680-block 467
+    %%%%%:  680-block 468
+    %%%%%:  680-block 469
+    $$$$$:  680-block 470
+    %%%%%:  680-block 471
+    %%%%%:  680-block 472
+    %%%%%:  680-block 473
+    %%%%%:  680-block 474
+    %%%%%:  680-block 475
+    %%%%%:  680-block 476
+    $$$$$:  680-block 477
+    $$$$$:  680-block 478
+    $$$$$:  680-block 479
+    $$$$$:  680-block 480
+    $$$$$:  680-block 481
+    $$$$$:  680-block 482
+    $$$$$:  680-block 483
+    $$$$$:  680-block 484
+    $$$$$:  680-block 485
+    %%%%%:  680-block 486
+    %%%%%:  680-block 487
+    %%%%%:  680-block 488
+    %%%%%:  680-block 489
+    %%%%%:  680-block 490
+    %%%%%:  680-block 491
+    %%%%%:  680-block 492
+    %%%%%:  680-block 493
+    %%%%%:  680-block 494
+    %%%%%:  680-block 495
+    $$$$$:  680-block 496
+    $$$$$:  680-block 497
+    $$$$$:  680-block 498
+    $$$$$:  680-block 499
+    %%%%%:  680-block 500
+    %%%%%:  680-block 501
+    $$$$$:  680-block 502
+    %%%%%:  680-block 503
+    %%%%%:  680-block 504
+    %%%%%:  680-block 505
+    %%%%%:  680-block 506
+    %%%%%:  680-block 507
+    $$$$$:  680-block 508
+    $$$$$:  680-block 509
+    $$$$$:  680-block 510
+    $$$$$:  680-block 511
+    %%%%%:  680-block 512
+    %%%%%:  680-block 513
+    $$$$$:  680-block 514
+    %%%%%:  680-block 515
+    %%%%%:  680-block 516
+    $$$$$:  680-block 517
+------------------
+_ZNSt6vectorIN3pic11LabelOutputESaIS1_EED2Ev:
+    #####:  675:      ~vector() _GLIBCXX_NOEXCEPT
+        -:  676:      {
+    #####:  677:	std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+    #####:  678:		      _M_get_Tp_allocator());
+    %%%%%:  678-block  0
+        -:  679:	_GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC;
+    #####:  680:      }
+    %%%%%:  680-block  0
+------------------
+_ZNSt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS5_EED2Ev:
+        1:  675:      ~vector() _GLIBCXX_NOEXCEPT
+        -:  676:      {
+        2:  677:	std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+        1:  678:		      _M_get_Tp_allocator());
+        1:  678-block  0
+        -:  679:	_GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC;
+        1:  680:      }
+        1:  680-block  0
+------------------
+_ZNSt6vectorIN3pic4TileESaIS1_EED2Ev:
+        3:  675:      ~vector() _GLIBCXX_NOEXCEPT
+        -:  676:      {
+        6:  677:	std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+        3:  678:		      _M_get_Tp_allocator());
+        3:  678-block  0
+        -:  679:	_GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC;
+        3:  680:      }
+        3:  680-block  0
+------------------
+_ZNSt6vectorIS_IhSaIhEESaIS1_EED2Ev:
+    #####:  675:      ~vector() _GLIBCXX_NOEXCEPT
+        -:  676:      {
+    #####:  677:	std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+    #####:  678:		      _M_get_Tp_allocator());
+    %%%%%:  678-block  0
+    %%%%%:  678-block  1
+        -:  679:	_GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC;
+    #####:  680:      }
+    %%%%%:  680-block  0
+    %%%%%:  680-block  1
+    %%%%%:  680-block  2
+------------------
+_ZNSt6vectorIN12_GLOBAL__N_111ChannelInfoESaIS1_EED2Ev:
+    #####:  675:      ~vector() _GLIBCXX_NOEXCEPT
+        -:  676:      {
+    #####:  677:	std::_Destroy(this->_M_impl._M_start, this->_M_impl._M_finish,
+    #####:  678:		      _M_get_Tp_allocator());
+    %%%%%:  678-block  0
+        -:  679:	_GLIBCXX_ASAN_ANNOTATE_BEFORE_DEALLOC;
+    #####:  680:      }
+    %%%%%:  680-block  0
+------------------
+        -:  681:
+        -:  682:      /**
+        -:  683:       *  @brief  %Vector assignment operator.
+        -:  684:       *  @param  __x  A %vector of identical element and allocator types.
+        -:  685:       *
+        -:  686:       *  All the elements of @a __x are copied, but any unused capacity in
+        -:  687:       *  @a __x will not be copied.
+        -:  688:       *
+        -:  689:       *  Whether the allocator is copied depends on the allocator traits.
+        -:  690:       */
+        -:  691:      vector&
+        -:  692:      operator=(const vector& __x);
+        -:  693:
+        -:  694:#if __cplusplus >= 201103L
+        -:  695:      /**
+        -:  696:       *  @brief  %Vector move assignment operator.
+        -:  697:       *  @param  __x  A %vector of identical element and allocator types.
+        -:  698:       *
+        -:  699:       *  The contents of @a __x are moved into this %vector (without copying,
+        -:  700:       *  if the allocators permit it).
+        -:  701:       *  Afterwards @a __x is a valid, but unspecified %vector.
+        -:  702:       *
+        -:  703:       *  Whether the allocator is moved depends on the allocator traits.
+        -:  704:       */
+        -:  705:      vector&
+    #####:  706:      operator=(vector&& __x) noexcept(_Alloc_traits::_S_nothrow_move())
+        -:  707:      {
+    #####:  708:	constexpr bool __move_storage =
+    %%%%%:  708-block  0
+        -:  709:	  _Alloc_traits::_S_propagate_on_move_assign()
+        -:  710:	  || _Alloc_traits::_S_always_equal();
+    #####:  711:	_M_move_assign(std::move(__x), __bool_constant<__move_storage>());
+        -:  712:	return *this;
+        -:  713:      }
+        -:  714:
+        -:  715:      /**
+        -:  716:       *  @brief  %Vector list assignment operator.
+        -:  717:       *  @param  __l  An initializer_list.
+        -:  718:       *
+        -:  719:       *  This function fills a %vector with copies of the elements in the
+        -:  720:       *  initializer list @a __l.
+        -:  721:       *
+        -:  722:       *  Note that the assignment completely changes the %vector and
+        -:  723:       *  that the resulting %vector's size is the same as the number
+        -:  724:       *  of elements assigned.
+        -:  725:       */
+        -:  726:      vector&
+        -:  727:      operator=(initializer_list<value_type> __l)
+        -:  728:      {
+        -:  729:	this->_M_assign_aux(__l.begin(), __l.end(),
+        -:  730:			    random_access_iterator_tag());
+        -:  731:	return *this;
+        -:  732:      }
+        -:  733:#endif
+        -:  734:
+        -:  735:      /**
+        -:  736:       *  @brief  Assigns a given value to a %vector.
+        -:  737:       *  @param  __n  Number of elements to be assigned.
+        -:  738:       *  @param  __val  Value to be assigned.
+        -:  739:       *
+        -:  740:       *  This function fills a %vector with @a __n copies of the given
+        -:  741:       *  value.  Note that the assignment completely changes the
+        -:  742:       *  %vector and that the resulting %vector's size is the same as
+        -:  743:       *  the number of elements assigned.
+        -:  744:       */
+        -:  745:      void
+        -:  746:      assign(size_type __n, const value_type& __val)
+        -:  747:      { _M_fill_assign(__n, __val); }
+        -:  748:
+        -:  749:      /**
+        -:  750:       *  @brief  Assigns a range to a %vector.
+        -:  751:       *  @param  __first  An input iterator.
+        -:  752:       *  @param  __last   An input iterator.
+        -:  753:       *
+        -:  754:       *  This function fills a %vector with copies of the elements in the
+        -:  755:       *  range [__first,__last).
+        -:  756:       *
+        -:  757:       *  Note that the assignment completely changes the %vector and
+        -:  758:       *  that the resulting %vector's size is the same as the number
+        -:  759:       *  of elements assigned.
+        -:  760:       */
+        -:  761:#if __cplusplus >= 201103L
+        -:  762:      template<typename _InputIterator,
+        -:  763:	       typename = std::_RequireInputIter<_InputIterator>>
+        -:  764:	void
+        -:  765:	assign(_InputIterator __first, _InputIterator __last)
+        -:  766:	{ _M_assign_dispatch(__first, __last, __false_type()); }
+        -:  767:#else
+        -:  768:      template<typename _InputIterator>
+        -:  769:	void
+        -:  770:	assign(_InputIterator __first, _InputIterator __last)
+        -:  771:	{
+        -:  772:	  // Check whether it's an integral type.  If so, it's not an iterator.
+        -:  773:	  typedef typename std::__is_integer<_InputIterator>::__type _Integral;
+        -:  774:	  _M_assign_dispatch(__first, __last, _Integral());
+        -:  775:	}
+        -:  776:#endif
+        -:  777:
+        -:  778:#if __cplusplus >= 201103L
+        -:  779:      /**
+        -:  780:       *  @brief  Assigns an initializer list to a %vector.
+        -:  781:       *  @param  __l  An initializer_list.
+        -:  782:       *
+        -:  783:       *  This function fills a %vector with copies of the elements in the
+        -:  784:       *  initializer list @a __l.
+        -:  785:       *
+        -:  786:       *  Note that the assignment completely changes the %vector and
+        -:  787:       *  that the resulting %vector's size is the same as the number
+        -:  788:       *  of elements assigned.
+        -:  789:       */
+        -:  790:      void
+        -:  791:      assign(initializer_list<value_type> __l)
+        -:  792:      {
+        -:  793:	this->_M_assign_aux(__l.begin(), __l.end(),
+        -:  794:			    random_access_iterator_tag());
+        -:  795:      }
+        -:  796:#endif
+        -:  797:
+        -:  798:      /// Get a copy of the memory allocation object.
+        -:  799:      using _Base::get_allocator;
+        -:  800:
+        -:  801:      // iterators
+        -:  802:      /**
+        -:  803:       *  Returns a read/write iterator that points to the first
+        -:  804:       *  element in the %vector.  Iteration is done in ordinary
+        -:  805:       *  element order.
+        -:  806:       */
+        -:  807:      iterator
+      48*:  808:      begin() _GLIBCXX_NOEXCEPT
+      48*:  809:      { return iterator(this->_M_impl._M_start); }
+    %%%%%:  809-block  0
+    %%%%%:  809-block  1
+    %%%%%:  809-block  2
+    %%%%%:  809-block  3
+    %%%%%:  809-block  4
+    %%%%%:  809-block  5
+    %%%%%:  809-block  6
+    %%%%%:  809-block  7
+    %%%%%:  809-block  8
+        -:  810:
+        -:  811:      /**
+        -:  812:       *  Returns a read-only (constant) iterator that points to the
+        -:  813:       *  first element in the %vector.  Iteration is done in ordinary
+        -:  814:       *  element order.
+        -:  815:       */
+        -:  816:      const_iterator
+     278*:  817:      begin() const _GLIBCXX_NOEXCEPT
+     278*:  818:      { return const_iterator(this->_M_impl._M_start); }
+    %%%%%:  818-block  0
+    %%%%%:  818-block  1
+    %%%%%:  818-block  2
+    %%%%%:  818-block  3
+    %%%%%:  818-block  4
+    %%%%%:  818-block  5
+    %%%%%:  818-block  6
+    %%%%%:  818-block  7
+    %%%%%:  818-block  8
+    %%%%%:  818-block  9
+    %%%%%:  818-block 10
+    %%%%%:  818-block 11
+    %%%%%:  818-block 12
+    %%%%%:  818-block 13
+    %%%%%:  818-block 14
+    %%%%%:  818-block 15
+    %%%%%:  818-block 16
+    %%%%%:  818-block 17
+    %%%%%:  818-block 18
+        3:  818-block 19
+        -:  819:
+        -:  820:      /**
+        -:  821:       *  Returns a read/write iterator that points one past the last
+        -:  822:       *  element in the %vector.  Iteration is done in ordinary
+        -:  823:       *  element order.
+        -:  824:       */
+        -:  825:      iterator
+      48*:  826:      end() _GLIBCXX_NOEXCEPT
+      48*:  827:      { return iterator(this->_M_impl._M_finish); }
+    %%%%%:  827-block  0
+    %%%%%:  827-block  1
+    %%%%%:  827-block  2
+    %%%%%:  827-block  3
+    %%%%%:  827-block  4
+    %%%%%:  827-block  5
+    %%%%%:  827-block  6
+    %%%%%:  827-block  7
+        3:  827-block  8
+    %%%%%:  827-block  9
+    %%%%%:  827-block 10
+    %%%%%:  827-block 11
+    %%%%%:  827-block 12
+    %%%%%:  827-block 13
+    %%%%%:  827-block 14
+    %%%%%:  827-block 15
+    %%%%%:  827-block 16
+    %%%%%:  827-block 17
+    %%%%%:  827-block 18
+    %%%%%:  827-block 19
+       24:  827-block 20
+        8:  827-block 21
+        6:  827-block 22
+        3:  827-block 23
+    %%%%%:  827-block 24
+    %%%%%:  827-block 25
+    %%%%%:  827-block 26
+        4:  827-block 27
+    %%%%%:  827-block 28
+    %%%%%:  827-block 29
+    %%%%%:  827-block 30
+    %%%%%:  827-block 31
+    %%%%%:  827-block 32
+    %%%%%:  827-block 33
+    %%%%%:  827-block 34
+    %%%%%:  827-block 35
+    %%%%%:  827-block 36
+    %%%%%:  827-block 37
+    %%%%%:  827-block 38
+        -:  828:
+        -:  829:      /**
+        -:  830:       *  Returns a read-only (constant) iterator that points one past
+        -:  831:       *  the last element in the %vector.  Iteration is done in
+        -:  832:       *  ordinary element order.
+        -:  833:       */
+        -:  834:      const_iterator
+     278*:  835:      end() const _GLIBCXX_NOEXCEPT
+     275*:  836:      { return const_iterator(this->_M_impl._M_finish); }
+    %%%%%:  836-block  0
+    %%%%%:  836-block  1
+    %%%%%:  836-block  2
+    %%%%%:  836-block  3
+        -:  837:
+        -:  838:      /**
+        -:  839:       *  Returns a read/write reverse iterator that points to the
+        -:  840:       *  last element in the %vector.  Iteration is done in reverse
+        -:  841:       *  element order.
+        -:  842:       */
+        -:  843:      reverse_iterator
+        -:  844:      rbegin() _GLIBCXX_NOEXCEPT
+        -:  845:      { return reverse_iterator(end()); }
+        -:  846:
+        -:  847:      /**
+        -:  848:       *  Returns a read-only (constant) reverse iterator that points
+        -:  849:       *  to the last element in the %vector.  Iteration is done in
+        -:  850:       *  reverse element order.
+        -:  851:       */
+        -:  852:      const_reverse_iterator
+        -:  853:      rbegin() const _GLIBCXX_NOEXCEPT
+        -:  854:      { return const_reverse_iterator(end()); }
+        -:  855:
+        -:  856:      /**
+        -:  857:       *  Returns a read/write reverse iterator that points to one
+        -:  858:       *  before the first element in the %vector.  Iteration is done
+        -:  859:       *  in reverse element order.
+        -:  860:       */
+        -:  861:      reverse_iterator
+        -:  862:      rend() _GLIBCXX_NOEXCEPT
+        -:  863:      { return reverse_iterator(begin()); }
+        -:  864:
+        -:  865:      /**
+        -:  866:       *  Returns a read-only (constant) reverse iterator that points
+        -:  867:       *  to one before the first element in the %vector.  Iteration
+        -:  868:       *  is done in reverse element order.
+        -:  869:       */
+        -:  870:      const_reverse_iterator
+        -:  871:      rend() const _GLIBCXX_NOEXCEPT
+        -:  872:      { return const_reverse_iterator(begin()); }
+        -:  873:
+        -:  874:#if __cplusplus >= 201103L
+        -:  875:      /**
+        -:  876:       *  Returns a read-only (constant) iterator that points to the
+        -:  877:       *  first element in the %vector.  Iteration is done in ordinary
+        -:  878:       *  element order.
+        -:  879:       */
+        -:  880:      const_iterator
+    #####:  881:      cbegin() const noexcept
+    #####:  882:      { return const_iterator(this->_M_impl._M_start); }
+        -:  883:
+        -:  884:      /**
+        -:  885:       *  Returns a read-only (constant) iterator that points one past
+        -:  886:       *  the last element in the %vector.  Iteration is done in
+        -:  887:       *  ordinary element order.
+        -:  888:       */
+        -:  889:      const_iterator
+        -:  890:      cend() const noexcept
+        -:  891:      { return const_iterator(this->_M_impl._M_finish); }
+        -:  892:
+        -:  893:      /**
+        -:  894:       *  Returns a read-only (constant) reverse iterator that points
+        -:  895:       *  to the last element in the %vector.  Iteration is done in
+        -:  896:       *  reverse element order.
+        -:  897:       */
+        -:  898:      const_reverse_iterator
+        -:  899:      crbegin() const noexcept
+        -:  900:      { return const_reverse_iterator(end()); }
+        -:  901:
+        -:  902:      /**
+        -:  903:       *  Returns a read-only (constant) reverse iterator that points
+        -:  904:       *  to one before the first element in the %vector.  Iteration
+        -:  905:       *  is done in reverse element order.
+        -:  906:       */
+        -:  907:      const_reverse_iterator
+        -:  908:      crend() const noexcept
+        -:  909:      { return const_reverse_iterator(begin()); }
+        -:  910:#endif
+        -:  911:
+        -:  912:      // [23.2.4.2] capacity
+        -:  913:      /**  Returns the number of elements in the %vector.  */
+        -:  914:      size_type
+     218*:  915:      size() const _GLIBCXX_NOEXCEPT
+    %%%%%:  915-block  0
+    %%%%%:  915-block  1
+    %%%%%:  915-block  2
+    %%%%%:  915-block  3
+    %%%%%:  915-block  4
+    %%%%%:  915-block  5
+    %%%%%:  915-block  6
+    %%%%%:  915-block  7
+        1:  915-block  8
+      210:  915-block  9
+        7:  915-block 10
+    %%%%%:  915-block 11
+    %%%%%:  915-block 12
+     684*:  916:      { return size_type(this->_M_impl._M_finish - this->_M_impl._M_start); }
+    %%%%%:  916-block  0
+    %%%%%:  916-block  1
+    %%%%%:  916-block  2
+    %%%%%:  916-block  3
+    %%%%%:  916-block  4
+    %%%%%:  916-block  5
+    %%%%%:  916-block  6
+    %%%%%:  916-block  7
+    %%%%%:  916-block  8
+    %%%%%:  916-block  9
+    %%%%%:  916-block 10
+    %%%%%:  916-block 11
+    %%%%%:  916-block 12
+    %%%%%:  916-block 13
+    %%%%%:  916-block 14
+    %%%%%:  916-block 15
+    %%%%%:  916-block 16
+    %%%%%:  916-block 17
+    %%%%%:  916-block 18
+    %%%%%:  916-block 19
+       13:  916-block 20
+      275:  916-block 21
+    %%%%%:  916-block 22
+    %%%%%:  916-block 23
+    %%%%%:  916-block 24
+    %%%%%:  916-block 25
+    %%%%%:  916-block 26
+    %%%%%:  916-block 27
+    %%%%%:  916-block 28
+    %%%%%:  916-block 29
+    %%%%%:  916-block 30
+    %%%%%:  916-block 31
+    %%%%%:  916-block 32
+    %%%%%:  916-block 33
+    %%%%%:  916-block 34
+    %%%%%:  916-block 35
+    %%%%%:  916-block 36
+    %%%%%:  916-block 37
+    %%%%%:  916-block 38
+       70:  916-block 39
+    %%%%%:  916-block 40
+    %%%%%:  916-block 41
+    %%%%%:  916-block 42
+    %%%%%:  916-block 43
+    %%%%%:  916-block 44
+    %%%%%:  916-block 45
+    %%%%%:  916-block 46
+    %%%%%:  916-block 47
+    %%%%%:  916-block 48
+    %%%%%:  916-block 49
+    %%%%%:  916-block 50
+    %%%%%:  916-block 51
+    %%%%%:  916-block 52
+    %%%%%:  916-block 53
+    %%%%%:  916-block 54
+    %%%%%:  916-block 55
+    %%%%%:  916-block 56
+    %%%%%:  916-block 57
+        1:  916-block 58
+    %%%%%:  916-block 59
+    %%%%%:  916-block 60
+    %%%%%:  916-block 61
+       70:  916-block 62
+    %%%%%:  916-block 63
+    %%%%%:  916-block 64
+    %%%%%:  916-block 65
+    %%%%%:  916-block 66
+    %%%%%:  916-block 67
+    %%%%%:  916-block 68
+    %%%%%:  916-block 69
+        1:  916-block 70
+        1:  916-block 71
+        1:  916-block 72
+        3:  916-block 73
+        1:  916-block 74
+      234:  916-block 75
+    %%%%%:  916-block 76
+    %%%%%:  916-block 77
+        1:  916-block 78
+        3:  916-block 79
+        1:  916-block 80
+        8:  916-block 81
+    %%%%%:  916-block 82
+    %%%%%:  916-block 83
+    %%%%%:  916-block 84
+    %%%%%:  916-block 85
+    %%%%%:  916-block 86
+    %%%%%:  916-block 87
+    %%%%%:  916-block 88
+    %%%%%:  916-block 89
+        -:  917:
+        -:  918:      /**  Returns the size() of the largest possible %vector.  */
+        -:  919:      size_type
+      96*:  920:      max_size() const _GLIBCXX_NOEXCEPT
+     144*:  921:      { return _S_max_size(_M_get_Tp_allocator()); }
+        -:  922:
+        -:  923:#if __cplusplus >= 201103L
+        -:  924:      /**
+        -:  925:       *  @brief  Resizes the %vector to the specified number of elements.
+        -:  926:       *  @param  __new_size  Number of elements the %vector should contain.
+        -:  927:       *
+        -:  928:       *  This function will %resize the %vector to the specified
+        -:  929:       *  number of elements.  If the number is smaller than the
+        -:  930:       *  %vector's current size the %vector is truncated, otherwise
+        -:  931:       *  default constructed elements are appended.
+        -:  932:       */
+        -:  933:      void
+    #####:  934:      resize(size_type __new_size)
+        -:  935:      {
+    #####:  936:	if (__new_size > size())
+    %%%%%:  936-block  0
+    #####:  937:	  _M_default_append(__new_size - size());
+    %%%%%:  937-block  0
+    #####:  938:	else if (__new_size < size())
+    %%%%%:  938-block  0
+    #####:  939:	  _M_erase_at_end(this->_M_impl._M_start + __new_size);
+    #####:  940:      }
+        -:  941:
+        -:  942:      /**
+        -:  943:       *  @brief  Resizes the %vector to the specified number of elements.
+        -:  944:       *  @param  __new_size  Number of elements the %vector should contain.
+        -:  945:       *  @param  __x  Data with which new elements should be populated.
+        -:  946:       *
+        -:  947:       *  This function will %resize the %vector to the specified
+        -:  948:       *  number of elements.  If the number is smaller than the
+        -:  949:       *  %vector's current size the %vector is truncated, otherwise
+        -:  950:       *  the %vector is extended and new elements are populated with
+        -:  951:       *  given data.
+        -:  952:       */
+        -:  953:      void
+        -:  954:      resize(size_type __new_size, const value_type& __x)
+        -:  955:      {
+        -:  956:	if (__new_size > size())
+        -:  957:	  _M_fill_insert(end(), __new_size - size(), __x);
+        -:  958:	else if (__new_size < size())
+        -:  959:	  _M_erase_at_end(this->_M_impl._M_start + __new_size);
+        -:  960:      }
+        -:  961:#else
+        -:  962:      /**
+        -:  963:       *  @brief  Resizes the %vector to the specified number of elements.
+        -:  964:       *  @param  __new_size  Number of elements the %vector should contain.
+        -:  965:       *  @param  __x  Data with which new elements should be populated.
+        -:  966:       *
+        -:  967:       *  This function will %resize the %vector to the specified
+        -:  968:       *  number of elements.  If the number is smaller than the
+        -:  969:       *  %vector's current size the %vector is truncated, otherwise
+        -:  970:       *  the %vector is extended and new elements are populated with
+        -:  971:       *  given data.
+        -:  972:       */
+        -:  973:      void
+        -:  974:      resize(size_type __new_size, value_type __x = value_type())
+        -:  975:      {
+        -:  976:	if (__new_size > size())
+        -:  977:	  _M_fill_insert(end(), __new_size - size(), __x);
+        -:  978:	else if (__new_size < size())
+        -:  979:	  _M_erase_at_end(this->_M_impl._M_start + __new_size);
+        -:  980:      }
+        -:  981:#endif
+        -:  982:
+        -:  983:#if __cplusplus >= 201103L
+        -:  984:      /**  A non-binding request to reduce capacity() to size().  */
+        -:  985:      void
+        -:  986:      shrink_to_fit()
+        -:  987:      { _M_shrink_to_fit(); }
+        -:  988:#endif
+        -:  989:
+        -:  990:      /**
+        -:  991:       *  Returns the total number of elements that the %vector can
+        -:  992:       *  hold before needing to allocate more memory.
+        -:  993:       */
+        -:  994:      size_type
+    #####:  995:      capacity() const _GLIBCXX_NOEXCEPT
+        -:  996:      { return size_type(this->_M_impl._M_end_of_storage
+    #####:  997:			 - this->_M_impl._M_start); }
+    %%%%%:  997-block  0
+    %%%%%:  997-block  1
+        -:  998:
+        -:  999:      /**
+        -: 1000:       *  Returns true if the %vector is empty.  (Thus begin() would
+        -: 1001:       *  equal end().)
+        -: 1002:       */
+        -: 1003:      _GLIBCXX_NODISCARD bool
+       3*: 1004:      empty() const _GLIBCXX_NOEXCEPT
+       3*: 1005:      { return begin() == end(); }
+    %%%%%: 1005-block  0
+    %%%%%: 1005-block  1
+    %%%%%: 1005-block  2
+    %%%%%: 1005-block  3
+    %%%%%: 1005-block  4
+    %%%%%: 1005-block  5
+    %%%%%: 1005-block  6
+    %%%%%: 1005-block  7
+    %%%%%: 1005-block  8
+    %%%%%: 1005-block  9
+    %%%%%: 1005-block 10
+    %%%%%: 1005-block 11
+    %%%%%: 1005-block 12
+    %%%%%: 1005-block 13
+    %%%%%: 1005-block 14
+    %%%%%: 1005-block 15
+    %%%%%: 1005-block 16
+        3: 1005-block 17
+        -: 1006:
+        -: 1007:      /**
+        -: 1008:       *  @brief  Attempt to preallocate enough memory for specified number of
+        -: 1009:       *          elements.
+        -: 1010:       *  @param  __n  Number of elements required.
+        -: 1011:       *  @throw  std::length_error  If @a n exceeds @c max_size().
+        -: 1012:       *
+        -: 1013:       *  This function attempts to reserve enough memory for the
+        -: 1014:       *  %vector to hold the specified number of elements.  If the
+        -: 1015:       *  number requested is more than max_size(), length_error is
+        -: 1016:       *  thrown.
+        -: 1017:       *
+        -: 1018:       *  The advantage of this function is that if optimal code is a
+        -: 1019:       *  necessity and the user can determine the number of elements
+        -: 1020:       *  that will be required, the user can reserve the memory in
+        -: 1021:       *  %advance, and thus prevent a possible reallocation of memory
+        -: 1022:       *  and copying of %vector data.
+        -: 1023:       */
+        -: 1024:      void
+        -: 1025:      reserve(size_type __n);
+        -: 1026:
+        -: 1027:      // element access
+        -: 1028:      /**
+        -: 1029:       *  @brief  Subscript access to the data contained in the %vector.
+        -: 1030:       *  @param __n The index of the element for which data should be
+        -: 1031:       *  accessed.
+        -: 1032:       *  @return  Read/write reference to data.
+        -: 1033:       *
+        -: 1034:       *  This operator allows for easy, array-style, data access.
+        -: 1035:       *  Note that data access with this operator is unchecked and
+        -: 1036:       *  out_of_range lookups are not defined. (For checked lookups
+        -: 1037:       *  see at().)
+        -: 1038:       */
+        -: 1039:      reference
+  547136*: 1040:      operator[](size_type __n) _GLIBCXX_NOEXCEPT
+    %%%%%: 1040-block  0
+    %%%%%: 1040-block  1
+    %%%%%: 1040-block  2
+    %%%%%: 1040-block  3
+    %%%%%: 1040-block  4
+    %%%%%: 1040-block  5
+    %%%%%: 1040-block  6
+    %%%%%: 1040-block  7
+    %%%%%: 1040-block  8
+    %%%%%: 1040-block  9
+    %%%%%: 1040-block 10
+    %%%%%: 1040-block 11
+    %%%%%: 1040-block 12
+    %%%%%: 1040-block 13
+    %%%%%: 1040-block 14
+    %%%%%: 1040-block 15
+    %%%%%: 1040-block 16
+    %%%%%: 1040-block 17
+    %%%%%: 1040-block 18
+    %%%%%: 1040-block 19
+    %%%%%: 1040-block 20
+    %%%%%: 1040-block 21
+    %%%%%: 1040-block 22
+    %%%%%: 1040-block 23
+    %%%%%: 1040-block 24
+    %%%%%: 1040-block 25
+    %%%%%: 1040-block 26
+    %%%%%: 1040-block 27
+    %%%%%: 1040-block 28
+    %%%%%: 1040-block 29
+    %%%%%: 1040-block 30
+    %%%%%: 1040-block 31
+    %%%%%: 1040-block 32
+    %%%%%: 1040-block 33
+    %%%%%: 1040-block 34
+    %%%%%: 1040-block 35
+    %%%%%: 1040-block 36
+    %%%%%: 1040-block 37
+    %%%%%: 1040-block 38
+    %%%%%: 1040-block 39
+    %%%%%: 1040-block 40
+    %%%%%: 1040-block 41
+    %%%%%: 1040-block 42
+    %%%%%: 1040-block 43
+    %%%%%: 1040-block 44
+    %%%%%: 1040-block 45
+    %%%%%: 1040-block 46
+    %%%%%: 1040-block 47
+    %%%%%: 1040-block 48
+    %%%%%: 1040-block 49
+    %%%%%: 1040-block 50
+    %%%%%: 1040-block 51
+    %%%%%: 1040-block 52
+    %%%%%: 1040-block 53
+    %%%%%: 1040-block 54
+    %%%%%: 1040-block 55
+    %%%%%: 1040-block 56
+        1: 1040-block 57
+        1: 1040-block 58
+    %%%%%: 1040-block 59
+    %%%%%: 1040-block 60
+    %%%%%: 1040-block 61
+    %%%%%: 1040-block 62
+    %%%%%: 1040-block 63
+        1: 1040-block 64
+        1: 1040-block 65
+    %%%%%: 1040-block 66
+    %%%%%: 1040-block 67
+    %%%%%: 1040-block 68
+    %%%%%: 1040-block 69
+    %%%%%: 1040-block 70
+    %%%%%: 1040-block 71
+    %%%%%: 1040-block 72
+    %%%%%: 1040-block 73
+    %%%%%: 1040-block 74
+    %%%%%: 1040-block 75
+    %%%%%: 1040-block 76
+    %%%%%: 1040-block 77
+    %%%%%: 1040-block 78
+    %%%%%: 1040-block 79
+    %%%%%: 1040-block 80
+    %%%%%: 1040-block 81
+    %%%%%: 1040-block 82
+    %%%%%: 1040-block 83
+    %%%%%: 1040-block 84
+    %%%%%: 1040-block 85
+    %%%%%: 1040-block 86
+    %%%%%: 1040-block 87
+    %%%%%: 1040-block 88
+    %%%%%: 1040-block 89
+    %%%%%: 1040-block 90
+    %%%%%: 1040-block 91
+    %%%%%: 1040-block 92
+    %%%%%: 1040-block 93
+    %%%%%: 1040-block 94
+    %%%%%: 1040-block 95
+    %%%%%: 1040-block 96
+    %%%%%: 1040-block 97
+    %%%%%: 1040-block 98
+    %%%%%: 1040-block 99
+    %%%%%: 1040-block 100
+    %%%%%: 1040-block 101
+    %%%%%: 1040-block 102
+    %%%%%: 1040-block 103
+    %%%%%: 1040-block 104
+    %%%%%: 1040-block 105
+    %%%%%: 1040-block 106
+    %%%%%: 1040-block 107
+    %%%%%: 1040-block 108
+    %%%%%: 1040-block 109
+    %%%%%: 1040-block 110
+    %%%%%: 1040-block 111
+    %%%%%: 1040-block 112
+    %%%%%: 1040-block 113
+    %%%%%: 1040-block 114
+    %%%%%: 1040-block 115
+    %%%%%: 1040-block 116
+    %%%%%: 1040-block 117
+    %%%%%: 1040-block 118
+    %%%%%: 1040-block 119
+    %%%%%: 1040-block 120
+    %%%%%: 1040-block 121
+    %%%%%: 1040-block 122
+    %%%%%: 1040-block 123
+    %%%%%: 1040-block 124
+    %%%%%: 1040-block 125
+    %%%%%: 1040-block 126
+    %%%%%: 1040-block 127
+    %%%%%: 1040-block 128
+    %%%%%: 1040-block 129
+    %%%%%: 1040-block 130
+    %%%%%: 1040-block 131
+    %%%%%: 1040-block 132
+    %%%%%: 1040-block 133
+    %%%%%: 1040-block 134
+    %%%%%: 1040-block 135
+    %%%%%: 1040-block 136
+    %%%%%: 1040-block 137
+    %%%%%: 1040-block 138
+    %%%%%: 1040-block 139
+    %%%%%: 1040-block 140
+    %%%%%: 1040-block 141
+    %%%%%: 1040-block 142
+    %%%%%: 1040-block 143
+    %%%%%: 1040-block 144
+    %%%%%: 1040-block 145
+    %%%%%: 1040-block 146
+    %%%%%: 1040-block 147
+    %%%%%: 1040-block 148
+    %%%%%: 1040-block 149
+    %%%%%: 1040-block 150
+    %%%%%: 1040-block 151
+    %%%%%: 1040-block 152
+    %%%%%: 1040-block 153
+    %%%%%: 1040-block 154
+    %%%%%: 1040-block 155
+    %%%%%: 1040-block 156
+    %%%%%: 1040-block 157
+    %%%%%: 1040-block 158
+    %%%%%: 1040-block 159
+    %%%%%: 1040-block 160
+    %%%%%: 1040-block 161
+    %%%%%: 1040-block 162
+    %%%%%: 1040-block 163
+       70: 1040-block 164
+    %%%%%: 1040-block 165
+        1: 1040-block 166
+    %%%%%: 1040-block 167
+        1: 1040-block 168
+    %%%%%: 1040-block 169
+    %%%%%: 1040-block 170
+    %%%%%: 1040-block 171
+    %%%%%: 1040-block 172
+    %%%%%: 1040-block 173
+    %%%%%: 1040-block 174
+    %%%%%: 1040-block 175
+    %%%%%: 1040-block 176
+    %%%%%: 1040-block 177
+    %%%%%: 1040-block 178
+    %%%%%: 1040-block 179
+    %%%%%: 1040-block 180
+    %%%%%: 1040-block 181
+    %%%%%: 1040-block 182
+    %%%%%: 1040-block 183
+    %%%%%: 1040-block 184
+    %%%%%: 1040-block 185
+    %%%%%: 1040-block 186
+    %%%%%: 1040-block 187
+    %%%%%: 1040-block 188
+    %%%%%: 1040-block 189
+    %%%%%: 1040-block 190
+    %%%%%: 1040-block 191
+    %%%%%: 1040-block 192
+    %%%%%: 1040-block 193
+    %%%%%: 1040-block 194
+    %%%%%: 1040-block 195
+    %%%%%: 1040-block 196
+    %%%%%: 1040-block 197
+    %%%%%: 1040-block 198
+    %%%%%: 1040-block 199
+    %%%%%: 1040-block 200
+    %%%%%: 1040-block 201
+    %%%%%: 1040-block 202
+    %%%%%: 1040-block 203
+    %%%%%: 1040-block 204
+    %%%%%: 1040-block 205
+    %%%%%: 1040-block 206
+    %%%%%: 1040-block 207
+    %%%%%: 1040-block 208
+    %%%%%: 1040-block 209
+    %%%%%: 1040-block 210
+    %%%%%: 1040-block 211
+    %%%%%: 1040-block 212
+        1: 1040-block 213
+    %%%%%: 1040-block 214
+    %%%%%: 1040-block 215
+    %%%%%: 1040-block 216
+    %%%%%: 1040-block 217
+    %%%%%: 1040-block 218
+    %%%%%: 1040-block 219
+    %%%%%: 1040-block 220
+    %%%%%: 1040-block 221
+    %%%%%: 1040-block 222
+    %%%%%: 1040-block 223
+    %%%%%: 1040-block 224
+    %%%%%: 1040-block 225
+    %%%%%: 1040-block 226
+    %%%%%: 1040-block 227
+    %%%%%: 1040-block 228
+    %%%%%: 1040-block 229
+    %%%%%: 1040-block 230
+    %%%%%: 1040-block 231
+    %%%%%: 1040-block 232
+    %%%%%: 1040-block 233
+    %%%%%: 1040-block 234
+    %%%%%: 1040-block 235
+    %%%%%: 1040-block 236
+    %%%%%: 1040-block 237
+    %%%%%: 1040-block 238
+    %%%%%: 1040-block 239
+    %%%%%: 1040-block 240
+    %%%%%: 1040-block 241
+    %%%%%: 1040-block 242
+    %%%%%: 1040-block 243
+    %%%%%: 1040-block 244
+    %%%%%: 1040-block 245
+    %%%%%: 1040-block 246
+    %%%%%: 1040-block 247
+       70: 1040-block 248
+      420: 1040-block 249
+    %%%%%: 1040-block 250
+        1: 1040-block 251
+        1: 1040-block 252
+   273280: 1040-block 253
+   273280: 1040-block 254
+    %%%%%: 1040-block 255
+    %%%%%: 1040-block 256
+    %%%%%: 1040-block 257
+    %%%%%: 1040-block 258
+    %%%%%: 1040-block 259
+    %%%%%: 1040-block 260
+    %%%%%: 1040-block 261
+        1: 1040-block 262
+    %%%%%: 1040-block 263
+    %%%%%: 1040-block 264
+    %%%%%: 1040-block 265
+    %%%%%: 1040-block 266
+    %%%%%: 1040-block 267
+    %%%%%: 1040-block 268
+    %%%%%: 1040-block 269
+    %%%%%: 1040-block 270
+    %%%%%: 1040-block 271
+    %%%%%: 1040-block 272
+    %%%%%: 1040-block 273
+    %%%%%: 1040-block 274
+    %%%%%: 1040-block 275
+    %%%%%: 1040-block 276
+    %%%%%: 1040-block 277
+    %%%%%: 1040-block 278
+    %%%%%: 1040-block 279
+    %%%%%: 1040-block 280
+    %%%%%: 1040-block 281
+    %%%%%: 1040-block 282
+    %%%%%: 1040-block 283
+        5: 1040-block 284
+    %%%%%: 1040-block 285
+    %%%%%: 1040-block 286
+    %%%%%: 1040-block 287
+    %%%%%: 1040-block 288
+    %%%%%: 1040-block 289
+    %%%%%: 1040-block 290
+    %%%%%: 1040-block 291
+    %%%%%: 1040-block 292
+    %%%%%: 1040-block 293
+        -: 1041:      {
+        -: 1042:	__glibcxx_requires_subscript(__n);
+13396792*: 1043:	return *(this->_M_impl._M_start + __n);
+    %%%%%: 1043-block  0
+    %%%%%: 1043-block  1
+    %%%%%: 1043-block  2
+    %%%%%: 1043-block  3
+    %%%%%: 1043-block  4
+    %%%%%: 1043-block  5
+    %%%%%: 1043-block  6
+    %%%%%: 1043-block  7
+    %%%%%: 1043-block  8
+    %%%%%: 1043-block  9
+    %%%%%: 1043-block 10
+    %%%%%: 1043-block 11
+    %%%%%: 1043-block 12
+    %%%%%: 1043-block 13
+    %%%%%: 1043-block 14
+    %%%%%: 1043-block 15
+    %%%%%: 1043-block 16
+    %%%%%: 1043-block 17
+    %%%%%: 1043-block 18
+    %%%%%: 1043-block 19
+    %%%%%: 1043-block 20
+    %%%%%: 1043-block 21
+    %%%%%: 1043-block 22
+    %%%%%: 1043-block 23
+    %%%%%: 1043-block 24
+    %%%%%: 1043-block 25
+    %%%%%: 1043-block 26
+    %%%%%: 1043-block 27
+    %%%%%: 1043-block 28
+    %%%%%: 1043-block 29
+    %%%%%: 1043-block 30
+    %%%%%: 1043-block 31
+    %%%%%: 1043-block 32
+    %%%%%: 1043-block 33
+    %%%%%: 1043-block 34
+       10: 1043-block 35
+       10: 1043-block 36
+    %%%%%: 1043-block 37
+    %%%%%: 1043-block 38
+    %%%%%: 1043-block 39
+    %%%%%: 1043-block 40
+    %%%%%: 1043-block 41
+    %%%%%: 1043-block 42
+    %%%%%: 1043-block 43
+    %%%%%: 1043-block 44
+    %%%%%: 1043-block 45
+    %%%%%: 1043-block 46
+    %%%%%: 1043-block 47
+    %%%%%: 1043-block 48
+    %%%%%: 1043-block 49
+    %%%%%: 1043-block 50
+        1: 1043-block 51
+    %%%%%: 1043-block 52
+    %%%%%: 1043-block 53
+    %%%%%: 1043-block 54
+    %%%%%: 1043-block 55
+    %%%%%: 1043-block 56
+    %%%%%: 1043-block 57
+    %%%%%: 1043-block 58
+    %%%%%: 1043-block 59
+    %%%%%: 1043-block 60
+    %%%%%: 1043-block 61
+    %%%%%: 1043-block 62
+    %%%%%: 1043-block 63
+    %%%%%: 1043-block 64
+    %%%%%: 1043-block 65
+    %%%%%: 1043-block 66
+    %%%%%: 1043-block 67
+    %%%%%: 1043-block 68
+        7: 1043-block 69
+    %%%%%: 1043-block 70
+    %%%%%: 1043-block 71
+    %%%%%: 1043-block 72
+    %%%%%: 1043-block 73
+    %%%%%: 1043-block 74
+    %%%%%: 1043-block 75
+    %%%%%: 1043-block 76
+      420: 1043-block 77
+  1912960: 1043-block 78
+  5738880: 1043-block 79
+    %%%%%: 1043-block 80
+  5738880: 1043-block 81
+    %%%%%: 1043-block 82
+    %%%%%: 1043-block 83
+    %%%%%: 1043-block 84
+    %%%%%: 1043-block 85
+    %%%%%: 1043-block 86
+    %%%%%: 1043-block 87
+    %%%%%: 1043-block 88
+    %%%%%: 1043-block 89
+    %%%%%: 1043-block 90
+    %%%%%: 1043-block 91
+    %%%%%: 1043-block 92
+    %%%%%: 1043-block 93
+     5376: 1043-block 94
+    %%%%%: 1043-block 95
+       21: 1043-block 96
+    %%%%%: 1043-block 97
+      210: 1043-block 98
+    %%%%%: 1043-block 99
+        5: 1043-block 100
+        6: 1043-block 101
+        7: 1043-block 102
+    %%%%%: 1043-block 103
+    %%%%%: 1043-block 104
+    %%%%%: 1043-block 105
+    %%%%%: 1043-block 106
+    %%%%%: 1043-block 107
+    %%%%%: 1043-block 108
+    %%%%%: 1043-block 109
+    %%%%%: 1043-block 110
+    %%%%%: 1043-block 111
+    %%%%%: 1043-block 112
+    %%%%%: 1043-block 113
+    %%%%%: 1043-block 114
+        -: 1044:      }
+        -: 1045:
+        -: 1046:      /**
+        -: 1047:       *  @brief  Subscript access to the data contained in the %vector.
+        -: 1048:       *  @param __n The index of the element for which data should be
+        -: 1049:       *  accessed.
+        -: 1050:       *  @return  Read-only (constant) reference to data.
+        -: 1051:       *
+        -: 1052:       *  This operator allows for easy, array-style, data access.
+        -: 1053:       *  Note that data access with this operator is unchecked and
+        -: 1054:       *  out_of_range lookups are not defined. (For checked lookups
+        -: 1055:       *  see at().)
+        -: 1056:       */
+        -: 1057:      const_reference
+    #####: 1058:      operator[](size_type __n) const _GLIBCXX_NOEXCEPT
+        -: 1059:      {
+        -: 1060:	__glibcxx_requires_subscript(__n);
+    #####: 1061:	return *(this->_M_impl._M_start + __n);
+    %%%%%: 1061-block  0
+    %%%%%: 1061-block  1
+    %%%%%: 1061-block  2
+    %%%%%: 1061-block  3
+        -: 1062:      }
+        -: 1063:
+        -: 1064:    protected:
+        -: 1065:      /// Safety check used only from at().
+        -: 1066:      void
+ 5738880*: 1067:      _M_range_check(size_type __n) const
+        -: 1068:      {
+ 5738880*: 1069:	if (__n >= this->size())
+    #####: 1070:	  __throw_out_of_range_fmt(__N("vector::_M_range_check: __n "
+    %%%%%: 1070-block  0
+    %%%%%: 1070-block  1
+    %%%%%: 1070-block  2
+    %%%%%: 1070-block  3
+    %%%%%: 1070-block  4
+    %%%%%: 1070-block  5
+    %%%%%: 1070-block  6
+    %%%%%: 1070-block  7
+    %%%%%: 1070-block  8
+    %%%%%: 1070-block  9
+    %%%%%: 1070-block 10
+    %%%%%: 1070-block 11
+    %%%%%: 1070-block 12
+    %%%%%: 1070-block 13
+    %%%%%: 1070-block 14
+    %%%%%: 1070-block 15
+    %%%%%: 1070-block 16
+    %%%%%: 1070-block 17
+    %%%%%: 1070-block 18
+    %%%%%: 1070-block 19
+    %%%%%: 1070-block 20
+    %%%%%: 1070-block 21
+    %%%%%: 1070-block 22
+    %%%%%: 1070-block 23
+    %%%%%: 1070-block 24
+    %%%%%: 1070-block 25
+    %%%%%: 1070-block 26
+    %%%%%: 1070-block 27
+    %%%%%: 1070-block 28
+    %%%%%: 1070-block 29
+    %%%%%: 1070-block 30
+    %%%%%: 1070-block 31
+    %%%%%: 1070-block 32
+    %%%%%: 1070-block 33
+    %%%%%: 1070-block 34
+    %%%%%: 1070-block 35
+    %%%%%: 1070-block 36
+    %%%%%: 1070-block 37
+    %%%%%: 1070-block 38
+    %%%%%: 1070-block 39
+    %%%%%: 1070-block 40
+    %%%%%: 1070-block 41
+    %%%%%: 1070-block 42
+    %%%%%: 1070-block 43
+    %%%%%: 1070-block 44
+        -: 1071:				       "(which is %zu) >= this->size() "
+        -: 1072:				       "(which is %zu)"),
+        -: 1073:				   __n, this->size());
+        -: 1074:      }
+        -: 1075:
+        -: 1076:    public:
+        -: 1077:      /**
+        -: 1078:       *  @brief  Provides access to the data contained in the %vector.
+        -: 1079:       *  @param __n The index of the element for which data should be
+        -: 1080:       *  accessed.
+        -: 1081:       *  @return  Read/write reference to data.
+        -: 1082:       *  @throw  std::out_of_range  If @a __n is an invalid index.
+        -: 1083:       *
+        -: 1084:       *  This function provides for safer data access.  The parameter
+        -: 1085:       *  is first checked that it is in the range of the vector.  The
+        -: 1086:       *  function throws out_of_range if the check fails.
+        -: 1087:       */
+        -: 1088:      reference
+ 5738880*: 1089:      at(size_type __n)
+  5738880: 1089-block  0
+    %%%%%: 1089-block  1
+    %%%%%: 1089-block  2
+    %%%%%: 1089-block  3
+    %%%%%: 1089-block  4
+    %%%%%: 1089-block  5
+    %%%%%: 1089-block  6
+    %%%%%: 1089-block  7
+    %%%%%: 1089-block  8
+    %%%%%: 1089-block  9
+    %%%%%: 1089-block 10
+    %%%%%: 1089-block 11
+    %%%%%: 1089-block 12
+    %%%%%: 1089-block 13
+    %%%%%: 1089-block 14
+    %%%%%: 1089-block 15
+    %%%%%: 1089-block 16
+    %%%%%: 1089-block 17
+    %%%%%: 1089-block 18
+    %%%%%: 1089-block 19
+    %%%%%: 1089-block 20
+    %%%%%: 1089-block 21
+    %%%%%: 1089-block 22
+    %%%%%: 1089-block 23
+    %%%%%: 1089-block 24
+    %%%%%: 1089-block 25
+    %%%%%: 1089-block 26
+    %%%%%: 1089-block 27
+    %%%%%: 1089-block 28
+    %%%%%: 1089-block 29
+    %%%%%: 1089-block 30
+    %%%%%: 1089-block 31
+    %%%%%: 1089-block 32
+    %%%%%: 1089-block 33
+    %%%%%: 1089-block 34
+    %%%%%: 1089-block 35
+    %%%%%: 1089-block 36
+    %%%%%: 1089-block 37
+    %%%%%: 1089-block 38
+    %%%%%: 1089-block 39
+    %%%%%: 1089-block 40
+    %%%%%: 1089-block 41
+    %%%%%: 1089-block 42
+    %%%%%: 1089-block 43
+        -: 1090:      {
+ 5738880*: 1091:	_M_range_check(__n);
+ 5738880*: 1092:	return (*this)[__n];
+  5738880: 1092-block  0
+    %%%%%: 1092-block  1
+    %%%%%: 1092-block  2
+    %%%%%: 1092-block  3
+    %%%%%: 1092-block  4
+    %%%%%: 1092-block  5
+    %%%%%: 1092-block  6
+    %%%%%: 1092-block  7
+    %%%%%: 1092-block  8
+    %%%%%: 1092-block  9
+    %%%%%: 1092-block 10
+    %%%%%: 1092-block 11
+    %%%%%: 1092-block 12
+    %%%%%: 1092-block 13
+    %%%%%: 1092-block 14
+    %%%%%: 1092-block 15
+    %%%%%: 1092-block 16
+    %%%%%: 1092-block 17
+    %%%%%: 1092-block 18
+    %%%%%: 1092-block 19
+    %%%%%: 1092-block 20
+    %%%%%: 1092-block 21
+    %%%%%: 1092-block 22
+    %%%%%: 1092-block 23
+    %%%%%: 1092-block 24
+    %%%%%: 1092-block 25
+    %%%%%: 1092-block 26
+    %%%%%: 1092-block 27
+    %%%%%: 1092-block 28
+    %%%%%: 1092-block 29
+    %%%%%: 1092-block 30
+    %%%%%: 1092-block 31
+    %%%%%: 1092-block 32
+    %%%%%: 1092-block 33
+    %%%%%: 1092-block 34
+    %%%%%: 1092-block 35
+    %%%%%: 1092-block 36
+    %%%%%: 1092-block 37
+    %%%%%: 1092-block 38
+    %%%%%: 1092-block 39
+    %%%%%: 1092-block 40
+    %%%%%: 1092-block 41
+    %%%%%: 1092-block 42
+    %%%%%: 1092-block 43
+        -: 1093:      }
+        -: 1094:
+        -: 1095:      /**
+        -: 1096:       *  @brief  Provides access to the data contained in the %vector.
+        -: 1097:       *  @param __n The index of the element for which data should be
+        -: 1098:       *  accessed.
+        -: 1099:       *  @return  Read-only (constant) reference to data.
+        -: 1100:       *  @throw  std::out_of_range  If @a __n is an invalid index.
+        -: 1101:       *
+        -: 1102:       *  This function provides for safer data access.  The parameter
+        -: 1103:       *  is first checked that it is in the range of the vector.  The
+        -: 1104:       *  function throws out_of_range if the check fails.
+        -: 1105:       */
+        -: 1106:      const_reference
+    #####: 1107:      at(size_type __n) const
+    %%%%%: 1107-block  0
+        -: 1108:      {
+    #####: 1109:	_M_range_check(__n);
+    #####: 1110:	return (*this)[__n];
+    %%%%%: 1110-block  0
+        -: 1111:      }
+        -: 1112:
+        -: 1113:      /**
+        -: 1114:       *  Returns a read/write reference to the data at the first
+        -: 1115:       *  element of the %vector.
+        -: 1116:       */
+        -: 1117:      reference
+        -: 1118:      front() _GLIBCXX_NOEXCEPT
+        -: 1119:      {
+        -: 1120:	__glibcxx_requires_nonempty();
+        -: 1121:	return *begin();
+        -: 1122:      }
+        -: 1123:
+        -: 1124:      /**
+        -: 1125:       *  Returns a read-only (constant) reference to the data at the first
+        -: 1126:       *  element of the %vector.
+        -: 1127:       */
+        -: 1128:      const_reference
+        -: 1129:      front() const _GLIBCXX_NOEXCEPT
+        -: 1130:      {
+        -: 1131:	__glibcxx_requires_nonempty();
+        -: 1132:	return *begin();
+        -: 1133:      }
+        -: 1134:
+        -: 1135:      /**
+        -: 1136:       *  Returns a read/write reference to the data at the last
+        -: 1137:       *  element of the %vector.
+        -: 1138:       */
+        -: 1139:      reference
+    #####: 1140:      back() _GLIBCXX_NOEXCEPT
+    %%%%%: 1140-block  0
+        -: 1141:      {
+        -: 1142:	__glibcxx_requires_nonempty();
+    #####: 1143:	return *(end() - 1);
+    %%%%%: 1143-block  0
+        -: 1144:      }
+        -: 1145:
+        -: 1146:      /**
+        -: 1147:       *  Returns a read-only (constant) reference to the data at the
+        -: 1148:       *  last element of the %vector.
+        -: 1149:       */
+        -: 1150:      const_reference
+        -: 1151:      back() const _GLIBCXX_NOEXCEPT
+        -: 1152:      {
+        -: 1153:	__glibcxx_requires_nonempty();
+        -: 1154:	return *(end() - 1);
+        -: 1155:      }
+        -: 1156:
+        -: 1157:      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        -: 1158:      // DR 464. Suggestion for new member functions in standard containers.
+        -: 1159:      // data access
+        -: 1160:      /**
+        -: 1161:       *   Returns a pointer such that [data(), data() + size()) is a valid
+        -: 1162:       *   range.  For a non-empty %vector, data() == &front().
+        -: 1163:       */
+        -: 1164:      _Tp*
+        -: 1165:      data() _GLIBCXX_NOEXCEPT
+        -: 1166:      { return _M_data_ptr(this->_M_impl._M_start); }
+        -: 1167:
+        -: 1168:      const _Tp*
+        -: 1169:      data() const _GLIBCXX_NOEXCEPT
+        -: 1170:      { return _M_data_ptr(this->_M_impl._M_start); }
+        -: 1171:
+        -: 1172:      // [23.2.4.3] modifiers
+        -: 1173:      /**
+        -: 1174:       *  @brief  Add data to the end of the %vector.
+        -: 1175:       *  @param  __x  Data to be added.
+        -: 1176:       *
+        -: 1177:       *  This is a typical stack operation.  The function creates an
+        -: 1178:       *  element at the end of the %vector and assigns the given data
+        -: 1179:       *  to it.  Due to the nature of a %vector this operation can be
+        -: 1180:       *  done in constant time if the %vector has preallocated space
+        -: 1181:       *  available.
+        -: 1182:       */
+        -: 1183:      void
+     243*: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+     243*: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+     198*: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+        -: 1190:				     __x);
+     198*: 1191:	    ++this->_M_impl._M_finish;
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+      45*: 1195:	  _M_realloc_insert(end(), __x);
+     243*: 1196:      }
+------------------
+_ZNSt6vectorIN3pic3VecILj2EfEESaIS2_EE9push_backERKS2_:
+    #####: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+    #####: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+    %%%%%: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+    #####: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+    %%%%%: 1189-block  0
+        -: 1190:				     __x);
+    #####: 1191:	    ++this->_M_impl._M_finish;
+    %%%%%: 1191-block  0
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+    #####: 1195:	  _M_realloc_insert(end(), __x);
+    %%%%%: 1195-block  0
+    #####: 1196:      }
+------------------
+_ZNSt6vectorIN3pic11LabelOutputESaIS1_EE9push_backERKS1_:
+    #####: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+    #####: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+    %%%%%: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+    #####: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+    %%%%%: 1189-block  0
+        -: 1190:				     __x);
+    #####: 1191:	    ++this->_M_impl._M_finish;
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+    #####: 1195:	  _M_realloc_insert(end(), __x);
+    %%%%%: 1195-block  0
+    #####: 1196:      }
+------------------
+_ZNSt6vectorIN3pic3VecILj2EiEESaIS2_EE9push_backERKS2_:
+    #####: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+    #####: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+    %%%%%: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+    #####: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+    %%%%%: 1189-block  0
+        -: 1190:				     __x);
+    #####: 1191:	    ++this->_M_impl._M_finish;
+    %%%%%: 1191-block  0
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+    #####: 1195:	  _M_realloc_insert(end(), __x);
+    %%%%%: 1195-block  0
+    #####: 1196:      }
+------------------
+_ZNSt6vectorIPbSaIS0_EE9push_backERKS0_:
+    #####: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+    #####: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+    %%%%%: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+    #####: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+    %%%%%: 1189-block  0
+        -: 1190:				     __x);
+    #####: 1191:	    ++this->_M_impl._M_finish;
+    %%%%%: 1191-block  0
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+    #####: 1195:	  _M_realloc_insert(end(), __x);
+    %%%%%: 1195-block  0
+    #####: 1196:      }
+------------------
+_ZNSt6vectorIiSaIiEE9push_backERKi:
+    #####: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+    #####: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+    %%%%%: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+    #####: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+    %%%%%: 1189-block  0
+        -: 1190:				     __x);
+    #####: 1191:	    ++this->_M_impl._M_finish;
+    %%%%%: 1191-block  0
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+    #####: 1195:	  _M_realloc_insert(end(), __x);
+    %%%%%: 1195-block  0
+    #####: 1196:      }
+------------------
+_ZNSt6vectorIPN3pic6FilterESaIS2_EE9push_backERKS2_:
+    #####: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+    #####: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+    %%%%%: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+    #####: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+    %%%%%: 1189-block  0
+        -: 1190:				     __x);
+    #####: 1191:	    ++this->_M_impl._M_finish;
+    %%%%%: 1191-block  0
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+    #####: 1195:	  _M_realloc_insert(end(), __x);
+    %%%%%: 1195-block  0
+    #####: 1196:      }
+------------------
+_ZNSt6vectorIN3pic4TileESaIS1_EE9push_backERKS1_:
+      210: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+      210: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+      210: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+      186: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+      186: 1189-block  0
+        -: 1190:				     __x);
+      186: 1191:	    ++this->_M_impl._M_finish;
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+       24: 1195:	  _M_realloc_insert(end(), __x);
+       24: 1195-block  0
+      210: 1196:      }
+------------------
+_ZNSt6vectorIfSaIfEE9push_backERKf:
+       14: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+       14: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+       14: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+        6: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+        6: 1189-block  0
+        -: 1190:				     __x);
+        6: 1191:	    ++this->_M_impl._M_finish;
+        6: 1191-block  0
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+        8: 1195:	  _M_realloc_insert(end(), __x);
+        8: 1195-block  0
+       14: 1196:      }
+------------------
+_ZNSt6vectorIPN3pic5ImageESaIS2_EE9push_backERKS2_:
+        9: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+        9: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+        9: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+        3: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+        3: 1189-block  0
+        -: 1190:				     __x);
+        3: 1191:	    ++this->_M_impl._M_finish;
+        3: 1191-block  0
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+        6: 1195:	  _M_realloc_insert(end(), __x);
+        6: 1195-block  0
+        9: 1196:      }
+------------------
+_ZNSt6vectorIPfSaIS0_EE9push_backERKS0_:
+        3: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+        3: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+        3: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+    #####: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+    %%%%%: 1189-block  0
+        -: 1190:				     __x);
+    #####: 1191:	    ++this->_M_impl._M_finish;
+    %%%%%: 1191-block  0
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+        3: 1195:	  _M_realloc_insert(end(), __x);
+        3: 1195-block  0
+        3: 1196:      }
+------------------
+_ZNSt6vectorIhSaIhEE9push_backERKh:
+    #####: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+    #####: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+    %%%%%: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+    #####: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+    %%%%%: 1189-block  0
+        -: 1190:				     __x);
+    #####: 1191:	    ++this->_M_impl._M_finish;
+    %%%%%: 1191-block  0
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+    #####: 1195:	  _M_realloc_insert(end(), __x);
+    %%%%%: 1195-block  0
+    #####: 1196:      }
+------------------
+_ZNSt6vectorI13_EXRAttributeSaIS0_EE9push_backERKS0_:
+    #####: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+    #####: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+    %%%%%: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+    #####: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+    %%%%%: 1189-block  0
+        -: 1190:				     __x);
+    #####: 1191:	    ++this->_M_impl._M_finish;
+    %%%%%: 1191-block  0
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+    #####: 1195:	  _M_realloc_insert(end(), __x);
+    %%%%%: 1195-block  0
+    #####: 1196:      }
+------------------
+_ZNSt6vectorIN12_GLOBAL__N_111ChannelInfoESaIS1_EE9push_backERKS1_:
+    #####: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+    #####: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+    %%%%%: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+    #####: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+    %%%%%: 1189-block  0
+        -: 1190:				     __x);
+    #####: 1191:	    ++this->_M_impl._M_finish;
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+    #####: 1195:	  _M_realloc_insert(end(), __x);
+    %%%%%: 1195-block  0
+    #####: 1196:      }
+------------------
+_ZNSt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS5_EE9push_backERKS5_:
+        7: 1184:      push_back(const value_type& __x)
+        -: 1185:      {
+        7: 1186:	if (this->_M_impl._M_finish != this->_M_impl._M_end_of_storage)
+        7: 1186-block  0
+        -: 1187:	  {
+        -: 1188:	    _GLIBCXX_ASAN_ANNOTATE_GROW(1);
+        3: 1189:	    _Alloc_traits::construct(this->_M_impl, this->_M_impl._M_finish,
+        3: 1189-block  0
+        -: 1190:				     __x);
+        3: 1191:	    ++this->_M_impl._M_finish;
+        -: 1192:	    _GLIBCXX_ASAN_ANNOTATE_GREW(1);
+        -: 1193:	  }
+        -: 1194:	else
+        4: 1195:	  _M_realloc_insert(end(), __x);
+        4: 1195-block  0
+        7: 1196:      }
+------------------
+        -: 1197:
+        -: 1198:#if __cplusplus >= 201103L
+        -: 1199:      void
+       1*: 1200:      push_back(value_type&& __x)
+    %%%%%: 1200-block  0
+    %%%%%: 1200-block  1
+    %%%%%: 1200-block  2
+        1: 1200-block  3
+        1: 1200-block  4
+        1: 1200-block  5
+    %%%%%: 1200-block  6
+    %%%%%: 1200-block  7
+    %%%%%: 1200-block  8
+    %%%%%: 1200-block  9
+    %%%%%: 1200-block 10
+    %%%%%: 1200-block 11
+    %%%%%: 1200-block 12
+    %%%%%: 1200-block 13
+    %%%%%: 1200-block 14
+    %%%%%: 1200-block 15
+    %%%%%: 1200-block 16
+    %%%%%: 1200-block 17
+    %%%%%: 1200-block 18
+    %%%%%: 1200-block 19
+    %%%%%: 1200-block 20
+    %%%%%: 1200-block 21
+    %%%%%: 1200-block 22
+    %%%%%: 1200-block 23
+    %%%%%: 1200-block 24
+    %%%%%: 1200-block 25
+    %%%%%: 1200-block 26
+    %%%%%: 1200-block 27
+    %%%%%: 1200-block 28
+       1*: 1201:      { emplace_back(std::move(__x)); }
+    %%%%%: 1201-block  0
+    %%%%%: 1201-block  1
+    %%%%%: 1201-block  2
+        1: 1201-block  3
+        1: 1201-block  4
+        1: 1201-block  5
+    %%%%%: 1201-block  6
+    %%%%%: 1201-block  7
+    %%%%%: 1201-block  8
+    %%%%%: 1201-block  9
+    %%%%%: 1201-block 10
+    %%%%%: 1201-block 11
+    %%%%%: 1201-block 12
+    %%%%%: 1201-block 13
+    %%%%%: 1201-block 14
+    %%%%%: 1201-block 15
+    %%%%%: 1201-block 16
+    %%%%%: 1201-block 17
+    %%%%%: 1201-block 18
+    %%%%%: 1201-block 19
+    %%%%%: 1201-block 20
+    %%%%%: 1201-block 21
+    %%%%%: 1201-block 22
+    %%%%%: 1201-block 23
+    %%%%%: 1201-block 24
+    %%%%%: 1201-block 25
+    %%%%%: 1201-block 26
+    %%%%%: 1201-block 27
+    %%%%%: 1201-block 28
+        -: 1202:
+        -: 1203:      template<typename... _Args>
+        -: 1204:#if __cplusplus > 201402L
+        -: 1205:	reference
+        -: 1206:#else
+        -: 1207:	void
+        -: 1208:#endif
+        -: 1209:	emplace_back(_Args&&... __args);
+        -: 1210:#endif
+        -: 1211:
+        -: 1212:      /**
+        -: 1213:       *  @brief  Removes last element.
+        -: 1214:       *
+        -: 1215:       *  This is a typical stack operation. It shrinks the %vector by one.
+        -: 1216:       *
+        -: 1217:       *  Note that no data is returned, and if the last element's
+        -: 1218:       *  data is needed, it should be retrieved before pop_back() is
+        -: 1219:       *  called.
+        -: 1220:       */
+        -: 1221:      void
+    #####: 1222:      pop_back() _GLIBCXX_NOEXCEPT
+        -: 1223:      {
+        -: 1224:	__glibcxx_requires_nonempty();
+    #####: 1225:	--this->_M_impl._M_finish;
+    #####: 1226:	_Alloc_traits::destroy(this->_M_impl, this->_M_impl._M_finish);
+    %%%%%: 1226-block  0
+    %%%%%: 1226-block  1
+        -: 1227:	_GLIBCXX_ASAN_ANNOTATE_SHRINK(1);
+    #####: 1228:      }
+    %%%%%: 1228-block  0
+    %%%%%: 1228-block  1
+        -: 1229:
+        -: 1230:#if __cplusplus >= 201103L
+        -: 1231:      /**
+        -: 1232:       *  @brief  Inserts an object in %vector before specified iterator.
+        -: 1233:       *  @param  __position  A const_iterator into the %vector.
+        -: 1234:       *  @param  __args  Arguments.
+        -: 1235:       *  @return  An iterator that points to the inserted data.
+        -: 1236:       *
+        -: 1237:       *  This function will insert an object of type T constructed
+        -: 1238:       *  with T(std::forward<Args>(args)...) before the specified location.
+        -: 1239:       *  Note that this kind of operation could be expensive for a %vector
+        -: 1240:       *  and if it is frequently used the user should consider using
+        -: 1241:       *  std::list.
+        -: 1242:       */
+        -: 1243:      template<typename... _Args>
+        -: 1244:	iterator
+        -: 1245:	emplace(const_iterator __position, _Args&&... __args)
+        -: 1246:	{ return _M_emplace_aux(__position, std::forward<_Args>(__args)...); }
+        -: 1247:
+        -: 1248:      /**
+        -: 1249:       *  @brief  Inserts given value into %vector before specified iterator.
+        -: 1250:       *  @param  __position  A const_iterator into the %vector.
+        -: 1251:       *  @param  __x  Data to be inserted.
+        -: 1252:       *  @return  An iterator that points to the inserted data.
+        -: 1253:       *
+        -: 1254:       *  This function will insert a copy of the given value before
+        -: 1255:       *  the specified location.  Note that this kind of operation
+        -: 1256:       *  could be expensive for a %vector and if it is frequently
+        -: 1257:       *  used the user should consider using std::list.
+        -: 1258:       */
+        -: 1259:      iterator
+        -: 1260:      insert(const_iterator __position, const value_type& __x);
+        -: 1261:#else
+        -: 1262:      /**
+        -: 1263:       *  @brief  Inserts given value into %vector before specified iterator.
+        -: 1264:       *  @param  __position  An iterator into the %vector.
+        -: 1265:       *  @param  __x  Data to be inserted.
+        -: 1266:       *  @return  An iterator that points to the inserted data.
+        -: 1267:       *
+        -: 1268:       *  This function will insert a copy of the given value before
+        -: 1269:       *  the specified location.  Note that this kind of operation
+        -: 1270:       *  could be expensive for a %vector and if it is frequently
+        -: 1271:       *  used the user should consider using std::list.
+        -: 1272:       */
+        -: 1273:      iterator
+        -: 1274:      insert(iterator __position, const value_type& __x);
+        -: 1275:#endif
+        -: 1276:
+        -: 1277:#if __cplusplus >= 201103L
+        -: 1278:      /**
+        -: 1279:       *  @brief  Inserts given rvalue into %vector before specified iterator.
+        -: 1280:       *  @param  __position  A const_iterator into the %vector.
+        -: 1281:       *  @param  __x  Data to be inserted.
+        -: 1282:       *  @return  An iterator that points to the inserted data.
+        -: 1283:       *
+        -: 1284:       *  This function will insert a copy of the given rvalue before
+        -: 1285:       *  the specified location.  Note that this kind of operation
+        -: 1286:       *  could be expensive for a %vector and if it is frequently
+        -: 1287:       *  used the user should consider using std::list.
+        -: 1288:       */
+        -: 1289:      iterator
+        -: 1290:      insert(const_iterator __position, value_type&& __x)
+        -: 1291:      { return _M_insert_rval(__position, std::move(__x)); }
+        -: 1292:
+        -: 1293:      /**
+        -: 1294:       *  @brief  Inserts an initializer_list into the %vector.
+        -: 1295:       *  @param  __position  An iterator into the %vector.
+        -: 1296:       *  @param  __l  An initializer_list.
+        -: 1297:       *
+        -: 1298:       *  This function will insert copies of the data in the
+        -: 1299:       *  initializer_list @a l into the %vector before the location
+        -: 1300:       *  specified by @a position.
+        -: 1301:       *
+        -: 1302:       *  Note that this kind of operation could be expensive for a
+        -: 1303:       *  %vector and if it is frequently used the user should
+        -: 1304:       *  consider using std::list.
+        -: 1305:       */
+        -: 1306:      iterator
+        -: 1307:      insert(const_iterator __position, initializer_list<value_type> __l)
+        -: 1308:      {
+        -: 1309:	auto __offset = __position - cbegin();
+        -: 1310:	_M_range_insert(begin() + __offset, __l.begin(), __l.end(),
+        -: 1311:			std::random_access_iterator_tag());
+        -: 1312:	return begin() + __offset;
+        -: 1313:      }
+        -: 1314:#endif
+        -: 1315:
+        -: 1316:#if __cplusplus >= 201103L
+        -: 1317:      /**
+        -: 1318:       *  @brief  Inserts a number of copies of given data into the %vector.
+        -: 1319:       *  @param  __position  A const_iterator into the %vector.
+        -: 1320:       *  @param  __n  Number of elements to be inserted.
+        -: 1321:       *  @param  __x  Data to be inserted.
+        -: 1322:       *  @return  An iterator that points to the inserted data.
+        -: 1323:       *
+        -: 1324:       *  This function will insert a specified number of copies of
+        -: 1325:       *  the given data before the location specified by @a position.
+        -: 1326:       *
+        -: 1327:       *  Note that this kind of operation could be expensive for a
+        -: 1328:       *  %vector and if it is frequently used the user should
+        -: 1329:       *  consider using std::list.
+        -: 1330:       */
+        -: 1331:      iterator
+        -: 1332:      insert(const_iterator __position, size_type __n, const value_type& __x)
+        -: 1333:      {
+        -: 1334:	difference_type __offset = __position - cbegin();
+        -: 1335:	_M_fill_insert(begin() + __offset, __n, __x);
+        -: 1336:	return begin() + __offset;
+        -: 1337:      }
+        -: 1338:#else
+        -: 1339:      /**
+        -: 1340:       *  @brief  Inserts a number of copies of given data into the %vector.
+        -: 1341:       *  @param  __position  An iterator into the %vector.
+        -: 1342:       *  @param  __n  Number of elements to be inserted.
+        -: 1343:       *  @param  __x  Data to be inserted.
+        -: 1344:       *
+        -: 1345:       *  This function will insert a specified number of copies of
+        -: 1346:       *  the given data before the location specified by @a position.
+        -: 1347:       *
+        -: 1348:       *  Note that this kind of operation could be expensive for a
+        -: 1349:       *  %vector and if it is frequently used the user should
+        -: 1350:       *  consider using std::list.
+        -: 1351:       */
+        -: 1352:      void
+        -: 1353:      insert(iterator __position, size_type __n, const value_type& __x)
+        -: 1354:      { _M_fill_insert(__position, __n, __x); }
+        -: 1355:#endif
+        -: 1356:
+        -: 1357:#if __cplusplus >= 201103L
+        -: 1358:      /**
+        -: 1359:       *  @brief  Inserts a range into the %vector.
+        -: 1360:       *  @param  __position  A const_iterator into the %vector.
+        -: 1361:       *  @param  __first  An input iterator.
+        -: 1362:       *  @param  __last   An input iterator.
+        -: 1363:       *  @return  An iterator that points to the inserted data.
+        -: 1364:       *
+        -: 1365:       *  This function will insert copies of the data in the range
+        -: 1366:       *  [__first,__last) into the %vector before the location specified
+        -: 1367:       *  by @a pos.
+        -: 1368:       *
+        -: 1369:       *  Note that this kind of operation could be expensive for a
+        -: 1370:       *  %vector and if it is frequently used the user should
+        -: 1371:       *  consider using std::list.
+        -: 1372:       */
+        -: 1373:      template<typename _InputIterator,
+        -: 1374:	       typename = std::_RequireInputIter<_InputIterator>>
+        -: 1375:	iterator
+    #####: 1376:	insert(const_iterator __position, _InputIterator __first,
+        -: 1377:	       _InputIterator __last)
+        -: 1378:	{
+    #####: 1379:	  difference_type __offset = __position - cbegin();
+    %%%%%: 1379-block  0
+    %%%%%: 1379-block  1
+    %%%%%: 1379-block  2
+    %%%%%: 1379-block  3
+    #####: 1380:	  _M_insert_dispatch(begin() + __offset,
+    %%%%%: 1380-block  0
+    %%%%%: 1380-block  1
+    %%%%%: 1380-block  2
+    %%%%%: 1380-block  3
+    %%%%%: 1380-block  4
+    %%%%%: 1380-block  5
+        -: 1381:			     __first, __last, __false_type());
+    #####: 1382:	  return begin() + __offset;
+    %%%%%: 1382-block  0
+    %%%%%: 1382-block  1
+    %%%%%: 1382-block  2
+        -: 1383:	}
+------------------
+_ZNSt6vectorIiSaIiEE6insertIN9__gnu_cxx17__normal_iteratorIPiS1_EEvEES6_NS4_IPKiS1_EET_SA_:
+    #####: 1376:	insert(const_iterator __position, _InputIterator __first,
+        -: 1377:	       _InputIterator __last)
+        -: 1378:	{
+    #####: 1379:	  difference_type __offset = __position - cbegin();
+    %%%%%: 1379-block  0
+    #####: 1380:	  _M_insert_dispatch(begin() + __offset,
+    %%%%%: 1380-block  0
+        -: 1381:			     __first, __last, __false_type());
+    #####: 1382:	  return begin() + __offset;
+        -: 1383:	}
+------------------
+_ZNSt6vectorIhSaIhEE6insertIN9__gnu_cxx17__normal_iteratorIPhS1_EEvEES6_NS4_IPKhS1_EET_SA_:
+    #####: 1376:	insert(const_iterator __position, _InputIterator __first,
+        -: 1377:	       _InputIterator __last)
+        -: 1378:	{
+    #####: 1379:	  difference_type __offset = __position - cbegin();
+    %%%%%: 1379-block  0
+    #####: 1380:	  _M_insert_dispatch(begin() + __offset,
+    %%%%%: 1380-block  0
+        -: 1381:			     __first, __last, __false_type());
+    #####: 1382:	  return begin() + __offset;
+        -: 1383:	}
+------------------
+        -: 1384:#else
+        -: 1385:      /**
+        -: 1386:       *  @brief  Inserts a range into the %vector.
+        -: 1387:       *  @param  __position  An iterator into the %vector.
+        -: 1388:       *  @param  __first  An input iterator.
+        -: 1389:       *  @param  __last   An input iterator.
+        -: 1390:       *
+        -: 1391:       *  This function will insert copies of the data in the range
+        -: 1392:       *  [__first,__last) into the %vector before the location specified
+        -: 1393:       *  by @a pos.
+        -: 1394:       *
+        -: 1395:       *  Note that this kind of operation could be expensive for a
+        -: 1396:       *  %vector and if it is frequently used the user should
+        -: 1397:       *  consider using std::list.
+        -: 1398:       */
+        -: 1399:      template<typename _InputIterator>
+        -: 1400:	void
+        -: 1401:	insert(iterator __position, _InputIterator __first,
+        -: 1402:	       _InputIterator __last)
+        -: 1403:	{
+        -: 1404:	  // Check whether it's an integral type.  If so, it's not an iterator.
+        -: 1405:	  typedef typename std::__is_integer<_InputIterator>::__type _Integral;
+        -: 1406:	  _M_insert_dispatch(__position, __first, __last, _Integral());
+        -: 1407:	}
+        -: 1408:#endif
+        -: 1409:
+        -: 1410:      /**
+        -: 1411:       *  @brief  Remove element at given position.
+        -: 1412:       *  @param  __position  Iterator pointing to element to be erased.
+        -: 1413:       *  @return  An iterator pointing to the next element (or end()).
+        -: 1414:       *
+        -: 1415:       *  This function will erase the element at the given position and thus
+        -: 1416:       *  shorten the %vector by one.
+        -: 1417:       *
+        -: 1418:       *  Note This operation could be expensive and if it is
+        -: 1419:       *  frequently used the user should consider using std::list.
+        -: 1420:       *  The user is also cautioned that this function only erases
+        -: 1421:       *  the element, and that if the element is itself a pointer,
+        -: 1422:       *  the pointed-to memory is not touched in any way.  Managing
+        -: 1423:       *  the pointer is the user's responsibility.
+        -: 1424:       */
+        -: 1425:      iterator
+        -: 1426:#if __cplusplus >= 201103L
+        -: 1427:      erase(const_iterator __position)
+        -: 1428:      { return _M_erase(begin() + (__position - cbegin())); }
+        -: 1429:#else
+        -: 1430:      erase(iterator __position)
+        -: 1431:      { return _M_erase(__position); }
+        -: 1432:#endif
+        -: 1433:
+        -: 1434:      /**
+        -: 1435:       *  @brief  Remove a range of elements.
+        -: 1436:       *  @param  __first  Iterator pointing to the first element to be erased.
+        -: 1437:       *  @param  __last  Iterator pointing to one past the last element to be
+        -: 1438:       *                  erased.
+        -: 1439:       *  @return  An iterator pointing to the element pointed to by @a __last
+        -: 1440:       *           prior to erasing (or end()).
+        -: 1441:       *
+        -: 1442:       *  This function will erase the elements in the range
+        -: 1443:       *  [__first,__last) and shorten the %vector accordingly.
+        -: 1444:       *
+        -: 1445:       *  Note This operation could be expensive and if it is
+        -: 1446:       *  frequently used the user should consider using std::list.
+        -: 1447:       *  The user is also cautioned that this function only erases
+        -: 1448:       *  the elements, and that if the elements themselves are
+        -: 1449:       *  pointers, the pointed-to memory is not touched in any way.
+        -: 1450:       *  Managing the pointer is the user's responsibility.
+        -: 1451:       */
+        -: 1452:      iterator
+        -: 1453:#if __cplusplus >= 201103L
+        -: 1454:      erase(const_iterator __first, const_iterator __last)
+        -: 1455:      {
+        -: 1456:	const auto __beg = begin();
+        -: 1457:	const auto __cbeg = cbegin();
+        -: 1458:	return _M_erase(__beg + (__first - __cbeg), __beg + (__last - __cbeg));
+        -: 1459:      }
+        -: 1460:#else
+        -: 1461:      erase(iterator __first, iterator __last)
+        -: 1462:      { return _M_erase(__first, __last); }
+        -: 1463:#endif
+        -: 1464:
+        -: 1465:      /**
+        -: 1466:       *  @brief  Swaps data with another %vector.
+        -: 1467:       *  @param  __x  A %vector of the same element and allocator types.
+        -: 1468:       *
+        -: 1469:       *  This exchanges the elements between two vectors in constant time.
+        -: 1470:       *  (Three pointers, so it should be quite fast.)
+        -: 1471:       *  Note that the global std::swap() function is specialized such that
+        -: 1472:       *  std::swap(v1,v2) will feed to this function.
+        -: 1473:       *
+        -: 1474:       *  Whether the allocators are swapped depends on the allocator traits.
+        -: 1475:       */
+        -: 1476:      void
+        -: 1477:      swap(vector& __x) _GLIBCXX_NOEXCEPT
+        -: 1478:      {
+        -: 1479:#if __cplusplus >= 201103L
+        -: 1480:	__glibcxx_assert(_Alloc_traits::propagate_on_container_swap::value
+        -: 1481:			 || _M_get_Tp_allocator() == __x._M_get_Tp_allocator());
+        -: 1482:#endif
+        -: 1483:	this->_M_impl._M_swap_data(__x._M_impl);
+        -: 1484:	_Alloc_traits::_S_on_swap(_M_get_Tp_allocator(),
+        -: 1485:				  __x._M_get_Tp_allocator());
+        -: 1486:      }
+        -: 1487:
+        -: 1488:      /**
+        -: 1489:       *  Erases all the elements.  Note that this function only erases the
+        -: 1490:       *  elements, and that if the elements themselves are pointers, the
+        -: 1491:       *  pointed-to memory is not touched in any way.  Managing the pointer is
+        -: 1492:       *  the user's responsibility.
+        -: 1493:       */
+        -: 1494:      void
+       1*: 1495:      clear() _GLIBCXX_NOEXCEPT
+        1: 1495-block  0
+      12*: 1496:      { _M_erase_at_end(this->_M_impl._M_start); }
+    %%%%%: 1496-block  0
+    %%%%%: 1496-block  1
+    %%%%%: 1496-block  2
+    %%%%%: 1496-block  3
+    %%%%%: 1496-block  4
+    %%%%%: 1496-block  5
+        1: 1496-block  6
+        1: 1496-block  7
+        3: 1496-block  8
+        8: 1496-block  9
+    %%%%%: 1496-block 10
+        -: 1497:
+        -: 1498:    protected:
+        -: 1499:      /**
+        -: 1500:       *  Memory expansion handler.  Uses the member allocation function to
+        -: 1501:       *  obtain @a n bytes of memory, and then copies [first,last) into it.
+        -: 1502:       */
+        -: 1503:      template<typename _ForwardIterator>
+        -: 1504:	pointer
+        -: 1505:	_M_allocate_and_copy(size_type __n,
+        -: 1506:			     _ForwardIterator __first, _ForwardIterator __last)
+        -: 1507:	{
+        -: 1508:	  pointer __result = this->_M_allocate(__n);
+        -: 1509:	  __try
+        -: 1510:	    {
+        -: 1511:	      std::__uninitialized_copy_a(__first, __last, __result,
+        -: 1512:					  _M_get_Tp_allocator());
+        -: 1513:	      return __result;
+        -: 1514:	    }
+        -: 1515:	  __catch(...)
+        -: 1516:	    {
+        -: 1517:	      _M_deallocate(__result, __n);
+        -: 1518:	      __throw_exception_again;
+        -: 1519:	    }
+        -: 1520:	}
+        -: 1521:
+        -: 1522:
+        -: 1523:      // Internal constructor functions follow.
+        -: 1524:
+        -: 1525:      // Called by the range constructor to implement [23.1.1]/9
+        -: 1526:
+        -: 1527:#if __cplusplus < 201103L
+        -: 1528:      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        -: 1529:      // 438. Ambiguity in the "do the right thing" clause
+        -: 1530:      template<typename _Integer>
+        -: 1531:	void
+        -: 1532:	_M_initialize_dispatch(_Integer __n, _Integer __value, __true_type)
+        -: 1533:	{
+        -: 1534:	  this->_M_impl._M_start = _M_allocate(_S_check_init_len(
+        -: 1535:		static_cast<size_type>(__n), _M_get_Tp_allocator()));
+        -: 1536:	  this->_M_impl._M_end_of_storage =
+        -: 1537:	    this->_M_impl._M_start + static_cast<size_type>(__n);
+        -: 1538:	  _M_fill_initialize(static_cast<size_type>(__n), __value);
+        -: 1539:	}
+        -: 1540:
+        -: 1541:      // Called by the range constructor to implement [23.1.1]/9
+        -: 1542:      template<typename _InputIterator>
+        -: 1543:	void
+        -: 1544:	_M_initialize_dispatch(_InputIterator __first, _InputIterator __last,
+        -: 1545:			       __false_type)
+        -: 1546:	{
+        -: 1547:	  _M_range_initialize(__first, __last,
+        -: 1548:			      std::__iterator_category(__first));
+        -: 1549:	}
+        -: 1550:#endif
+        -: 1551:
+        -: 1552:      // Called by the second initialize_dispatch above
+        -: 1553:      template<typename _InputIterator>
+        -: 1554:	void
+        -: 1555:	_M_range_initialize(_InputIterator __first, _InputIterator __last,
+        -: 1556:			    std::input_iterator_tag)
+        -: 1557:	{
+        -: 1558:	  __try {
+        -: 1559:	    for (; __first != __last; ++__first)
+        -: 1560:#if __cplusplus >= 201103L
+        -: 1561:	      emplace_back(*__first);
+        -: 1562:#else
+        -: 1563:	      push_back(*__first);
+        -: 1564:#endif
+        -: 1565:	  } __catch(...) {
+        -: 1566:	    clear();
+        -: 1567:	    __throw_exception_again;
+        -: 1568:	  }
+        -: 1569:	}
+        -: 1570:
+        -: 1571:      // Called by the second initialize_dispatch above
+        -: 1572:      template<typename _ForwardIterator>
+        -: 1573:	void
+        -: 1574:	_M_range_initialize(_ForwardIterator __first, _ForwardIterator __last,
+        -: 1575:			    std::forward_iterator_tag)
+        -: 1576:	{
+        -: 1577:	  const size_type __n = std::distance(__first, __last);
+        -: 1578:	  this->_M_impl._M_start
+        -: 1579:	    = this->_M_allocate(_S_check_init_len(__n, _M_get_Tp_allocator()));
+        -: 1580:	  this->_M_impl._M_end_of_storage = this->_M_impl._M_start + __n;
+        -: 1581:	  this->_M_impl._M_finish =
+        -: 1582:	    std::__uninitialized_copy_a(__first, __last,
+        -: 1583:					this->_M_impl._M_start,
+        -: 1584:					_M_get_Tp_allocator());
+        -: 1585:	}
+        -: 1586:
+        -: 1587:      // Called by the first initialize_dispatch above and by the
+        -: 1588:      // vector(n,value,a) constructor.
+        -: 1589:      void
+        -: 1590:      _M_fill_initialize(size_type __n, const value_type& __value)
+        -: 1591:      {
+        -: 1592:	this->_M_impl._M_finish =
+        -: 1593:	  std::__uninitialized_fill_n_a(this->_M_impl._M_start, __n, __value,
+        -: 1594:					_M_get_Tp_allocator());
+        -: 1595:      }
+        -: 1596:
+        -: 1597:#if __cplusplus >= 201103L
+        -: 1598:      // Called by the vector(n) constructor.
+        -: 1599:      void
+    #####: 1600:      _M_default_initialize(size_type __n)
+        -: 1601:      {
+    #####: 1602:	this->_M_impl._M_finish =
+    #####: 1603:	  std::__uninitialized_default_n_a(this->_M_impl._M_start, __n,
+    #####: 1604:					   _M_get_Tp_allocator());
+        -: 1605:      }
+        -: 1606:#endif
+        -: 1607:
+        -: 1608:      // Internal assign functions follow.  The *_aux functions do the actual
+        -: 1609:      // assignment work for the range versions.
+        -: 1610:
+        -: 1611:      // Called by the range assign to implement [23.1.1]/9
+        -: 1612:
+        -: 1613:      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        -: 1614:      // 438. Ambiguity in the "do the right thing" clause
+        -: 1615:      template<typename _Integer>
+        -: 1616:	void
+        -: 1617:	_M_assign_dispatch(_Integer __n, _Integer __val, __true_type)
+        -: 1618:	{ _M_fill_assign(__n, __val); }
+        -: 1619:
+        -: 1620:      // Called by the range assign to implement [23.1.1]/9
+        -: 1621:      template<typename _InputIterator>
+        -: 1622:	void
+        -: 1623:	_M_assign_dispatch(_InputIterator __first, _InputIterator __last,
+        -: 1624:			   __false_type)
+        -: 1625:	{ _M_assign_aux(__first, __last, std::__iterator_category(__first)); }
+        -: 1626:
+        -: 1627:      // Called by the second assign_dispatch above
+        -: 1628:      template<typename _InputIterator>
+        -: 1629:	void
+        -: 1630:	_M_assign_aux(_InputIterator __first, _InputIterator __last,
+        -: 1631:		      std::input_iterator_tag);
+        -: 1632:
+        -: 1633:      // Called by the second assign_dispatch above
+        -: 1634:      template<typename _ForwardIterator>
+        -: 1635:	void
+        -: 1636:	_M_assign_aux(_ForwardIterator __first, _ForwardIterator __last,
+        -: 1637:		      std::forward_iterator_tag);
+        -: 1638:
+        -: 1639:      // Called by assign(n,t), and the range assign when it turns out
+        -: 1640:      // to be the same thing.
+        -: 1641:      void
+        -: 1642:      _M_fill_assign(size_type __n, const value_type& __val);
+        -: 1643:
+        -: 1644:      // Internal insert functions follow.
+        -: 1645:
+        -: 1646:      // Called by the range insert to implement [23.1.1]/9
+        -: 1647:
+        -: 1648:      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        -: 1649:      // 438. Ambiguity in the "do the right thing" clause
+        -: 1650:      template<typename _Integer>
+        -: 1651:	void
+        -: 1652:	_M_insert_dispatch(iterator __pos, _Integer __n, _Integer __val,
+        -: 1653:			   __true_type)
+        -: 1654:	{ _M_fill_insert(__pos, __n, __val); }
+        -: 1655:
+        -: 1656:      // Called by the range insert to implement [23.1.1]/9
+        -: 1657:      template<typename _InputIterator>
+        -: 1658:	void
+    #####: 1659:	_M_insert_dispatch(iterator __pos, _InputIterator __first,
+        -: 1660:			   _InputIterator __last, __false_type)
+        -: 1661:	{
+    #####: 1662:	  _M_range_insert(__pos, __first, __last,
+    %%%%%: 1662-block  0
+    %%%%%: 1662-block  1
+    %%%%%: 1662-block  2
+    %%%%%: 1662-block  3
+    %%%%%: 1662-block  4
+    %%%%%: 1662-block  5
+        -: 1663:			  std::__iterator_category(__first));
+        -: 1664:	}
+        -: 1665:
+        -: 1666:      // Called by the second insert_dispatch above
+        -: 1667:      template<typename _InputIterator>
+        -: 1668:	void
+        -: 1669:	_M_range_insert(iterator __pos, _InputIterator __first,
+        -: 1670:			_InputIterator __last, std::input_iterator_tag);
+        -: 1671:
+        -: 1672:      // Called by the second insert_dispatch above
+        -: 1673:      template<typename _ForwardIterator>
+        -: 1674:	void
+        -: 1675:	_M_range_insert(iterator __pos, _ForwardIterator __first,
+        -: 1676:			_ForwardIterator __last, std::forward_iterator_tag);
+        -: 1677:
+        -: 1678:      // Called by insert(p,n,x), and the range insert when it turns out to be
+        -: 1679:      // the same thing.
+        -: 1680:      void
+        -: 1681:      _M_fill_insert(iterator __pos, size_type __n, const value_type& __x);
+        -: 1682:
+        -: 1683:#if __cplusplus >= 201103L
+        -: 1684:      // Called by resize(n).
+        -: 1685:      void
+        -: 1686:      _M_default_append(size_type __n);
+        -: 1687:
+        -: 1688:      bool
+        -: 1689:      _M_shrink_to_fit();
+        -: 1690:#endif
+        -: 1691:
+        -: 1692:#if __cplusplus < 201103L
+        -: 1693:      // Called by insert(p,x)
+        -: 1694:      void
+        -: 1695:      _M_insert_aux(iterator __position, const value_type& __x);
+        -: 1696:
+        -: 1697:      void
+        -: 1698:      _M_realloc_insert(iterator __position, const value_type& __x);
+        -: 1699:#else
+        -: 1700:      // A value_type object constructed with _Alloc_traits::construct()
+        -: 1701:      // and destroyed with _Alloc_traits::destroy().
+        -: 1702:      struct _Temporary_value
+        -: 1703:      {
+        -: 1704:	template<typename... _Args>
+        -: 1705:	  explicit
+        -: 1706:	  _Temporary_value(vector* __vec, _Args&&... __args) : _M_this(__vec)
+        -: 1707:	  {
+        -: 1708:	    _Alloc_traits::construct(_M_this->_M_impl, _M_ptr(),
+        -: 1709:				     std::forward<_Args>(__args)...);
+        -: 1710:	  }
+        -: 1711:
+        -: 1712:	~_Temporary_value()
+        -: 1713:	{ _Alloc_traits::destroy(_M_this->_M_impl, _M_ptr()); }
+        -: 1714:
+        -: 1715:	value_type&
+        -: 1716:	_M_val() { return *_M_ptr(); }
+        -: 1717:
+        -: 1718:      private:
+        -: 1719:	_Tp*
+        -: 1720:	_M_ptr() { return reinterpret_cast<_Tp*>(&__buf); }
+        -: 1721:
+        -: 1722:	vector* _M_this;
+        -: 1723:	typename aligned_storage<sizeof(_Tp), alignof(_Tp)>::type __buf;
+        -: 1724:      };
+        -: 1725:
+        -: 1726:      // Called by insert(p,x) and other functions when insertion needs to
+        -: 1727:      // reallocate or move existing elements. _Arg is either _Tp& or _Tp.
+        -: 1728:      template<typename _Arg>
+        -: 1729:	void
+        -: 1730:	_M_insert_aux(iterator __position, _Arg&& __arg);
+        -: 1731:
+        -: 1732:      template<typename... _Args>
+        -: 1733:	void
+        -: 1734:	_M_realloc_insert(iterator __position, _Args&&... __args);
+        -: 1735:
+        -: 1736:      // Either move-construct at the end, or forward to _M_insert_aux.
+        -: 1737:      iterator
+        -: 1738:      _M_insert_rval(const_iterator __position, value_type&& __v);
+        -: 1739:
+        -: 1740:      // Try to emplace at the end, otherwise forward to _M_insert_aux.
+        -: 1741:      template<typename... _Args>
+        -: 1742:	iterator
+        -: 1743:	_M_emplace_aux(const_iterator __position, _Args&&... __args);
+        -: 1744:
+        -: 1745:      // Emplacing an rvalue of the correct type can use _M_insert_rval.
+        -: 1746:      iterator
+        -: 1747:      _M_emplace_aux(const_iterator __position, value_type&& __v)
+        -: 1748:      { return _M_insert_rval(__position, std::move(__v)); }
+        -: 1749:#endif
+        -: 1750:
+        -: 1751:      // Called by _M_fill_insert, _M_insert_aux etc.
+        -: 1752:      size_type
+      48*: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+      48*: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+        -: 1757:
+      48*: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+      48*: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIN3pic3VecILj2EfEESaIS2_EE12_M_check_lenEmPKc:
+    #####: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+    #####: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+    #####: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+    %%%%%: 1758-block  0
+    #####: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+    %%%%%: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIN3pic11LabelOutputESaIS1_EE12_M_check_lenEmPKc:
+    #####: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+    #####: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+    #####: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+    %%%%%: 1758-block  0
+    #####: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+    %%%%%: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIN5Eigen7TripletIdiEESaIS2_EE12_M_check_lenEmPKc:
+    #####: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+    #####: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+    #####: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+    %%%%%: 1758-block  0
+    #####: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+    %%%%%: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIN3pic3VecILj2EiEESaIS2_EE12_M_check_lenEmPKc:
+    #####: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+    #####: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+    #####: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+    %%%%%: 1758-block  0
+    #####: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+    %%%%%: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIPbSaIS0_EE12_M_check_lenEmPKc:
+    #####: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+    #####: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+    #####: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+    %%%%%: 1758-block  0
+    #####: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+    %%%%%: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIiSaIiEE12_M_check_lenEmPKc:
+    #####: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+    #####: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+    #####: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+    %%%%%: 1758-block  0
+    #####: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+    %%%%%: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIPN3pic6FilterESaIS2_EE12_M_check_lenEmPKc:
+    #####: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+    #####: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+    #####: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+    %%%%%: 1758-block  0
+    #####: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+    %%%%%: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIN3pic4TileESaIS1_EE12_M_check_lenEmPKc:
+       24: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+       24: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+       24: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+       24: 1758-block  0
+       24: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+       24: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIfSaIfEE12_M_check_lenEmPKc:
+        8: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+        8: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+        8: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+        8: 1758-block  0
+        8: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+        8: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIPN3pic5ImageESaIS2_EE12_M_check_lenEmPKc:
+        9: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+        9: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+        9: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+        9: 1758-block  0
+        9: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+        9: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIPfSaIS0_EE12_M_check_lenEmPKc:
+        3: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+        3: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+        3: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+        3: 1758-block  0
+        3: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+        3: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorI13_EXRAttributeSaIS0_EE12_M_check_lenEmPKc:
+    #####: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+    #####: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+    #####: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+    %%%%%: 1758-block  0
+    #####: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+    %%%%%: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIN12_GLOBAL__N_111ChannelInfoESaIS1_EE12_M_check_lenEmPKc:
+    #####: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+    #####: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+    #####: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+    %%%%%: 1758-block  0
+    #####: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+    %%%%%: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorIhSaIhEE12_M_check_lenEmPKc:
+    #####: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+    #####: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+    #####: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+    %%%%%: 1758-block  0
+    #####: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+    %%%%%: 1759-block  0
+        -: 1760:      }
+------------------
+_ZNKSt6vectorINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaIS5_EE12_M_check_lenEmPKc:
+        4: 1753:      _M_check_len(size_type __n, const char* __s) const
+        -: 1754:      {
+        4: 1755:	if (max_size() - size() < __n)
+    #####: 1756:	  __throw_length_error(__N(__s));
+    %%%%%: 1756-block  0
+        -: 1757:
+        4: 1758:	const size_type __len = size() + (std::max)(size(), __n);
+        4: 1758-block  0
+        4: 1759:	return (__len < size() || __len > max_size()) ? max_size() : __len;
+        4: 1759-block  0
+        -: 1760:      }
+------------------
+        -: 1761:
+        -: 1762:      // Called by constructors to check initial size.
+        -: 1763:      static size_type
+    #####: 1764:      _S_check_init_len(size_type __n, const allocator_type& __a)
+    %%%%%: 1764-block  0
+    %%%%%: 1764-block  1
+    %%%%%: 1764-block  2
+    %%%%%: 1764-block  3
+    %%%%%: 1764-block  4
+        -: 1765:      {
+    #####: 1766:	if (__n > _S_max_size(_Tp_alloc_type(__a)))
+    #####: 1767:	  __throw_length_error(
+    %%%%%: 1767-block  0
+    %%%%%: 1767-block  1
+    %%%%%: 1767-block  2
+    %%%%%: 1767-block  3
+    %%%%%: 1767-block  4
+        -: 1768:	      __N("cannot create std::vector larger than max_size()"));
+        -: 1769:	return __n;
+        -: 1770:      }
+        -: 1771:
+        -: 1772:      static size_type
+      96*: 1773:      _S_max_size(const _Tp_alloc_type& __a) _GLIBCXX_NOEXCEPT
+        -: 1774:      {
+        -: 1775:	// std::distance(begin(), end()) cannot be greater than PTRDIFF_MAX,
+        -: 1776:	// and realistically we can't store more than PTRDIFF_MAX/sizeof(T)
+        -: 1777:	// (even if std::allocator_traits::max_size says we can).
+        -: 1778:	const size_t __diffmax
+        -: 1779:	  = __gnu_cxx::__numeric_traits<ptrdiff_t>::__max / sizeof(_Tp);
+      96*: 1780:	const size_t __allocmax = _Alloc_traits::max_size(__a);
+    %%%%%: 1780-block  0
+    %%%%%: 1780-block  1
+    %%%%%: 1780-block  2
+    %%%%%: 1780-block  3
+    %%%%%: 1780-block  4
+    %%%%%: 1780-block  5
+    %%%%%: 1780-block  6
+    %%%%%: 1780-block  7
+    %%%%%: 1780-block  8
+    %%%%%: 1780-block  9
+    %%%%%: 1780-block 10
+    %%%%%: 1780-block 11
+    %%%%%: 1780-block 12
+    %%%%%: 1780-block 13
+       24: 1780-block 14
+       24: 1780-block 15
+        8: 1780-block 16
+        8: 1780-block 17
+        9: 1780-block 18
+        9: 1780-block 19
+        3: 1780-block 20
+        3: 1780-block 21
+    %%%%%: 1780-block 22
+    %%%%%: 1780-block 23
+    %%%%%: 1780-block 24
+    %%%%%: 1780-block 25
+    %%%%%: 1780-block 26
+    %%%%%: 1780-block 27
+        4: 1780-block 28
+        4: 1780-block 29
+    %%%%%: 1780-block 30
+    %%%%%: 1780-block 31
+    %%%%%: 1780-block 32
+    %%%%%: 1780-block 33
+    %%%%%: 1780-block 34
+    %%%%%: 1780-block 35
+    %%%%%: 1780-block 36
+      96*: 1781:	return (std::min)(__diffmax, __allocmax);
+    %%%%%: 1781-block  0
+    %%%%%: 1781-block  1
+    %%%%%: 1781-block  2
+    %%%%%: 1781-block  3
+    %%%%%: 1781-block  4
+    %%%%%: 1781-block  5
+    %%%%%: 1781-block  6
+    %%%%%: 1781-block  7
+    %%%%%: 1781-block  8
+    %%%%%: 1781-block  9
+    %%%%%: 1781-block 10
+    %%%%%: 1781-block 11
+    %%%%%: 1781-block 12
+    %%%%%: 1781-block 13
+       24: 1781-block 14
+       24: 1781-block 15
+        8: 1781-block 16
+        8: 1781-block 17
+        9: 1781-block 18
+        9: 1781-block 19
+        3: 1781-block 20
+        3: 1781-block 21
+    %%%%%: 1781-block 22
+    %%%%%: 1781-block 23
+    %%%%%: 1781-block 24
+    %%%%%: 1781-block 25
+    %%%%%: 1781-block 26
+    %%%%%: 1781-block 27
+        4: 1781-block 28
+        4: 1781-block 29
+    %%%%%: 1781-block 30
+    %%%%%: 1781-block 31
+    %%%%%: 1781-block 32
+    %%%%%: 1781-block 33
+    %%%%%: 1781-block 34
+    %%%%%: 1781-block 35
+    %%%%%: 1781-block 36
+        -: 1782:      }
+        -: 1783:
+        -: 1784:      // Internal erase functions follow.
+        -: 1785:
+        -: 1786:      // Called by erase(q1,q2), clear(), resize(), _M_fill_assign,
+        -: 1787:      // _M_assign_aux.
+        -: 1788:      void
+       9*: 1789:      _M_erase_at_end(pointer __pos) _GLIBCXX_NOEXCEPT
+        -: 1790:      {
+       8*: 1791:	if (size_type __n = this->_M_impl._M_finish - __pos)
+    %%%%%: 1791-block  0
+    %%%%%: 1791-block  1
+    %%%%%: 1791-block  2
+    %%%%%: 1791-block  3
+    %%%%%: 1791-block  4
+    %%%%%: 1791-block  5
+    %%%%%: 1791-block  6
+        3: 1791-block  7
+    %%%%%: 1791-block  8
+    %%%%%: 1791-block  9
+    %%%%%: 1791-block 10
+    %%%%%: 1791-block 11
+    %%%%%: 1791-block 12
+        1: 1791-block 13
+        1: 1791-block 14
+        3: 1791-block 15
+        1: 1791-block 16
+    %%%%%: 1791-block 17
+        -: 1792:	  {
+     218*: 1793:	    std::_Destroy(__pos, this->_M_impl._M_finish,
+     215*: 1794:			  _M_get_Tp_allocator());
+    %%%%%: 1794-block  0
+    %%%%%: 1794-block  1
+    %%%%%: 1794-block  2
+    %%%%%: 1794-block  3
+    %%%%%: 1794-block  4
+    %%%%%: 1794-block  5
+    %%%%%: 1794-block  6
+        2: 1794-block  7
+    %%%%%: 1794-block  8
+    %%%%%: 1794-block  9
+    %%%%%: 1794-block 10
+    %%%%%: 1794-block 11
+      213: 1794-block 12
+    %%%%%: 1794-block 13
+    %%%%%: 1794-block 14
+       5*: 1795:	    this->_M_impl._M_finish = __pos;
+    %%%%%: 1795-block  0
+    %%%%%: 1795-block  1
+    %%%%%: 1795-block  2
+    %%%%%: 1795-block  3
+    %%%%%: 1795-block  4
+    %%%%%: 1795-block  5
+    %%%%%: 1795-block  6
+        2: 1795-block  7
+    %%%%%: 1795-block  8
+    %%%%%: 1795-block  9
+    %%%%%: 1795-block 10
+    %%%%%: 1795-block 11
+        3: 1795-block 12
+    %%%%%: 1795-block 13
+    %%%%%: 1795-block 14
+        -: 1796:	    _GLIBCXX_ASAN_ANNOTATE_SHRINK(__n);
+        -: 1797:	  }
+        -: 1798:      }
+        -: 1799:
+        -: 1800:      iterator
+        -: 1801:      _M_erase(iterator __position);
+        -: 1802:
+        -: 1803:      iterator
+        -: 1804:      _M_erase(iterator __first, iterator __last);
+        -: 1805:
+        -: 1806:#if __cplusplus >= 201103L
+        -: 1807:    private:
+        -: 1808:      // Constant-time move assignment when source object's memory can be
+        -: 1809:      // moved, either because the source's allocator will move too
+        -: 1810:      // or because the allocators are equal.
+        -: 1811:      void
+    #####: 1812:      _M_move_assign(vector&& __x, true_type) noexcept
+        -: 1813:      {
+    #####: 1814:	vector __tmp(get_allocator());
+    %%%%%: 1814-block  0
+    %%%%%: 1814-block  1
+    #####: 1815:	this->_M_impl._M_swap_data(__x._M_impl);
+    #####: 1816:	__tmp._M_impl._M_swap_data(__x._M_impl);
+    #####: 1817:	std::__alloc_on_move(_M_get_Tp_allocator(), __x._M_get_Tp_allocator());
+    %%%%%: 1817-block  0
+        -: 1818:      }
+        -: 1819:
+        -: 1820:      // Do move assignment when it might not be possible to move source
+        -: 1821:      // object's memory, resulting in a linear-time operation.
+        -: 1822:      void
+        -: 1823:      _M_move_assign(vector&& __x, false_type)
+        -: 1824:      {
+        -: 1825:	if (__x._M_get_Tp_allocator() == this->_M_get_Tp_allocator())
+        -: 1826:	  _M_move_assign(std::move(__x), true_type());
+        -: 1827:	else
+        -: 1828:	  {
+        -: 1829:	    // The rvalue's allocator cannot be moved and is not equal,
+        -: 1830:	    // so we need to individually move each element.
+        -: 1831:	    this->assign(std::__make_move_if_noexcept_iterator(__x.begin()),
+        -: 1832:			 std::__make_move_if_noexcept_iterator(__x.end()));
+        -: 1833:	    __x.clear();
+        -: 1834:	  }
+        -: 1835:      }
+        -: 1836:#endif
+        -: 1837:
+        -: 1838:      template<typename _Up>
+        -: 1839:	_Up*
+        -: 1840:	_M_data_ptr(_Up* __ptr) const _GLIBCXX_NOEXCEPT
+        -: 1841:	{ return __ptr; }
+        -: 1842:
+        -: 1843:#if __cplusplus >= 201103L
+        -: 1844:      template<typename _Ptr>
+        -: 1845:	typename std::pointer_traits<_Ptr>::element_type*
+        -: 1846:	_M_data_ptr(_Ptr __ptr) const
+        -: 1847:	{ return empty() ? nullptr : std::__to_address(__ptr); }
+        -: 1848:#else
+        -: 1849:      template<typename _Up>
+        -: 1850:	_Up*
+        -: 1851:	_M_data_ptr(_Up* __ptr) _GLIBCXX_NOEXCEPT
+        -: 1852:	{ return __ptr; }
+        -: 1853:
+        -: 1854:      template<typename _Ptr>
+        -: 1855:	value_type*
+        -: 1856:	_M_data_ptr(_Ptr __ptr)
+        -: 1857:	{ return empty() ? (value_type*)0 : __ptr.operator->(); }
+        -: 1858:
+        -: 1859:      template<typename _Ptr>
+        -: 1860:	const value_type*
+        -: 1861:	_M_data_ptr(_Ptr __ptr) const
+        -: 1862:	{ return empty() ? (const value_type*)0 : __ptr.operator->(); }
+        -: 1863:#endif
+        -: 1864:    };
+        -: 1865:
+        -: 1866:#if __cpp_deduction_guides >= 201606
+        -: 1867:  template<typename _InputIterator, typename _ValT
+        -: 1868:	     = typename iterator_traits<_InputIterator>::value_type,
+        -: 1869:	   typename _Allocator = allocator<_ValT>,
+        -: 1870:	   typename = _RequireInputIter<_InputIterator>,
+        -: 1871:	   typename = _RequireAllocator<_Allocator>>
+        -: 1872:    vector(_InputIterator, _InputIterator, _Allocator = _Allocator())
+        -: 1873:      -> vector<_ValT, _Allocator>;
+        -: 1874:#endif
+        -: 1875:
+        -: 1876:  /**
+        -: 1877:   *  @brief  Vector equality comparison.
+        -: 1878:   *  @param  __x  A %vector.
+        -: 1879:   *  @param  __y  A %vector of the same type as @a __x.
+        -: 1880:   *  @return  True iff the size and elements of the vectors are equal.
+        -: 1881:   *
+        -: 1882:   *  This is an equivalence relation.  It is linear in the size of the
+        -: 1883:   *  vectors.  Vectors are considered equivalent if their sizes are equal,
+        -: 1884:   *  and if corresponding elements compare equal.
+        -: 1885:  */
+        -: 1886:  template<typename _Tp, typename _Alloc>
+        -: 1887:    inline bool
+        -: 1888:    operator==(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
+        -: 1889:    { return (__x.size() == __y.size()
+        -: 1890:	      && std::equal(__x.begin(), __x.end(), __y.begin())); }
+        -: 1891:
+        -: 1892:  /**
+        -: 1893:   *  @brief  Vector ordering relation.
+        -: 1894:   *  @param  __x  A %vector.
+        -: 1895:   *  @param  __y  A %vector of the same type as @a __x.
+        -: 1896:   *  @return  True iff @a __x is lexicographically less than @a __y.
+        -: 1897:   *
+        -: 1898:   *  This is a total ordering relation.  It is linear in the size of the
+        -: 1899:   *  vectors.  The elements must be comparable with @c <.
+        -: 1900:   *
+        -: 1901:   *  See std::lexicographical_compare() for how the determination is made.
+        -: 1902:  */
+        -: 1903:  template<typename _Tp, typename _Alloc>
+        -: 1904:    inline bool
+        -: 1905:    operator<(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
+        -: 1906:    { return std::lexicographical_compare(__x.begin(), __x.end(),
+        -: 1907:					  __y.begin(), __y.end()); }
+        -: 1908:
+        -: 1909:  /// Based on operator==
+        -: 1910:  template<typename _Tp, typename _Alloc>
+        -: 1911:    inline bool
+        -: 1912:    operator!=(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
+        -: 1913:    { return !(__x == __y); }
+        -: 1914:
+        -: 1915:  /// Based on operator<
+        -: 1916:  template<typename _Tp, typename _Alloc>
+        -: 1917:    inline bool
+        -: 1918:    operator>(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
+        -: 1919:    { return __y < __x; }
+        -: 1920:
+        -: 1921:  /// Based on operator<
+        -: 1922:  template<typename _Tp, typename _Alloc>
+        -: 1923:    inline bool
+        -: 1924:    operator<=(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
+        -: 1925:    { return !(__y < __x); }
+        -: 1926:
+        -: 1927:  /// Based on operator<
+        -: 1928:  template<typename _Tp, typename _Alloc>
+        -: 1929:    inline bool
+        -: 1930:    operator>=(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
+        -: 1931:    { return !(__x < __y); }
+        -: 1932:
+        -: 1933:  /// See std::vector::swap().
+        -: 1934:  template<typename _Tp, typename _Alloc>
+        -: 1935:    inline void
+        -: 1936:    swap(vector<_Tp, _Alloc>& __x, vector<_Tp, _Alloc>& __y)
+        -: 1937:    _GLIBCXX_NOEXCEPT_IF(noexcept(__x.swap(__y)))
+        -: 1938:    { __x.swap(__y); }
+        -: 1939:
+        -: 1940:_GLIBCXX_END_NAMESPACE_CONTAINER
+        -: 1941:
+        -: 1942:#if __cplusplus >= 201703L
+        -: 1943:  namespace __detail::__variant
+        -: 1944:  {
+        -: 1945:    template<typename> struct _Never_valueless_alt; // see <variant>
+        -: 1946:
+        -: 1947:    // Provide the strong exception-safety guarantee when emplacing a
+        -: 1948:    // vector into a variant, but only if move assignment cannot throw.
+        -: 1949:    template<typename _Tp, typename _Alloc>
+        -: 1950:      struct _Never_valueless_alt<_GLIBCXX_STD_C::vector<_Tp, _Alloc>>
+        -: 1951:      : std::is_nothrow_move_assignable<_GLIBCXX_STD_C::vector<_Tp, _Alloc>>
+        -: 1952:      { };
+        -: 1953:  }  // namespace __detail::__variant
+        -: 1954:#endif // C++17
+        -: 1955:
+        -: 1956:_GLIBCXX_END_NAMESPACE_VERSION
+        -: 1957:} // namespace std
+        -: 1958:
+        -: 1959:#endif /* _STL_VECTOR_H */

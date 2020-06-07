@@ -1,0 +1,215 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_luminance.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_LUMINANCE_HPP
+        -:   19:#define PIC_FILTERING_FILTER_LUMINANCE_HPP
+        -:   20:
+        -:   21:#include "../util/array.hpp"
+        -:   22:#include "../util/std_util.hpp"
+        -:   23:
+        -:   24:#include "../filtering/filter.hpp"
+        -:   25:
+        -:   26:namespace pic {
+        -:   27:
+        -:   28:enum LUMINANCE_TYPE{LT_CIE_LUMINANCE, LT_LUMA, LT_WARD_LUMINANCE, LT_MEAN};
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief The FilterLuminance class
+        -:   32: */
+        -:   33:class FilterLuminance: public Filter
+        -:   34:{
+        -:   35:protected:
+        -:   36:
+        -:   37:    LUMINANCE_TYPE type;
+        -:   38:    float *weights;
+        -:   39:
+        -:   40:    /**
+        -:   41:     * @brief ProcessBBox
+        -:   42:     * @param dst
+        -:   43:     * @param src
+        -:   44:     * @param box
+        -:   45:     */
+       70:   46:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   47:    {
+     4340:   48:        for(int j = box->y0; j < box->y1; j++) {
+       70:   48-block  0
+     4340:   48-block  1
+     4270:   48-block  2
+        -:   49:
+   277550:   50:            for(int i = box->x0; i < box->x1; i++) {
+     4270:   50-block  0
+   277550:   50-block  1
+        -:   51:
+   273280:   52:                float *data_src = (*src[0])(i, j);
+   273280:   52-block  0
+   273280:   53:                float *data_dst = (*dst)(i, j);
+   273280:   53-block  0
+        -:   54:
+   546560:   55:                data_dst[0] = Arrayf::dot(data_src, weights, src[0]->channels);
+   273280:   55-block  0
+   273280:   55-block  1
+        -:   56:            }
+        -:   57:        }
+       70:   58:    }
+        -:   59:
+        -:   60:public:
+        -:   61:
+        -:   62:    /**
+        -:   63:     * @brief FilterLuminance
+        -:   64:     * @param type
+        -:   65:     */
+    #####:   66:    FilterLuminance(LUMINANCE_TYPE type = LT_CIE_LUMINANCE) : Filter()
+        -:   67:    {
+       1*:   68:        weights = NULL;
+       1*:   69:        update(type);
+        -:   70:    }
+        -:   71:
+        1:   72:    ~FilterLuminance()
+        3:   73:    {
+        2:   74:        weights = delete_s(weights);
+        1:   74-block  0
+        1:   74-block  1
+        1:   75:    }
+        -:   76:
+        -:   77:    /**
+        -:   78:     * @brief computeWeights
+        -:   79:     * @param type
+        -:   80:     * @param weights
+        -:   81:     * @return
+        -:   82:     */
+        3:   83:    static float *computeWeights(LUMINANCE_TYPE type, int channels, float *weights)
+        -:   84:    {
+        3:   85:        if(weights == NULL) {
+        3:   85-block  0
+       3*:   86:            weights = new float[channels];
+        3:   86-block  0
+        3:   86-block  1
+    %%%%%:   86-block  2
+        -:   87:        }
+        -:   88:
+        3:   89:        if(channels == 3) {
+        3:   89-block  0
+        1:   90:            switch(type)
+        1:   90-block  0
+        -:   91:            {
+    #####:   92:            case LT_WARD_LUMINANCE:
+    #####:   93:             {
+    #####:   94:                weights[0] =  54.0f  / 256.0f;
+    #####:   95:                weights[1] =  183.0f / 256.0f;
+    #####:   96:                weights[2] =  19.0f  / 256.0f;
+    #####:   97:            } break;
+    %%%%%:   97-block  0
+        -:   98:
+    #####:   99:            case LT_LUMA:
+    #####:  100:            {
+    #####:  101:                weights[0] =  0.2989f;
+    #####:  102:                weights[1] =  0.5870f;
+    #####:  103:                weights[2] =  0.114f;
+    #####:  104:            } break;
+    %%%%%:  104-block  0
+        -:  105:
+        1:  106:            case LT_CIE_LUMINANCE:
+        1:  107:            {
+        1:  108:                weights[0] =  0.2126f;
+        1:  109:                weights[1] =  0.7152f;
+        1:  110:                weights[2] =  0.0722f;
+        1:  111:            } break;
+        1:  111-block  0
+        -:  112:
+    #####:  113:            default:
+    #####:  114:            {
+    #####:  115:                weights[0] = 1.0f / 3.0f;
+    #####:  116:                weights[1] = weights[0];
+    #####:  117:                weights[2] = weights[0];
+    %%%%%:  117-block  0
+        -:  118:            }
+        -:  119:            }
+        -:  120:        } else {
+        2:  121:            if(channels == 1) {
+        2:  121-block  0
+        2:  122:                weights[0] = 1.0f;
+        2:  122-block  0
+        -:  123:            } else {
+    #####:  124:                Arrayf::assign(1.0f / float(channels), weights, channels);
+    %%%%%:  124-block  0
+        -:  125:            }
+        -:  126:        }
+        -:  127:
+        3:  128:        return weights;
+        -:  129:    }
+        -:  130:
+        -:  131:    /**
+        -:  132:     * @brief update
+        -:  133:     * @param type
+        -:  134:     */
+       1*:  135:    void update(LUMINANCE_TYPE type = LT_CIE_LUMINANCE)
+        -:  136:    {
+       1*:  137:        this->type = type;
+        1:  137-block  0
+        -:  138:    }
+        -:  139:
+        -:  140:    /**
+        -:  141:     * @brief OutputSize
+        -:  142:     * @param imgIn
+        -:  143:     * @param width
+        -:  144:     * @param height
+        -:  145:     * @param channels
+        -:  146:     * @param frames
+        -:  147:     */
+        1:  148:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  149:    {
+        1:  150:        width       = imgIn[0]->width;
+        1:  150-block  0
+        1:  151:        height      = imgIn[0]->height;
+        1:  152:        channels    = 1;
+        1:  153:        frames      = imgIn[0]->frames;
+        -:  154:
+        1:  155:        weights = delete_s(weights);
+        1:  155-block  0
+        1:  156:        weights = computeWeights(type, imgIn[0]->channels, weights);
+        1:  156-block  0
+        1:  157:    }
+        -:  158:
+        -:  159:    /**
+        -:  160:     * @brief execute
+        -:  161:     * @param imgIn
+        -:  162:     * @param imgOut
+        -:  163:     * @param type
+        -:  164:     * @return
+        -:  165:     */
+    #####:  166:    static Image *execute(Image *imgIn, Image *imgOut, LUMINANCE_TYPE type = LT_CIE_LUMINANCE)
+        -:  167:    {
+    #####:  168:        FilterLuminance fltLum(type);
+    %%%%%:  168-block  0
+    #####:  169:        return fltLum.Process(Single(imgIn), imgOut);
+    %%%%%:  169-block  0
+    %%%%%:  169-block  1
+    %%%%%:  169-block  2
+    %%%%%:  169-block  3
+    $$$$$:  169-block  4
+    $$$$$:  169-block  5
+        -:  170:    }
+        -:  171:};
+        -:  172:
+        -:  173:} // end namespace pic
+        -:  174:
+        -:  175:#endif /* PIC_FILTERING_FILTER_LUMINANCE_HPP */
+        -:  176:

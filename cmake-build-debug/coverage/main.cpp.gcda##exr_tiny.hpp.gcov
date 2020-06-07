@@ -1,0 +1,211 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/io/exr_tiny.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IO_EXR_TINY_HPP
+        -:   19:#define PIC_IO_EXR_TINY_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:#ifndef PIC_DISABLE_TINY_EXR
+        -:   24:
+        -:   25:#define TINYEXR_IMPLEMENTATION
+        -:   26:
+        -:   27:#include "../util/std_util.hpp"
+        -:   28:
+        -:   29:#include "../externals/tinyexr/tinyexr.h"
+        -:   30:
+        -:   31:namespace pic {
+        -:   32:
+    #####:   33:PIC_INLINE float *ReadEXR(std::string nameFile, float *data, int &width, int &height, int &channels)
+        -:   34:{
+    #####:   35:    EXRImage image;
+    #####:   36:    InitEXRImage(&image);
+    %%%%%:   36-block  0
+        -:   37:
+    #####:   38:    const char* err;
+    #####:   39:    int ret = ParseMultiChannelEXRHeaderFromFile(&image, nameFile.c_str(), &err);
+    %%%%%:   39-block  0
+    #####:   40:    if (ret != 0) {
+        -:   41:        #ifdef PIC_DEBUG
+        -:   42:            printf("Parse EXR error: %s\n", err);
+        -:   43:        #endif
+        -:   44:
+        -:   45:        return NULL;
+        -:   46:    }
+        -:   47:
+    #####:   48:    width = image.width;
+    #####:   49:    height = image.height;
+    #####:   50:    channels = image.num_channels;
+        -:   51:
+        -:   52:    //Allocate into memory
+    #####:   53:    if(data == NULL) {
+    %%%%%:   53-block  0
+    #####:   54:        data = new float[width * height * channels];
+    %%%%%:   54-block  0
+    %%%%%:   54-block  1
+    %%%%%:   54-block  2
+        -:   55:    }
+        -:   56:
+    #####:   57:    for (int i = 0; i < image.num_channels; i++) {
+    %%%%%:   57-block  0
+    %%%%%:   57-block  1
+    %%%%%:   57-block  2
+    #####:   58:        if (image.pixel_types[i] == TINYEXR_PIXELTYPE_HALF) {
+    %%%%%:   58-block  0
+    #####:   59:            image.requested_pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
+    %%%%%:   59-block  0
+        -:   60:        }
+        -:   61:    }
+        -:   62:
+    #####:   63:    ret = LoadMultiChannelEXRFromFile(&image, nameFile.c_str(), &err);
+    %%%%%:   63-block  0
+    #####:   64:    if (ret != 0) {
+        -:   65:        #ifdef PIC_DEBUG
+        -:   66:            printf("Load EXR error: %s\n", err);
+        -:   67:        #endif
+        -:   68:        return data;
+        -:   69:    }
+        -:   70:
+    #####:   71:    float **images = (float**) image.images;
+        -:   72:
+    #####:   73:    int nPixels = width * height;
+    #####:   74:    for (int i = 0; i < nPixels; i++){
+    %%%%%:   74-block  0
+    %%%%%:   74-block  1
+    #####:   75:        int index = i * channels;
+        -:   76:
+    #####:   77:        data[index    ] = images[2][i];
+    #####:   78:        data[index + 1] = images[1][i];
+    #####:   79:        data[index + 2] = images[0][i];
+    %%%%%:   79-block  0
+        -:   80:    }
+        -:   81:
+    #####:   82:    FreeEXRImage(&image);
+    #####:   83:    return data;
+    %%%%%:   83-block  0
+        -:   84:}
+        -:   85:
+        -:   86:/**
+        -:   87: * @brief WriteEXR
+        -:   88: * @param nameFile
+        -:   89: * @param data
+        -:   90: * @param width
+        -:   91: * @param height
+        -:   92: * @param channels
+        -:   93: * @return
+        -:   94: */
+    #####:   95:PIC_INLINE bool WriteEXR(std::string nameFile, float *data, int width,
+        -:   96:                         int height, int channels = 3)
+        -:   97:{
+    #####:   98:    EXRImage image;
+    #####:   99:    InitEXRImage(&image);
+    %%%%%:   99-block  0
+        -:  100:
+    #####:  101:     image.num_channels = channels;
+        -:  102:
+    #####:  103:     const char* channel_names[] = {"B", "G", "R"}; // "B", "G", "R", "A" for RGBA image
+        -:  104:
+    #####:  105:     std::vector< float* > images;
+    %%%%%:  105-block  0
+    %%%%%:  105-block  1
+    #####:  106:     for(int i = 0; i < channels; i++) {
+    %%%%%:  106-block  0
+    %%%%%:  106-block  1
+    %%%%%:  106-block  2
+    #####:  107:         float *tmp = new float[width * height];
+    %%%%%:  107-block  0
+    %%%%%:  107-block  1
+    %%%%%:  107-block  2
+    #####:  108:         images.push_back(tmp);
+    %%%%%:  108-block  0
+        -:  109:     }
+        -:  110:
+    #####:  111:     int nPixels = width * height;
+    #####:  112:     for (int i = 0; i < nPixels; i++){
+    %%%%%:  112-block  0
+    %%%%%:  112-block  1
+    %%%%%:  112-block  2
+    #####:  113:         int index = i * channels;
+        -:  114:
+    #####:  115:         for(int j = 0; j < channels; j++) {
+    %%%%%:  115-block  0
+    %%%%%:  115-block  1
+    %%%%%:  115-block  2
+    #####:  116:             images[j][i] = data[index + j];
+    %%%%%:  116-block  0
+        -:  117:         }
+        -:  118:     }
+        -:  119:
+    #####:  120:     float *image_ptr[3];
+    #####:  121:     image_ptr[0] = &(images[2][0]); // B
+    %%%%%:  121-block  0
+    #####:  122:     image_ptr[1] = &(images[1][0]); // G
+    #####:  123:     image_ptr[2] = &(images[0][0]); // R
+        -:  124:
+    #####:  125:     image.channel_names = channel_names;
+    #####:  126:     image.images = (unsigned char**)image_ptr;
+    #####:  127:     image.width = width;
+    #####:  128:     image.height = height;
+        -:  129:
+    #####:  130:     image.pixel_types = (int *)malloc(sizeof(int) * image.num_channels);
+    #####:  131:     image.requested_pixel_types = (int *)malloc(sizeof(int) * image.num_channels);
+    #####:  132:     for (int i = 0; i < image.num_channels; i++) {
+    %%%%%:  132-block  0
+    %%%%%:  132-block  1
+    #####:  133:       image.pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT; // pixel type of input image
+    #####:  134:       image.requested_pixel_types[i] = TINYEXR_PIXELTYPE_HALF; // pixel type of output image to be stored in .EXR
+    %%%%%:  134-block  0
+        -:  135:     }
+        -:  136:
+    #####:  137:     const char* err;
+    #####:  138:     int ret = SaveMultiChannelEXRToFile(&image, nameFile.c_str(), &err);
+    %%%%%:  138-block  0
+    #####:  139:     if (ret != 0) {
+    %%%%%:  139-block  0
+    #####:  140:         printf("Save EXR err: %s\n", err);
+    %%%%%:  140-block  0
+        -:  141:         return false;
+        -:  142:     }
+        -:  143:
+    #####:  144:     for(int i = 0; i < channels; i++) {
+    %%%%%:  144-block  0
+    #####:  145:         delete_vec_s(images[i]);
+    %%%%%:  145-block  0
+    %%%%%:  145-block  1
+        -:  146:     }
+    #####:  147:     images.clear();
+    %%%%%:  147-block  0
+        -:  148:
+    #####:  149:     delete_vec_s(image.pixel_types);
+    %%%%%:  149-block  0
+    #####:  150:     delete_vec_s(image.requested_pixel_types);
+    %%%%%:  150-block  0
+    %%%%%:  150-block  1
+        -:  151:
+        -:  152:     return true;
+        -:  153:}
+        -:  154:
+        -:  155:}
+        -:  156:
+        -:  157:#endif //PIC_DISABLE_TINY_EXR
+        -:  158:
+        -:  159:#endif /* PIC_IO_EXR_TINY_HPP */
+        -:  160:

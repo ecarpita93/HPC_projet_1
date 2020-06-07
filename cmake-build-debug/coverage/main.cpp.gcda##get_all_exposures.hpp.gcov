@@ -1,0 +1,233 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/get_all_exposures.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_GET_ALL_EXPOSURES_HPP
+        -:   19:#define PIC_TONE_MAPPING_GET_ALL_EXPOSURES_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:#include "../image.hpp"
+        -:   23:#include "../histogram.hpp"
+        -:   24:
+        -:   25:#include "../util/math.hpp"
+        -:   26:#include "../util/indexed_array.hpp"
+        -:   27:
+        -:   28:#include "../filtering/filter_luminance.hpp"
+        -:   29:#include "../filtering/filter_simple_tmo.hpp"
+        -:   30:
+        -:   31:namespace pic {
+        -:   32:
+        -:   33:/**
+        -:   34: * @brief getMinMaxFstops computes the minimum and maximum f-stop values of an image.
+        -:   35: * @param imgIn is an image.
+        -:   36: * @param minFstop is the mininum f-stop of imgIn, output.
+        -:   37: * @param maxFstop is the maximum f-stop of imgIn, output.
+        -:   38: */
+    #####:   39:PIC_INLINE void getMinMaxFstops(Image *imgIn, int &minFstop, int &maxFstop)
+        -:   40:{
+    #####:   41:    if(imgIn == NULL) {
+    %%%%%:   41-block  0
+    #####:   42:        return;
+    %%%%%:   42-block  0
+        -:   43:    }
+        -:   44:
+    #####:   45:    Image *img_lum = NULL;
+        -:   46:
+    #####:   47:    if(imgIn->channels == 1) {
+    %%%%%:   47-block  0
+        -:   48:        img_lum = imgIn;
+        -:   49:    } else {
+    #####:   50:        img_lum = FilterLuminance::execute(imgIn, NULL, LT_CIE_LUMINANCE);
+    %%%%%:   50-block  0
+        -:   51:    }
+        -:   52:
+    #####:   53:    int nData = img_lum->width * img_lum->height;
+        -:   54:
+    #####:   55:    IntCoord coord;
+    %%%%%:   55-block  0
+    %%%%%:   55-block  1
+    #####:   56:    IndexedArray<float>::findSimple(img_lum->data, nData, IndexedArray<float>::bFuncNotNeg, coord);
+    %%%%%:   56-block  0
+        -:   57:
+    #####:   58:    float commonMin = IndexedArray<float>::min(img_lum->data, coord);
+    %%%%%:   58-block  0
+    #####:   59:    float commonMax = IndexedArray<float>::max(img_lum->data, coord);
+        -:   60:
+    #####:   61:    float tminFstop = log2f(commonMin);
+    #####:   62:    float tmaxFstop = log2f(commonMax);
+        -:   63:
+    #####:   64:    minFstop = int(lround(tminFstop));
+    #####:   65:    maxFstop = int(lround(tmaxFstop));
+        -:   66:
+    #####:   67:    int halfFstops = (maxFstop - minFstop + 1) >> 1;
+    #####:   68:    minFstop = -halfFstops + 1;
+    #####:   69:    maxFstop =  halfFstops - 1;
+        -:   70:
+    #####:   71:    if(minFstop == maxFstop) {
+    #####:   72:        minFstop--;
+    #####:   73:        maxFstop++;
+    %%%%%:   73-block  0
+        -:   74:    }
+        -:   75:
+    #####:   76:    if(imgIn->channels != 1) {
+    %%%%%:   76-block  0
+    #####:   77:        delete img_lum;
+    %%%%%:   77-block  0
+        -:   78:    }
+        -:   79:}
+        -:   80:
+        -:   81:/**
+        -:   82: * @brief getAllExposuresUniform computes all required exposure values for reconstructing the input image
+        -:   83: * using uniform sampling
+        -:   84: * @param imgIn is an input image
+        -:   85: * @return It returns an std::vector<float> with all f-stops values encoding imgIn
+        -:   86: */
+    #####:   87:PIC_INLINE std::vector<float> getAllExposuresUniform(Image *imgIn)
+        -:   88:{
+    #####:   89:    std::vector<float> ret;
+    %%%%%:   89-block  0
+        -:   90:
+    #####:   91:    int iMin, iMax;
+    #####:   92:    getMinMaxFstops(imgIn, iMin, iMax);
+    %%%%%:   92-block  0
+        -:   93:
+    #####:   94:    for(int i = iMin; i <= iMax; i++) {
+    %%%%%:   94-block  0
+    %%%%%:   94-block  1
+    #####:   95:        ret.push_back(float(i));
+    %%%%%:   95-block  0
+    %%%%%:   95-block  1
+    $$$$$:   95-block  2
+        -:   96:    }
+        -:   97:
+    #####:   98:    return ret;
+    %%%%%:   98-block  0
+        -:   99:}
+        -:  100:
+        -:  101:/**
+        -:  102: * @brief getAllExposures computes all required exposure values for reconstructing the input image
+        -:  103: * using histogram sampling
+        -:  104: * @param imgIn is an input image
+        -:  105: * @return It returns an std::vector<float> with all exposure values encoding imgIn
+        -:  106: */
+    #####:  107:PIC_INLINE std::vector<float> getAllExposures(Image *imgIn) {
+    #####:  108:    std::vector<float> fstops;
+    %%%%%:  108-block  0
+        -:  109:
+    #####:  110:    if(imgIn == NULL) {
+    %%%%%:  110-block  0
+        -:  111:        return fstops;
+        -:  112:    }
+        -:  113:
+    #####:  114:    if(!imgIn->isValid()) {
+    %%%%%:  114-block  0
+        -:  115:        return fstops;
+        -:  116:    }
+        -:  117:
+    #####:  118:    Image *lum = NULL;
+        -:  119:
+    #####:  120:    if(imgIn->channels == 1) {
+    %%%%%:  120-block  0
+        -:  121:        lum = imgIn;
+        -:  122:    } else {
+    #####:  123:        lum = FilterLuminance::execute(imgIn, NULL, LT_CIE_LUMINANCE);
+    %%%%%:  123-block  0
+        -:  124:    }
+        -:  125:
+    #####:  126:    Histogram m(lum, VS_LOG_2, 1024);
+    %%%%%:  126-block  0
+    %%%%%:  126-block  1
+    #####:  127:    fstops = m.exposureCovering();
+    %%%%%:  127-block  0
+    %%%%%:  127-block  1
+        -:  128:
+    #####:  129:    if(imgIn->channels != 1) {
+    %%%%%:  129-block  0
+    #####:  130:        delete lum;
+    %%%%%:  130-block  0
+    %%%%%:  130-block  1
+        -:  131:    }
+        -:  132:
+    #####:  133:    return fstops;
+    %%%%%:  133-block  0
+        -:  134:}
+        -:  135:
+        -:  136:/**
+        -:  137: * @brief getAllExposuresImages converts an image into a stack of images.
+        -:  138: * @param imgIn is an input image.
+        -:  139: * @param fstops a vector with fstops.
+        -:  140: * @param gamma is the gamma correction value for the output stack.
+        -:  141: * @return It returns an ImageVec of images which encode imgIn at different
+        -:  142: * exposure values.
+        -:  143: */
+    #####:  144:PIC_INLINE ImageVec getAllExposuresImages(Image *imgIn, std::vector<float> &fstops, float gamma = 2.2f)
+        -:  145:{
+    #####:  146:    ImageVec ret;
+    %%%%%:  146-block  0
+    #####:  147:    FilterSimpleTMO flt(gamma, 0.0f);
+    %%%%%:  147-block  0
+        -:  148:
+    #####:  149:    ImageVec input = Single(imgIn);
+    %%%%%:  149-block  0
+    $$$$$:  149-block  1
+        -:  150:
+    #####:  151:    for(unsigned int i = 0; i < fstops.size(); i++) {
+    %%%%%:  151-block  0
+    %%%%%:  151-block  1
+    #####:  152:        flt.update(gamma, fstops[i]);
+    %%%%%:  152-block  0
+    #####:  153:        Image *expo = flt.Process(input, NULL);
+    %%%%%:  153-block  0
+    %%%%%:  153-block  1
+    %%%%%:  153-block  2
+    $$$$$:  153-block  3
+    $$$$$:  153-block  4
+        -:  154:
+    #####:  155:        expo->exposure = powf(2.0f, fstops[i]);
+    %%%%%:  155-block  0
+    #####:  156:        expo->clamp(0.0f, 1.0f);
+    %%%%%:  156-block  0
+        -:  157:
+    #####:  158:        ret.push_back(expo);
+        -:  159:    }
+        -:  160:
+    #####:  161:    return ret;
+    %%%%%:  161-block  0
+        -:  162:}
+        -:  163:
+        -:  164:/**
+        -:  165: * @brief getAllExposuresImages converts an image into a stack of images.
+        -:  166: * @param imgIn is an input image.
+        -:  167: * @param gamma is the gamma correction value for the output stack.
+        -:  168: * @return It returns an ImageVec of images which encode imgIn at different
+        -:  169: * exposure values.
+        -:  170: */
+    #####:  171:PIC_INLINE ImageVec getAllExposuresImages(Image *imgIn, float gamma = 2.2f)
+        -:  172:{
+    #####:  173:    std::vector<float> fstops = getAllExposures(imgIn);
+    %%%%%:  173-block  0
+    #####:  174:    return getAllExposuresImages(imgIn, fstops, gamma);
+    %%%%%:  174-block  0
+        -:  175:}
+        -:  176:
+        -:  177:} // end namespace pic
+        -:  178:
+        -:  179:#endif /* PIC_TONE_MAPPING_GET_ALL_EXPOSURES_HPP */
+        -:  180:

@@ -1,0 +1,152 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_mosaic.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_MOSAIC_HPP
+        -:   19:#define PIC_FILTERING_FILTER_MOSAIC_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterMosaic class
+        -:   27: */
+        -:   28:class FilterMosaic: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:
+        -:   32:    /**
+        -:   33:     * @brief ProcessBBox
+        -:   34:     * @param dst
+        -:   35:     * @param src
+        -:   36:     * @param box
+        -:   37:     */
+    #####:   38:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   39:    {
+    #####:   40:        if(src[0]->channels != 3){
+    %%%%%:   40-block  0
+        -:   41:            return;
+        -:   42:        }
+        -:   43:
+    #####:   44:        int width = dst->width;
+    #####:   45:        float *data = src[0]->data;
+    %%%%%:   45-block  0
+        -:   46:
+    #####:   47:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   47-block  0
+    %%%%%:   47-block  1
+    %%%%%:   47-block  2
+    #####:   48:            int c = j * width;
+    #####:   49:            int mody = j % 2;
+        -:   50:
+    #####:   51:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   51-block  0
+    %%%%%:   51-block  1
+    %%%%%:   51-block  2
+    #####:   52:                int modx = i % 2;
+        -:   53:
+        -:   54:                //indecies
+    #####:   55:                int c1 = c + i;
+    #####:   56:                int c3 = c1 * 3;
+        -:   57:
+    #####:   58:                if(mody == 0 && modx == 0) { //Red
+    %%%%%:   58-block  0
+    #####:   59:                    dst->data[c1] = data[c3];
+    %%%%%:   59-block  0
+        -:   60:                }
+        -:   61:
+    #####:   62:                if(mody == 0 && modx == 1) { //Green
+    %%%%%:   62-block  0
+    #####:   63:                    dst->data[c1] = data[c3 + 1];
+    %%%%%:   63-block  0
+        -:   64:                }
+        -:   65:
+    #####:   66:                if(mody == 1 && modx == 0) { //Green
+    %%%%%:   66-block  0
+    #####:   67:                    dst->data[c1] = data[c3 + 1];
+    %%%%%:   67-block  0
+        -:   68:                }
+        -:   69:
+    #####:   70:                if(mody == 1 && modx == 1) { //Blue
+    %%%%%:   70-block  0
+    #####:   71:                    dst->data[c1] = data[c3 + 2];
+    %%%%%:   71-block  0
+        -:   72:                }
+        -:   73:            }
+        -:   74:        }
+        -:   75:    }
+        -:   76:
+        -:   77:public:
+        -:   78:    /**
+        -:   79:     * @brief FilterMosaic
+        -:   80:     */
+        -:   81:    FilterMosaic() : Filter()
+        -:   82:    {
+        -:   83:
+        -:   84:    }
+        -:   85:
+        -:   86:    /**
+        -:   87:     * @brief OutputSize
+        -:   88:     * @param imgIn
+        -:   89:     * @param width
+        -:   90:     * @param height
+        -:   91:     * @param channels
+        -:   92:     * @param frames
+        -:   93:     */
+    #####:   94:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:   95:    {
+    #####:   96:        width    = imgIn[0]->width;
+    #####:   97:        height   = imgIn[0]->height;
+    #####:   98:        channels = 1;
+    #####:   99:        frames   = imgIn[0]->frames;
+    #####:  100:    }
+        -:  101:
+        -:  102:    /**
+        -:  103:     * @brief execute
+        -:  104:     * @param imgIn
+        -:  105:     * @param imgOut
+        -:  106:     * @return
+        -:  107:     */
+        -:  108:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  109:    {
+        -:  110:        FilterMosaic flt;
+        -:  111:        return flt.Process(Single(imgIn), imgOut);
+        -:  112:    }
+        -:  113:
+        -:  114:    /**
+        -:  115:     * @brief execute
+        -:  116:     * @param fileInput
+        -:  117:     * @param fileOutput
+        -:  118:     * @return
+        -:  119:     */
+        -:  120:    static Image *execute(std::string fileInput, std::string fileOutput)
+        -:  121:    {
+        -:  122:        Image imgIn(fileInput);
+        -:  123:        Image *out = FilterMosaic::execute(&imgIn, NULL);
+        -:  124:        out->Write(fileOutput);
+        -:  125:        return out;
+        -:  126:    }
+        -:  127:};
+        -:  128:
+        -:  129:} // end namespace pic
+        -:  130:
+        -:  131:#endif /* PIC_FILTERING_FILTER_MOSAIC_HPP */
+        -:  132:

@@ -1,0 +1,421 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/indexed_array.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_INDEXED_ARRAY_HPP
+        -:   19:#define PIC_UTIL_INDEXED_ARRAY_HPP
+        -:   20:
+        -:   21:#include <vector>
+        -:   22:
+        -:   23:#include "../util/math.hpp"
+        -:   24:
+        -:   25:namespace pic {
+        -:   26:
+        -:   27:/**
+        -:   28: * @brief IntCoord
+        -:   29: */
+        -:   30:typedef std::vector<int> IntCoord;
+        -:   31:
+        -:   32:/**
+        -:   33: * @brief The IndexedArray class
+        -:   34: */
+        -:   35:template <class T>
+        -:   36:class IndexedArray
+        -:   37:{
+        -:   38:public:
+        -:   39:    IndexedArray()
+        -:   40:    {
+        -:   41:    }
+        -:   42:
+        -:   43:    /**
+        -:   44:     * @brief bFuncNotNeg
+        -:   45:     * @param val
+        -:   46:     * @return
+        -:   47:     */
+    #####:   48:    static bool bFuncNotNeg(T val)
+        -:   49:    {
+    #####:   50:        return val > T(0);
+        -:   51:    }
+        -:   52:
+        -:   53:    /**
+        -:   54:     * @brief bFuncNotZero
+        -:   55:     * @param val
+        -:   56:     * @return
+        -:   57:     */
+        -:   58:    static bool bFuncNotZero(T val)
+        -:   59:    {
+        -:   60:        return (val < T(0)) || (val > T(0));
+        -:   61:    }
+        -:   62:
+        -:   63:    /**
+        -:   64:     * @brief bFuncNeg
+        -:   65:     * @param val
+        -:   66:     * @return
+        -:   67:     */
+        -:   68:    static bool bFuncNeg(T val)
+        -:   69:    {
+        -:   70:        return (val < T(0));
+        -:   71:    }
+        -:   72:
+        -:   73:    /**
+        -:   74:     * @brief findSimple collects coordinates of data which satisfies a bool function func.
+        -:   75:     * @param data
+        -:   76:     * @param nData
+        -:   77:     * @param ret
+        -:   78:     * @param stride
+        -:   79:     */
+    #####:   80:    static void findSimple(T *data, int nData, bool(*func)(float), IntCoord &ret, int stride = 1)
+        -:   81:    {
+    #####:   82:        for(int i = 0; i < nData; i += stride) {
+    %%%%%:   82-block  0
+    %%%%%:   82-block  1
+    %%%%%:   82-block  2
+    #####:   83:            if(func(data[i])) {
+    %%%%%:   83-block  0
+    #####:   84:                ret.push_back(i);
+    %%%%%:   84-block  0
+        -:   85:            }
+        -:   86:        }
+    #####:   87:    }
+        -:   88:
+        -:   89:    /**
+        -:   90:     * @brief find collects coordinates of data which satisfies a bool function func.
+        -:   91:     * @param data
+        -:   92:     * @param nData
+        -:   93:     * @param param
+        -:   94:     * @param ret
+        -:   95:     */
+        -:   96:    static void find(float *data, int nData, bool(*func)(float,
+        -:   97:                     std::vector<float>), std::vector<float> param, IntCoord &ret)
+        -:   98:    {
+        -:   99:        for(int i = 0; i < nData; i++) {
+        -:  100:            if(func(data[i], param)) {
+        -:  101:                ret.push_back(i);
+        -:  102:            }
+        -:  103:        }
+        -:  104:    }
+        -:  105:
+        -:  106:    /**
+        -:  107:     * @brief mean computes the mean value.
+        -:  108:     * @param data
+        -:  109:     * @param coord
+        -:  110:     * @return
+        -:  111:     */
+    #####:  112:    static T mean(T *data, IntCoord &coord)
+    %%%%%:  112-block  0
+        -:  113:    {
+    #####:  114:        if(coord.empty()) {
+    %%%%%:  114-block  0
+        -:  115:            return T(0);
+        -:  116:        }
+        -:  117:
+    #####:  118:        T ret = data[coord[0]];
+    %%%%%:  118-block  0
+        -:  119:
+    #####:  120:        for(unsigned int i = 1; i < coord.size(); i++) {
+    %%%%%:  120-block  0
+    %%%%%:  120-block  1
+    #####:  121:            int j = coord[i];
+    %%%%%:  121-block  0
+    #####:  122:            ret += data[j];
+    %%%%%:  122-block  0
+        -:  123:        }
+        -:  124:
+    #####:  125:        ret /= T(coord.size());
+    %%%%%:  125-block  0
+        -:  126:
+    #####:  127:        return ret;
+    %%%%%:  127-block  0
+        -:  128:    }
+        -:  129:
+        -:  130:    /**
+        -:  131:     * @brief min computes the min value.
+        -:  132:     * @param data
+        -:  133:     * @param coord
+        -:  134:     * @return
+        -:  135:     */
+    #####:  136:    static T min(T *data, IntCoord &coord)
+    %%%%%:  136-block  0
+        -:  137:    {
+    #####:  138:        if(coord.empty()) {
+    %%%%%:  138-block  0
+        -:  139:            return T(0);
+        -:  140:        }
+        -:  141:
+    #####:  142:        float ret = data[coord[0]];
+    %%%%%:  142-block  0
+        -:  143:
+    #####:  144:        for(unsigned int i = 1; i < coord.size(); i++) {
+    %%%%%:  144-block  0
+    %%%%%:  144-block  1
+    #####:  145:            int j = coord[i];
+    %%%%%:  145-block  0
+    #####:  146:            ret = MIN(ret, data[j]);
+    %%%%%:  146-block  0
+        -:  147:        }
+        -:  148:
+        -:  149:        return ret;
+        -:  150:    }
+        -:  151:
+        -:  152:    /**
+        -:  153:     * @brief max computes the max value.
+        -:  154:     * @param data
+        -:  155:     * @param coord
+        -:  156:     * @return
+        -:  157:     */
+    #####:  158:    static T max(T *data, IntCoord &coord)
+    %%%%%:  158-block  0
+        -:  159:    {
+    #####:  160:        if(coord.empty()) {
+    %%%%%:  160-block  0
+        -:  161:            return T(0);
+        -:  162:        }
+        -:  163:
+    #####:  164:        T ret = data[coord[0]];
+    %%%%%:  164-block  0
+        -:  165:
+    #####:  166:        for(unsigned int i = 1; i < coord.size(); i++) {
+    %%%%%:  166-block  0
+    %%%%%:  166-block  1
+    #####:  167:            int j = coord[i];
+    %%%%%:  167-block  0
+    #####:  168:            ret = MAX(ret, data[j]);
+    %%%%%:  168-block  0
+        -:  169:        }
+        -:  170:
+        -:  171:        return ret;
+        -:  172:    }
+        -:  173:
+        -:  174:    /**
+        -:  175:     * @brief percentile
+        -:  176:     * @param data
+        -:  177:     * @param coord
+        -:  178:     * @param percent
+        -:  179:     * @return
+        -:  180:     */
+    #####:  181:    static T percentile(T *data, IntCoord &coord, float percent)
+    %%%%%:  181-block  0
+        -:  182:    {
+    #####:  183:        if(coord.empty()) {
+    %%%%%:  183-block  0
+        -:  184:            return T(0);
+        -:  185:        }
+        -:  186:
+    #####:  187:        int n = int(coord.size());
+    %%%%%:  187-block  0
+    #####:  188:        T *tmp = new T[n];
+    %%%%%:  188-block  0
+    %%%%%:  188-block  1
+        -:  189:
+    #####:  190:        for(int i = 0; i < n; i++) {
+    %%%%%:  190-block  0
+    %%%%%:  190-block  1
+    #####:  191:            int j = coord[i];
+    %%%%%:  191-block  0
+    #####:  192:            tmp[i] = data[j];
+    %%%%%:  192-block  0
+        -:  193:        }
+        -:  194:
+    #####:  195:        std::sort(tmp, tmp + n);
+    %%%%%:  195-block  0
+        -:  196:
+    #####:  197:        percent = CLAMPi(percent, 0.0f, 1.0f);
+        -:  198:
+    #####:  199:        T ret = tmp[int(float(n - 1) * percent)];
+    #####:  200:        delete[] tmp;
+        -:  201:
+    #####:  202:        return ret;
+        -:  203:    }
+        -:  204:
+        -:  205:    /**
+        -:  206:     * @brief scale scales values.
+        -:  207:     * @param coord
+        -:  208:     * @param scaling
+        -:  209:     */
+        -:  210:    static void scale(IntCoord &coord, int scale)
+        -:  211:    {
+        -:  212:        for(unsigned int i = 0; i < coord.size(); i++) {
+        -:  213:            coord.at(i) = coord.at(i) * scale;
+        -:  214:        }
+        -:  215:    }
+        -:  216:
+        -:  217:    /**
+        -:  218:     * @brief log10Mean computes mean in the log10 domain.
+        -:  219:     * @param data
+        -:  220:     * @param coord
+        -:  221:     * @return
+        -:  222:     */
+        -:  223:    static float log10Mean(float *data, IntCoord &coord)
+        -:  224:    {
+        -:  225:        if(coord.empty()) {
+        -:  226:            return FLT_MAX;
+        -:  227:        }
+        -:  228:
+        -:  229:        float delta = 1e-6f;
+        -:  230:        float ret = 0.0f;
+        -:  231:
+        -:  232:        for(unsigned int i = 0; i < coord.size(); i++) {
+        -:  233:            int j = coord[i];
+        -:  234:            ret += log10f(data[j] + delta);
+        -:  235:        }
+        -:  236:
+        -:  237:        return ret / float(coord.size());
+        -:  238:    }
+        -:  239:
+        -:  240:    /**
+        -:  241:     * @brief log2Mean computes mean in the log2 domain.
+        -:  242:     * @param data
+        -:  243:     * @param coord
+        -:  244:     * @return
+        -:  245:     */
+        -:  246:    static float log2Mean(float *data, IntCoord &coord)
+        -:  247:    {
+        -:  248:        if(coord.empty()) {
+        -:  249:            return FLT_MAX;
+        -:  250:        }
+        -:  251:
+        -:  252:        float delta = 1e-6f;
+        -:  253:        float ret = 0.0f;
+        -:  254:        float log2f = logf(2.0f);
+        -:  255:
+        -:  256:        for(unsigned int i = 0; i < coord.size(); i++) {
+        -:  257:            int j = coord[i];
+        -:  258:            ret += logf(data[j] + delta) / log2f;
+        -:  259:        }
+        -:  260:
+        -:  261:        return ret / float(coord.size());
+        -:  262:    }
+        -:  263:
+        -:  264:    /**
+        -:  265:     * @brief negative computes the negative value given a val reference point.
+        -:  266:     * @param data
+        -:  267:     * @param coord
+        -:  268:     * @param referencePoint
+        -:  269:     */
+        -:  270:    static void negative(T *data, IntCoord &coord, T referencePoint = T(1))
+        -:  271:    {
+        -:  272:        for(unsigned int i = 0; i < coord.size(); i++) {
+        -:  273:            int j = coord[i];
+        -:  274:            data[j] = referencePoint - data[j];
+        -:  275:        }
+        -:  276:    }
+        -:  277:
+        -:  278:    /**
+        -:  279:     * @brief add is the additive operator.
+        -:  280:     * @param data
+        -:  281:     * @param coord
+        -:  282:     * @param val
+        -:  283:     */
+    #####:  284:    static void add(T *data, IntCoord &coord, T val)
+        -:  285:    {
+    #####:  286:        for(unsigned int i = 0; i < coord.size(); i++) {
+    %%%%%:  286-block  0
+    #####:  287:            int j = coord[i];
+    %%%%%:  287-block  0
+    #####:  288:            data[j] += val;
+    %%%%%:  288-block  0
+        -:  289:        }
+        -:  290:    }
+        -:  291:
+        -:  292:    /**
+        -:  293:     * @brief sub is the subtractive operator.
+        -:  294:     * @param data
+        -:  295:     * @param coord
+        -:  296:     * @param val
+        -:  297:     */
+        -:  298:    static void sub(T *data, IntCoord &coord, T val)
+        -:  299:    {
+        -:  300:        for(unsigned int i = 0; i < coord.size(); i++) {
+        -:  301:            int j = coord[i];
+        -:  302:            data[j] -= val;
+        -:  303:        }
+        -:  304:    }
+        -:  305:
+        -:  306:    /**
+        -:  307:     * @brief mul is the multiplicative operator.
+        -:  308:     * @param data
+        -:  309:     * @param coord
+        -:  310:     * @param val
+        -:  311:     */
+        -:  312:    static void mul(T *data, IntCoord &coord, T val)
+        -:  313:    {
+        -:  314:        for(unsigned int i = 0; i < coord.size(); i++) {
+        -:  315:            int j = coord[i];
+        -:  316:            data[j] *= val;
+        -:  317:        }
+        -:  318:    }
+        -:  319:
+        -:  320:    /**
+        -:  321:     * @brief div is the division operator.
+        -:  322:     * @param dataDst
+        -:  323:     * @param coord
+        -:  324:     * @param val
+        -:  325:     */
+        -:  326:    static void div(T *dataDst, IntCoord &coord, T val)
+        -:  327:    {
+        -:  328:        for(unsigned int i = 0; i < coord.size(); i++) {
+        -:  329:            int j = coord[i];
+        -:  330:            dataDst[j] /= val;
+        -:  331:        }
+        -:  332:    }
+        -:  333:
+        -:  334:    /**
+        -:  335:     * @brief assign
+        -:  336:     * @param dataDst
+        -:  337:     * @param coord
+        -:  338:     * @param dataSrc
+        -:  339:     */
+    #####:  340:    static void assign(T *dataDst, IntCoord &coord, T dataSrc)
+    %%%%%:  340-block  0
+        -:  341:    {
+    #####:  342:        for(unsigned int i = 0; i < coord.size(); i++) {
+    %%%%%:  342-block  0
+    #####:  343:            int j = coord[i];
+    %%%%%:  343-block  0
+    #####:  344:            dataDst[j] = dataSrc;
+    %%%%%:  344-block  0
+        -:  345:        }
+        -:  346:    }
+        -:  347:
+        -:  348:    /**
+        -:  349:     * @brief Assign
+        -:  350:     * @param dataDst
+        -:  351:     * @param coord
+        -:  352:     * @param dataSrc
+        -:  353:     */
+        -:  354:    static void assign(T *dataDst, IntCoord &coord, T *dataSrc)
+        -:  355:    {
+        -:  356:        for(unsigned int i = 0; i < coord.size(); i++) {
+        -:  357:            int j = coord[i];
+        -:  358:            dataDst[j] = dataSrc[j];
+        -:  359:        }
+        -:  360:    }
+        -:  361:};
+        -:  362:
+        -:  363:typedef IndexedArray<float> IndexedArrayf;
+        -:  364:
+        -:  365:typedef IndexedArray<int> IndexedArrayi;
+        -:  366:
+        -:  367:typedef IndexedArray<unsigned int> IndexedArrayui;
+        -:  368:
+        -:  369:} // end namespace pic
+        -:  370:
+        -:  371:#endif /* PIC_UTIL_INDEXED_ARRAY_HPP */
+        -:  372:

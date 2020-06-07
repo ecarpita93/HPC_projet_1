@@ -1,0 +1,193 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/Householder/BlockHouseholder.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2010 Vincent Lejeune
+        -:    5:// Copyright (C) 2010 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    6://
+        -:    7:// This Source Code Form is subject to the terms of the Mozilla
+        -:    8:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    9:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   10:
+        -:   11:#ifndef EIGEN_BLOCK_HOUSEHOLDER_H
+        -:   12:#define EIGEN_BLOCK_HOUSEHOLDER_H
+        -:   13:
+        -:   14:// This file contains some helper function to deal with block householder reflectors
+        -:   15:
+        -:   16:namespace Eigen { 
+        -:   17:
+        -:   18:namespace internal {
+        -:   19:  
+        -:   20:/** \internal */
+        -:   21:// template<typename TriangularFactorType,typename VectorsType,typename CoeffsType>
+        -:   22:// void make_block_householder_triangular_factor(TriangularFactorType& triFactor, const VectorsType& vectors, const CoeffsType& hCoeffs)
+        -:   23:// {
+        -:   24://   typedef typename VectorsType::Scalar Scalar;
+        -:   25://   const Index nbVecs = vectors.cols();
+        -:   26://   eigen_assert(triFactor.rows() == nbVecs && triFactor.cols() == nbVecs && vectors.rows()>=nbVecs);
+        -:   27:// 
+        -:   28://   for(Index i = 0; i < nbVecs; i++)
+        -:   29://   {
+        -:   30://     Index rs = vectors.rows() - i;
+        -:   31://     // Warning, note that hCoeffs may alias with vectors.
+        -:   32://     // It is then necessary to copy it before modifying vectors(i,i). 
+        -:   33://     typename CoeffsType::Scalar h = hCoeffs(i);
+        -:   34://     // This hack permits to pass trough nested Block<> and Transpose<> expressions.
+        -:   35://     Scalar *Vii_ptr = const_cast<Scalar*>(vectors.data() + vectors.outerStride()*i + vectors.innerStride()*i);
+        -:   36://     Scalar Vii = *Vii_ptr;
+        -:   37://     *Vii_ptr = Scalar(1);
+        -:   38://     triFactor.col(i).head(i).noalias() = -h * vectors.block(i, 0, rs, i).adjoint()
+        -:   39://                                        * vectors.col(i).tail(rs);
+        -:   40://     *Vii_ptr = Vii;
+        -:   41://     // FIXME add .noalias() once the triangular product can work inplace
+        -:   42://     triFactor.col(i).head(i) = triFactor.block(0,0,i,i).template triangularView<Upper>()
+        -:   43://                              * triFactor.col(i).head(i);
+        -:   44://     triFactor(i,i) = hCoeffs(i);
+        -:   45://   }
+        -:   46:// }
+        -:   47:
+        -:   48:/** \internal */
+        -:   49:// This variant avoid modifications in vectors
+        -:   50:template<typename TriangularFactorType,typename VectorsType,typename CoeffsType>
+      33*:   51:void make_block_householder_triangular_factor(TriangularFactorType& triFactor, const VectorsType& vectors, const CoeffsType& hCoeffs)
+        -:   52:{
+      33*:   53:  const Index nbVecs = vectors.cols();
+      33*:   54:  eigen_assert(triFactor.rows() == nbVecs && triFactor.cols() == nbVecs && vectors.rows()>=nbVecs);
+        -:   55:
+    1569*:   56:  for(Index i = nbVecs-1; i >=0 ; --i)
+        -:   57:  {
+    1536*:   58:    Index rs = vectors.rows() - i - 1;
+    1536*:   59:    Index rt = nbVecs-i-1;
+        -:   60:
+    1536*:   61:    if(rt>0)
+        -:   62:    {
+    1503*:   63:      triFactor.row(i).tail(rt).noalias() = -hCoeffs(i) * vectors.col(i).tail(rs).adjoint()
+    3006*:   64:                                                        * vectors.bottomRightCorner(rs, rt).template triangularView<UnitLower>();
+        -:   65:            
+        -:   66:      // FIXME add .noalias() once the triangular product can work inplace
+    1503*:   67:      triFactor.row(i).tail(rt) = triFactor.row(i).tail(rt) * triFactor.bottomRightCorner(rt,rt).template triangularView<Upper>();
+        -:   68:      
+        -:   69:    }
+    1536*:   70:    triFactor(i,i) = hCoeffs(i);
+        -:   71:  }
+      33*:   72:}
+------------------
+_ZN5Eigen8internal40make_block_householder_triangular_factorINS_6MatrixIfLin1ELin1ELi1ELin1ELin1EEENS_5BlockINS2_IfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEENS4_IKNS2_IfLin1ELi1ELi0ELin1ELi1EEELin1ELi1ELb0EEEEEvRT_RKT0_RKT1_:
+    #####:   51:void make_block_householder_triangular_factor(TriangularFactorType& triFactor, const VectorsType& vectors, const CoeffsType& hCoeffs)
+        -:   52:{
+    #####:   53:  const Index nbVecs = vectors.cols();
+    %%%%%:   53-block  0
+    #####:   54:  eigen_assert(triFactor.rows() == nbVecs && triFactor.cols() == nbVecs && vectors.rows()>=nbVecs);
+    %%%%%:   54-block  0
+    %%%%%:   54-block  1
+    %%%%%:   54-block  2
+    %%%%%:   54-block  3
+        -:   55:
+    #####:   56:  for(Index i = nbVecs-1; i >=0 ; --i)
+    %%%%%:   56-block  0
+    %%%%%:   56-block  1
+        -:   57:  {
+    #####:   58:    Index rs = vectors.rows() - i - 1;
+    %%%%%:   58-block  0
+    #####:   59:    Index rt = nbVecs-i-1;
+        -:   60:
+    #####:   61:    if(rt>0)
+    %%%%%:   61-block  0
+        -:   62:    {
+    #####:   63:      triFactor.row(i).tail(rt).noalias() = -hCoeffs(i) * vectors.col(i).tail(rs).adjoint()
+    #####:   64:                                                        * vectors.bottomRightCorner(rs, rt).template triangularView<UnitLower>();
+        -:   65:            
+        -:   66:      // FIXME add .noalias() once the triangular product can work inplace
+    #####:   67:      triFactor.row(i).tail(rt) = triFactor.row(i).tail(rt) * triFactor.bottomRightCorner(rt,rt).template triangularView<Upper>();
+        -:   68:      
+        -:   69:    }
+    #####:   70:    triFactor(i,i) = hCoeffs(i);
+    %%%%%:   70-block  0
+        -:   71:  }
+    #####:   72:}
+------------------
+_ZN5Eigen8internal40make_block_householder_triangular_factorINS_6MatrixIfLin1ELin1ELi1ELin1ELin1EEENS_5BlockINS2_IfLin1ELin1ELi0ELin1ELin1EEELin1ELin1ELb0EEENS_11VectorBlockIKNS2_IfLin1ELi1ELi0ELin1ELi1EEELin1EEEEEvRT_RKT0_RKT1_:
+       33:   51:void make_block_householder_triangular_factor(TriangularFactorType& triFactor, const VectorsType& vectors, const CoeffsType& hCoeffs)
+        -:   52:{
+       33:   53:  const Index nbVecs = vectors.cols();
+       33:   53-block  0
+      33*:   54:  eigen_assert(triFactor.rows() == nbVecs && triFactor.cols() == nbVecs && vectors.rows()>=nbVecs);
+       33:   54-block  0
+       33:   54-block  1
+       33:   54-block  2
+    %%%%%:   54-block  3
+        -:   55:
+     1569:   56:  for(Index i = nbVecs-1; i >=0 ; --i)
+       33:   56-block  0
+     1569:   56-block  1
+        -:   57:  {
+     1536:   58:    Index rs = vectors.rows() - i - 1;
+     1536:   58-block  0
+     1536:   59:    Index rt = nbVecs-i-1;
+        -:   60:
+     1536:   61:    if(rt>0)
+     1536:   61-block  0
+        -:   62:    {
+     1503:   63:      triFactor.row(i).tail(rt).noalias() = -hCoeffs(i) * vectors.col(i).tail(rs).adjoint()
+     3006:   64:                                                        * vectors.bottomRightCorner(rs, rt).template triangularView<UnitLower>();
+        -:   65:            
+        -:   66:      // FIXME add .noalias() once the triangular product can work inplace
+     1503:   67:      triFactor.row(i).tail(rt) = triFactor.row(i).tail(rt) * triFactor.bottomRightCorner(rt,rt).template triangularView<Upper>();
+        -:   68:      
+        -:   69:    }
+     1536:   70:    triFactor(i,i) = hCoeffs(i);
+     1536:   70-block  0
+        -:   71:  }
+       33:   72:}
+------------------
+        -:   73:
+        -:   74:/** \internal
+        -:   75:  * if forward then perform   mat = H0 * H1 * H2 * mat
+        -:   76:  * otherwise perform         mat = H2 * H1 * H0 * mat
+        -:   77:  */
+        -:   78:template<typename MatrixType,typename VectorsType,typename CoeffsType>
+       33:   79:void apply_block_householder_on_the_left(MatrixType& mat, const VectorsType& vectors, const CoeffsType& hCoeffs, bool forward)
+        -:   80:{
+        -:   81:  enum { TFactorSize = MatrixType::ColsAtCompileTime };
+       33:   82:  Index nbVecs = vectors.cols();
+       33:   82-block  0
+       33:   83:  Matrix<typename MatrixType::Scalar, TFactorSize, TFactorSize, RowMajor> T(nbVecs,nbVecs);
+       33:   83-block  0
+        -:   84:  
+       33:   85:  if(forward) make_block_householder_triangular_factor(T, vectors, hCoeffs);
+       33:   85-block  0
+    #####:   86:  else        make_block_householder_triangular_factor(T, vectors, hCoeffs.conjugate());  
+    %%%%%:   86-block  0
+       33:   87:  const TriangularView<const VectorsType, UnitLower> V(vectors);
+       33:   87-block  0
+        -:   88:
+        -:   89:  // A -= V T V^* A
+        -:   90:  Matrix<typename MatrixType::Scalar,VectorsType::ColsAtCompileTime,MatrixType::ColsAtCompileTime,
+        -:   91:         (VectorsType::MaxColsAtCompileTime==1 && MatrixType::MaxColsAtCompileTime!=1)?RowMajor:ColMajor,
+       66:   92:         VectorsType::MaxColsAtCompileTime,MatrixType::MaxColsAtCompileTime> tmp = V.adjoint() * mat;
+       33:   92-block  0
+       33:   92-block  1
+    $$$$$:   92-block  2
+    $$$$$:   92-block  3
+        -:   93:  // FIXME add .noalias() once the triangular product can work inplace
+       33:   94:  if(forward) tmp = T.template triangularView<Upper>()           * tmp;
+       33:   94-block  0
+       33:   94-block  1
+       33:   94-block  2
+    #####:   95:  else        tmp = T.template triangularView<Upper>().adjoint() * tmp;
+    %%%%%:   95-block  0
+    %%%%%:   95-block  1
+       33:   96:  mat.noalias() -= V * tmp;
+       33:   96-block  0
+    $$$$$:   96-block  1
+       33:   97:}
+       33:   97-block  0
+        -:   98:
+        -:   99:} // end namespace internal
+        -:  100:
+        -:  101:} // end namespace Eigen
+        -:  102:
+        -:  103:#endif // EIGEN_BLOCK_HOUSEHOLDER_H

@@ -1,0 +1,171 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/plugins/CommonCwiseUnaryOps.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2008-2009 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5:// Copyright (C) 2006-2008 Benoit Jacob <jacob.benoit.1@gmail.com>
+        -:    6://
+        -:    7:// This Source Code Form is subject to the terms of the Mozilla
+        -:    8:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    9:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   10:
+        -:   11:// This file is a base class plugin containing common coefficient wise functions.
+        -:   12:
+        -:   13:#ifndef EIGEN_PARSED_BY_DOXYGEN
+        -:   14:
+        -:   15:/** \internal the return type of conjugate() */
+        -:   16:typedef typename internal::conditional<NumTraits<Scalar>::IsComplex,
+        -:   17:                    const CwiseUnaryOp<internal::scalar_conjugate_op<Scalar>, const Derived>,
+        -:   18:                    const Derived&
+        -:   19:                  >::type ConjugateReturnType;
+        -:   20:/** \internal the return type of real() const */
+        -:   21:typedef typename internal::conditional<NumTraits<Scalar>::IsComplex,
+        -:   22:                    const CwiseUnaryOp<internal::scalar_real_op<Scalar>, const Derived>,
+        -:   23:                    const Derived&
+        -:   24:                  >::type RealReturnType;
+        -:   25:/** \internal the return type of real() */
+        -:   26:typedef typename internal::conditional<NumTraits<Scalar>::IsComplex,
+        -:   27:                    CwiseUnaryView<internal::scalar_real_ref_op<Scalar>, Derived>,
+        -:   28:                    Derived&
+        -:   29:                  >::type NonConstRealReturnType;
+        -:   30:/** \internal the return type of imag() const */
+        -:   31:typedef CwiseUnaryOp<internal::scalar_imag_op<Scalar>, const Derived> ImagReturnType;
+        -:   32:/** \internal the return type of imag() */
+        -:   33:typedef CwiseUnaryView<internal::scalar_imag_ref_op<Scalar>, Derived> NonConstImagReturnType;
+        -:   34:
+        -:   35:typedef CwiseUnaryOp<internal::scalar_opposite_op<Scalar>, const Derived> NegativeReturnType;
+        -:   36:
+        -:   37:#endif // not EIGEN_PARSED_BY_DOXYGEN
+        -:   38:
+        -:   39:/// \returns an expression of the opposite of \c *this
+        -:   40:///
+        -:   41:EIGEN_DOC_UNARY_ADDONS(operator-,opposite)
+        -:   42:///
+        -:   43:EIGEN_DEVICE_FUNC
+        -:   44:inline const NegativeReturnType
+      761:   45:operator-() const { return NegativeReturnType(derived()); }
+        -:   46:
+        -:   47:
+        -:   48:template<class NewType> struct CastXpr { typedef typename internal::cast_return_type<Derived,const CwiseUnaryOp<internal::scalar_cast_op<Scalar, NewType>, const Derived> >::type Type; };
+        -:   49:
+        -:   50:/// \returns an expression of \c *this with the \a Scalar type casted to
+        -:   51:/// \a NewScalar.
+        -:   52:///
+        -:   53:/// The template parameter \a NewScalar is the type we are casting the scalars to.
+        -:   54:///
+        -:   55:EIGEN_DOC_UNARY_ADDONS(cast,conversion function)
+        -:   56:///
+        -:   57:/// \sa class CwiseUnaryOp
+        -:   58:///
+        -:   59:template<typename NewType>
+        -:   60:EIGEN_DEVICE_FUNC
+        -:   61:typename CastXpr<NewType>::Type
+        -:   62:cast() const
+        -:   63:{
+        -:   64:  return typename CastXpr<NewType>::Type(derived());
+        -:   65:}
+        -:   66:
+        -:   67:/// \returns an expression of the complex conjugate of \c *this.
+        -:   68:///
+        -:   69:EIGEN_DOC_UNARY_ADDONS(conjugate,complex conjugate)
+        -:   70:///
+        -:   71:/// \sa <a href="group__CoeffwiseMathFunctions.html#cwisetable_conj">Math functions</a>, MatrixBase::adjoint()
+        -:   72:EIGEN_DEVICE_FUNC
+        -:   73:inline ConjugateReturnType
+       3*:   74:conjugate() const
+    %%%%%:   74-block  0
+        3:   74-block  1
+        -:   75:{
+       3*:   76:  return ConjugateReturnType(derived());
+    %%%%%:   76-block  0
+        3:   76-block  1
+        -:   77:}
+        -:   78:
+        -:   79:/// \returns a read-only expression of the real part of \c *this.
+        -:   80:///
+        -:   81:EIGEN_DOC_UNARY_ADDONS(real,real part function)
+        -:   82:///
+        -:   83:/// \sa imag()
+        -:   84:EIGEN_DEVICE_FUNC
+        -:   85:inline RealReturnType
+        -:   86:real() const { return RealReturnType(derived()); }
+        -:   87:
+        -:   88:/// \returns an read-only expression of the imaginary part of \c *this.
+        -:   89:///
+        -:   90:EIGEN_DOC_UNARY_ADDONS(imag,imaginary part function)
+        -:   91:///
+        -:   92:/// \sa real()
+        -:   93:EIGEN_DEVICE_FUNC
+        -:   94:inline const ImagReturnType
+        -:   95:imag() const { return ImagReturnType(derived()); }
+        -:   96:
+        -:   97:/// \brief Apply a unary operator coefficient-wise
+        -:   98:/// \param[in]  func  Functor implementing the unary operator
+        -:   99:/// \tparam  CustomUnaryOp Type of \a func
+        -:  100:/// \returns An expression of a custom coefficient-wise unary operator \a func of *this
+        -:  101:///
+        -:  102:/// The function \c ptr_fun() from the C++ standard library can be used to make functors out of normal functions.
+        -:  103:///
+        -:  104:/// Example:
+        -:  105:/// \include class_CwiseUnaryOp_ptrfun.cpp
+        -:  106:/// Output: \verbinclude class_CwiseUnaryOp_ptrfun.out
+        -:  107:///
+        -:  108:/// Genuine functors allow for more possibilities, for instance it may contain a state.
+        -:  109:///
+        -:  110:/// Example:
+        -:  111:/// \include class_CwiseUnaryOp.cpp
+        -:  112:/// Output: \verbinclude class_CwiseUnaryOp.out
+        -:  113:///
+        -:  114:EIGEN_DOC_UNARY_ADDONS(unaryExpr,unary function)
+        -:  115:///
+        -:  116:/// \sa unaryViewExpr, binaryExpr, class CwiseUnaryOp
+        -:  117:///
+        -:  118:template<typename CustomUnaryOp>
+        -:  119:EIGEN_DEVICE_FUNC
+        -:  120:inline const CwiseUnaryOp<CustomUnaryOp, const Derived>
+        -:  121:unaryExpr(const CustomUnaryOp& func = CustomUnaryOp()) const
+        -:  122:{
+        -:  123:  return CwiseUnaryOp<CustomUnaryOp, const Derived>(derived(), func);
+        -:  124:}
+        -:  125:
+        -:  126:/// \returns an expression of a custom coefficient-wise unary operator \a func of *this
+        -:  127:///
+        -:  128:/// The template parameter \a CustomUnaryOp is the type of the functor
+        -:  129:/// of the custom unary operator.
+        -:  130:///
+        -:  131:/// Example:
+        -:  132:/// \include class_CwiseUnaryOp.cpp
+        -:  133:/// Output: \verbinclude class_CwiseUnaryOp.out
+        -:  134:///
+        -:  135:EIGEN_DOC_UNARY_ADDONS(unaryViewExpr,unary function)
+        -:  136:///
+        -:  137:/// \sa unaryExpr, binaryExpr class CwiseUnaryOp
+        -:  138:///
+        -:  139:template<typename CustomViewOp>
+        -:  140:EIGEN_DEVICE_FUNC
+        -:  141:inline const CwiseUnaryView<CustomViewOp, const Derived>
+        -:  142:unaryViewExpr(const CustomViewOp& func = CustomViewOp()) const
+        -:  143:{
+        -:  144:  return CwiseUnaryView<CustomViewOp, const Derived>(derived(), func);
+        -:  145:}
+        -:  146:
+        -:  147:/// \returns a non const expression of the real part of \c *this.
+        -:  148:///
+        -:  149:EIGEN_DOC_UNARY_ADDONS(real,real part function)
+        -:  150:///
+        -:  151:/// \sa imag()
+        -:  152:EIGEN_DEVICE_FUNC
+        -:  153:inline NonConstRealReturnType
+        -:  154:real() { return NonConstRealReturnType(derived()); }
+        -:  155:
+        -:  156:/// \returns a non const expression of the imaginary part of \c *this.
+        -:  157:///
+        -:  158:EIGEN_DOC_UNARY_ADDONS(imag,imaginary part function)
+        -:  159:///
+        -:  160:/// \sa real()
+        -:  161:EIGEN_DEVICE_FUNC
+        -:  162:inline NonConstImagReturnType
+        -:  163:imag() { return NonConstImagReturnType(derived()); }

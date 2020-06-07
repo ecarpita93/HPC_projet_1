@@ -1,0 +1,241 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_assemble_hdr.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_ASSEMBLE_HDR_HPP
+        -:   19:#define PIC_FILTERING_FILTER_ASSEMBLE_HDR_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:#include "../util/array.hpp"
+        -:   24:
+        -:   25:#include "../algorithms/camera_response_function.hpp"
+        -:   26:
+        -:   27:namespace pic {
+        -:   28:
+        -:   29:/**
+        -:   30: * @brief The HDR_REC_DOMAIN enum
+        -:   31: * HRD_LOG: assembling HDR image in the log-domain
+        -:   32:
+        -:   33: * HRD_LIN: assembling HDR image in the linear domain
+        -:   34: *
+        -:   35: * HRD_SQ: assembling HDR image in the linear domain with t^2 trick
+        -:   36: * for reducing noise [Robertson et al.]
+        -:   37: */
+        -:   38:enum HDR_REC_DOMAIN {HRD_LOG, HRD_LIN, HRD_SQ};
+        -:   39:
+        -:   40:/**
+        -:   41: * @brief The FilterAssembleHDR class
+        -:   42: */
+        1:   43:class FilterAssembleHDR: public Filter
+        -:   44:{
+        -:   45:protected:
+        -:   46:    CameraResponseFunction *crf;
+        -:   47:    HDR_REC_DOMAIN          domain;
+        -:   48:    CRF_WEIGHT              weight_type;
+        -:   49:    float                   delta_value;
+        -:   50:
+        -:   51:    /**
+        -:   52:     * @brief ProcessBBox
+        -:   53:     * @param dst
+        -:   54:     * @param src
+        -:   55:     * @param box
+        -:   56:     */
+       70:   57:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   58:    {
+       70:   59:        int width = dst->width;
+       70:   60:        int channels = dst->channels;
+        -:   61:
+       70:   62:        int n = int(src.size());
+       70:   62-block  0
+        -:   63:
+       70:   64:        float t_min = src[0]->exposure;
+       70:   64-block  0
+       70:   65:        int index = 0;
+      490:   66:        for(int j = 1; j < n; j++) {
+       70:   66-block  0
+      490:   66-block  1
+      420:   66-block  2
+      420:   67:            if(src[j]->exposure < t_min) {
+      420:   67-block  0
+      420:   68:                t_min = src[j]->exposure;
+      420:   68-block  0
+      420:   69:                index = j;
+      420:   69-block  0
+        -:   70:            }
+        -:   71:        }        
+        -:   72:
+      70*:   73:        float *acc = new float[channels];
+       70:   73-block  0
+       70:   73-block  1
+    %%%%%:   73-block  2
+       70:   74:        float *totWeight = new float[channels];
+        -:   75:
+     4340:   76:        for(int j = box->y0; j < box->y1; j++) {
+     4340:   76-block  0
+     4270:   76-block  1
+     4270:   77:            int ind = j * width;
+        -:   78:
+   277550:   79:            for(int i = box->x0; i < box->x1; i++) {
+     4270:   79-block  0
+   277550:   79-block  1
+   273280:   80:                int c = (ind + i) * channels;
+        -:   81:
+   273280:   82:                Arrayf::assign(0.0f, acc, channels);
+   273280:   82-block  0
+  1093120:   83:                Arrayf::assign(0.0f, totWeight, channels);
+  1093120:   83-block  0
+        -:   84:
+        -:   85:                float max_val_saturation = 1.0f;
+        -:   86:                float max_val_saturation_fb = -1.0f;
+        -:   87:
+        -:   88:                //for each exposure...
+  2186240:   89:                for(int l = 0; l < n; l++) {
+  2186240:   89-block  0
+  1912960:   89-block  1
+        -:   90:
+  1912960:   91:                    float x = Arrayf::sum(&src[l]->data[c], channels);
+  1912960:   91-block  0
+  1912960:   92:                    x /= dst->channelsf;
+        -:   93:
+  1912960:   94:                    float t_mvs = x / t_min;
+        -:   95:
+  1912960:   96:                    max_val_saturation_fb = MAX(max_val_saturation_fb, t_mvs);
+        -:   97:
+  1912960:   98:                    if(l == index) {
+  1912960:   98-block  0
+   273280:   99:                        max_val_saturation = t_mvs;
+   273280:   99-block  0
+        -:  100:                    }
+        -:  101:
+  1912960:  102:                    float weight = weightFunction(x, weight_type);
+        -:  103:
+  1912960:  104:                    if(domain == HRD_SQ) {
+  1912960:  104-block  0
+    #####:  105:                        weight *= (src[l]->exposure * src[l]->exposure);
+    %%%%%:  105-block  0
+        -:  106:                    }
+        -:  107:
+  7651840:  108:                    for(int k = 0; k < channels; k++) {
+  1912960:  108-block  0
+  7651840:  108-block  1
+  5738880:  109:                        float x_lin = crf->remove(src[l]->data[c + k], k);
+  5738880:  109-block  0
+        -:  110:
+        -:  111:                        //merge HDR pixels
+  5738880:  112:                        switch(domain) {
+    #####:  113:                            case HRD_LIN: {
+    #####:  114:                                acc[k] += (weight * x_lin) / src[l]->exposure;
+    %%%%%:  114-block  0
+    #####:  115:                            } break;
+    %%%%%:  115-block  0
+        -:  116:
+  5738880:  117:                            case HRD_LOG: {
+  5738880:  118:                                acc[k] += weight * (logf(x_lin + delta_value) - logf(src[l]->exposure));
+  5738880:  118-block  0
+  5738880:  119:                            } break;
+  5738880:  119-block  0
+        -:  120:
+    #####:  121:                            case HRD_SQ: {
+    #####:  122:                                acc[k] += (weight * x_lin) * src[l]->exposure;
+    %%%%%:  122-block  0
+    #####:  123:                            } break;
+    %%%%%:  123-block  0
+        -:  124:                        }
+        -:  125:
+  5738880:  126:                        totWeight[k] += weight;
+  5738880:  126-block  0
+        -:  127:                    }
+        -:  128:                }
+        -:  129:
+        -:  130:                bool bSaturated = false;
+  1093120:  131:                for(int k = 0; k < channels; k++) {
+  1093120:  131-block  0
+  1639671:  132:                    bSaturated = bSaturated || (totWeight[k] < 1e-4f);
+   819840:  132-block  0
+   819834:  132-block  1
+   819840:  132-block  2
+        -:  133:                }
+        -:  134:
+   273280:  135:                if(!bSaturated) {
+   273280:  135-block  0
+  1093108:  136:                    for(int k = 0; k < channels; k++) {
+  1093108:  136-block  0
+   819831:  137:                        acc[k] /= totWeight[k];
+   819831:  138:                        if(domain == HRD_LOG) {
+   819831:  138-block  0
+   819831:  139:                            acc[k] = expf(acc[k]);
+   819831:  139-block  0
+        -:  140:                        }
+   819831:  141:                        dst->data[c + k] = acc[k];
+   819831:  141-block  0
+        -:  142:                    }
+        -:  143:                } else {
+        3:  144:                    max_val_saturation = MAX(max_val_saturation_fb, max_val_saturation);
+   273283:  145:                    Arrayf::assign(max_val_saturation, &dst->data[c], channels);
+        3:  145-block  0
+   273280:  145-block  1
+        -:  146:                }
+        -:  147:            }
+        -:  148:        }
+        -:  149:
+       70:  150:        delete[] totWeight;
+       70:  150-block  0
+       70:  151:        delete[] acc;
+       70:  152:    }
+        -:  153:
+        -:  154:public:
+        -:  155:
+        -:  156:    /**
+        -:  157:     * @brief FilterAssembleHDR
+        -:  158:     * @param weight_type
+        -:  159:     * @param linearization_type
+        -:  160:     * @param icrf
+        -:  161:     */
+        1:  162:    FilterAssembleHDR(CameraResponseFunction *crf = NULL, CRF_WEIGHT weight_type = CW_DEB97, HDR_REC_DOMAIN domain = HRD_LOG)
+        1:  163:    {
+        1:  164:        update(crf, weight_type, domain);
+        1:  165:        minInputImages = 2;
+        -:  166:
+        -:  167:        //a numerical stability value when assembling images in the log-domain
+        1:  168:        this->delta_value = 1.0 / 65536.0f;
+        -:  169:    }
+        -:  170:
+        -:  171:    /**
+        -:  172:     * @brief update
+        -:  173:     * @param crf
+        -:  174:     * @param weight_type
+        -:  175:     * @param domain
+        -:  176:     */
+        2:  177:    void update(CameraResponseFunction *crf, CRF_WEIGHT weight_type = CW_DEB97, HDR_REC_DOMAIN domain = HRD_LOG)
+        -:  178:    {        
+        2:  179:        this->crf = crf;
+        -:  180:
+        2:  181:        this->weight_type = weight_type;
+        -:  182:
+        2:  183:        this->domain = domain;
+        1:  183-block  0
+        -:  184:    }
+        -:  185:};
+        -:  186:
+        -:  187:} // end namespace pic
+        -:  188:
+        -:  189:#endif /* PIC_FILTERING_FILTER_ASSEMBLE_HDR_HPP */
+        -:  190:

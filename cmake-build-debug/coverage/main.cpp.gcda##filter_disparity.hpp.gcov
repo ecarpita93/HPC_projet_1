@@ -1,0 +1,232 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_disparity.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_DISPARITY_HPP
+        -:   19:#define PIC_FILTERING_FILTER_DISPARITY_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:#include "../features_matching/patch_comp.hpp"
+        -:   24:
+        -:   25:namespace pic {
+        -:   26:
+        -:   27:/**
+        -:   28: * @brief The FilterDisparity class
+        -:   29: */
+        -:   30:class FilterDisparity: public Filter
+        -:   31:{
+        -:   32:protected:
+        -:   33:
+        -:   34:    int maxDisparity, halfMaxDisparity, patchSize;
+        -:   35:    float lambda;
+        -:   36:    PatchComp *pc;
+        -:   37:
+        -:   38:    /**
+        -:   39:     * @brief ProcessBBox
+        -:   40:     * @param dst
+        -:   41:     * @param src
+        -:   42:     * @param box
+        -:   43:     */
+    #####:   44:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   45:    {
+    #####:   46:        float maxDisparityf = float(maxDisparity);
+    #####:   47:        float patchSize_sq = float (patchSize * patchSize);
+        -:   48:
+    #####:   49:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   49-block  0
+    %%%%%:   49-block  1
+    %%%%%:   49-block  2
+        -:   50:
+    #####:   51:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   51-block  0
+    %%%%%:   51-block  1
+        -:   52:
+    #####:   53:                float *prevL = (*dst)(i - 1, j    );
+    %%%%%:   53-block  0
+    #####:   54:                float *prevU = (*dst)(i    , j - 1);
+    %%%%%:   54-block  0
+        -:   55:
+    #####:   56:                int xB = -1;
+    #####:   57:                float dB = FLT_MAX;
+        -:   58:
+    #####:   59:                int minX = MAX(i - halfMaxDisparity, 0);
+    #####:   60:                int maxX = MIN(i + halfMaxDisparity, src[1]->width);
+    %%%%%:   60-block  0
+        -:   61:
+    #####:   62:                for(int x = minX; x < maxX; x++) {
+    %%%%%:   62-block  0
+    %%%%%:   62-block  1
+    %%%%%:   62-block  2
+        -:   63:
+    #####:   64:                    float dist = pc->getSSDSmooth(i, j, x, j) / patchSize_sq;
+        -:   65:
+        -:   66:                    //regularization
+    #####:   67:                    float reg = 0.0f;//float(x1 - x0);
+        -:   68:
+    #####:   69:                    if(prevL[1] >= 0.0f) {
+    %%%%%:   69-block  0
+    #####:   70:                        float deltaL = fabsf(prevL[0] - x);
+    #####:   71:                        reg += deltaL / maxDisparityf;
+    %%%%%:   71-block  0
+        -:   72:                    }
+        -:   73:
+    #####:   74:                    if(prevU[1] >= 0.0f) {
+    %%%%%:   74-block  0
+    #####:   75:                        float deltaU = fabsf(prevU[0] - x);
+    #####:   76:                        reg += deltaU / maxDisparityf;
+    %%%%%:   76-block  0
+        -:   77:                    }
+        -:   78:
+    #####:   79:                    dist += lambda * reg;
+        -:   80:
+    #####:   81:                    if(dist < dB) {
+    %%%%%:   81-block  0
+    #####:   82:                        xB = x;
+    #####:   83:                        dB = dist;
+    %%%%%:   83-block  0
+        -:   84:                    }
+        -:   85:                }
+        -:   86:
+    #####:   87:                float *out = (*dst)(i, j);
+    %%%%%:   87-block  0
+        -:   88:
+    #####:   89:                out[1] = dB;
+    #####:   90:                out[0] = float(xB);
+    %%%%%:   90-block  0
+        -:   91:            }
+        -:   92:        }
+    #####:   93:    }
+        -:   94:
+        -:   95:    /**
+        -:   96:     * @brief setupAux
+        -:   97:     * @param imgIn
+        -:   98:     * @param imgOut
+        -:   99:     * @return
+        -:  100:     */
+    #####:  101:    Image *setupAux(ImageVec imgIn, Image *imgOut)
+        -:  102:    {
+    #####:  103:        if(imgIn.size() == 4) {
+    %%%%%:  103-block  0
+    #####:  104:            pc = new PatchComp(imgIn[0], imgIn[1], imgIn[2], imgIn[3], patchSize, 0.9f);
+    %%%%%:  104-block  0
+        -:  105:        } else {
+        -:  106:            return NULL;
+        -:  107:        }
+        -:  108:
+    #####:  109:        if(imgOut == NULL) {
+    %%%%%:  109-block  0
+    #####:  110:            imgOut = new Image(1, imgIn[0]->width, imgIn[0]->height, 2);
+    %%%%%:  110-block  0
+    $$$$$:  110-block  1
+        -:  111:        } else {
+    #####:  112:            if(imgOut->isValid()) {
+    %%%%%:  112-block  0
+        -:  113:
+    #####:  114:                if((imgIn[0]->width  != imgOut->width)  ||
+    %%%%%:  114-block  0
+    %%%%%:  114-block  1
+    #####:  115:                   (imgIn[0]->height != imgOut->height) ||
+    %%%%%:  115-block  0
+    %%%%%:  115-block  1
+    %%%%%:  115-block  2
+        -:  116:                   (imgOut->channels != 2)) {
+    #####:  117:                    imgOut = new Image(1, imgIn[0]->width, imgIn[0]->height, 2);
+    %%%%%:  117-block  0
+    $$$$$:  117-block  1
+        -:  118:                }
+        -:  119:            } else {
+    #####:  120:                imgOut->allocateSimilarTo(imgIn[0]);
+    %%%%%:  120-block  0
+        -:  121:            }
+        -:  122:        }
+        -:  123:
+    #####:  124:        *imgOut = -1.0f;
+    %%%%%:  124-block  0
+    %%%%%:  124-block  1
+        -:  125:
+        -:  126:        return imgOut;
+        -:  127:    }
+        -:  128:
+        -:  129:public:
+        -:  130:
+        -:  131:    /**
+        -:  132:     * @brief FilterDisparity
+        -:  133:     */
+        -:  134:    FilterDisparity()
+        -:  135:    {
+        -:  136:        update(200, 7, 0.05f);
+        -:  137:    }
+        -:  138:
+        -:  139:    /**
+        -:  140:     * @brief FilterDisparity
+        -:  141:     * @param maxDisparity
+        -:  142:     * @param patchSize
+        -:  143:     * @param lambda
+        -:  144:     */
+        -:  145:    FilterDisparity(int maxDisparity, int patchSize, float lambda) : Filter()
+        -:  146:    {
+        -:  147:        pc = NULL;
+        -:  148:        update(maxDisparity, patchSize, lambda);
+        -:  149:    }
+        -:  150:
+        -:  151:    ~FilterDisparity()
+        -:  152:    {
+        -:  153:        delete_s(pc);
+        -:  154:    }
+        -:  155:
+        -:  156:    /**
+        -:  157:     * @brief update
+        -:  158:     * @param maxDisparity
+        -:  159:     */
+        -:  160:    void update(int maxDisparity, int patchSize, float lambda)
+        -:  161:    {
+        -:  162:        if(this->patchSize != patchSize) {
+        -:  163:            delete_s(pc);
+        -:  164:        }
+        -:  165:
+        -:  166:        this->lambda = lambda > 0.0f ? lambda : 0.05f;
+        -:  167:
+        -:  168:        this->maxDisparity = maxDisparity;
+        -:  169:        this->halfMaxDisparity = maxDisparity >> 1;
+        -:  170:        this->patchSize = patchSize;
+        -:  171:    }
+        -:  172:
+        -:  173:    /**
+        -:  174:     * @brief OutputSize
+        -:  175:     * @param imgIn
+        -:  176:     * @param width
+        -:  177:     * @param height
+        -:  178:     * @param channels
+        -:  179:     * @param frames
+        -:  180:     */
+        -:  181:    void OutputSize(Image *imgIn, int &width, int &height, int &channels, int &frames)
+        -:  182:    {
+        -:  183:        width       = imgIn->width;
+        -:  184:        height      = imgIn->height;
+        -:  185:        channels    = 2;
+        -:  186:        frames      = imgIn->frames;
+        -:  187:    }
+        -:  188:};
+        -:  189:
+        -:  190:} // end namespace pic
+        -:  191:
+        -:  192:#endif /* PIC_FILTERING_FILTER_DISPARITY_HPP */
+        -:  193:

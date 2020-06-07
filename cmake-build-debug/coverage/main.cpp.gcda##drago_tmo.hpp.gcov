@@ -1,0 +1,119 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/drago_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_DRAGO_TMO_HPP
+        -:   19:#define PIC_TONE_MAPPING_DRAGO_TMO_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:
+        -:   23:#include "../filtering/filter.hpp"
+        -:   24:#include "../filtering/filter_luminance.hpp"
+        -:   25:#include "../filtering/filter_drago_tmo.hpp"
+        -:   26:#include "../tone_mapping/tone_mapping_operator.hpp"
+        -:   27:
+        -:   28:namespace pic {
+        -:   29:
+        -:   30:/**
+        -:   31: * @brief The DragoTMO class
+        -:   32: */
+        -:   33:class DragoTMO: public ToneMappingOperator
+        -:   34:{
+        -:   35:protected:
+        -:   36:    float Ld_Max, b;
+        -:   37:    FilterLuminance flt_lum;
+        -:   38:    FilterDragoTMO flt_drg;
+        -:   39:
+        -:   40:    /**
+        -:   41:     * @brief ProcessAux
+        -:   42:     * @param imgIn
+        -:   43:     * @param imgOut
+        -:   44:     * @return
+        -:   45:     */    
+    #####:   46:    Image *ProcessAux(ImageVec imgIn, Image *imgOut)
+        -:   47:    {
+    #####:   48:        updateImage(imgIn[0]);
+    %%%%%:   48-block  0
+        -:   49:
+        -:   50:        //compute luminance and its statistics
+    #####:   51:        images[0] = flt_lum.Process(imgIn, images[0]);
+    %%%%%:   51-block  0
+    $$$$$:   51-block  1
+        -:   52:
+    #####:   53:        float Lw_Max, Lw_a;
+    #####:   54:        images[0]->getMaxVal(NULL, &Lw_Max);
+    %%%%%:   54-block  0
+    #####:   55:        images[0]->getLogMeanVal(NULL, &Lw_a);
+        -:   56:
+        -:   57:        //tone map
+    #####:   58:        flt_drg.update(Ld_Max, b, Lw_Max, Lw_a);
+    #####:   59:        imgOut = flt_drg.Process(Double(imgIn[0], images[0]), imgOut);
+    %%%%%:   59-block  0
+        -:   60:
+    #####:   61:        return imgOut;
+    %%%%%:   61-block  0
+        -:   62:    }
+        -:   63:
+        -:   64:public:
+        -:   65:
+        -:   66:    /**
+        -:   67:     * @brief DragoTMO
+        -:   68:     * @param Ld_Max
+        -:   69:     * @param b
+        -:   70:     */
+        -:   71:    DragoTMO(float Ld_Max = 100.0f, float b = 0.95f) : ToneMappingOperator()
+        -:   72:    {
+        -:   73:        images.push_back(NULL);
+        -:   74:        update(Ld_Max, b);
+        -:   75:    }
+        -:   76:
+        -:   77:    ~DragoTMO()
+        -:   78:    {
+        -:   79:        release();
+        -:   80:    }
+        -:   81:
+        -:   82:    /**
+        -:   83:     * @brief update
+        -:   84:     * @param Ld_Max
+        -:   85:     * @param b
+        -:   86:     */
+        -:   87:    void update(float Ld_Max = 100.0f, float b = 0.95f)
+        -:   88:    {
+        -:   89:        this->Ld_Max = Ld_Max;
+        -:   90:        this->b = b;
+        -:   91:
+        -:   92:    }
+        -:   93:
+        -:   94:    /**
+        -:   95:     * @brief execute
+        -:   96:     * @param imgIn
+        -:   97:     * @param imgOut
+        -:   98:     * @return
+        -:   99:     */
+        -:  100:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  101:    {
+        -:  102:        DragoTMO dtmo(100.0f, 0.95f);
+        -:  103:        return dtmo.Process(Single(imgIn), imgOut);
+        -:  104:    }
+        -:  105:};
+        -:  106:} // end namespace pic
+        -:  107:
+        -:  108:#endif /* PIC_TONE_MAPPING_DRAGO_TMO_HPP */
+        -:  109:

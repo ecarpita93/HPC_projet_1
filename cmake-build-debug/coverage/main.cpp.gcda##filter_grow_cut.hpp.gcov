@@ -1,0 +1,126 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_grow_cut.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_GROW_CUT_HPP
+        -:   19:#define PIC_FILTERING_FILTER_GROW_CUT_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:#include "../util/array.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The FilterGrowCut class
+        -:   28: */
+        -:   29:class FilterGrowCut: public Filter
+        -:   30:{
+        -:   31:protected:
+        -:   32:
+        -:   33:    int dx[8], dy[8];
+        -:   34:
+        -:   35:    /**
+        -:   36:     * @brief ProcessBBox
+        -:   37:     * @param dst
+        -:   38:     * @param src
+        -:   39:     * @param box
+        -:   40:     */
+    #####:   41:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   42:    {                
+    #####:   43:        Image *state_cur  = src[0];
+    %%%%%:   43-block  0
+    #####:   44:        Image *img        = src[1];
+    #####:   45:        Image *img_max    = src[2];
+        -:   46:
+    #####:   47:        Image *state_next  = dst;
+        -:   48:
+    #####:   49:        int channels = img->channels;
+        -:   50:
+    #####:   51:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   51-block  0
+    %%%%%:   51-block  1
+    %%%%%:   51-block  2
+    #####:   52:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   52-block  0
+    %%%%%:   52-block  1
+    %%%%%:   52-block  2
+    #####:   53:                float *s_cur = (*state_cur)(i, j);
+    %%%%%:   53-block  0
+    #####:   54:                float *s_next = (*state_next)(i, j);
+    %%%%%:   54-block  0
+    #####:   55:                float *col = (*img)(i, j);
+    %%%%%:   55-block  0
+        -:   56:
+    #####:   57:                float C = (*img_max)(i, j)[0];
+    %%%%%:   57-block  0
+        -:   58:
+    #####:   59:                s_next[0] = s_cur[0];
+    #####:   60:                s_next[1] = s_cur[1];
+        -:   61:
+    #####:   62:                for(int k = 0; k < 8; k++) {
+    %%%%%:   62-block  0
+    %%%%%:   62-block  1
+    %%%%%:   62-block  2
+    #####:   63:                    int x = i + dx[k];
+    #####:   64:                    int y = j + dy[k];
+        -:   65:
+    #####:   66:                    float *s_cur_k = (*state_cur)(x, y);
+    %%%%%:   66-block  0
+    #####:   67:                    float *col_k = (*img)(x, y);
+    %%%%%:   67-block  0
+        -:   68:
+    #####:   69:                    float dist = Arrayf::distanceSq(col, col_k, channels);
+    %%%%%:   69-block  0
+        -:   70:
+    #####:   71:                    float g_theta = 1.0f - (dist / C);
+    #####:   72:                    g_theta *= s_cur_k[1];
+        -:   73:
+    #####:   74:                    if(g_theta > s_cur[1]) {
+    %%%%%:   74-block  0
+    #####:   75:                        s_next[0] = s_cur_k[0];
+    #####:   76:                        s_next[1] = g_theta;
+    %%%%%:   76-block  0
+        -:   77:                    }
+        -:   78:                }
+        -:   79:            }
+        -:   80:        }
+    #####:   81:    }
+        -:   82:
+        -:   83:
+        -:   84:public:
+        -:   85:
+        -:   86:    /**
+        -:   87:     * @brief FilterGrowCut
+        -:   88:     */
+        -:   89:    FilterGrowCut() : Filter()
+        -:   90:    {
+        -:   91:        int dx_t[8] = {-1, 0, 1, -1, 1, -1,  0,  1};
+        -:   92:        int dy_t[8] = { 1, 1, 1,  0, 0, -1, -1, -1};
+        -:   93:
+        -:   94:        memcpy(dx, dx_t, sizeof(int) * 8);
+        -:   95:        memcpy(dy, dy_t, sizeof(int) * 8);
+        -:   96:    }
+        -:   97:
+        -:   98:};
+        -:   99:
+        -:  100:} // end namespace pic
+        -:  101:
+        -:  102:#endif /* PIC_FILTERING_FILTER_GROW_CUT_HPP */
+        -:  103:

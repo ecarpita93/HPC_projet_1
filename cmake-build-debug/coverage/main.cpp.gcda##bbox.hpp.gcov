@@ -1,0 +1,237 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/util/bbox.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_UTIL_BBOX_HPP
+        -:   19:#define PIC_UTIL_BBOX_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:#include "../util/string.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The BBox class manages the creation of bounding boxes for images.
+        -:   28: */
+        -:   29:class BBox
+        -:   30:{
+        -:   31:public:
+        -:   32:    int x0, y0, z0, x1, y1, z1;
+        -:   33:    int width, height, frames;
+        -:   34:
+        -:   35:    /**
+        -:   36:     * @brief BBox is a basic constructor. It does nothing.
+        -:   37:     */
+     232*:   38:    BBox()
+     221*:   39:    {
+      210:   39-block  0
+        4:   39-block  1
+    %%%%%:   39-block  2
+        7:   39-block  3
+        -:   40:
+        -:   41:    }
+        -:   42:
+        -:   43:    /**
+        -:   44:     * @brief BBox is a constructor setting the BBox up.
+        -:   45:     * @param width is the maxium horizontal coordinate in pixels.
+        -:   46:     * The minimum is set to 0.
+        -:   47:     * @param height is the maxium vertical coordinate in pixels.
+        -:   48:     * The minimum is set to 0.
+        -:   49:     */
+        -:   50:    BBox(int width, int height)
+        -:   51:    {
+        -:   52:        setBox(0, width, 0, height, 0, 1, width, height, 1);
+        -:   53:    }
+        -:   54:
+        -:   55:    /**
+        -:   56:     * @brief BBox is a constructor setting the BBox up.
+        -:   57:     * @param width is the maxium horizontal coordinate in pixels.
+        -:   58:     * The minimum is set to 0.
+        -:   59:     * @param height is the maxium vertical coordinate in pixels.
+        -:   60:     * The minimum is set to 0.
+        -:   61:     * @param frames is the maxium temporal coordinate in pixels.
+        -:   62:     * The minimum is set to 0.
+        -:   63:     */
+       2*:   64:    BBox(int width, int height, int frames)
+       2*:   65:    {
+       2*:   66:        setBox(0, width, 0, height, 0, frames, width, height, frames);
+        -:   67:    }
+        -:   68:
+        -:   69:    /**
+        -:   70:     * @brief BBox is a constructor setting the BBox up.
+        -:   71:     * @param x0 is the minimum horizontal coordinate in pixels.
+        -:   72:     * @param x1 is the maximum horizontal coordinate in pixels.
+        -:   73:     * @param y0 is the minimum vertical coordinate in pixels.
+        -:   74:     * @param y1 is the maximum vertical coordinate in pixels.
+        -:   75:     */
+    #####:   76:    BBox(int x0, int x1, int y0, int y1)
+    #####:   77:    {
+    #####:   78:        setBox(x0, x1, y0, y1, 0, 1, -1, -1, 1);
+        -:   79:    }
+        -:   80:
+        -:   81:    /**
+        -:   82:     * @brief BBox is a constructor setting the BBox up.
+        -:   83:     * @param x0 is the minimum horizontal coordinate in pixels.
+        -:   84:     * @param x1 is the maximum horizontal coordinate in pixels.
+        -:   85:     * @param y0 is the minimum vertical coordinate in pixels.
+        -:   86:     * @param y1 is the maximum vertical coordinate in pixels.
+        -:   87:     * @param width is the horizontal size in pixels.
+        -:   88:     * @param height is the vertical size in pixels.
+        -:   89:     */
+        -:   90:    BBox(int x0, int x1, int y0, int y1, int width, int height)
+        -:   91:    {
+        -:   92:        setBox(x0, x1, y0, y1, 0, 1, width, height, 1);
+        -:   93:    }
+        -:   94:
+        -:   95:    /**
+        -:   96:     * @brief BBox
+        -:   97:     * @param x0 is the horizontal coordinate in pixels.
+        -:   98:     * @param y0 is the vertical coordinate in pixels.
+        -:   99:     * @param size is the patch size
+        -:  100:     * @param width is the original width of the image.
+        -:  101:     * @param height is the original height of the image.
+        -:  102:     */
+        -:  103:    BBox(int x0, int y0, int size, int width, int height)
+        -:  104:    {
+        -:  105:        setCentered(x0, y0, size, width, height);
+        -:  106:    }
+        -:  107:
+        -:  108:    /**
+        -:  109:     * @brief Size computes the number of pixels in a bounding box.
+        -:  110:     * @return It returns the number of pixels in a bounding box.
+        -:  111:     */
+       2*:  112:    int Size()
+        -:  113:    {
+       2*:  114:        return (y1 - y0) * (x1 - x0) * (z1 - z0);
+        2:  114-block  0
+    %%%%%:  114-block  1
+    %%%%%:  114-block  2
+    %%%%%:  114-block  3
+        -:  115:    }
+        -:  116:
+        -:  117:    /**
+        -:  118:     * @brief setBox sets a BBox up.
+        -:  119:     * @param x0 is the minimum horizontal coordinate in pixels.
+        -:  120:     * @param x1 is the maximum horizontal coordinate in pixels.
+        -:  121:     * @param y0 is the minimum vertical coordinate in pixels.
+        -:  122:     * @param y1 is the maximum vertical coordinate in pixels.
+        -:  123:     * @param z0 is the minimum temporal coordinate in pixels.
+        -:  124:     * @param z1 is the maximum temporal coordinate in pixels.
+        -:  125:     * @param width is the original width of the image.
+        -:  126:     * @param height is the original height of the image.
+        -:  127:     * @param frames is the original length of the image.
+        -:  128:     */
+     223*:  129:    void setBox(int x0, int x1, int y0, int y1, int z0, int z1, int width,
+        -:  130:                int height, int frames)
+        -:  131:    {
+     223*:  132:        this->x0 = x0;
+     223*:  133:        this->y0 = y0;
+     223*:  134:        this->z0 = z0;
+        -:  135:
+     223*:  136:        this->x1 = x1;
+     223*:  137:        this->y1 = y1;
+     223*:  138:        this->z1 = z1;
+        -:  139:
+     223*:  140:        this->width = width;
+     223*:  141:        this->height = height;
+     212*:  142:        this->frames = frames;
+    %%%%%:  142-block  0
+    %%%%%:  142-block  1
+    %%%%%:  142-block  2
+    %%%%%:  142-block  3
+    %%%%%:  142-block  4
+    %%%%%:  142-block  5
+    %%%%%:  142-block  6
+    %%%%%:  142-block  7
+    %%%%%:  142-block  8
+      210:  142-block  9
+        -:  143:    }
+        -:  144:
+        -:  145:    /**
+        -:  146:     * @brief SetCentered
+        -:  147:     * @param x0 is the horizontal coordinate in pixels.
+        -:  148:     * @param y0 is the vertical coordinate in pixels.
+        -:  149:     * @param size is the patch size
+        -:  150:     * @param width is the original width of the image.
+        -:  151:     * @param height is the original height of the image.
+        -:  152:     */
+        -:  153:    void setCentered(int x0, int y0, int size, int width, int height)
+        -:  154:    {
+        -:  155:        this->z0 = 0;
+        -:  156:        this->z1 = 1;
+        -:  157:
+        -:  158:        int halfSize = size >> 1;
+        -:  159:
+        -:  160:        this->x0 = x0 - halfSize;
+        -:  161:        this->x1 = x0 + halfSize;
+        -:  162:
+        -:  163:        this->y0 = y0 - halfSize;
+        -:  164:        this->y1 = y0 + halfSize;
+        -:  165:
+        -:  166:        this->width = width;
+        -:  167:        this->height = height;
+        -:  168:        this->frames = 1;
+        -:  169:    }
+        -:  170:
+        -:  171:    /**
+        -:  172:     * @brief getFourBlocks sets the BBox as a quadrant of a given size.
+        -:  173:     * @param width is horizontal size in pixels.
+        -:  174:     * @param height is the vertical size in pixels.
+        -:  175:     * @param i is the i-th quadrant.
+        -:  176:     */
+        -:  177:    void getFourBlocks(int width, int height, int i)
+        -:  178:    {
+        -:  179:        int halfWidth  = width >> 1;
+        -:  180:        int halfHeight = height >> 1;
+        -:  181:
+        -:  182:        int dataX[] = {0, 0, halfWidth, halfWidth};
+        -:  183:        int dataY[] = {0, halfHeight, 0, halfHeight};
+        -:  184:
+        -:  185:        if((width % 2) == 1) {
+        -:  186:            halfWidth++;
+        -:  187:        }
+        -:  188:
+        -:  189:        if((height % 2) == 1) {
+        -:  190:            halfHeight++;
+        -:  191:        }
+        -:  192:
+        -:  193:        setBox(dataX[i], dataX[i] + halfWidth,
+        -:  194:               dataY[i], dataY[i] + halfHeight,
+        -:  195:               0, 1,
+        -:  196:               width, height, 1);
+        -:  197:        //	print();
+        -:  198:    }
+        -:  199:
+        -:  200:    /**
+        -:  201:     * @brief toString returns a string representation of BBox
+        -:  202:     * @return It returns a string with the BBox content.
+        -:  203:     */
+        -:  204:    std::string toString()
+        -:  205:    {
+        -:  206:        return "X = (" + fromNumberToString(x0) + ", " + fromNumberToString(x1) + ") " +
+        -:  207:               "Y = (" + fromNumberToString(y0) + ", " + fromNumberToString(y1) + ") " +
+        -:  208:               "Z = (" + fromNumberToString(z0) + ", " + fromNumberToString(z1) + ")";
+        -:  209:    }
+        -:  210:};
+        -:  211:
+        -:  212:} // end namespace pic
+        -:  213:
+        -:  214:#endif /* PIC_UTIL_BBOX_HPP */
+        -:  215:

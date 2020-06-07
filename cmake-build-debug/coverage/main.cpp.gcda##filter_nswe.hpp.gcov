@@ -1,0 +1,141 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_nswe.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_NSWE_HPP
+        -:   19:#define PIC_FILTERING_FILTER_NSWE_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterNSWE class
+        -:   27: */
+        -:   28:class FilterNSWE: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:    /**
+        -:   32:     * @brief f
+        -:   33:     * @param data
+        -:   34:     */
+    #####:   35:    void f(FilterFData *data)
+        -:   36:    {
+    #####:   37:        float *img_data  = (*data->src[0])(data->x    , data->y);
+    %%%%%:   37-block  0
+    #####:   38:        float *img_dataN = (*data->src[0])(data->x + 1, data->y);
+    %%%%%:   38-block  0
+    #####:   39:        float *img_dataS = (*data->src[0])(data->x - 1, data->y);
+    %%%%%:   39-block  0
+    #####:   40:        float *img_dataW = (*data->src[0])(data->x    , data->y - 1);
+    %%%%%:   40-block  0
+    #####:   41:        float *img_dataE = (*data->src[0])(data->x    , data->y + 1);
+    %%%%%:   41-block  0
+        -:   42:
+    #####:   43:        for(int k = 0; k < data->src[0]->channels; k++) {
+    %%%%%:   43-block  0
+    %%%%%:   43-block  1
+    #####:   44:            int tmp = k << 2;
+    #####:   45:            data->out[tmp    ] = img_dataN[k] - img_data[k];
+    #####:   46:            data->out[tmp + 1] = img_dataS[k] - img_data[k];
+    #####:   47:            data->out[tmp + 2] = img_dataW[k] - img_data[k];
+    #####:   48:            data->out[tmp + 3] = img_dataE[k] - img_data[k];
+    %%%%%:   48-block  0
+        -:   49:        }
+    #####:   50:    }
+        -:   51:
+        -:   52:    /**
+        -:   53:     * @brief ProcessBBox
+        -:   54:     * @param dst
+        -:   55:     * @param src
+        -:   56:     * @param box
+        -:   57:     */
+        -:   58:    /*
+        -:   59:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   60:    {
+        -:   61:        Image *img = src[0];
+        -:   62:        int channels = img->channels;
+        -:   63:
+        -:   64:        for(int j = box->y0; j < box->y1; j++) {
+        -:   65:
+        -:   66:            for(int i = box->x0; i < box->x1; i++) {
+        -:   67:
+        -:   68:                float *dst_data   = (*dst)(i  , j);
+        -:   69:
+        -:   70:                float *img_data  = (*img)(i    , j);
+        -:   71:                float *img_dataN = (*img)(i + 1, j);
+        -:   72:                float *img_dataS = (*img)(i - 1, j);
+        -:   73:                float *img_dataW = (*img)(i    , j - 1);
+        -:   74:                float *img_dataE = (*img)(i    , j + 1);
+        -:   75:
+        -:   76:                for(int k = 0; k < channels; k++) {
+        -:   77:                    int tmp = k * 4;
+        -:   78:                    dst_data[tmp    ] = img_dataN[k] - img_data[k];
+        -:   79:                    dst_data[tmp + 1] = img_dataS[k] - img_data[k];
+        -:   80:                    dst_data[tmp + 2] = img_dataW[k] - img_data[k];
+        -:   81:                    dst_data[tmp + 3] = img_dataE[k] - img_data[k];
+        -:   82:                }
+        -:   83:            }
+        -:   84:        }
+        -:   85:    }
+        -:   86:    */
+        -:   87:
+        -:   88:public:
+        -:   89:    /**
+        -:   90:     * @brief FilterNSWE
+        -:   91:     */
+        -:   92:    FilterNSWE() : Filter()
+        -:   93:    {
+        -:   94:
+        -:   95:    }
+        -:   96:
+        -:   97:    /**
+        -:   98:     * @brief OutputSize
+        -:   99:     * @param imgIn
+        -:  100:     * @param width
+        -:  101:     * @param height
+        -:  102:     * @param channels
+        -:  103:     * @param frames
+        -:  104:     */
+    #####:  105:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:  106:    {
+    #####:  107:        width    = imgIn[0]->width;
+    #####:  108:        height   = imgIn[0]->height;
+    #####:  109:        channels = imgIn[0]->channels << 2;
+    #####:  110:        frames   = imgIn[0]->frames;
+    #####:  111:    }
+        -:  112:
+        -:  113:    /**
+        -:  114:     * @brief execute
+        -:  115:     * @param imgIn
+        -:  116:     * @param imgOut
+        -:  117:     * @return
+        -:  118:     */
+        -:  119:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  120:    {
+        -:  121:        FilterNSWE filter;
+        -:  122:        return filter.Process(Single(imgIn), imgOut);
+        -:  123:    }
+        -:  124:};
+        -:  125:
+        -:  126:} // end namespace pic
+        -:  127:
+        -:  128:#endif /* PIC_FILTERING_FILTER_NSWE_HPP */
+        -:  129:

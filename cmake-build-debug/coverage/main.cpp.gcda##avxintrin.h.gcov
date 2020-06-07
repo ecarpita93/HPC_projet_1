@@ -1,0 +1,1858 @@
+        -:    0:Source:/usr/lib/gcc/x86_64-linux-gnu/9/include/avxintrin.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/* Copyright (C) 2008-2019 Free Software Foundation, Inc.
+        -:    2:
+        -:    3:   This file is part of GCC.
+        -:    4:
+        -:    5:   GCC is free software; you can redistribute it and/or modify
+        -:    6:   it under the terms of the GNU General Public License as published by
+        -:    7:   the Free Software Foundation; either version 3, or (at your option)
+        -:    8:   any later version.
+        -:    9:
+        -:   10:   GCC is distributed in the hope that it will be useful,
+        -:   11:   but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   12:   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        -:   13:   GNU General Public License for more details.
+        -:   14:
+        -:   15:   Under Section 7 of GPL version 3, you are granted additional
+        -:   16:   permissions described in the GCC Runtime Library Exception, version
+        -:   17:   3.1, as published by the Free Software Foundation.
+        -:   18:
+        -:   19:   You should have received a copy of the GNU General Public License and
+        -:   20:   a copy of the GCC Runtime Library Exception along with this program;
+        -:   21:   see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+        -:   22:   <http://www.gnu.org/licenses/>.  */
+        -:   23:
+        -:   24:/* Implemented from the specification included in the Intel C++ Compiler
+        -:   25:   User Guide and Reference, version 11.0.  */
+        -:   26:
+        -:   27:#ifndef _IMMINTRIN_H_INCLUDED
+        -:   28:# error "Never use <avxintrin.h> directly; include <immintrin.h> instead."
+        -:   29:#endif
+        -:   30:
+        -:   31:#ifndef _AVXINTRIN_H_INCLUDED
+        -:   32:#define _AVXINTRIN_H_INCLUDED
+        -:   33:
+        -:   34:#ifndef __AVX__
+        -:   35:#pragma GCC push_options
+        -:   36:#pragma GCC target("avx")
+        -:   37:#define __DISABLE_AVX__
+        -:   38:#endif /* __AVX__ */
+        -:   39:
+        -:   40:/* Internal data types for implementing the intrinsics.  */
+        -:   41:typedef double __v4df __attribute__ ((__vector_size__ (32)));
+        -:   42:typedef float __v8sf __attribute__ ((__vector_size__ (32)));
+        -:   43:typedef long long __v4di __attribute__ ((__vector_size__ (32)));
+        -:   44:typedef unsigned long long __v4du __attribute__ ((__vector_size__ (32)));
+        -:   45:typedef int __v8si __attribute__ ((__vector_size__ (32)));
+        -:   46:typedef unsigned int __v8su __attribute__ ((__vector_size__ (32)));
+        -:   47:typedef short __v16hi __attribute__ ((__vector_size__ (32)));
+        -:   48:typedef unsigned short __v16hu __attribute__ ((__vector_size__ (32)));
+        -:   49:typedef char __v32qi __attribute__ ((__vector_size__ (32)));
+        -:   50:typedef signed char __v32qs __attribute__ ((__vector_size__ (32)));
+        -:   51:typedef unsigned char __v32qu __attribute__ ((__vector_size__ (32)));
+        -:   52:
+        -:   53:/* The Intel API is flexible enough that we must allow aliasing with other
+        -:   54:   vector types, and their scalar components.  */
+        -:   55:typedef float __m256 __attribute__ ((__vector_size__ (32),
+        -:   56:				     __may_alias__));
+        -:   57:typedef long long __m256i __attribute__ ((__vector_size__ (32),
+        -:   58:					  __may_alias__));
+        -:   59:typedef double __m256d __attribute__ ((__vector_size__ (32),
+        -:   60:				       __may_alias__));
+        -:   61:
+        -:   62:/* Unaligned version of the same types.  */
+        -:   63:typedef float __m256_u __attribute__ ((__vector_size__ (32),
+        -:   64:				       __may_alias__,
+        -:   65:				       __aligned__ (1)));
+        -:   66:typedef long long __m256i_u __attribute__ ((__vector_size__ (32),
+        -:   67:					    __may_alias__,
+        -:   68:					    __aligned__ (1)));
+        -:   69:typedef double __m256d_u __attribute__ ((__vector_size__ (32),
+        -:   70:					 __may_alias__,
+        -:   71:					 __aligned__ (1)));
+        -:   72:
+        -:   73:/* Compare predicates for scalar and packed compare intrinsics.  */
+        -:   74:
+        -:   75:/* Equal (ordered, non-signaling)  */
+        -:   76:#define _CMP_EQ_OQ	0x00
+        -:   77:/* Less-than (ordered, signaling)  */
+        -:   78:#define _CMP_LT_OS	0x01
+        -:   79:/* Less-than-or-equal (ordered, signaling)  */
+        -:   80:#define _CMP_LE_OS	0x02
+        -:   81:/* Unordered (non-signaling)  */
+        -:   82:#define _CMP_UNORD_Q	0x03
+        -:   83:/* Not-equal (unordered, non-signaling)  */
+        -:   84:#define _CMP_NEQ_UQ	0x04
+        -:   85:/* Not-less-than (unordered, signaling)  */
+        -:   86:#define _CMP_NLT_US	0x05
+        -:   87:/* Not-less-than-or-equal (unordered, signaling)  */
+        -:   88:#define _CMP_NLE_US	0x06
+        -:   89:/* Ordered (nonsignaling)   */
+        -:   90:#define _CMP_ORD_Q	0x07
+        -:   91:/* Equal (unordered, non-signaling)  */
+        -:   92:#define _CMP_EQ_UQ	0x08
+        -:   93:/* Not-greater-than-or-equal (unordered, signaling)  */
+        -:   94:#define _CMP_NGE_US	0x09
+        -:   95:/* Not-greater-than (unordered, signaling)  */
+        -:   96:#define _CMP_NGT_US	0x0a
+        -:   97:/* False (ordered, non-signaling)  */
+        -:   98:#define _CMP_FALSE_OQ	0x0b
+        -:   99:/* Not-equal (ordered, non-signaling)  */
+        -:  100:#define _CMP_NEQ_OQ	0x0c
+        -:  101:/* Greater-than-or-equal (ordered, signaling)  */
+        -:  102:#define _CMP_GE_OS	0x0d
+        -:  103:/* Greater-than (ordered, signaling)  */
+        -:  104:#define _CMP_GT_OS	0x0e
+        -:  105:/* True (unordered, non-signaling)  */
+        -:  106:#define _CMP_TRUE_UQ	0x0f
+        -:  107:/* Equal (ordered, signaling)  */
+        -:  108:#define _CMP_EQ_OS	0x10
+        -:  109:/* Less-than (ordered, non-signaling)  */
+        -:  110:#define _CMP_LT_OQ	0x11
+        -:  111:/* Less-than-or-equal (ordered, non-signaling)  */
+        -:  112:#define _CMP_LE_OQ	0x12
+        -:  113:/* Unordered (signaling)  */
+        -:  114:#define _CMP_UNORD_S	0x13
+        -:  115:/* Not-equal (unordered, signaling)  */
+        -:  116:#define _CMP_NEQ_US	0x14
+        -:  117:/* Not-less-than (unordered, non-signaling)  */
+        -:  118:#define _CMP_NLT_UQ	0x15
+        -:  119:/* Not-less-than-or-equal (unordered, non-signaling)  */
+        -:  120:#define _CMP_NLE_UQ	0x16
+        -:  121:/* Ordered (signaling)  */
+        -:  122:#define _CMP_ORD_S	0x17
+        -:  123:/* Equal (unordered, signaling)  */
+        -:  124:#define _CMP_EQ_US	0x18
+        -:  125:/* Not-greater-than-or-equal (unordered, non-signaling)  */
+        -:  126:#define _CMP_NGE_UQ	0x19
+        -:  127:/* Not-greater-than (unordered, non-signaling)  */
+        -:  128:#define _CMP_NGT_UQ	0x1a
+        -:  129:/* False (ordered, signaling)  */
+        -:  130:#define _CMP_FALSE_OS	0x1b
+        -:  131:/* Not-equal (ordered, signaling)  */
+        -:  132:#define _CMP_NEQ_OS	0x1c
+        -:  133:/* Greater-than-or-equal (ordered, non-signaling)  */
+        -:  134:#define _CMP_GE_OQ	0x1d
+        -:  135:/* Greater-than (ordered, non-signaling)  */
+        -:  136:#define _CMP_GT_OQ	0x1e
+        -:  137:/* True (unordered, signaling)  */
+        -:  138:#define _CMP_TRUE_US	0x1f
+        -:  139:
+        -:  140:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  141:_mm256_add_pd (__m256d __A, __m256d __B)
+        -:  142:{
+        -:  143:  return (__m256d) ((__v4df)__A + (__v4df)__B);
+        -:  144:}
+        -:  145:
+        -:  146:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+71304618*:  147:_mm256_add_ps (__m256 __A, __m256 __B)
+        -:  148:{
+71303850*:  149:  return (__m256) ((__v8sf)__A + (__v8sf)__B);
+     3744:  149-block  0
+     9792:  149-block  1
+    %%%%%:  149-block  2
+    %%%%%:  149-block  3
+    %%%%%:  149-block  4
+    %%%%%:  149-block  5
+    %%%%%:  149-block  6
+    %%%%%:  149-block  7
+    %%%%%:  149-block  8
+    %%%%%:  149-block  9
+  1698804:  149-block 10
+    %%%%%:  149-block 11
+   127332:  149-block 12
+ 22908288:  149-block 13
+    %%%%%:  149-block 14
+   510162:  149-block 15
+    24384:  149-block 16
+      384:  149-block 17
+    %%%%%:  149-block 18
+    %%%%%:  149-block 19
+   760704:  149-block 20
+    %%%%%:  149-block 21
+    %%%%%:  149-block 22
+    %%%%%:  149-block 23
+     4224:  149-block 24
+    %%%%%:  149-block 25
+    %%%%%:  149-block 26
+    %%%%%:  149-block 27
+   169824:  149-block 28
+     1536:  149-block 29
+      768:  149-block 30
+    %%%%%:  149-block 31
+    %%%%%:  149-block 32
+    %%%%%:  149-block 33
+   195072:  149-block 34
+     1536:  149-block 35
+    %%%%%:  149-block 36
+        -:  150:}
+        -:  151:
+        -:  152:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  153:_mm256_addsub_pd (__m256d __A, __m256d __B)
+        -:  154:{
+        -:  155:  return (__m256d) __builtin_ia32_addsubpd256 ((__v4df)__A, (__v4df)__B);
+        -:  156:}
+        -:  157:
+        -:  158:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  159:_mm256_addsub_ps (__m256 __A, __m256 __B)
+        -:  160:{
+        -:  161:  return (__m256) __builtin_ia32_addsubps256 ((__v8sf)__A, (__v8sf)__B);
+        -:  162:}
+        -:  163:
+        -:  164:
+        -:  165:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  166:_mm256_and_pd (__m256d __A, __m256d __B)
+        -:  167:{
+        -:  168:  return (__m256d) __builtin_ia32_andpd256 ((__v4df)__A, (__v4df)__B);
+        -:  169:}
+        -:  170:
+        -:  171:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  393408*:  172:_mm256_and_ps (__m256 __A, __m256 __B)
+        -:  173:{
+  393408*:  174:  return (__m256) __builtin_ia32_andps256 ((__v8sf)__A, (__v8sf)__B);
+        3:  174-block  0
+        3:  174-block  1
+   196701:  174-block  2
+    %%%%%:  174-block  3
+        -:  175:}
+        -:  176:
+        -:  177:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  178:_mm256_andnot_pd (__m256d __A, __m256d __B)
+        -:  179:{
+        -:  180:  return (__m256d) __builtin_ia32_andnpd256 ((__v4df)__A, (__v4df)__B);
+        -:  181:}
+        -:  182:
+        -:  183:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  184:_mm256_andnot_ps (__m256 __A, __m256 __B)
+        -:  185:{
+        -:  186:  return (__m256) __builtin_ia32_andnps256 ((__v8sf)__A, (__v8sf)__B);
+        -:  187:}
+        -:  188:
+        -:  189:/* Double/single precision floating point blend instructions - select
+        -:  190:   data from 2 sources using constant/variable mask.  */
+        -:  191:
+        -:  192:#ifdef __OPTIMIZE__
+        -:  193:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  194:_mm256_blend_pd (__m256d __X, __m256d __Y, const int __M)
+        -:  195:{
+        -:  196:  return (__m256d) __builtin_ia32_blendpd256 ((__v4df)__X,
+        -:  197:					      (__v4df)__Y,
+        -:  198:					      __M);
+        -:  199:}
+        -:  200:
+        -:  201:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  202:_mm256_blend_ps (__m256 __X, __m256 __Y, const int __M)
+        -:  203:{
+        -:  204:  return (__m256) __builtin_ia32_blendps256 ((__v8sf)__X,
+        -:  205:					     (__v8sf)__Y,
+        -:  206:					     __M);
+        -:  207:}
+        -:  208:#else
+        -:  209:#define _mm256_blend_pd(X, Y, M)					\
+        -:  210:  ((__m256d) __builtin_ia32_blendpd256 ((__v4df)(__m256d)(X),		\
+        -:  211:					(__v4df)(__m256d)(Y), (int)(M)))
+        -:  212:
+        -:  213:#define _mm256_blend_ps(X, Y, M)					\
+        -:  214:  ((__m256) __builtin_ia32_blendps256 ((__v8sf)(__m256)(X),		\
+        -:  215:				       (__v8sf)(__m256)(Y), (int)(M)))
+        -:  216:#endif
+        -:  217:
+        -:  218:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  219:_mm256_blendv_pd (__m256d __X, __m256d __Y, __m256d __M)
+        -:  220:{
+        -:  221:  return (__m256d) __builtin_ia32_blendvpd256 ((__v4df)__X,
+        -:  222:					       (__v4df)__Y,
+        -:  223:					       (__v4df)__M);
+        -:  224:}
+        -:  225:
+        -:  226:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  227:_mm256_blendv_ps (__m256 __X, __m256 __Y, __m256 __M)
+        -:  228:{
+        -:  229:  return (__m256) __builtin_ia32_blendvps256 ((__v8sf)__X,
+        -:  230:					      (__v8sf)__Y,
+        -:  231:					      (__v8sf)__M);
+        -:  232:}
+        -:  233:
+        -:  234:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+    #####:  235:_mm256_div_pd (__m256d __A, __m256d __B)
+        -:  236:{
+    #####:  237:  return (__m256d) ((__v4df)__A / (__v4df)__B);
+    %%%%%:  237-block  0
+        -:  238:}
+        -:  239:
+        -:  240:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  735168*:  241:_mm256_div_ps (__m256 __A, __m256 __B)
+        -:  242:{
+  735168*:  243:  return (__m256) ((__v8sf)__A / (__v8sf)__B);
+      189:  243-block  0
+   341571:  243-block  1
+    %%%%%:  243-block  2
+   393408:  243-block  3
+        -:  244:}
+        -:  245:
+        -:  246:/* Dot product instructions with mask-defined summing and zeroing parts
+        -:  247:   of result.  */
+        -:  248:
+        -:  249:#ifdef __OPTIMIZE__
+        -:  250:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  251:_mm256_dp_ps (__m256 __X, __m256 __Y, const int __M)
+        -:  252:{
+        -:  253:  return (__m256) __builtin_ia32_dpps256 ((__v8sf)__X,
+        -:  254:					  (__v8sf)__Y,
+        -:  255:					  __M);
+        -:  256:}
+        -:  257:#else
+        -:  258:#define _mm256_dp_ps(X, Y, M)						\
+        -:  259:  ((__m256) __builtin_ia32_dpps256 ((__v8sf)(__m256)(X),		\
+        -:  260:				    (__v8sf)(__m256)(Y), (int)(M)))
+        -:  261:#endif
+        -:  262:
+        -:  263:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  264:_mm256_hadd_pd (__m256d __X, __m256d __Y)
+        -:  265:{
+        -:  266:  return (__m256d) __builtin_ia32_haddpd256 ((__v4df)__X, (__v4df)__Y);
+        -:  267:}
+        -:  268:
+        -:  269:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  270:_mm256_hadd_ps (__m256 __X, __m256 __Y)
+        -:  271:{
+        -:  272:  return (__m256) __builtin_ia32_haddps256 ((__v8sf)__X, (__v8sf)__Y);
+        -:  273:}
+        -:  274:
+        -:  275:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  276:_mm256_hsub_pd (__m256d __X, __m256d __Y)
+        -:  277:{
+        -:  278:  return (__m256d) __builtin_ia32_hsubpd256 ((__v4df)__X, (__v4df)__Y);
+        -:  279:}
+        -:  280:
+        -:  281:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  282:_mm256_hsub_ps (__m256 __X, __m256 __Y)
+        -:  283:{
+        -:  284:  return (__m256) __builtin_ia32_hsubps256 ((__v8sf)__X, (__v8sf)__Y);
+        -:  285:}
+        -:  286:
+        -:  287:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  288:_mm256_max_pd (__m256d __A, __m256d __B)
+        -:  289:{
+        -:  290:  return (__m256d) __builtin_ia32_maxpd256 ((__v4df)__A, (__v4df)__B);
+        -:  291:}
+        -:  292:
+        -:  293:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  393612*:  294:_mm256_max_ps (__m256 __A, __m256 __B)
+        -:  295:{
+  393519*:  296:  return (__m256) __builtin_ia32_maxps256 ((__v8sf)__A, (__v8sf)__B);
+       93:  296-block  0
+        3:  296-block  1
+    %%%%%:  296-block  2
+        3:  296-block  3
+        -:  297:}
+        -:  298:
+        -:  299:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  300:_mm256_min_pd (__m256d __A, __m256d __B)
+        -:  301:{
+        -:  302:  return (__m256d) __builtin_ia32_minpd256 ((__v4df)__A, (__v4df)__B);
+        -:  303:}
+        -:  304:
+        -:  305:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  306:_mm256_min_ps (__m256 __A, __m256 __B)
+        -:  307:{
+        -:  308:  return (__m256) __builtin_ia32_minps256 ((__v8sf)__A, (__v8sf)__B);
+        -:  309:}
+        -:  310:
+        -:  311:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+    #####:  312:_mm256_mul_pd (__m256d __A, __m256d __B)
+        -:  313:{
+    #####:  314:  return (__m256d) ((__v4df)__A * (__v4df)__B);
+    %%%%%:  314-block  0
+        -:  315:}
+        -:  316:
+        -:  317:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+163429095*:  318:_mm256_mul_ps (__m256 __A, __m256 __B)
+        -:  319:{
+163426023*:  320:  return (__m256) ((__v8sf)__A * (__v8sf)__B);
+     3744:  320-block  0
+     9792:  320-block  1
+    %%%%%:  320-block  2
+    %%%%%:  320-block  3
+    %%%%%:  320-block  4
+    %%%%%:  320-block  5
+    %%%%%:  320-block  6
+    %%%%%:  320-block  7
+    %%%%%:  320-block  8
+    %%%%%:  320-block  9
+    %%%%%:  320-block 10
+    %%%%%:  320-block 11
+    %%%%%:  320-block 12
+    %%%%%:  320-block 13
+    %%%%%:  320-block 14
+ 91782912:  320-block 15
+   342336:  320-block 16
+  1698804:  320-block 17
+    %%%%%:  320-block 18
+   127332:  320-block 19
+    %%%%%:  320-block 20
+    %%%%%:  320-block 21
+      189:  320-block 22
+ 22908288:  320-block 23
+    %%%%%:  320-block 24
+   510162:  320-block 25
+    24384:  320-block 26
+      384:  320-block 27
+    %%%%%:  320-block 28
+    %%%%%:  320-block 29
+   760704:  320-block 30
+    %%%%%:  320-block 31
+    %%%%%:  320-block 32
+    %%%%%:  320-block 33
+    %%%%%:  320-block 34
+    %%%%%:  320-block 35
+    %%%%%:  320-block 36
+    %%%%%:  320-block 37
+     1536:  320-block 38
+     1536:  320-block 39
+   169824:  320-block 40
+      768:  320-block 41
+    %%%%%:  320-block 42
+    %%%%%:  320-block 43
+    %%%%%:  320-block 44
+    %%%%%:  320-block 45
+     1536:  320-block 46
+     1536:  320-block 47
+   195072:  320-block 48
+    %%%%%:  320-block 49
+      192:  320-block 50
+        -:  321:}
+        -:  322:
+        -:  323:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  324:_mm256_or_pd (__m256d __A, __m256d __B)
+        -:  325:{
+        -:  326:  return (__m256d) __builtin_ia32_orpd256 ((__v4df)__A, (__v4df)__B);
+        -:  327:}
+        -:  328:
+        -:  329:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  330:_mm256_or_ps (__m256 __A, __m256 __B)
+        -:  331:{
+        -:  332:  return (__m256) __builtin_ia32_orps256 ((__v8sf)__A, (__v8sf)__B);
+        -:  333:}
+        -:  334:
+        -:  335:#ifdef __OPTIMIZE__
+        -:  336:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  337:_mm256_shuffle_pd (__m256d __A, __m256d __B, const int __mask)
+        -:  338:{
+        -:  339:  return (__m256d) __builtin_ia32_shufpd256 ((__v4df)__A, (__v4df)__B,
+        -:  340:					     __mask);
+        -:  341:}
+        -:  342:
+        -:  343:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  4399596:  344:_mm256_shuffle_ps (__m256 __A, __m256 __B, const int __mask)
+        -:  345:{
+  1055688:  346:  return (__m256) __builtin_ia32_shufps256 ((__v8sf)__A, (__v8sf)__B,
+        -:  347:					    __mask);
+        -:  348:}
+        -:  349:#else
+        -:  350:#define _mm256_shuffle_pd(A, B, N)					\
+        -:  351:  ((__m256d)__builtin_ia32_shufpd256 ((__v4df)(__m256d)(A),		\
+        -:  352:				      (__v4df)(__m256d)(B), (int)(N)))
+        -:  353:
+        -:  354:#define _mm256_shuffle_ps(A, B, N)					\
+        -:  355:  ((__m256) __builtin_ia32_shufps256 ((__v8sf)(__m256)(A),		\
+        -:  356:				      (__v8sf)(__m256)(B), (int)(N)))
+        -:  357:#endif
+        -:  358:
+        -:  359:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  360:_mm256_sub_pd (__m256d __A, __m256d __B)
+        -:  361:{
+        -:  362:  return (__m256d) ((__v4df)__A - (__v4df)__B);
+        -:  363:}
+        -:  364:
+        -:  365:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+91977149*:  366:_mm256_sub_ps (__m256 __A, __m256 __B)
+        -:  367:{
+91782912*:  368:  return (__m256) ((__v8sf)__A - (__v8sf)__B);
+    %%%%%:  368-block  0
+ 91782912:  368-block  1
+    %%%%%:  368-block  2
+    %%%%%:  368-block  3
+        -:  369:}
+        -:  370:
+        -:  371:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  372:_mm256_xor_pd (__m256d __A, __m256d __B)
+        -:  373:{
+        -:  374:  return (__m256d) __builtin_ia32_xorpd256 ((__v4df)__A, (__v4df)__B);
+        -:  375:}
+        -:  376:
+        -:  377:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  378:_mm256_xor_ps (__m256 __A, __m256 __B)
+        -:  379:{
+        -:  380:  return (__m256) __builtin_ia32_xorps256 ((__v8sf)__A, (__v8sf)__B);
+        -:  381:}
+        -:  382:
+        -:  383:#ifdef __OPTIMIZE__
+        -:  384:extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  385:_mm_cmp_pd (__m128d __X, __m128d __Y, const int __P)
+        -:  386:{
+        -:  387:  return (__m128d) __builtin_ia32_cmppd ((__v2df)__X, (__v2df)__Y, __P);
+        -:  388:}
+        -:  389:
+        -:  390:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  391:_mm_cmp_ps (__m128 __X, __m128 __Y, const int __P)
+        -:  392:{
+        -:  393:  return (__m128) __builtin_ia32_cmpps ((__v4sf)__X, (__v4sf)__Y, __P);
+        -:  394:}
+        -:  395:
+        -:  396:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  397:_mm256_cmp_pd (__m256d __X, __m256d __Y, const int __P)
+        -:  398:{
+        -:  399:  return (__m256d) __builtin_ia32_cmppd256 ((__v4df)__X, (__v4df)__Y,
+        -:  400:					    __P);
+        -:  401:}
+        -:  402:
+        -:  403:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  404:_mm256_cmp_ps (__m256 __X, __m256 __Y, const int __P)
+        -:  405:{
+        -:  406:  return (__m256) __builtin_ia32_cmpps256 ((__v8sf)__X, (__v8sf)__Y,
+        -:  407:					   __P);
+        -:  408:}
+        -:  409:
+        -:  410:extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  411:_mm_cmp_sd (__m128d __X, __m128d __Y, const int __P)
+        -:  412:{
+        -:  413:  return (__m128d) __builtin_ia32_cmpsd ((__v2df)__X, (__v2df)__Y, __P);
+        -:  414:}
+        -:  415:
+        -:  416:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  417:_mm_cmp_ss (__m128 __X, __m128 __Y, const int __P)
+        -:  418:{
+        -:  419:  return (__m128) __builtin_ia32_cmpss ((__v4sf)__X, (__v4sf)__Y, __P);
+        -:  420:}
+        -:  421:#else
+        -:  422:#define _mm_cmp_pd(X, Y, P)						\
+        -:  423:  ((__m128d) __builtin_ia32_cmppd ((__v2df)(__m128d)(X),		\
+        -:  424:				   (__v2df)(__m128d)(Y), (int)(P)))
+        -:  425:
+        -:  426:#define _mm_cmp_ps(X, Y, P)						\
+        -:  427:  ((__m128) __builtin_ia32_cmpps ((__v4sf)(__m128)(X),			\
+        -:  428:				  (__v4sf)(__m128)(Y), (int)(P)))
+        -:  429:
+        -:  430:#define _mm256_cmp_pd(X, Y, P)						\
+        -:  431:  ((__m256d) __builtin_ia32_cmppd256 ((__v4df)(__m256d)(X),		\
+        -:  432:				      (__v4df)(__m256d)(Y), (int)(P)))
+        -:  433:
+        -:  434:#define _mm256_cmp_ps(X, Y, P)						\
+        -:  435:  ((__m256) __builtin_ia32_cmpps256 ((__v8sf)(__m256)(X),		\
+        -:  436:				     (__v8sf)(__m256)(Y), (int)(P)))
+        -:  437:
+        -:  438:#define _mm_cmp_sd(X, Y, P)						\
+        -:  439:  ((__m128d) __builtin_ia32_cmpsd ((__v2df)(__m128d)(X),		\
+        -:  440:				   (__v2df)(__m128d)(Y), (int)(P)))
+        -:  441:
+        -:  442:#define _mm_cmp_ss(X, Y, P)						\
+        -:  443:  ((__m128) __builtin_ia32_cmpss ((__v4sf)(__m128)(X),			\
+        -:  444:				  (__v4sf)(__m128)(Y), (int)(P)))
+        -:  445:#endif
+        -:  446:
+        -:  447:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  448:_mm256_cvtepi32_pd (__m128i __A)
+        -:  449:{
+        -:  450:  return (__m256d)__builtin_ia32_cvtdq2pd256 ((__v4si) __A);
+        -:  451:}
+        -:  452:
+        -:  453:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  454:_mm256_cvtepi32_ps (__m256i __A)
+        -:  455:{
+        -:  456:  return (__m256)__builtin_ia32_cvtdq2ps256 ((__v8si) __A);
+        -:  457:}
+        -:  458:
+        -:  459:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  460:_mm256_cvtpd_ps (__m256d __A)
+        -:  461:{
+        -:  462:  return (__m128)__builtin_ia32_cvtpd2ps256 ((__v4df) __A);
+        -:  463:}
+        -:  464:
+        -:  465:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  466:_mm256_cvtps_epi32 (__m256 __A)
+        -:  467:{
+        -:  468:  return (__m256i)__builtin_ia32_cvtps2dq256 ((__v8sf) __A);
+        -:  469:}
+        -:  470:
+        -:  471:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  472:_mm256_cvtps_pd (__m128 __A)
+        -:  473:{
+        -:  474:  return (__m256d)__builtin_ia32_cvtps2pd256 ((__v4sf) __A);
+        -:  475:}
+        -:  476:
+        -:  477:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  478:_mm256_cvttpd_epi32 (__m256d __A)
+        -:  479:{
+        -:  480:  return (__m128i)__builtin_ia32_cvttpd2dq256 ((__v4df) __A);
+        -:  481:}
+        -:  482:
+        -:  483:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  484:_mm256_cvtpd_epi32 (__m256d __A)
+        -:  485:{
+        -:  486:  return (__m128i)__builtin_ia32_cvtpd2dq256 ((__v4df) __A);
+        -:  487:}
+        -:  488:
+        -:  489:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  490:_mm256_cvttps_epi32 (__m256 __A)
+        -:  491:{
+        -:  492:  return (__m256i)__builtin_ia32_cvttps2dq256 ((__v8sf) __A);
+        -:  493:}
+        -:  494:
+        -:  495:extern __inline double
+        -:  496:__attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
+        -:  497:_mm256_cvtsd_f64 (__m256d __A)
+        -:  498:{
+        -:  499:  return __A[0];
+        -:  500:}
+        -:  501:
+        -:  502:extern __inline float
+        -:  503:__attribute__ ((__gnu_inline__, __always_inline__, __artificial__))
+        -:  504:_mm256_cvtss_f32 (__m256 __A)
+        -:  505:{
+        -:  506:  return __A[0];
+        -:  507:}
+        -:  508:
+        -:  509:#ifdef __OPTIMIZE__
+        -:  510:extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  511:_mm256_extractf128_pd (__m256d __X, const int __N)
+        -:  512:{
+        -:  513:  return (__m128d) __builtin_ia32_vextractf128_pd256 ((__v4df)__X, __N);
+        -:  514:}
+        -:  515:
+        -:  516:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  432531*:  517:_mm256_extractf128_ps (__m256 __X, const int __N)
+        -:  518:{
+  432531*:  519:  return (__m128) __builtin_ia32_vextractf128_ps256 ((__v8sf)__X, __N);
+    %%%%%:  519-block  0
+    %%%%%:  519-block  1
+     7680:  519-block  2
+      576:  519-block  3
+    97914:  519-block  4
+     2283:  519-block  5
+    %%%%%:  519-block  6
+     4224:  519-block  7
+     1536:  519-block  8
+    %%%%%:  519-block  9
+     1536:  519-block 10
+        -:  520:}
+        -:  521:
+        -:  522:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  523:_mm256_extractf128_si256 (__m256i __X, const int __N)
+        -:  524:{
+        -:  525:  return (__m128i) __builtin_ia32_vextractf128_si256 ((__v8si)__X, __N);
+        -:  526:}
+        -:  527:
+        -:  528:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  529:_mm256_extract_epi32 (__m256i __X, int const __N)
+        -:  530:{
+        -:  531:  __m128i __Y = _mm256_extractf128_si256 (__X, __N >> 2);
+        -:  532:  return _mm_extract_epi32 (__Y, __N % 4);
+        -:  533:}
+        -:  534:
+        -:  535:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  536:_mm256_extract_epi16 (__m256i __X, int const __N)
+        -:  537:{
+        -:  538:  __m128i __Y = _mm256_extractf128_si256 (__X, __N >> 3);
+        -:  539:  return _mm_extract_epi16 (__Y, __N % 8);
+        -:  540:}
+        -:  541:
+        -:  542:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  543:_mm256_extract_epi8 (__m256i __X, int const __N)
+        -:  544:{
+        -:  545:  __m128i __Y = _mm256_extractf128_si256 (__X, __N >> 4);
+        -:  546:  return _mm_extract_epi8 (__Y, __N % 16);
+        -:  547:}
+        -:  548:
+        -:  549:#ifdef __x86_64__
+        -:  550:extern __inline long long  __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  551:_mm256_extract_epi64 (__m256i __X, const int __N)
+        -:  552:{
+        -:  553:  __m128i __Y = _mm256_extractf128_si256 (__X, __N >> 1);
+        -:  554:  return _mm_extract_epi64 (__Y, __N % 2);
+        -:  555:}
+        -:  556:#endif
+        -:  557:#else
+        -:  558:#define _mm256_extractf128_pd(X, N)					\
+        -:  559:  ((__m128d) __builtin_ia32_vextractf128_pd256 ((__v4df)(__m256d)(X),	\
+        -:  560:						(int)(N)))
+        -:  561:
+        -:  562:#define _mm256_extractf128_ps(X, N)					\
+        -:  563:  ((__m128) __builtin_ia32_vextractf128_ps256 ((__v8sf)(__m256)(X),	\
+        -:  564:					       (int)(N)))
+        -:  565:
+        -:  566:#define _mm256_extractf128_si256(X, N)					\
+        -:  567:  ((__m128i) __builtin_ia32_vextractf128_si256 ((__v8si)(__m256i)(X),	\
+        -:  568:						(int)(N)))
+        -:  569:
+        -:  570:#define _mm256_extract_epi32(X, N)					\
+        -:  571:  (__extension__							\
+        -:  572:   ({									\
+        -:  573:      __m128i __Y = _mm256_extractf128_si256 ((X), (N) >> 2);		\
+        -:  574:      _mm_extract_epi32 (__Y, (N) % 4);					\
+        -:  575:    }))
+        -:  576:
+        -:  577:#define _mm256_extract_epi16(X, N)					\
+        -:  578:  (__extension__							\
+        -:  579:   ({									\
+        -:  580:      __m128i __Y = _mm256_extractf128_si256 ((X), (N) >> 3);		\
+        -:  581:      _mm_extract_epi16 (__Y, (N) % 8);					\
+        -:  582:    }))
+        -:  583:
+        -:  584:#define _mm256_extract_epi8(X, N)					\
+        -:  585:  (__extension__							\
+        -:  586:   ({									\
+        -:  587:      __m128i __Y = _mm256_extractf128_si256 ((X), (N) >> 4);		\
+        -:  588:      _mm_extract_epi8 (__Y, (N) % 16);					\
+        -:  589:    }))
+        -:  590:
+        -:  591:#ifdef __x86_64__
+        -:  592:#define _mm256_extract_epi64(X, N)					\
+        -:  593:  (__extension__							\
+        -:  594:   ({									\
+        -:  595:      __m128i __Y = _mm256_extractf128_si256 ((X), (N) >> 1);		\
+        -:  596:      _mm_extract_epi64 (__Y, (N) % 2);					\
+        -:  597:    }))
+        -:  598:#endif
+        -:  599:#endif
+        -:  600:
+        -:  601:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  602:_mm256_zeroall (void)
+        -:  603:{
+        -:  604:  __builtin_ia32_vzeroall ();
+        -:  605:}
+        -:  606:
+        -:  607:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  608:_mm256_zeroupper (void)
+        -:  609:{
+        -:  610:  __builtin_ia32_vzeroupper ();
+        -:  611:}
+        -:  612:
+        -:  613:extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  614:_mm_permutevar_pd (__m128d __A, __m128i __C)
+        -:  615:{
+        -:  616:  return (__m128d) __builtin_ia32_vpermilvarpd ((__v2df)__A,
+        -:  617:						(__v2di)__C);
+        -:  618:}
+        -:  619:
+        -:  620:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  621:_mm256_permutevar_pd (__m256d __A, __m256i __C)
+        -:  622:{
+        -:  623:  return (__m256d) __builtin_ia32_vpermilvarpd256 ((__v4df)__A,
+        -:  624:						   (__v4di)__C);
+        -:  625:}
+        -:  626:
+        -:  627:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  628:_mm_permutevar_ps (__m128 __A, __m128i __C)
+        -:  629:{
+        -:  630:  return (__m128) __builtin_ia32_vpermilvarps ((__v4sf)__A,
+        -:  631:					       (__v4si)__C);
+        -:  632:}
+        -:  633:
+        -:  634:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  635:_mm256_permutevar_ps (__m256 __A, __m256i __C)
+        -:  636:{
+        -:  637:  return (__m256) __builtin_ia32_vpermilvarps256 ((__v8sf)__A,
+        -:  638:						  (__v8si)__C);
+        -:  639:}
+        -:  640:
+        -:  641:#ifdef __OPTIMIZE__
+        -:  642:extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  643:_mm_permute_pd (__m128d __X, const int __C)
+        -:  644:{
+        -:  645:  return (__m128d) __builtin_ia32_vpermilpd ((__v2df)__X, __C);
+        -:  646:}
+        -:  647:
+        -:  648:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  649:_mm256_permute_pd (__m256d __X, const int __C)
+        -:  650:{
+        -:  651:  return (__m256d) __builtin_ia32_vpermilpd256 ((__v4df)__X, __C);
+        -:  652:}
+        -:  653:
+        -:  654:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  655:_mm_permute_ps (__m128 __X, const int __C)
+        -:  656:{
+        -:  657:  return (__m128) __builtin_ia32_vpermilps ((__v4sf)__X, __C);
+        -:  658:}
+        -:  659:
+        -:  660:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  661:_mm256_permute_ps (__m256 __X, const int __C)
+        -:  662:{
+        -:  663:  return (__m256) __builtin_ia32_vpermilps256 ((__v8sf)__X, __C);
+        -:  664:}
+        -:  665:#else
+        -:  666:#define _mm_permute_pd(X, C)						\
+        -:  667:  ((__m128d) __builtin_ia32_vpermilpd ((__v2df)(__m128d)(X), (int)(C)))
+        -:  668:
+        -:  669:#define _mm256_permute_pd(X, C)						\
+        -:  670:  ((__m256d) __builtin_ia32_vpermilpd256 ((__v4df)(__m256d)(X),	(int)(C)))
+        -:  671:
+        -:  672:#define _mm_permute_ps(X, C)						\
+        -:  673:  ((__m128) __builtin_ia32_vpermilps ((__v4sf)(__m128)(X), (int)(C)))
+        -:  674:
+        -:  675:#define _mm256_permute_ps(X, C)						\
+        -:  676:  ((__m256) __builtin_ia32_vpermilps256 ((__v8sf)(__m256)(X), (int)(C)))
+        -:  677:#endif
+        -:  678:
+        -:  679:#ifdef __OPTIMIZE__
+        -:  680:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  681:_mm256_permute2f128_pd (__m256d __X, __m256d __Y, const int __C)
+        -:  682:{
+        -:  683:  return (__m256d) __builtin_ia32_vperm2f128_pd256 ((__v4df)__X,
+        -:  684:						    (__v4df)__Y,
+        -:  685:						    __C);
+        -:  686:}
+        -:  687:
+        -:  688:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  4399590:  689:_mm256_permute2f128_ps (__m256 __X, __m256 __Y, const int __C)
+        -:  690:{
+  1055682:  691:  return (__m256) __builtin_ia32_vperm2f128_ps256 ((__v8sf)__X,
+        3:  691-block  0
+        3:  691-block  1
+        -:  692:						   (__v8sf)__Y,
+        -:  693:						   __C);
+        -:  694:}
+        -:  695:
+        -:  696:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  697:_mm256_permute2f128_si256 (__m256i __X, __m256i __Y, const int __C)
+        -:  698:{
+        -:  699:  return (__m256i) __builtin_ia32_vperm2f128_si256 ((__v8si)__X,
+        -:  700:						    (__v8si)__Y,
+        -:  701:						    __C);
+        -:  702:}
+        -:  703:#else
+        -:  704:#define _mm256_permute2f128_pd(X, Y, C)					\
+        -:  705:  ((__m256d) __builtin_ia32_vperm2f128_pd256 ((__v4df)(__m256d)(X),	\
+        -:  706:					      (__v4df)(__m256d)(Y),	\
+        -:  707:					      (int)(C)))
+        -:  708:
+        -:  709:#define _mm256_permute2f128_ps(X, Y, C)					\
+        -:  710:  ((__m256) __builtin_ia32_vperm2f128_ps256 ((__v8sf)(__m256)(X),	\
+        -:  711:					     (__v8sf)(__m256)(Y),	\
+        -:  712:					     (int)(C)))
+        -:  713:
+        -:  714:#define _mm256_permute2f128_si256(X, Y, C)				\
+        -:  715:  ((__m256i) __builtin_ia32_vperm2f128_si256 ((__v8si)(__m256i)(X),	\
+        -:  716:					      (__v8si)(__m256i)(Y),	\
+        -:  717:					      (int)(C)))
+        -:  718:#endif
+        -:  719:
+        -:  720:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  196608*:  721:_mm_broadcast_ss (float const *__X)
+        -:  722:{
+  196608*:  723:  return (__m128) __builtin_ia32_vbroadcastss (__X);
+    24576:  723-block  0
+    %%%%%:  723-block  1
+        -:  724:}
+        -:  725:
+        -:  726:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  727:_mm256_broadcast_sd (double const *__X)
+        -:  728:{
+        -:  729:  return (__m256d) __builtin_ia32_vbroadcastsd256 (__X);
+        -:  730:}
+        -:  731:
+        -:  732:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+179355648*:  733:_mm256_broadcast_ss (float const *__X)
+        -:  734:{
+44838912*:  735:  return (__m256) __builtin_ia32_vbroadcastss256 (__X);
+        -:  736:}
+        -:  737:
+        -:  738:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  739:_mm256_broadcast_pd (__m128d const *__X)
+        -:  740:{
+        -:  741:  return (__m256d) __builtin_ia32_vbroadcastf128_pd256 (__X);
+        -:  742:}
+        -:  743:
+        -:  744:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  745:_mm256_broadcast_ps (__m128 const *__X)
+        -:  746:{
+        -:  747:  return (__m256) __builtin_ia32_vbroadcastf128_ps256 (__X);
+        -:  748:}
+        -:  749:
+        -:  750:#ifdef __OPTIMIZE__
+        -:  751:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  752:_mm256_insertf128_pd (__m256d __X, __m128d __Y, const int __O)
+        -:  753:{
+        -:  754:  return (__m256d) __builtin_ia32_vinsertf128_pd256 ((__v4df)__X,
+        -:  755:						     (__v2df)__Y,
+        -:  756:						     __O);
+        -:  757:}
+        -:  758:
+        -:  759:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+   98304*:  760:_mm256_insertf128_ps (__m256 __X, __m128 __Y, const int __O)
+        -:  761:{
+   98304*:  762:  return (__m256) __builtin_ia32_vinsertf128_ps256 ((__v8sf)__X,
+        -:  763:						    (__v4sf)__Y,
+        -:  764:						    __O);
+        -:  765:}
+        -:  766:
+        -:  767:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  768:_mm256_insertf128_si256 (__m256i __X, __m128i __Y, const int __O)
+        -:  769:{
+        -:  770:  return (__m256i) __builtin_ia32_vinsertf128_si256 ((__v8si)__X,
+        -:  771:						     (__v4si)__Y,
+        -:  772:						     __O);
+        -:  773:}
+        -:  774:
+        -:  775:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  776:_mm256_insert_epi32 (__m256i __X, int __D, int const __N)
+        -:  777:{
+        -:  778:  __m128i __Y = _mm256_extractf128_si256 (__X, __N >> 2);
+        -:  779:  __Y = _mm_insert_epi32 (__Y, __D, __N % 4);
+        -:  780:  return _mm256_insertf128_si256 (__X, __Y, __N >> 2);
+        -:  781:}
+        -:  782:
+        -:  783:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  784:_mm256_insert_epi16 (__m256i __X, int __D, int const __N)
+        -:  785:{
+        -:  786:  __m128i __Y = _mm256_extractf128_si256 (__X, __N >> 3);
+        -:  787:  __Y = _mm_insert_epi16 (__Y, __D, __N % 8);
+        -:  788:  return _mm256_insertf128_si256 (__X, __Y, __N >> 3);
+        -:  789:}
+        -:  790:
+        -:  791:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  792:_mm256_insert_epi8 (__m256i __X, int __D, int const __N)
+        -:  793:{
+        -:  794:  __m128i __Y = _mm256_extractf128_si256 (__X, __N >> 4);
+        -:  795:  __Y = _mm_insert_epi8 (__Y, __D, __N % 16);
+        -:  796:  return _mm256_insertf128_si256 (__X, __Y, __N >> 4);
+        -:  797:}
+        -:  798:
+        -:  799:#ifdef __x86_64__
+        -:  800:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  801:_mm256_insert_epi64 (__m256i __X, long long __D, int const __N)
+        -:  802:{
+        -:  803:  __m128i __Y = _mm256_extractf128_si256 (__X, __N >> 1);
+        -:  804:  __Y = _mm_insert_epi64 (__Y, __D, __N % 2);
+        -:  805:  return _mm256_insertf128_si256 (__X, __Y, __N >> 1);
+        -:  806:}
+        -:  807:#endif
+        -:  808:#else
+        -:  809:#define _mm256_insertf128_pd(X, Y, O)					\
+        -:  810:  ((__m256d) __builtin_ia32_vinsertf128_pd256 ((__v4df)(__m256d)(X),	\
+        -:  811:					       (__v2df)(__m128d)(Y),	\
+        -:  812:					       (int)(O)))
+        -:  813:
+        -:  814:#define _mm256_insertf128_ps(X, Y, O)					\
+        -:  815:  ((__m256) __builtin_ia32_vinsertf128_ps256 ((__v8sf)(__m256)(X),	\
+        -:  816:					      (__v4sf)(__m128)(Y),  	\
+        -:  817:					      (int)(O)))
+        -:  818:
+        -:  819:#define _mm256_insertf128_si256(X, Y, O)				\
+        -:  820:  ((__m256i) __builtin_ia32_vinsertf128_si256 ((__v8si)(__m256i)(X),	\
+        -:  821:					       (__v4si)(__m128i)(Y),	\
+        -:  822:					       (int)(O)))
+        -:  823:
+        -:  824:#define _mm256_insert_epi32(X, D, N)					\
+        -:  825:  (__extension__							\
+        -:  826:   ({									\
+        -:  827:      __m128i __Y = _mm256_extractf128_si256 ((X), (N) >> 2);		\
+        -:  828:      __Y = _mm_insert_epi32 (__Y, (D), (N) % 4);			\
+        -:  829:      _mm256_insertf128_si256 ((X), __Y, (N) >> 2);			\
+        -:  830:    }))
+        -:  831:
+        -:  832:#define _mm256_insert_epi16(X, D, N)					\
+        -:  833:  (__extension__							\
+        -:  834:   ({									\
+        -:  835:      __m128i __Y = _mm256_extractf128_si256 ((X), (N) >> 3);		\
+        -:  836:      __Y = _mm_insert_epi16 (__Y, (D), (N) % 8);			\
+        -:  837:      _mm256_insertf128_si256 ((X), __Y, (N) >> 3);			\
+        -:  838:    }))
+        -:  839:
+        -:  840:#define _mm256_insert_epi8(X, D, N)					\
+        -:  841:  (__extension__							\
+        -:  842:   ({									\
+        -:  843:      __m128i __Y = _mm256_extractf128_si256 ((X), (N) >> 4);		\
+        -:  844:      __Y = _mm_insert_epi8 (__Y, (D), (N) % 16);			\
+        -:  845:      _mm256_insertf128_si256 ((X), __Y, (N) >> 4);			\
+        -:  846:    }))
+        -:  847:
+        -:  848:#ifdef __x86_64__
+        -:  849:#define _mm256_insert_epi64(X, D, N)					\
+        -:  850:  (__extension__							\
+        -:  851:   ({									\
+        -:  852:      __m128i __Y = _mm256_extractf128_si256 ((X), (N) >> 1);		\
+        -:  853:      __Y = _mm_insert_epi64 (__Y, (D), (N) % 2);			\
+        -:  854:      _mm256_insertf128_si256 ((X), __Y, (N) >> 1);			\
+        -:  855:    }))
+        -:  856:#endif
+        -:  857:#endif
+        -:  858:
+        -:  859:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+    #####:  860:_mm256_load_pd (double const *__P)
+        -:  861:{
+    #####:  862:  return *(__m256d *)__P;
+    %%%%%:  862-block  0
+    %%%%%:  862-block  1
+        -:  863:}
+        -:  864:
+        -:  865:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+    #####:  866:_mm256_store_pd (double *__P, __m256d __A)
+        -:  867:{
+    #####:  868:  *(__m256d *)__P = __A;
+    %%%%%:  868-block  0
+    %%%%%:  868-block  1
+    %%%%%:  868-block  2
+        -:  869:}
+        -:  870:
+        -:  871:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+138789286*:  872:_mm256_load_ps (float const *__P)
+        -:  873:{
+138789190*:  874:  return *(__m256 *)__P;
+     3744:  874-block  0
+     9792:  874-block  1
+    %%%%%:  874-block  2
+    %%%%%:  874-block  3
+    %%%%%:  874-block  4
+ 91782912:  874-block  5
+    %%%%%:  874-block  6
+    %%%%%:  874-block  7
+      189:  874-block  8
+    24384:  874-block  9
+      384:  874-block 10
+    %%%%%:  874-block 11
+    %%%%%:  874-block 12
+    %%%%%:  874-block 13
+    %%%%%:  874-block 14
+    %%%%%:  874-block 15
+    %%%%%:  874-block 16
+    %%%%%:  874-block 17
+   393408:  874-block 18
+   849865:  874-block 19
+      192:  874-block 20
+        3:  874-block 21
+        3:  874-block 22
+       93:  874-block 23
+    %%%%%:  874-block 24
+   491712:  874-block 25
+      192:  874-block 26
+        3:  874-block 27
+        3:  874-block 28
+   196701:  874-block 29
+    %%%%%:  874-block 30
+        -:  875:}
+        -:  876:
+        -:  877:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+95718576*:  878:_mm256_store_ps (float *__P, __m256 __A)
+        -:  879:{
+95715408*:  880:  *(__m256 *)__P = __A;
+     3744:  880-block  0
+     2112:  880-block  1
+     3744:  880-block  2
+     1056:  880-block  3
+     9792:  880-block  4
+    %%%%%:  880-block  5
+    %%%%%:  880-block  6
+     3744:  880-block  7
+    %%%%%:  880-block  8
+    %%%%%:  880-block  9
+    48384:  880-block 10
+    %%%%%:  880-block 11
+    %%%%%:  880-block 12
+ 91782912:  880-block 13
+   342336:  880-block 14
+   353760:  880-block 15
+    %%%%%:  880-block 16
+    %%%%%:  880-block 17
+     1149:  880-block 18
+      189:  880-block 19
+     3744:  880-block 20
+    %%%%%:  880-block 21
+    24384:  880-block 22
+      384:  880-block 23
+    %%%%%:  880-block 24
+   341571:  880-block 25
+    %%%%%:  880-block 26
+    %%%%%:  880-block 27
+   173328:  880-block 28
+    %%%%%:  880-block 29
+    %%%%%:  880-block 30
+    %%%%%:  880-block 31
+    %%%%%:  880-block 32
+    %%%%%:  880-block 33
+    %%%%%:  880-block 34
+   393408:  880-block 35
+   194237:  880-block 36
+   849865:  880-block 37
+      192:  880-block 38
+   688320:  880-block 39
+     1149:  880-block 40
+   491712:  880-block 41
+      192:  880-block 42
+        -:  881:}
+        -:  882:
+        -:  883:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  884:_mm256_loadu_pd (double const *__P)
+        -:  885:{
+        -:  886:  return *(__m256d_u *)__P;
+        -:  887:}
+        -:  888:
+        -:  889:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  890:_mm256_storeu_pd (double *__P, __m256d __A)
+        -:  891:{
+        -:  892:  *(__m256d_u *)__P = __A;
+        -:  893:}
+        -:  894:
+        -:  895:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+121517952*:  896:_mm256_loadu_ps (float const *__P)
+        -:  897:{
+121514880*:  898:  return *(__m256_u *)__P;
+     3744:  898-block  0
+     9792:  898-block  1
+    %%%%%:  898-block  2
+    %%%%%:  898-block  3
+    %%%%%:  898-block  4
+    %%%%%:  898-block  5
+    %%%%%:  898-block  6
+    %%%%%:  898-block  7
+    %%%%%:  898-block  8
+    %%%%%:  898-block  9
+    %%%%%:  898-block 10
+    %%%%%:  898-block 11
+    %%%%%:  898-block 12
+    %%%%%:  898-block 13
+    %%%%%:  898-block 14
+ 91782912:  898-block 15
+   342336:  898-block 16
+   353760:  898-block 17
+  1698804:  898-block 18
+    %%%%%:  898-block 19
+   127332:  898-block 20
+    %%%%%:  898-block 21
+      189:  898-block 22
+  1011456:  898-block 23
+ 22908288:  898-block 24
+    %%%%%:  898-block 25
+   510162:  898-block 26
+     3744:  898-block 27
+    24384:  898-block 28
+      384:  898-block 29
+    %%%%%:  898-block 30
+   341571:  898-block 31
+    %%%%%:  898-block 32
+    %%%%%:  898-block 33
+   760704:  898-block 34
+    %%%%%:  898-block 35
+    %%%%%:  898-block 36
+    %%%%%:  898-block 37
+    24576:  898-block 38
+    %%%%%:  898-block 39
+   173328:  898-block 40
+    %%%%%:  898-block 41
+    %%%%%:  898-block 42
+    %%%%%:  898-block 43
+    %%%%%:  898-block 44
+    %%%%%:  898-block 45
+     1536:  898-block 46
+     1536:  898-block 47
+   169824:  898-block 48
+      768:  898-block 49
+   194237:  898-block 50
+    %%%%%:  898-block 51
+    %%%%%:  898-block 52
+    %%%%%:  898-block 53
+    %%%%%:  898-block 54
+     1536:  898-block 55
+     1536:  898-block 56
+   195072:  898-block 57
+    %%%%%:  898-block 58
+   849865:  898-block 59
+        -:  899:}
+        -:  900:
+        -:  901:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+ 2622025*:  902:_mm256_storeu_ps (float *__P, __m256 __A)
+        -:  903:{
+ 2622025*:  904:  *(__m256_u *)__P = __A;
+   760704:  904-block  0
+    %%%%%:  904-block  1
+    %%%%%:  904-block  2
+    %%%%%:  904-block  3
+   849865:  904-block  4
+        -:  905:}
+        -:  906:
+        -:  907:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  908:_mm256_load_si256 (__m256i const *__P)
+        -:  909:{
+        -:  910:  return *__P;
+        -:  911:}
+        -:  912:
+        -:  913:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  914:_mm256_store_si256 (__m256i *__P, __m256i __A)
+        -:  915:{
+        -:  916:  *__P = __A;
+        -:  917:}
+        -:  918:
+        -:  919:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  920:_mm256_loadu_si256 (__m256i_u const *__P)
+        -:  921:{
+        -:  922:  return *__P;
+        -:  923:}
+        -:  924:
+        -:  925:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  926:_mm256_storeu_si256 (__m256i_u *__P, __m256i __A)
+        -:  927:{
+        -:  928:  *__P = __A;
+        -:  929:}
+        -:  930:
+        -:  931:extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  932:_mm_maskload_pd (double const *__P, __m128i __M)
+        -:  933:{
+        -:  934:  return (__m128d) __builtin_ia32_maskloadpd ((const __v2df *)__P,
+        -:  935:					      (__v2di)__M);
+        -:  936:}
+        -:  937:
+        -:  938:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  939:_mm_maskstore_pd (double *__P, __m128i __M, __m128d __A)
+        -:  940:{
+        -:  941:  __builtin_ia32_maskstorepd ((__v2df *)__P, (__v2di)__M, (__v2df)__A);
+        -:  942:}
+        -:  943:
+        -:  944:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  945:_mm256_maskload_pd (double const *__P, __m256i __M)
+        -:  946:{
+        -:  947:  return (__m256d) __builtin_ia32_maskloadpd256 ((const __v4df *)__P,
+        -:  948:						 (__v4di)__M);
+        -:  949:}
+        -:  950:
+        -:  951:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  952:_mm256_maskstore_pd (double *__P, __m256i __M, __m256d __A)
+        -:  953:{
+        -:  954:  __builtin_ia32_maskstorepd256 ((__v4df *)__P, (__v4di)__M, (__v4df)__A);
+        -:  955:}
+        -:  956:
+        -:  957:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  958:_mm_maskload_ps (float const *__P, __m128i __M)
+        -:  959:{
+        -:  960:  return (__m128) __builtin_ia32_maskloadps ((const __v4sf *)__P,
+        -:  961:					     (__v4si)__M);
+        -:  962:}
+        -:  963:
+        -:  964:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  965:_mm_maskstore_ps (float *__P, __m128i __M, __m128 __A)
+        -:  966:{
+        -:  967:  __builtin_ia32_maskstoreps ((__v4sf *)__P, (__v4si)__M, (__v4sf)__A);
+        -:  968:}
+        -:  969:
+        -:  970:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  971:_mm256_maskload_ps (float const *__P, __m256i __M)
+        -:  972:{
+        -:  973:  return (__m256) __builtin_ia32_maskloadps256 ((const __v8sf *)__P,
+        -:  974:						(__v8si)__M);
+        -:  975:}
+        -:  976:
+        -:  977:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  978:_mm256_maskstore_ps (float *__P, __m256i __M, __m256 __A)
+        -:  979:{
+        -:  980:  __builtin_ia32_maskstoreps256 ((__v8sf *)__P, (__v8si)__M, (__v8sf)__A);
+        -:  981:}
+        -:  982:
+        -:  983:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  984:_mm256_movehdup_ps (__m256 __X)
+        -:  985:{
+        -:  986:  return (__m256) __builtin_ia32_movshdup256 ((__v8sf)__X);
+        -:  987:}
+        -:  988:
+        -:  989:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  990:_mm256_moveldup_ps (__m256 __X)
+        -:  991:{
+        -:  992:  return (__m256) __builtin_ia32_movsldup256 ((__v8sf)__X);
+        -:  993:}
+        -:  994:
+        -:  995:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -:  996:_mm256_movedup_pd (__m256d __X)
+        -:  997:{
+        -:  998:  return (__m256d) __builtin_ia32_movddup256 ((__v4df)__X);
+        -:  999:}
+        -: 1000:
+        -: 1001:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1002:_mm256_lddqu_si256 (__m256i const *__P)
+        -: 1003:{
+        -: 1004:  return (__m256i) __builtin_ia32_lddqu256 ((char const *)__P);
+        -: 1005:}
+        -: 1006:
+        -: 1007:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1008:_mm256_stream_si256 (__m256i *__A, __m256i __B)
+        -: 1009:{
+        -: 1010:  __builtin_ia32_movntdq256 ((__v4di *)__A, (__v4di)__B);
+        -: 1011:}
+        -: 1012:
+        -: 1013:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1014:_mm256_stream_pd (double *__A, __m256d __B)
+        -: 1015:{
+        -: 1016:  __builtin_ia32_movntpd256 (__A, (__v4df)__B);
+        -: 1017:}
+        -: 1018:
+        -: 1019:extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1020:_mm256_stream_ps (float *__P, __m256 __A)
+        -: 1021:{
+        -: 1022:  __builtin_ia32_movntps256 (__P, (__v8sf)__A);
+        -: 1023:}
+        -: 1024:
+        -: 1025:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1026:_mm256_rcp_ps (__m256 __A)
+        -: 1027:{
+        -: 1028:  return (__m256) __builtin_ia32_rcpps256 ((__v8sf)__A);
+        -: 1029:}
+        -: 1030:
+        -: 1031:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1032:_mm256_rsqrt_ps (__m256 __A)
+        -: 1033:{
+        -: 1034:  return (__m256) __builtin_ia32_rsqrtps256 ((__v8sf)__A);
+        -: 1035:}
+        -: 1036:
+        -: 1037:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1038:_mm256_sqrt_pd (__m256d __A)
+        -: 1039:{
+        -: 1040:  return (__m256d) __builtin_ia32_sqrtpd256 ((__v4df)__A);
+        -: 1041:}
+        -: 1042:
+        -: 1043:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1044:_mm256_sqrt_ps (__m256 __A)
+        -: 1045:{
+        -: 1046:  return (__m256) __builtin_ia32_sqrtps256 ((__v8sf)__A);
+        -: 1047:}
+        -: 1048:
+        -: 1049:#ifdef __OPTIMIZE__
+        -: 1050:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1051:_mm256_round_pd (__m256d __V, const int __M)
+        -: 1052:{
+        -: 1053:  return (__m256d) __builtin_ia32_roundpd256 ((__v4df)__V, __M);
+        -: 1054:}
+        -: 1055:
+        -: 1056:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1057:_mm256_round_ps (__m256 __V, const int __M)
+        -: 1058:{
+        -: 1059:  return (__m256) __builtin_ia32_roundps256 ((__v8sf)__V, __M);
+        -: 1060:}
+        -: 1061:#else
+        -: 1062:#define _mm256_round_pd(V, M) \
+        -: 1063:  ((__m256d) __builtin_ia32_roundpd256 ((__v4df)(__m256d)(V), (int)(M)))
+        -: 1064:
+        -: 1065:#define _mm256_round_ps(V, M) \
+        -: 1066:  ((__m256) __builtin_ia32_roundps256 ((__v8sf)(__m256)(V), (int)(M)))
+        -: 1067:#endif
+        -: 1068:
+        -: 1069:#define _mm256_ceil_pd(V)	_mm256_round_pd ((V), _MM_FROUND_CEIL)
+        -: 1070:#define _mm256_floor_pd(V)	_mm256_round_pd ((V), _MM_FROUND_FLOOR)
+        -: 1071:#define _mm256_ceil_ps(V)	_mm256_round_ps ((V), _MM_FROUND_CEIL)
+        -: 1072:#define _mm256_floor_ps(V)	_mm256_round_ps ((V), _MM_FROUND_FLOOR)
+        -: 1073:
+        -: 1074:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1075:_mm256_unpackhi_pd (__m256d __A, __m256d __B)
+        -: 1076:{
+        -: 1077:  return (__m256d) __builtin_ia32_unpckhpd256 ((__v4df)__A, (__v4df)__B);
+        -: 1078:}
+        -: 1079:
+        -: 1080:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1081:_mm256_unpacklo_pd (__m256d __A, __m256d __B)
+        -: 1082:{
+        -: 1083:  return (__m256d) __builtin_ia32_unpcklpd256 ((__v4df)__A, (__v4df)__B);
+        -: 1084:}
+        -: 1085:
+        -: 1086:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  2199792: 1087:_mm256_unpackhi_ps (__m256 __A, __m256 __B)
+        -: 1088:{
+  2199792: 1089:  return (__m256) __builtin_ia32_unpckhps256 ((__v8sf)__A, (__v8sf)__B);
+        -: 1090:}
+        -: 1091:
+        -: 1092:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  2199792: 1093:_mm256_unpacklo_ps (__m256 __A, __m256 __B)
+        -: 1094:{
+  2199792: 1095:  return (__m256) __builtin_ia32_unpcklps256 ((__v8sf)__A, (__v8sf)__B);
+  1011456: 1095-block  0
+    44220: 1095-block  1
+        -: 1096:}
+        -: 1097:
+        -: 1098:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1099:_mm_testz_pd (__m128d __M, __m128d __V)
+        -: 1100:{
+        -: 1101:  return __builtin_ia32_vtestzpd ((__v2df)__M, (__v2df)__V);
+        -: 1102:}
+        -: 1103:
+        -: 1104:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1105:_mm_testc_pd (__m128d __M, __m128d __V)
+        -: 1106:{
+        -: 1107:  return __builtin_ia32_vtestcpd ((__v2df)__M, (__v2df)__V);
+        -: 1108:}
+        -: 1109:
+        -: 1110:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1111:_mm_testnzc_pd (__m128d __M, __m128d __V)
+        -: 1112:{
+        -: 1113:  return __builtin_ia32_vtestnzcpd ((__v2df)__M, (__v2df)__V);
+        -: 1114:}
+        -: 1115:
+        -: 1116:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1117:_mm_testz_ps (__m128 __M, __m128 __V)
+        -: 1118:{
+        -: 1119:  return __builtin_ia32_vtestzps ((__v4sf)__M, (__v4sf)__V);
+        -: 1120:}
+        -: 1121:
+        -: 1122:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1123:_mm_testc_ps (__m128 __M, __m128 __V)
+        -: 1124:{
+        -: 1125:  return __builtin_ia32_vtestcps ((__v4sf)__M, (__v4sf)__V);
+        -: 1126:}
+        -: 1127:
+        -: 1128:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1129:_mm_testnzc_ps (__m128 __M, __m128 __V)
+        -: 1130:{
+        -: 1131:  return __builtin_ia32_vtestnzcps ((__v4sf)__M, (__v4sf)__V);
+        -: 1132:}
+        -: 1133:
+        -: 1134:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1135:_mm256_testz_pd (__m256d __M, __m256d __V)
+        -: 1136:{
+        -: 1137:  return __builtin_ia32_vtestzpd256 ((__v4df)__M, (__v4df)__V);
+        -: 1138:}
+        -: 1139:
+        -: 1140:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1141:_mm256_testc_pd (__m256d __M, __m256d __V)
+        -: 1142:{
+        -: 1143:  return __builtin_ia32_vtestcpd256 ((__v4df)__M, (__v4df)__V);
+        -: 1144:}
+        -: 1145:
+        -: 1146:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1147:_mm256_testnzc_pd (__m256d __M, __m256d __V)
+        -: 1148:{
+        -: 1149:  return __builtin_ia32_vtestnzcpd256 ((__v4df)__M, (__v4df)__V);
+        -: 1150:}
+        -: 1151:
+        -: 1152:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1153:_mm256_testz_ps (__m256 __M, __m256 __V)
+        -: 1154:{
+        -: 1155:  return __builtin_ia32_vtestzps256 ((__v8sf)__M, (__v8sf)__V);
+        -: 1156:}
+        -: 1157:
+        -: 1158:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1159:_mm256_testc_ps (__m256 __M, __m256 __V)
+        -: 1160:{
+        -: 1161:  return __builtin_ia32_vtestcps256 ((__v8sf)__M, (__v8sf)__V);
+        -: 1162:}
+        -: 1163:
+        -: 1164:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1165:_mm256_testnzc_ps (__m256 __M, __m256 __V)
+        -: 1166:{
+        -: 1167:  return __builtin_ia32_vtestnzcps256 ((__v8sf)__M, (__v8sf)__V);
+        -: 1168:}
+        -: 1169:
+        -: 1170:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1171:_mm256_testz_si256 (__m256i __M, __m256i __V)
+        -: 1172:{
+        -: 1173:  return __builtin_ia32_ptestz256 ((__v4di)__M, (__v4di)__V);
+        -: 1174:}
+        -: 1175:
+        -: 1176:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1177:_mm256_testc_si256 (__m256i __M, __m256i __V)
+        -: 1178:{
+        -: 1179:  return __builtin_ia32_ptestc256 ((__v4di)__M, (__v4di)__V);
+        -: 1180:}
+        -: 1181:
+        -: 1182:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1183:_mm256_testnzc_si256 (__m256i __M, __m256i __V)
+        -: 1184:{
+        -: 1185:  return __builtin_ia32_ptestnzc256 ((__v4di)__M, (__v4di)__V);
+        -: 1186:}
+        -: 1187:
+        -: 1188:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1189:_mm256_movemask_pd (__m256d __A)
+        -: 1190:{
+        -: 1191:  return __builtin_ia32_movmskpd256 ((__v4df)__A);
+        -: 1192:}
+        -: 1193:
+        -: 1194:extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1195:_mm256_movemask_ps (__m256 __A)
+        -: 1196:{
+        -: 1197:  return __builtin_ia32_movmskps256 ((__v8sf)__A);
+        -: 1198:}
+        -: 1199:
+        -: 1200:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1201:_mm256_undefined_pd (void)
+        -: 1202:{
+        -: 1203:  __m256d __Y = __Y;
+        -: 1204:  return __Y;
+        -: 1205:}
+        -: 1206:
+        -: 1207:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1208:_mm256_undefined_ps (void)
+        -: 1209:{
+        -: 1210:  __m256 __Y = __Y;
+        -: 1211:  return __Y;
+        -: 1212:}
+        -: 1213:
+        -: 1214:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1215:_mm256_undefined_si256 (void)
+        -: 1216:{
+        -: 1217:  __m256i __Y = __Y;
+        -: 1218:  return __Y;
+        -: 1219:}
+        -: 1220:
+        -: 1221:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1222:_mm256_setzero_pd (void)
+        -: 1223:{
+        -: 1224:  return __extension__ (__m256d){ 0.0, 0.0, 0.0, 0.0 };
+        -: 1225:}
+        -: 1226:
+        -: 1227:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1228:_mm256_setzero_ps (void)
+        -: 1229:{
+        -: 1230:  return __extension__ (__m256){ 0.0, 0.0, 0.0, 0.0,
+        -: 1231:				 0.0, 0.0, 0.0, 0.0 };
+        -: 1232:}
+        -: 1233:
+        -: 1234:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1235:_mm256_setzero_si256 (void)
+        -: 1236:{
+        -: 1237:  return __extension__ (__m256i)(__v4di){ 0, 0, 0, 0 };
+        -: 1238:}
+        -: 1239:
+        -: 1240:/* Create the vector [A B C D].  */
+        -: 1241:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1242:_mm256_set_pd (double __A, double __B, double __C, double __D)
+        -: 1243:{
+        -: 1244:  return __extension__ (__m256d){ __D, __C, __B, __A };
+        -: 1245:}
+        -: 1246:
+        -: 1247:/* Create the vector [A B C D E F G H].  */
+        -: 1248:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1249:_mm256_set_ps (float __A, float __B, float __C, float __D,
+        -: 1250:	       float __E, float __F, float __G, float __H)
+        -: 1251:{
+        -: 1252:  return __extension__ (__m256){ __H, __G, __F, __E,
+        -: 1253:				 __D, __C, __B, __A };
+        -: 1254:}
+        -: 1255:
+        -: 1256:/* Create the vector [A B C D E F G H].  */
+        -: 1257:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  393408*: 1258:_mm256_set_epi32 (int __A, int __B, int __C, int __D,
+        -: 1259:		  int __E, int __F, int __G, int __H)
+        -: 1260:{
+  393408*: 1261:  return __extension__ (__m256i)(__v8si){ __H, __G, __F, __E,
+        -: 1262:					  __D, __C, __B, __A };
+        -: 1263:}
+        -: 1264:
+        -: 1265:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1266:_mm256_set_epi16 (short __q15, short __q14, short __q13, short __q12,
+        -: 1267:		  short __q11, short __q10, short __q09, short __q08,
+        -: 1268:		  short __q07, short __q06, short __q05, short __q04,
+        -: 1269:		  short __q03, short __q02, short __q01, short __q00)
+        -: 1270:{
+        -: 1271:  return __extension__ (__m256i)(__v16hi){
+        -: 1272:    __q00, __q01, __q02, __q03, __q04, __q05, __q06, __q07,
+        -: 1273:    __q08, __q09, __q10, __q11, __q12, __q13, __q14, __q15
+        -: 1274:  };
+        -: 1275:}
+        -: 1276:
+        -: 1277:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1278:_mm256_set_epi8  (char __q31, char __q30, char __q29, char __q28,
+        -: 1279:		  char __q27, char __q26, char __q25, char __q24,
+        -: 1280:		  char __q23, char __q22, char __q21, char __q20,
+        -: 1281:		  char __q19, char __q18, char __q17, char __q16,
+        -: 1282:		  char __q15, char __q14, char __q13, char __q12,
+        -: 1283:		  char __q11, char __q10, char __q09, char __q08,
+        -: 1284:		  char __q07, char __q06, char __q05, char __q04,
+        -: 1285:		  char __q03, char __q02, char __q01, char __q00)
+        -: 1286:{
+        -: 1287:  return __extension__ (__m256i)(__v32qi){
+        -: 1288:    __q00, __q01, __q02, __q03, __q04, __q05, __q06, __q07,
+        -: 1289:    __q08, __q09, __q10, __q11, __q12, __q13, __q14, __q15,
+        -: 1290:    __q16, __q17, __q18, __q19, __q20, __q21, __q22, __q23,
+        -: 1291:    __q24, __q25, __q26, __q27, __q28, __q29, __q30, __q31
+        -: 1292:  };
+        -: 1293:}
+        -: 1294:
+        -: 1295:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1296:_mm256_set_epi64x (long long __A, long long __B, long long __C,
+        -: 1297:		   long long __D)
+        -: 1298:{
+        -: 1299:  return __extension__ (__m256i)(__v4di){ __D, __C, __B, __A };
+        -: 1300:}
+        -: 1301:
+        -: 1302:/* Create a vector with all elements equal to A.  */
+        -: 1303:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+    #####: 1304:_mm256_set1_pd (double __A)
+        -: 1305:{
+    #####: 1306:  return __extension__ (__m256d){ __A, __A, __A, __A };
+    %%%%%: 1306-block  0
+    %%%%%: 1306-block  1
+        -: 1307:}
+        -: 1308:
+        -: 1309:/* Create a vector with all elements equal to A.  */
+        -: 1310:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+95455388*: 1311:_mm256_set1_ps (float __A)
+        -: 1312:{
+ 1070138*: 1313:  return __extension__ (__m256){ __A, __A, __A, __A,
+     8256: 1313-block  0
+     2304: 1313-block  1
+      189: 1313-block  2
+    97917: 1313-block  3
+     2307: 1313-block  4
+   194237: 1313-block  5
+94382082*: 1314:				 __A, __A, __A, __A };
+     3744: 1314-block  0
+     2112: 1314-block  1
+     3744: 1314-block  2
+     1056: 1314-block  3
+     7170: 1314-block  4
+    %%%%%: 1314-block  5
+     3744: 1314-block  6
+    %%%%%: 1314-block  7
+    %%%%%: 1314-block  8
+    48384: 1314-block  9
+    %%%%%: 1314-block 10
+    %%%%%: 1314-block 11
+ 91782912: 1314-block 12
+   342336: 1314-block 13
+    %%%%%: 1314-block 14
+    %%%%%: 1314-block 15
+     1149: 1314-block 16
+    %%%%%: 1314-block 17
+      381: 1314-block 18
+        6: 1314-block 19
+   341571: 1314-block 20
+    %%%%%: 1314-block 21
+   760704: 1314-block 22
+    %%%%%: 1314-block 23
+    %%%%%: 1314-block 24
+    %%%%%: 1314-block 25
+    %%%%%: 1314-block 26
+    %%%%%: 1314-block 27
+    %%%%%: 1314-block 28
+    %%%%%: 1314-block 29
+   393408: 1314-block 30
+      192: 1314-block 31
+   688320: 1314-block 32
+     1149: 1314-block 33
+        -: 1315:}
+        -: 1316:
+        -: 1317:/* Create a vector with all elements equal to A.  */
+        -: 1318:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1319:_mm256_set1_epi32 (int __A)
+        -: 1320:{
+        -: 1321:  return __extension__ (__m256i)(__v8si){ __A, __A, __A, __A,
+        -: 1322:					  __A, __A, __A, __A };
+        -: 1323:}
+        -: 1324:
+        -: 1325:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1326:_mm256_set1_epi16 (short __A)
+        -: 1327:{
+        -: 1328:  return _mm256_set_epi16 (__A, __A, __A, __A, __A, __A, __A, __A,
+        -: 1329:			   __A, __A, __A, __A, __A, __A, __A, __A);
+        -: 1330:}
+        -: 1331:
+        -: 1332:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1333:_mm256_set1_epi8 (char __A)
+        -: 1334:{
+        -: 1335:  return _mm256_set_epi8 (__A, __A, __A, __A, __A, __A, __A, __A,
+        -: 1336:			  __A, __A, __A, __A, __A, __A, __A, __A,
+        -: 1337:			  __A, __A, __A, __A, __A, __A, __A, __A,
+        -: 1338:			  __A, __A, __A, __A, __A, __A, __A, __A);
+        -: 1339:}
+        -: 1340:
+        -: 1341:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1342:_mm256_set1_epi64x (long long __A)
+        -: 1343:{
+        -: 1344:  return __extension__ (__m256i)(__v4di){ __A, __A, __A, __A };
+        -: 1345:}
+        -: 1346:
+        -: 1347:/* Create vectors of elements in the reversed order from the
+        -: 1348:   _mm256_set_XXX functions.  */
+        -: 1349:
+        -: 1350:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1351:_mm256_setr_pd (double __A, double __B, double __C, double __D)
+        -: 1352:{
+        -: 1353:  return _mm256_set_pd (__D, __C, __B, __A);
+        -: 1354:}
+        -: 1355:
+        -: 1356:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1357:_mm256_setr_ps (float __A, float __B, float __C, float __D,
+        -: 1358:		float __E, float __F, float __G, float __H)
+        -: 1359:{
+        -: 1360:  return _mm256_set_ps (__H, __G, __F, __E, __D, __C, __B, __A);
+        -: 1361:}
+        -: 1362:
+        -: 1363:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  393408*: 1364:_mm256_setr_epi32 (int __A, int __B, int __C, int __D,
+        -: 1365:		   int __E, int __F, int __G, int __H)
+        -: 1366:{
+  393408*: 1367:  return _mm256_set_epi32 (__H, __G, __F, __E, __D, __C, __B, __A);
+        -: 1368:}
+        -: 1369:
+        -: 1370:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1371:_mm256_setr_epi16 (short __q15, short __q14, short __q13, short __q12,
+        -: 1372:		   short __q11, short __q10, short __q09, short __q08,
+        -: 1373:		   short __q07, short __q06, short __q05, short __q04,
+        -: 1374:		   short __q03, short __q02, short __q01, short __q00)
+        -: 1375:{
+        -: 1376:  return _mm256_set_epi16 (__q00, __q01, __q02, __q03,
+        -: 1377:			   __q04, __q05, __q06, __q07,
+        -: 1378:			   __q08, __q09, __q10, __q11,
+        -: 1379:			   __q12, __q13, __q14, __q15);
+        -: 1380:}
+        -: 1381:
+        -: 1382:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1383:_mm256_setr_epi8  (char __q31, char __q30, char __q29, char __q28,
+        -: 1384:		   char __q27, char __q26, char __q25, char __q24,
+        -: 1385:		   char __q23, char __q22, char __q21, char __q20,
+        -: 1386:		   char __q19, char __q18, char __q17, char __q16,
+        -: 1387:		   char __q15, char __q14, char __q13, char __q12,
+        -: 1388:		   char __q11, char __q10, char __q09, char __q08,
+        -: 1389:		   char __q07, char __q06, char __q05, char __q04,
+        -: 1390:		   char __q03, char __q02, char __q01, char __q00)
+        -: 1391:{
+        -: 1392:  return _mm256_set_epi8 (__q00, __q01, __q02, __q03,
+        -: 1393:			  __q04, __q05, __q06, __q07,
+        -: 1394:			  __q08, __q09, __q10, __q11,
+        -: 1395:			  __q12, __q13, __q14, __q15,
+        -: 1396:			  __q16, __q17, __q18, __q19,
+        -: 1397:			  __q20, __q21, __q22, __q23,
+        -: 1398:			  __q24, __q25, __q26, __q27,
+        -: 1399:			  __q28, __q29, __q30, __q31);
+        -: 1400:}
+        -: 1401:
+        -: 1402:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1403:_mm256_setr_epi64x (long long __A, long long __B, long long __C,
+        -: 1404:		    long long __D)
+        -: 1405:{
+        -: 1406:  return _mm256_set_epi64x (__D, __C, __B, __A);
+        -: 1407:}
+        -: 1408:
+        -: 1409:/* Casts between various SP, DP, INT vector types.  Note that these do no
+        -: 1410:   conversion of values, they just change the type.  */
+        -: 1411:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1412:_mm256_castpd_ps (__m256d __A)
+        -: 1413:{
+        -: 1414:  return (__m256) __A;
+        -: 1415:}
+        -: 1416:
+        -: 1417:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1418:_mm256_castpd_si256 (__m256d __A)
+        -: 1419:{
+        -: 1420:  return (__m256i) __A;
+        -: 1421:}
+        -: 1422:
+        -: 1423:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1424:_mm256_castps_pd (__m256 __A)
+        -: 1425:{
+        -: 1426:  return (__m256d) __A;
+        -: 1427:}
+        -: 1428:
+        -: 1429:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1430:_mm256_castps_si256(__m256 __A)
+        -: 1431:{
+        -: 1432:  return (__m256i) __A;
+        -: 1433:}
+        -: 1434:
+        -: 1435:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  393408*: 1436:_mm256_castsi256_ps (__m256i __A)
+        -: 1437:{
+  393408*: 1438:  return (__m256) __A;
+        3: 1438-block  0
+        3: 1438-block  1
+   196701: 1438-block  2
+    %%%%%: 1438-block  3
+        -: 1439:}
+        -: 1440:
+        -: 1441:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1442:_mm256_castsi256_pd (__m256i __A)
+        -: 1443:{
+        -: 1444:  return (__m256d) __A;
+        -: 1445:}
+        -: 1446:
+        -: 1447:extern __inline __m128d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1448:_mm256_castpd256_pd128 (__m256d __A)
+        -: 1449:{
+        -: 1450:  return (__m128d) __builtin_ia32_pd_pd256 ((__v4df)__A);
+        -: 1451:}
+        -: 1452:
+        -: 1453:extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+  537369*: 1454:_mm256_castps256_ps128 (__m256 __A)
+        -: 1455:{
+  458745*: 1456:  return (__m128) __builtin_ia32_ps_ps256 ((__v8sf)__A);
+    %%%%%: 1456-block  0
+    26208: 1456-block  1
+    %%%%%: 1456-block  2
+    %%%%%: 1456-block  3
+    %%%%%: 1456-block  4
+    %%%%%: 1456-block  5
+    %%%%%: 1456-block  6
+    %%%%%: 1456-block  7
+    %%%%%: 1456-block  8
+    %%%%%: 1456-block  9
+    %%%%%: 1456-block 10
+    %%%%%: 1456-block 11
+        -: 1457:}
+        -: 1458:
+        -: 1459:extern __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1460:_mm256_castsi256_si128 (__m256i __A)
+        -: 1461:{
+        -: 1462:  return (__m128i) __builtin_ia32_si_si256 ((__v8si)__A);
+        -: 1463:}
+        -: 1464:
+        -: 1465:/* When cast is done from a 128 to 256-bit type, the low 128 bits of
+        -: 1466:   the 256-bit result contain source parameter value and the upper 128
+        -: 1467:   bits of the result are undefined.  Those intrinsics shouldn't
+        -: 1468:   generate any extra moves.  */
+        -: 1469:
+        -: 1470:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1471:_mm256_castpd128_pd256 (__m128d __A)
+        -: 1472:{
+        -: 1473:  return (__m256d) __builtin_ia32_pd256_pd ((__v2df)__A);
+        -: 1474:}
+        -: 1475:
+        -: 1476:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+   98304*: 1477:_mm256_castps128_ps256 (__m128 __A)
+        -: 1478:{
+   98304*: 1479:  return (__m256) __builtin_ia32_ps256_ps ((__v4sf)__A);
+        -: 1480:}
+        -: 1481:
+        -: 1482:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1483:_mm256_castsi128_si256 (__m128i __A)
+        -: 1484:{
+        -: 1485:  return (__m256i) __builtin_ia32_si256_si ((__v4si)__A);
+        -: 1486:}
+        -: 1487:
+        -: 1488:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1489:_mm256_set_m128 ( __m128 __H, __m128 __L)
+        -: 1490:{
+        -: 1491:  return _mm256_insertf128_ps (_mm256_castps128_ps256 (__L), __H, 1);
+        -: 1492:}
+        -: 1493:
+        -: 1494:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1495:_mm256_set_m128d (__m128d __H, __m128d __L)
+        -: 1496:{
+        -: 1497:  return _mm256_insertf128_pd (_mm256_castpd128_pd256 (__L), __H, 1);
+        -: 1498:}
+        -: 1499:
+        -: 1500:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1501:_mm256_set_m128i (__m128i __H, __m128i __L)
+        -: 1502:{
+        -: 1503:  return _mm256_insertf128_si256 (_mm256_castsi128_si256 (__L), __H, 1);
+        -: 1504:}
+        -: 1505:
+        -: 1506:extern __inline __m256 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1507:_mm256_setr_m128 (__m128 __L, __m128 __H)
+        -: 1508:{
+        -: 1509:  return _mm256_set_m128 (__H, __L);
+        -: 1510:}
+        -: 1511:
+        -: 1512:extern __inline __m256d __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1513:_mm256_setr_m128d (__m128d __L, __m128d __H)
+        -: 1514:{
+        -: 1515:  return _mm256_set_m128d (__H, __L);
+        -: 1516:}
+        -: 1517:
+        -: 1518:extern __inline __m256i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+        -: 1519:_mm256_setr_m128i (__m128i __L, __m128i __H)
+        -: 1520:{
+        -: 1521:  return _mm256_set_m128i (__H, __L);
+        -: 1522:}
+        -: 1523:
+        -: 1524:#ifdef __DISABLE_AVX__
+        -: 1525:#undef __DISABLE_AVX__
+        -: 1526:#pragma GCC pop_options
+        -: 1527:#endif /* __DISABLE_AVX__ */
+        -: 1528:
+        -: 1529:#endif /* _AVXINTRIN_H_INCLUDED */

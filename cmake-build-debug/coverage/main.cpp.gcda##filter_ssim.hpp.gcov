@@ -1,0 +1,124 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_ssim.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_SSIM_HPP
+        -:   19:#define PIC_FILTERING_FILTER_SSIM_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:/**
+        -:   26: * @brief The FilterSSIM class
+        -:   27: */
+        -:   28:class FilterSSIM: public Filter
+        -:   29:{
+        -:   30:protected:
+        -:   31:
+        -:   32:    /**
+        -:   33:     * @brief ProcessBBox
+        -:   34:     * @param dst
+        -:   35:     * @param src
+        -:   36:     * @param box
+        -:   37:     */
+    #####:   38:    void ProcessBBox(Image *dst, ImageVec src, BBox *box)
+        -:   39:    {
+    #####:   40:        int width    = src[0]->width;
+    %%%%%:   40-block  0
+    #####:   41:        int channels = src[0]->channels;
+        -:   42:
+    #####:   43:        for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:   43-block  0
+    %%%%%:   43-block  1
+    %%%%%:   43-block  2
+    #####:   44:            int c = j * width;
+        -:   45:
+    #####:   46:            for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:   46-block  0
+    %%%%%:   46-block  1
+    #####:   47:                int ind = (c + i) *  channels;
+        -:   48:
+    #####:   49:                float mu1 = src[0]->data[ind];
+    %%%%%:   49-block  0
+    #####:   50:                float mu1_sq = mu1 * mu1;
+        -:   51:
+    #####:   52:                float mu2 = src[1]->data[ind];
+    #####:   53:                float mu2_sq = mu2 * mu2;
+        -:   54:
+    #####:   55:                float sigma1_sq = src[2]->data[ind] - mu1_sq;
+    #####:   56:                float sigma2_sq = src[3]->data[ind] - mu2_sq;
+    #####:   57:                float mu1_mu2 = mu1 * mu2;
+    #####:   58:                float sigma1_sigma2 = src[4]->data[ind] - mu1_mu2;
+        -:   59:
+        -:   60:                //numerator
+    #####:   61:               float tmp1 = (mu1_mu2 * 2.0f + C0) *
+    #####:   62:                            (sigma1_sigma2 * 2.0f + C1);
+        -:   63:
+        -:   64:               //denominator
+    #####:   65:               float tmp2 = (mu1_sq + mu2_sq + C0 ) *
+    #####:   66:                            (sigma1_sq + sigma2_sq + C1);
+        -:   67:
+    #####:   68:               dst->data[ind] = tmp1 / tmp2;
+    %%%%%:   68-block  0
+        -:   69:            }
+        -:   70:        }
+    #####:   71:    }
+        -:   72:
+        -:   73:    float C0, C1;
+        -:   74:
+        -:   75:public:
+        -:   76:
+        -:   77:    /**
+        -:   78:     * @brief FilterSSIM
+        -:   79:     * @param type
+        -:   80:     */
+        -:   81:    FilterSSIM() : Filter()
+        -:   82:    {
+        -:   83:        minInputImages = 5;
+        -:   84:    }
+        -:   85:
+        -:   86:    /**
+        -:   87:     * @brief FilterSSIM
+        -:   88:     * @param type
+        -:   89:     */
+        -:   90:    FilterSSIM(float C0, float C1) : Filter()
+        -:   91:    {
+        -:   92:        minInputImages = 5;
+        -:   93:        update(C0, C1);
+        -:   94:    }
+        -:   95:
+        -:   96:    /**
+        -:   97:     * @brief update
+        -:   98:     * @param C0
+        -:   99:     * @param C1
+        -:  100:     */
+        -:  101:    void update(float C0, float C1)
+        -:  102:    {
+        -:  103:        this->C0 = C0;
+        -:  104:        this->C1 = C1;
+        -:  105:    }
+        -:  106:
+        -:  107:};
+        -:  108:
+        -:  109:} // end namespace pic
+        -:  110:
+        -:  111:#endif /* PIC_FILTERING_FILTER_SSIM_HPP */
+        -:  112:

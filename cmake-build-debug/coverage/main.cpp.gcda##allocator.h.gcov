@@ -1,0 +1,967 @@
+        -:    0:Source:/usr/include/c++/9/bits/allocator.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// Allocators -*- C++ -*-
+        -:    2:
+        -:    3:// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+        -:    4://
+        -:    5:// This file is part of the GNU ISO C++ Library.  This library is free
+        -:    6:// software; you can redistribute it and/or modify it under the
+        -:    7:// terms of the GNU General Public License as published by the
+        -:    8:// Free Software Foundation; either version 3, or (at your option)
+        -:    9:// any later version.
+        -:   10:
+        -:   11:// This library is distributed in the hope that it will be useful,
+        -:   12:// but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   13:// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        -:   14:// GNU General Public License for more details.
+        -:   15:
+        -:   16:// Under Section 7 of GPL version 3, you are granted additional
+        -:   17:// permissions described in the GCC Runtime Library Exception, version
+        -:   18:// 3.1, as published by the Free Software Foundation.
+        -:   19:
+        -:   20:// You should have received a copy of the GNU General Public License and
+        -:   21:// a copy of the GCC Runtime Library Exception along with this program;
+        -:   22:// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+        -:   23:// <http://www.gnu.org/licenses/>.
+        -:   24:
+        -:   25:/*
+        -:   26: * Copyright (c) 1996-1997
+        -:   27: * Silicon Graphics Computer Systems, Inc.
+        -:   28: *
+        -:   29: * Permission to use, copy, modify, distribute and sell this software
+        -:   30: * and its documentation for any purpose is hereby granted without fee,
+        -:   31: * provided that the above copyright notice appear in all copies and
+        -:   32: * that both that copyright notice and this permission notice appear
+        -:   33: * in supporting documentation.  Silicon Graphics makes no
+        -:   34: * representations about the suitability of this software for any
+        -:   35: * purpose.  It is provided "as is" without express or implied warranty.
+        -:   36: */
+        -:   37:
+        -:   38:/** @file bits/allocator.h
+        -:   39: *  This is an internal header file, included by other library headers.
+        -:   40: *  Do not attempt to use it directly. @headername{memory}
+        -:   41: */
+        -:   42:
+        -:   43:#ifndef _ALLOCATOR_H
+        -:   44:#define _ALLOCATOR_H 1
+        -:   45:
+        -:   46:#include <bits/c++allocator.h> // Define the base class to std::allocator.
+        -:   47:#include <bits/memoryfwd.h>
+        -:   48:#if __cplusplus >= 201103L
+        -:   49:#include <type_traits>
+        -:   50:#endif
+        -:   51:
+        -:   52:#define __cpp_lib_incomplete_container_elements 201505
+        -:   53:#if __cplusplus >= 201103L
+        -:   54:# define __cpp_lib_allocator_is_always_equal 201411
+        -:   55:#endif
+        -:   56:
+        -:   57:namespace std _GLIBCXX_VISIBILITY(default)
+        -:   58:{
+        -:   59:_GLIBCXX_BEGIN_NAMESPACE_VERSION
+        -:   60:
+        -:   61:  /**
+        -:   62:   *  @addtogroup allocators
+        -:   63:   *  @{
+        -:   64:   */
+        -:   65:
+        -:   66:  /// allocator<void> specialization.
+        -:   67:  template<>
+        -:   68:    class allocator<void>
+        -:   69:    {
+        -:   70:    public:
+        -:   71:      typedef size_t      size_type;
+        -:   72:      typedef ptrdiff_t   difference_type;
+        -:   73:      typedef void*       pointer;
+        -:   74:      typedef const void* const_pointer;
+        -:   75:      typedef void        value_type;
+        -:   76:
+        -:   77:      template<typename _Tp1>
+        -:   78:	struct rebind
+        -:   79:	{ typedef allocator<_Tp1> other; };
+        -:   80:
+        -:   81:#if __cplusplus >= 201103L
+        -:   82:      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        -:   83:      // 2103. std::allocator propagate_on_container_move_assignment
+        -:   84:      typedef true_type propagate_on_container_move_assignment;
+        -:   85:
+        -:   86:      typedef true_type is_always_equal;
+        -:   87:
+        -:   88:      template<typename _Up, typename... _Args>
+        -:   89:	void
+        -:   90:	construct(_Up* __p, _Args&&... __args)
+        -:   91:	noexcept(noexcept(::new((void *)__p)
+        -:   92:			    _Up(std::forward<_Args>(__args)...)))
+        -:   93:	{ ::new((void *)__p) _Up(std::forward<_Args>(__args)...); }
+        -:   94:
+        -:   95:      template<typename _Up>
+        -:   96:	void
+        -:   97:	destroy(_Up* __p)
+        -:   98:	noexcept(noexcept(__p->~_Up()))
+        -:   99:	{ __p->~_Up(); }
+        -:  100:#endif
+        -:  101:    };
+        -:  102:
+        -:  103:  /**
+        -:  104:   * @brief  The @a standard allocator, as per [20.4].
+        -:  105:   *
+        -:  106:   *  See https://gcc.gnu.org/onlinedocs/libstdc++/manual/memory.html#std.util.memory.allocator
+        -:  107:   *  for further details.
+        -:  108:   *
+        -:  109:   *  @tparam  _Tp  Type of allocated object.
+        -:  110:   */
+        -:  111:  template<typename _Tp>
+        -:  112:    class allocator : public __allocator_base<_Tp>
+        -:  113:    {
+        -:  114:   public:
+        -:  115:      typedef size_t     size_type;
+        -:  116:      typedef ptrdiff_t  difference_type;
+        -:  117:      typedef _Tp*       pointer;
+        -:  118:      typedef const _Tp* const_pointer;
+        -:  119:      typedef _Tp&       reference;
+        -:  120:      typedef const _Tp& const_reference;
+        -:  121:      typedef _Tp        value_type;
+        -:  122:
+        -:  123:      template<typename _Tp1>
+        -:  124:	struct rebind
+        -:  125:	{ typedef allocator<_Tp1> other; };
+        -:  126:
+        -:  127:#if __cplusplus >= 201103L
+        -:  128:      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        -:  129:      // 2103. std::allocator propagate_on_container_move_assignment
+        -:  130:      typedef true_type propagate_on_container_move_assignment;
+        -:  131:
+        -:  132:      typedef true_type is_always_equal;
+        -:  133:#endif
+        -:  134:
+        -:  135:      // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        -:  136:      // 3035. std::allocator's constructors should be constexpr
+        -:  137:      _GLIBCXX20_CONSTEXPR
+      59*:  138:      allocator() _GLIBCXX_NOTHROW { }
+    %%%%%:  138-block  0
+    %%%%%:  138-block  1
+    %%%%%:  138-block  2
+    %%%%%:  138-block  3
+    %%%%%:  138-block  4
+    %%%%%:  138-block  5
+    %%%%%:  138-block  6
+        1:  138-block  7
+        1:  138-block  8
+    %%%%%:  138-block  9
+    %%%%%:  138-block 10
+        1:  138-block 11
+    %%%%%:  138-block 12
+    %%%%%:  138-block 13
+    %%%%%:  138-block 14
+    %%%%%:  138-block 15
+    %%%%%:  138-block 16
+    %%%%%:  138-block 17
+    %%%%%:  138-block 18
+    %%%%%:  138-block 19
+    %%%%%:  138-block 20
+    %%%%%:  138-block 21
+    %%%%%:  138-block 22
+    %%%%%:  138-block 23
+    %%%%%:  138-block 24
+    %%%%%:  138-block 25
+    %%%%%:  138-block 26
+    %%%%%:  138-block 27
+    %%%%%:  138-block 28
+    %%%%%:  138-block 29
+    %%%%%:  138-block 30
+    %%%%%:  138-block 31
+    %%%%%:  138-block 32
+    %%%%%:  138-block 33
+    %%%%%:  138-block 34
+    %%%%%:  138-block 35
+    %%%%%:  138-block 36
+        1:  138-block 37
+        1:  138-block 38
+    %%%%%:  138-block 39
+        1:  138-block 40
+    %%%%%:  138-block 41
+    %%%%%:  138-block 42
+    %%%%%:  138-block 43
+        1:  138-block 44
+    %%%%%:  138-block 45
+    %%%%%:  138-block 46
+        3:  138-block 47
+       21:  138-block 48
+    %%%%%:  138-block 49
+    %%%%%:  138-block 50
+    %%%%%:  138-block 51
+        2:  138-block 52
+        7:  138-block 53
+        4:  138-block 54
+    %%%%%:  138-block 55
+        7:  138-block 56
+    %%%%%:  138-block 57
+        7:  138-block 58
+    %%%%%:  138-block 59
+    %%%%%:  138-block 60
+    %%%%%:  138-block 61
+    %%%%%:  138-block 62
+    %%%%%:  138-block 63
+    %%%%%:  138-block 64
+    %%%%%:  138-block 65
+    %%%%%:  138-block 66
+    %%%%%:  138-block 67
+    %%%%%:  138-block 68
+    %%%%%:  138-block 69
+    %%%%%:  138-block 70
+    %%%%%:  138-block 71
+    %%%%%:  138-block 72
+    %%%%%:  138-block 73
+    %%%%%:  138-block 74
+    %%%%%:  138-block 75
+    %%%%%:  138-block 76
+    %%%%%:  138-block 77
+    %%%%%:  138-block 78
+    %%%%%:  138-block 79
+    %%%%%:  138-block 80
+    %%%%%:  138-block 81
+    %%%%%:  138-block 82
+    %%%%%:  138-block 83
+    %%%%%:  138-block 84
+    %%%%%:  138-block 85
+    %%%%%:  138-block 86
+        -:  139:
+        -:  140:      _GLIBCXX20_CONSTEXPR
+     382*:  141:      allocator(const allocator& __a) _GLIBCXX_NOTHROW
+    %%%%%:  141-block  0
+        7:  141-block  1
+    %%%%%:  141-block  2
+    %%%%%:  141-block  3
+      275:  141-block  4
+    %%%%%:  141-block  5
+    %%%%%:  141-block  6
+    %%%%%:  141-block  7
+    %%%%%:  141-block  8
+    %%%%%:  141-block  9
+    %%%%%:  141-block 10
+    %%%%%:  141-block 11
+    %%%%%:  141-block 12
+    %%%%%:  141-block 13
+    %%%%%:  141-block 14
+    %%%%%:  141-block 15
+        3:  141-block 16
+    %%%%%:  141-block 17
+    %%%%%:  141-block 18
+    %%%%%:  141-block 19
+        7:  141-block 20
+    %%%%%:  141-block 21
+        7:  141-block 22
+       21:  141-block 23
+        2:  141-block 24
+    %%%%%:  141-block 25
+        1:  141-block 26
+    %%%%%:  141-block 27
+    %%%%%:  141-block 28
+    %%%%%:  141-block 29
+        1:  141-block 30
+        1:  141-block 31
+    %%%%%:  141-block 32
+    %%%%%:  141-block 33
+    %%%%%:  141-block 34
+    %%%%%:  141-block 35
+    %%%%%:  141-block 36
+    %%%%%:  141-block 37
+    %%%%%:  141-block 38
+    %%%%%:  141-block 39
+    %%%%%:  141-block 40
+        7:  141-block 41
+    %%%%%:  141-block 42
+    %%%%%:  141-block 43
+    %%%%%:  141-block 44
+    %%%%%:  141-block 45
+        7:  141-block 46
+        7:  141-block 47
+        4:  141-block 48
+    %%%%%:  141-block 49
+        7:  141-block 50
+    %%%%%:  141-block 51
+    %%%%%:  141-block 52
+    %%%%%:  141-block 53
+    %%%%%:  141-block 54
+    %%%%%:  141-block 55
+    %%%%%:  141-block 56
+    %%%%%:  141-block 57
+    %%%%%:  141-block 58
+    %%%%%:  141-block 59
+    %%%%%:  141-block 60
+    %%%%%:  141-block 61
+    %%%%%:  141-block 62
+    %%%%%:  141-block 63
+    %%%%%:  141-block 64
+    %%%%%:  141-block 65
+    %%%%%:  141-block 66
+    %%%%%:  141-block 67
+    %%%%%:  141-block 68
+    %%%%%:  141-block 69
+     367*:  142:      : __allocator_base<_Tp>(__a) { }
+    %%%%%:  142-block  0
+        7:  142-block  1
+    %%%%%:  142-block  2
+    %%%%%:  142-block  3
+       24:  142-block  4
+      275:  142-block  5
+    %%%%%:  142-block  6
+    %%%%%:  142-block  7
+    %%%%%:  142-block  8
+    %%%%%:  142-block  9
+    %%%%%:  142-block 10
+    %%%%%:  142-block 11
+    %%%%%:  142-block 12
+    %%%%%:  142-block 13
+    %%%%%:  142-block 14
+    %%%%%:  142-block 15
+        3:  142-block 16
+    %%%%%:  142-block 17
+    %%%%%:  142-block 18
+    %%%%%:  142-block 19
+        7:  142-block 20
+    %%%%%:  142-block 21
+        7:  142-block 22
+        2:  142-block 23
+    %%%%%:  142-block 24
+        1:  142-block 25
+    %%%%%:  142-block 26
+    %%%%%:  142-block 27
+    %%%%%:  142-block 28
+        1:  142-block 29
+        1:  142-block 30
+    %%%%%:  142-block 31
+    %%%%%:  142-block 32
+    %%%%%:  142-block 33
+    %%%%%:  142-block 34
+    %%%%%:  142-block 35
+    %%%%%:  142-block 36
+    %%%%%:  142-block 37
+    %%%%%:  142-block 38
+    %%%%%:  142-block 39
+        7:  142-block 40
+    %%%%%:  142-block 41
+    %%%%%:  142-block 42
+    %%%%%:  142-block 43
+    %%%%%:  142-block 44
+        7:  142-block 45
+    %%%%%:  142-block 46
+    %%%%%:  142-block 47
+    %%%%%:  142-block 48
+    %%%%%:  142-block 49
+    %%%%%:  142-block 50
+    %%%%%:  142-block 51
+    %%%%%:  142-block 52
+    %%%%%:  142-block 53
+    %%%%%:  142-block 54
+    %%%%%:  142-block 55
+    %%%%%:  142-block 56
+    %%%%%:  142-block 57
+    %%%%%:  142-block 58
+    %%%%%:  142-block 59
+        -:  143:
+        -:  144:#if __cplusplus >= 201103L
+        -:  145:      // Avoid implicit deprecation.
+        -:  146:      allocator& operator=(const allocator&) = default;
+        -:  147:#endif
+        -:  148:
+        -:  149:      template<typename _Tp1>
+        -:  150:	_GLIBCXX20_CONSTEXPR
+        -:  151:	allocator(const allocator<_Tp1>&) _GLIBCXX_NOTHROW { }
+        -:  152:
+     732*:  153:      ~allocator() _GLIBCXX_NOTHROW { }
+       24:  153-block  0
+    %%%%%:  153-block  1
+    %%%%%:  153-block  2
+    $$$$$:  153-block  3
+    $$$$$:  153-block  4
+        7:  153-block  5
+    %%%%%:  153-block  6
+    $$$$$:  153-block  7
+    %%%%%:  153-block  8
+        7:  153-block  9
+    $$$$$:  153-block 10
+    $$$$$:  153-block 11
+    $$$$$:  153-block 12
+    $$$$$:  153-block 13
+       24:  153-block 14
+    %%%%%:  153-block 15
+    %%%%%:  153-block 16
+    %%%%%:  153-block 17
+    %%%%%:  153-block 18
+    %%%%%:  153-block 19
+    %%%%%:  153-block 20
+    %%%%%:  153-block 21
+    %%%%%:  153-block 22
+        3:  153-block 23
+    %%%%%:  153-block 24
+    %%%%%:  153-block 25
+        7:  153-block 26
+        7:  153-block 27
+        7:  153-block 28
+        7:  153-block 29
+        1:  153-block 30
+        1:  153-block 31
+    $$$$$:  153-block 32
+    $$$$$:  153-block 33
+    $$$$$:  153-block 34
+    $$$$$:  153-block 35
+    $$$$$:  153-block 36
+    $$$$$:  153-block 37
+    $$$$$:  153-block 38
+    $$$$$:  153-block 39
+    %%%%%:  153-block 40
+    %%%%%:  153-block 41
+    %%%%%:  153-block 42
+    $$$$$:  153-block 43
+    %%%%%:  153-block 44
+    %%%%%:  153-block 45
+    $$$$$:  153-block 46
+    %%%%%:  153-block 47
+    %%%%%:  153-block 48
+    %%%%%:  153-block 49
+    %%%%%:  153-block 50
+    $$$$$:  153-block 51
+    $$$$$:  153-block 52
+    $$$$$:  153-block 53
+    %%%%%:  153-block 54
+    %%%%%:  153-block 55
+    $$$$$:  153-block 56
+    %%%%%:  153-block 57
+    %%%%%:  153-block 58
+    %%%%%:  153-block 59
+    %%%%%:  153-block 60
+    $$$$$:  153-block 61
+    %%%%%:  153-block 62
+    %%%%%:  153-block 63
+    $$$$$:  153-block 64
+    %%%%%:  153-block 65
+    %%%%%:  153-block 66
+        1:  153-block 67
+    $$$$$:  153-block 68
+        1:  153-block 69
+    %%%%%:  153-block 70
+    %%%%%:  153-block 71
+    %%%%%:  153-block 72
+        1:  153-block 73
+    $$$$$:  153-block 74
+    $$$$$:  153-block 75
+    $$$$$:  153-block 76
+    $$$$$:  153-block 77
+    %%%%%:  153-block 78
+    %%%%%:  153-block 79
+    $$$$$:  153-block 80
+    $$$$$:  153-block 81
+    %%%%%:  153-block 82
+    %%%%%:  153-block 83
+    %%%%%:  153-block 84
+    %%%%%:  153-block 85
+    %%%%%:  153-block 86
+    %%%%%:  153-block 87
+    %%%%%:  153-block 88
+    %%%%%:  153-block 89
+    %%%%%:  153-block 90
+    %%%%%:  153-block 91
+    $$$$$:  153-block 92
+    $$$$$:  153-block 93
+    $$$$$:  153-block 94
+    $$$$$:  153-block 95
+    $$$$$:  153-block 96
+    $$$$$:  153-block 97
+    $$$$$:  153-block 98
+    %%%%%:  153-block 99
+    %%%%%:  153-block 100
+    %%%%%:  153-block 101
+    $$$$$:  153-block 102
+    $$$$$:  153-block 103
+    %%%%%:  153-block 104
+    %%%%%:  153-block 105
+    $$$$$:  153-block 106
+    %%%%%:  153-block 107
+    %%%%%:  153-block 108
+    %%%%%:  153-block 109
+    %%%%%:  153-block 110
+    $$$$$:  153-block 111
+    $$$$$:  153-block 112
+    %%%%%:  153-block 113
+    %%%%%:  153-block 114
+    $$$$$:  153-block 115
+    %%%%%:  153-block 116
+    %%%%%:  153-block 117
+    $$$$$:  153-block 118
+    %%%%%:  153-block 119
+    $$$$$:  153-block 120
+    %%%%%:  153-block 121
+    $$$$$:  153-block 122
+    %%%%%:  153-block 123
+    $$$$$:  153-block 124
+    %%%%%:  153-block 125
+    $$$$$:  153-block 126
+    %%%%%:  153-block 127
+    %%%%%:  153-block 128
+    $$$$$:  153-block 129
+    $$$$$:  153-block 130
+    %%%%%:  153-block 131
+    $$$$$:  153-block 132
+        1:  153-block 133
+    %%%%%:  153-block 134
+    $$$$$:  153-block 135
+    %%%%%:  153-block 136
+    %%%%%:  153-block 137
+    $$$$$:  153-block 138
+    %%%%%:  153-block 139
+    %%%%%:  153-block 140
+    $$$$$:  153-block 141
+    $$$$$:  153-block 142
+    %%%%%:  153-block 143
+    $$$$$:  153-block 144
+    %%%%%:  153-block 145
+    %%%%%:  153-block 146
+    %%%%%:  153-block 147
+    %%%%%:  153-block 148
+    $$$$$:  153-block 149
+    $$$$$:  153-block 150
+    $$$$$:  153-block 151
+    %%%%%:  153-block 152
+    %%%%%:  153-block 153
+    %%%%%:  153-block 154
+    $$$$$:  153-block 155
+    $$$$$:  153-block 156
+        1:  153-block 157
+    %%%%%:  153-block 158
+    %%%%%:  153-block 159
+    %%%%%:  153-block 160
+    $$$$$:  153-block 161
+    $$$$$:  153-block 162
+    %%%%%:  153-block 163
+    %%%%%:  153-block 164
+    %%%%%:  153-block 165
+    %%%%%:  153-block 166
+    %%%%%:  153-block 167
+    $$$$$:  153-block 168
+    $$$$$:  153-block 169
+    %%%%%:  153-block 170
+    %%%%%:  153-block 171
+    %%%%%:  153-block 172
+    $$$$$:  153-block 173
+    $$$$$:  153-block 174
+    %%%%%:  153-block 175
+    %%%%%:  153-block 176
+    %%%%%:  153-block 177
+    %%%%%:  153-block 178
+    $$$$$:  153-block 179
+    $$$$$:  153-block 180
+    $$$$$:  153-block 181
+    %%%%%:  153-block 182
+    %%%%%:  153-block 183
+    %%%%%:  153-block 184
+    $$$$$:  153-block 185
+    $$$$$:  153-block 186
+    %%%%%:  153-block 187
+    %%%%%:  153-block 188
+    %%%%%:  153-block 189
+    $$$$$:  153-block 190
+    $$$$$:  153-block 191
+    $$$$$:  153-block 192
+        7:  153-block 193
+        7:  153-block 194
+    %%%%%:  153-block 195
+        1:  153-block 196
+    %%%%%:  153-block 197
+        1:  153-block 198
+        1:  153-block 199
+        1:  153-block 200
+        1:  153-block 201
+    $$$$$:  153-block 202
+    $$$$$:  153-block 203
+    $$$$$:  153-block 204
+    $$$$$:  153-block 205
+    $$$$$:  153-block 206
+    $$$$$:  153-block 207
+    $$$$$:  153-block 208
+        1:  153-block 209
+    %%%%%:  153-block 210
+    %%%%%:  153-block 211
+    %%%%%:  153-block 212
+    %%%%%:  153-block 213
+    %%%%%:  153-block 214
+    %%%%%:  153-block 215
+    %%%%%:  153-block 216
+    $$$$$:  153-block 217
+    %%%%%:  153-block 218
+    $$$$$:  153-block 219
+        1:  153-block 220
+    %%%%%:  153-block 221
+    %%%%%:  153-block 222
+    %%%%%:  153-block 223
+    %%%%%:  153-block 224
+    $$$$$:  153-block 225
+    $$$$$:  153-block 226
+    $$$$$:  153-block 227
+    %%%%%:  153-block 228
+    %%%%%:  153-block 229
+    %%%%%:  153-block 230
+    $$$$$:  153-block 231
+    $$$$$:  153-block 232
+    %%%%%:  153-block 233
+    %%%%%:  153-block 234
+    %%%%%:  153-block 235
+    $$$$$:  153-block 236
+    $$$$$:  153-block 237
+    %%%%%:  153-block 238
+    %%%%%:  153-block 239
+    $$$$$:  153-block 240
+    $$$$$:  153-block 241
+    %%%%%:  153-block 242
+    %%%%%:  153-block 243
+        3:  153-block 244
+        3:  153-block 245
+    $$$$$:  153-block 246
+    %%%%%:  153-block 247
+       24:  153-block 248
+    $$$$$:  153-block 249
+    $$$$$:  153-block 250
+      210:  153-block 251
+        3:  153-block 252
+        3:  153-block 253
+    $$$$$:  153-block 254
+        4:  153-block 255
+    %%%%%:  153-block 256
+       21:  153-block 257
+        2:  153-block 258
+        2:  153-block 259
+    %%%%%:  153-block 260
+    %%%%%:  153-block 261
+        1:  153-block 262
+        1:  153-block 263
+    %%%%%:  153-block 264
+    %%%%%:  153-block 265
+    %%%%%:  153-block 266
+    %%%%%:  153-block 267
+    %%%%%:  153-block 268
+    %%%%%:  153-block 269
+        1:  153-block 270
+        1:  153-block 271
+        1:  153-block 272
+        1:  153-block 273
+    %%%%%:  153-block 274
+    %%%%%:  153-block 275
+    %%%%%:  153-block 276
+    %%%%%:  153-block 277
+    %%%%%:  153-block 278
+    %%%%%:  153-block 279
+    %%%%%:  153-block 280
+    %%%%%:  153-block 281
+    $$$$$:  153-block 282
+    $$$$$:  153-block 283
+    $$$$$:  153-block 284
+    $$$$$:  153-block 285
+    $$$$$:  153-block 286
+    $$$$$:  153-block 287
+    $$$$$:  153-block 288
+    $$$$$:  153-block 289
+    $$$$$:  153-block 290
+        7:  153-block 291
+    %%%%%:  153-block 292
+    %%%%%:  153-block 293
+    %%%%%:  153-block 294
+    %%%%%:  153-block 295
+    %%%%%:  153-block 296
+    %%%%%:  153-block 297
+    %%%%%:  153-block 298
+    %%%%%:  153-block 299
+    %%%%%:  153-block 300
+    %%%%%:  153-block 301
+        7:  153-block 302
+        7:  153-block 303
+    %%%%%:  153-block 304
+    %%%%%:  153-block 305
+    %%%%%:  153-block 306
+    %%%%%:  153-block 307
+    %%%%%:  153-block 308
+    %%%%%:  153-block 309
+    %%%%%:  153-block 310
+    %%%%%:  153-block 311
+        7:  153-block 312
+        7:  153-block 313
+        7:  153-block 314
+        7:  153-block 315
+        7:  153-block 316
+    $$$$$:  153-block 317
+    $$$$$:  153-block 318
+    $$$$$:  153-block 319
+    $$$$$:  153-block 320
+    $$$$$:  153-block 321
+    $$$$$:  153-block 322
+    $$$$$:  153-block 323
+    $$$$$:  153-block 324
+    $$$$$:  153-block 325
+    $$$$$:  153-block 326
+    $$$$$:  153-block 327
+        4:  153-block 328
+    %%%%%:  153-block 329
+        7:  153-block 330
+        7:  153-block 331
+    %%%%%:  153-block 332
+    %%%%%:  153-block 333
+    %%%%%:  153-block 334
+    %%%%%:  153-block 335
+    %%%%%:  153-block 336
+    %%%%%:  153-block 337
+    $$$$$:  153-block 338
+    %%%%%:  153-block 339
+    %%%%%:  153-block 340
+    %%%%%:  153-block 341
+    %%%%%:  153-block 342
+    $$$$$:  153-block 343
+    %%%%%:  153-block 344
+    %%%%%:  153-block 345
+    %%%%%:  153-block 346
+    %%%%%:  153-block 347
+    %%%%%:  153-block 348
+    %%%%%:  153-block 349
+    %%%%%:  153-block 350
+    %%%%%:  153-block 351
+    %%%%%:  153-block 352
+    %%%%%:  153-block 353
+    %%%%%:  153-block 354
+    %%%%%:  153-block 355
+    %%%%%:  153-block 356
+    %%%%%:  153-block 357
+    %%%%%:  153-block 358
+    %%%%%:  153-block 359
+    $$$$$:  153-block 360
+    $$$$$:  153-block 361
+    $$$$$:  153-block 362
+    $$$$$:  153-block 363
+    %%%%%:  153-block 364
+    %%%%%:  153-block 365
+    %%%%%:  153-block 366
+    %%%%%:  153-block 367
+    %%%%%:  153-block 368
+    %%%%%:  153-block 369
+    %%%%%:  153-block 370
+    %%%%%:  153-block 371
+    %%%%%:  153-block 372
+    %%%%%:  153-block 373
+    %%%%%:  153-block 374
+    %%%%%:  153-block 375
+    $$$$$:  153-block 376
+    $$$$$:  153-block 377
+    $$$$$:  153-block 378
+    $$$$$:  153-block 379
+    $$$$$:  153-block 380
+    %%%%%:  153-block 381
+    %%%%%:  153-block 382
+    %%%%%:  153-block 383
+    %%%%%:  153-block 384
+    %%%%%:  153-block 385
+    %%%%%:  153-block 386
+    %%%%%:  153-block 387
+    %%%%%:  153-block 388
+    %%%%%:  153-block 389
+    %%%%%:  153-block 390
+    %%%%%:  153-block 391
+    %%%%%:  153-block 392
+    %%%%%:  153-block 393
+    %%%%%:  153-block 394
+    $$$$$:  153-block 395
+    $$$$$:  153-block 396
+    $$$$$:  153-block 397
+    $$$$$:  153-block 398
+    %%%%%:  153-block 399
+    %%%%%:  153-block 400
+    %%%%%:  153-block 401
+    %%%%%:  153-block 402
+    %%%%%:  153-block 403
+    %%%%%:  153-block 404
+    %%%%%:  153-block 405
+    $$$$$:  153-block 406
+    $$$$$:  153-block 407
+    %%%%%:  153-block 408
+    %%%%%:  153-block 409
+    %%%%%:  153-block 410
+    %%%%%:  153-block 411
+    %%%%%:  153-block 412
+    %%%%%:  153-block 413
+    %%%%%:  153-block 414
+    %%%%%:  153-block 415
+    %%%%%:  153-block 416
+    %%%%%:  153-block 417
+    %%%%%:  153-block 418
+    %%%%%:  153-block 419
+    %%%%%:  153-block 420
+    %%%%%:  153-block 421
+    $$$$$:  153-block 422
+    $$$$$:  153-block 423
+    $$$$$:  153-block 424
+    $$$$$:  153-block 425
+    $$$$$:  153-block 426
+    %%%%%:  153-block 427
+    %%%%%:  153-block 428
+    %%%%%:  153-block 429
+    %%%%%:  153-block 430
+    %%%%%:  153-block 431
+    %%%%%:  153-block 432
+    %%%%%:  153-block 433
+    %%%%%:  153-block 434
+    %%%%%:  153-block 435
+    %%%%%:  153-block 436
+    %%%%%:  153-block 437
+    %%%%%:  153-block 438
+    %%%%%:  153-block 439
+    %%%%%:  153-block 440
+    %%%%%:  153-block 441
+    $$$$$:  153-block 442
+    $$$$$:  153-block 443
+    $$$$$:  153-block 444
+    $$$$$:  153-block 445
+    $$$$$:  153-block 446
+    $$$$$:  153-block 447
+    $$$$$:  153-block 448
+    $$$$$:  153-block 449
+    %%%%%:  153-block 450
+    %%%%%:  153-block 451
+    %%%%%:  153-block 452
+    %%%%%:  153-block 453
+    %%%%%:  153-block 454
+    $$$$$:  153-block 455
+    $$$$$:  153-block 456
+    $$$$$:  153-block 457
+    $$$$$:  153-block 458
+    %%%%%:  153-block 459
+    %%%%%:  153-block 460
+    %%%%%:  153-block 461
+    %%%%%:  153-block 462
+        -:  154:
+        -:  155:      friend bool
+        -:  156:      operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+        -:  157:      { return true; }
+        -:  158:
+        -:  159:      friend bool
+        -:  160:      operator!=(const allocator&, const allocator&) _GLIBCXX_NOTHROW
+        -:  161:      { return false; }
+        -:  162:
+        -:  163:      // Inherit everything else.
+        -:  164:    };
+        -:  165:
+        -:  166:  template<typename _T1, typename _T2>
+        -:  167:    inline bool
+        -:  168:    operator==(const allocator<_T1>&, const allocator<_T2>&)
+        -:  169:    _GLIBCXX_NOTHROW
+        -:  170:    { return true; }
+        -:  171:
+        -:  172:  template<typename _T1, typename _T2>
+        -:  173:    inline bool
+        -:  174:    operator!=(const allocator<_T1>&, const allocator<_T2>&)
+        -:  175:    _GLIBCXX_NOTHROW
+        -:  176:    { return false; }
+        -:  177:
+        -:  178:  // Invalid allocator<cv T> partial specializations.
+        -:  179:  // allocator_traits::rebind_alloc can be used to form a valid allocator type.
+        -:  180:  template<typename _Tp>
+        -:  181:    class allocator<const _Tp>
+        -:  182:    {
+        -:  183:    public:
+        -:  184:      typedef _Tp value_type;
+        -:  185:      template<typename _Up> allocator(const allocator<_Up>&) { }
+        -:  186:    };
+        -:  187:
+        -:  188:  template<typename _Tp>
+        -:  189:    class allocator<volatile _Tp>
+        -:  190:    {
+        -:  191:    public:
+        -:  192:      typedef _Tp value_type;
+        -:  193:      template<typename _Up> allocator(const allocator<_Up>&) { }
+        -:  194:    };
+        -:  195:
+        -:  196:  template<typename _Tp>
+        -:  197:    class allocator<const volatile _Tp>
+        -:  198:    {
+        -:  199:    public:
+        -:  200:      typedef _Tp value_type;
+        -:  201:      template<typename _Up> allocator(const allocator<_Up>&) { }
+        -:  202:    };
+        -:  203:
+        -:  204:  /// @} group allocator
+        -:  205:
+        -:  206:  // Inhibit implicit instantiations for required instantiations,
+        -:  207:  // which are defined via explicit instantiations elsewhere.
+        -:  208:#if _GLIBCXX_EXTERN_TEMPLATE
+        -:  209:  extern template class allocator<char>;
+        -:  210:  extern template class allocator<wchar_t>;
+        -:  211:#endif
+        -:  212:
+        -:  213:  // Undefine.
+        -:  214:#undef __allocator_base
+        -:  215:
+        -:  216:  // To implement Option 3 of DR 431.
+        -:  217:  template<typename _Alloc, bool = __is_empty(_Alloc)>
+        -:  218:    struct __alloc_swap
+        -:  219:    { static void _S_do_it(_Alloc&, _Alloc&) _GLIBCXX_NOEXCEPT { } };
+        -:  220:
+        -:  221:  template<typename _Alloc>
+        -:  222:    struct __alloc_swap<_Alloc, false>
+        -:  223:    {
+        -:  224:      static void
+        -:  225:      _S_do_it(_Alloc& __one, _Alloc& __two) _GLIBCXX_NOEXCEPT
+        -:  226:      {
+        -:  227:	// Precondition: swappable allocators.
+        -:  228:	if (__one != __two)
+        -:  229:	  swap(__one, __two);
+        -:  230:      }
+        -:  231:    };
+        -:  232:
+        -:  233:  // Optimize for stateless allocators.
+        -:  234:  template<typename _Alloc, bool = __is_empty(_Alloc)>
+        -:  235:    struct __alloc_neq
+        -:  236:    {
+        -:  237:      static bool
+        -:  238:      _S_do_it(const _Alloc&, const _Alloc&)
+        -:  239:      { return false; }
+        -:  240:    };
+        -:  241:
+        -:  242:  template<typename _Alloc>
+        -:  243:    struct __alloc_neq<_Alloc, false>
+        -:  244:    {
+        -:  245:      static bool
+        -:  246:      _S_do_it(const _Alloc& __one, const _Alloc& __two)
+        -:  247:      { return __one != __two; }
+        -:  248:    };
+        -:  249:
+        -:  250:#if __cplusplus >= 201103L
+        -:  251:  template<typename _Tp, bool
+        -:  252:    = __or_<is_copy_constructible<typename _Tp::value_type>,
+        -:  253:            is_nothrow_move_constructible<typename _Tp::value_type>>::value>
+        -:  254:    struct __shrink_to_fit_aux
+        -:  255:    { static bool _S_do_it(_Tp&) noexcept { return false; } };
+        -:  256:
+        -:  257:  template<typename _Tp>
+        -:  258:    struct __shrink_to_fit_aux<_Tp, true>
+        -:  259:    {
+        -:  260:      static bool
+        -:  261:      _S_do_it(_Tp& __c) noexcept
+        -:  262:      {
+        -:  263:#if __cpp_exceptions
+        -:  264:	try
+        -:  265:	  {
+        -:  266:	    _Tp(__make_move_if_noexcept_iterator(__c.begin()),
+        -:  267:		__make_move_if_noexcept_iterator(__c.end()),
+        -:  268:		__c.get_allocator()).swap(__c);
+        -:  269:	    return true;
+        -:  270:	  }
+        -:  271:	catch(...)
+        -:  272:	  { return false; }
+        -:  273:#else
+        -:  274:	return false;
+        -:  275:#endif
+        -:  276:      }
+        -:  277:    };
+        -:  278:#endif
+        -:  279:
+        -:  280:_GLIBCXX_END_NAMESPACE_VERSION
+        -:  281:} // namespace std
+        -:  282:
+        -:  283:#endif

@@ -1,0 +1,193 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_gradient.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_GRADIENT_HPP
+        -:   19:#define PIC_FILTERING_FILTER_GRADIENT_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:enum GRADIENT_TYPE {G_SOBEL, G_PREWITT, G_NORMAL};
+        -:   26:
+        -:   27:/**
+        -:   28: * @brief The FilterGradient class
+        -:   29: */
+    #####:   30:class FilterGradient: public Filter
+    %%%%%:   30-block  0
+        -:   31:{
+        -:   32:protected:
+        -:   33:    int colorChannel;
+        -:   34:    GRADIENT_TYPE type;
+        -:   35:    float mask[3];
+        -:   36:
+        -:   37:    /**
+        -:   38:     * @brief ProcessBBox
+        -:   39:     * @param dst
+        -:   40:     * @param src
+        -:   41:     * @param box
+        -:   42:     */
+        -:   43:    void ProcessBBox(Image *dst, ImageVec src, BBox *box);
+        -:   44:
+        -:   45:public:
+        -:   46:    /**
+        -:   47:     * @brief FilterGradient
+        -:   48:     */
+        -:   49:    FilterGradient();
+        -:   50:
+        -:   51:    /**
+        -:   52:     * @brief FilterGradient
+        -:   53:     * @param colorChannel
+        -:   54:     * @param type
+        -:   55:     */
+        -:   56:    FilterGradient(int colorChannel, GRADIENT_TYPE type);
+        -:   57:
+        -:   58:    /**
+        -:   59:     * @brief update
+        -:   60:     * @param colorChannel
+        -:   61:     * @param type
+        -:   62:     */
+        -:   63:    void update(int colorChannel, GRADIENT_TYPE type);
+        -:   64:
+        -:   65:    /**
+        -:   66:     * @brief OutputSize
+        -:   67:     * @param imgIn
+        -:   68:     * @param width
+        -:   69:     * @param height
+        -:   70:     * @param channels
+        -:   71:     * @param frames
+        -:   72:     */
+    #####:   73:    void OutputSize(ImageVec imgIn, int &width, int &height, int &channels, int &frames)
+        -:   74:    {
+    #####:   75:        width       = imgIn[0]->width;
+    #####:   76:        height      = imgIn[0]->height;
+    #####:   77:        channels    = 3;
+    #####:   78:        frames      = imgIn[0]->frames;
+    #####:   79:    }   
+        -:   80:
+        -:   81:    /**
+        -:   82:     * @brief execute
+        -:   83:     * @param imgIn
+        -:   84:     * @param imgOut
+        -:   85:     * @param type
+        -:   86:     * @param colorChannel
+        -:   87:     * @return
+        -:   88:     */
+        -:   89:    static Image *execute(Image *imgIn, Image *imgOut = NULL,
+        -:   90:                             GRADIENT_TYPE type = G_SOBEL, int colorChannel = 0)
+        -:   91:    {
+        -:   92:        FilterGradient filter(colorChannel, type);
+        -:   93:        return filter.Process(Single(imgIn), imgOut);
+        -:   94:    }
+        -:   95:};
+        -:   96:
+    #####:   97:PIC_INLINE FilterGradient::FilterGradient() : Filter()
+        -:   98:{
+    #####:   99:    update(0, G_NORMAL);
+        -:  100:}
+        -:  101:
+        -:  102:PIC_INLINE FilterGradient::FilterGradient(int colorChannel,
+        -:  103:        GRADIENT_TYPE type = G_NORMAL) : Filter()
+        -:  104:{
+        -:  105:    update(colorChannel, type);
+        -:  106:}
+        -:  107:
+    #####:  108:PIC_INLINE void FilterGradient::update(int colorChannel,
+        -:  109:                                           GRADIENT_TYPE type = G_NORMAL)
+        -:  110:{
+    #####:  111:    this->colorChannel = colorChannel;
+    #####:  112:    this->type = type;
+        -:  113:
+    #####:  114:    switch(type) {
+        -:  115:    case G_SOBEL: {
+        -:  116:        mask[0] = 1.0f;
+        -:  117:        mask[1] = 2.0f;
+        -:  118:        mask[2] = 1.0f;
+        -:  119:    }
+        -:  120:    break;
+        -:  121:
+        -:  122:    case G_PREWITT: {
+        -:  123:        mask[0] = 1.0f;
+        -:  124:        mask[1] = 1.0f;
+        -:  125:        mask[2] = 1.0f;
+        -:  126:    }
+        -:  127:    break;
+        -:  128:
+    #####:  129:    case G_NORMAL: {
+    #####:  130:        mask[0] = 0.0f;
+    #####:  131:        mask[1] = 1.0f;
+    #####:  132:        mask[2] = 0.0f;
+        -:  133:    }
+    #####:  134:    break;
+        -:  135:
+        -:  136:    }
+        -:  137:}
+        -:  138:
+    #####:  139:PIC_INLINE void FilterGradient::ProcessBBox(Image *dst, ImageVec src,
+        -:  140:        BBox *box)
+        -:  141:{
+    #####:  142:    Image *img = src[0];
+    %%%%%:  142-block  0
+        -:  143:
+    #####:  144:    int channel = (img->channels == 1) ? 0 : colorChannel;
+    %%%%%:  144-block  0
+    %%%%%:  144-block  1
+        -:  145:
+    #####:  146:    for(int j = box->y0; j < box->y1; j++) {
+    %%%%%:  146-block  0
+    %%%%%:  146-block  1
+    %%%%%:  146-block  2
+    #####:  147:        for(int i = box->x0; i < box->x1; i++) {
+    %%%%%:  147-block  0
+    %%%%%:  147-block  1
+        -:  148:            float gradX = 0.0f;
+        -:  149:            float gradY = 0.0f;
+        -:  150:
+    #####:  151:            for(int k = -1; k < 2; k++) {
+    %%%%%:  151-block  0
+    #####:  152:                float val = mask[k + 1];
+        -:  153:
+    #####:  154:                gradX += val * (*img)(i + 1, j + k)[channel];
+    %%%%%:  154-block  0
+    #####:  155:                gradX -= val * (*img)(i - 1, j + k)[channel];
+    %%%%%:  155-block  0
+        -:  156:
+    #####:  157:                gradY += val * (*img)(i + k, j + 1)[channel];
+    %%%%%:  157-block  0
+    #####:  158:                gradY -= val * (*img)(i + k, j - 1)[channel];
+    %%%%%:  158-block  0
+    %%%%%:  158-block  1
+        -:  159:            }
+        -:  160:
+    #####:  161:            float *dst_data = (*dst)(i, j);
+    %%%%%:  161-block  0
+        -:  162:
+    #####:  163:            dst_data[0] = gradX;
+    #####:  164:            dst_data[1] = gradY;
+    #####:  165:            dst_data[2] = sqrtf(gradX * gradX + gradY * gradY);
+    %%%%%:  165-block  0
+        -:  166:        }
+        -:  167:    }
+    #####:  168:}
+        -:  169:
+        -:  170:} // end namespace pic
+        -:  171:
+        -:  172:#endif /* PIC_FILTERING_FILTER_GRADIENT_HPP */

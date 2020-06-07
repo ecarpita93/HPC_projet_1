@@ -1,0 +1,419 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_bilateral_2dg.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_BILATERAL_2DG_HPP
+        -:   19:#define PIC_FILTERING_FILTER_BILATERAL_2DG_HPP
+        -:   20:
+        -:   21://#define BILATERAL_GRID_MULTI_PASS
+        -:   22:
+        -:   23:#include "../util/std_util.hpp"
+        -:   24:
+        -:   25:#include "../filtering/filter.hpp"
+        -:   26:#include "../filtering/filter_gaussian_3d.hpp"
+        -:   27:#include "../image_samplers/image_sampler_bilinear.hpp"
+        -:   28:
+        -:   29:namespace pic {
+        -:   30:
+        -:   31:/**
+        -:   32: * @brief The FilterBilateral2DG class
+        -:   33: */
+        -:   34:class FilterBilateral2DG: public Filter
+        -:   35:{
+        -:   36:protected:
+        -:   37:    ImageSamplerBilinear isb;
+        -:   38:    FilterGaussian3D *fltG;
+        -:   39:    int width, height, range;
+        -:   40:    float sigma_s, sigma_r;
+        -:   41:
+        -:   42:    Image *grid, *gridBlur;
+        -:   43:    bool parallel;
+        -:   44:
+        -:   45:    /**
+        -:   46:     * @brief Splat splats values into the grid.
+        -:   47:     * @param base
+        -:   48:     * @param edge
+        -:   49:     * @param channel
+        -:   50:     * @return
+        -:   51:     */
+        -:   52:    Image *Splat(Image *base, Image *edge, int channel);
+        -:   53:
+        -:   54:    /**
+        -:   55:     * @brief Slice slices the grid into the output image
+        -:   56:     * @param out
+        -:   57:     * @param base
+        -:   58:     * @param edge
+        -:   59:     * @param channels
+        -:   60:     */
+        -:   61:    void Slice(Image *out, Image *base, Image *edge, int channels);
+        -:   62:
+        -:   63:public:
+        -:   64:
+        -:   65:    /**
+        -:   66:     * @brief FilterBilateral2DG
+        -:   67:     * @param sigma_s
+        -:   68:     * @param sigma_r
+        -:   69:     */
+        -:   70:    FilterBilateral2DG(float sigma_s, float sigma_r);
+        -:   71:
+        -:   72:    ~FilterBilateral2DG();
+        -:   73:
+        -:   74:    float s_S, s_R, mul_E;
+        -:   75:
+        -:   76:    /**
+        -:   77:     * @brief Signature
+        -:   78:     * @return
+        -:   79:     */
+    #####:   80:    std::string signature()
+        -:   81:    {
+    #####:   82:        return genBilString("G", sigma_s, sigma_r);
+    %%%%%:   82-block  0
+    %%%%%:   82-block  1
+    %%%%%:   82-block  2
+    $$$$$:   82-block  3
+        -:   83:    }
+        -:   84:
+        -:   85:    /**
+        -:   86:     * @brief Process
+        -:   87:     * @param imgIn
+        -:   88:     * @param imgOut
+        -:   89:     * @return
+        -:   90:     */
+        -:   91:    Image *Process(ImageVec imgIn, Image *imgOut);
+        -:   92:
+        -:   93:    /**
+        -:   94:     * @brief execute
+        -:   95:     * @param imgIn
+        -:   96:     * @param imgOut
+        -:   97:     * @param sigma_s
+        -:   98:     * @param sigma_r
+        -:   99:     * @return
+        -:  100:     */
+    #####:  101:    static Image *execute(Image *imgIn, Image *imgOut, float sigma_s,
+        -:  102:                             float sigma_r)
+        -:  103:    {
+    #####:  104:        FilterBilateral2DG filter(sigma_s, sigma_r);
+    %%%%%:  104-block  0
+        -:  105:
+        -:  106:        //long t0 = timeGetTime();
+        -:  107:
+    #####:  108:        imgOut = filter.Process(Single(imgIn), NULL); //Filtering
+    %%%%%:  108-block  0
+    %%%%%:  108-block  1
+    $$$$$:  108-block  2
+    $$$$$:  108-block  3
+        -:  109:
+        -:  110:        //long t1 = timeGetTime();
+        -:  111:        //printf("Bilateral Grid Filter time: %f\n", float(t1 - t0) / 1000.0f);
+        -:  112:
+    #####:  113:        return imgOut;
+    %%%%%:  113-block  0
+        -:  114:    }
+        -:  115:};
+        -:  116:
+    #####:  117:PIC_INLINE FilterBilateral2DG::FilterBilateral2DG(float sigma_s, float sigma_r) : Filter()
+    %%%%%:  117-block  0
+    $$$$$:  117-block  1
+        -:  118:{
+        -:  119:    //protected values are assigned/computed
+    #####:  120:    this->sigma_s = sigma_s;
+    #####:  121:    this->sigma_r = sigma_r;
+        -:  122:
+    #####:  123:    parallel = false;
+        -:  124:
+    #####:  125:    grid = NULL;
+    #####:  126:    gridBlur = NULL;
+        -:  127:
+    #####:  128:    fltG = new FilterGaussian3D(1.0f);
+    %%%%%:  128-block  0
+    %%%%%:  128-block  1
+    $$$$$:  128-block  2
+    #####:  129:}
+    %%%%%:  129-block  0
+        -:  130:
+    #####:  131:PIC_INLINE FilterBilateral2DG::~FilterBilateral2DG()
+        -:  132:{
+    #####:  133:    delete_s(grid);
+    %%%%%:  133-block  0
+    #####:  134:    delete_s(gridBlur);
+    %%%%%:  134-block  0
+    #####:  135:    delete_s(fltG);
+    %%%%%:  135-block  0
+    %%%%%:  135-block  1
+    #####:  136:}
+        -:  137:
+    #####:  138:PIC_INLINE Image *FilterBilateral2DG::Splat(Image *base, Image *edge, int channels)
+        -:  139:{
+    #####:  140:    if(grid == NULL) {
+    %%%%%:  140-block  0
+        -:  141:        #ifdef PIC_DEBUG
+        -:  142:            printf("S Rate: %f R Rate: %f Mul E: %f\n", s_S, s_R, mul_E);
+        -:  143:        #endif
+        -:  144:
+    #####:  145:        width =  int(ceilf(float(base->width) * s_S));
+    #####:  146:        height = int(ceilf(float(base->height) * s_S));
+    #####:  147:        range =  int(ceilf(s_R));
+        -:  148:
+        -:  149:        #ifdef PIC_DEBUG
+        -:  150:            printf("Grid Size: %d %d %d\n", width, height, range);
+        -:  151:        #endif
+        -:  152:
+        -:  153:#ifdef PIC_BILATERAL_GRID_MULTI_PASS
+        -:  154:        #ifdef PIC_DEBUG
+        -:  155:        printf("Grid - Memory Mb: %3.2f\n",
+        -:  156:               float(width + 1)*float(height + 1)*float(range + 1) * 8.0f /
+        -:  157:               (1024.0f * 1024.0f));
+        -:  158:        #endif
+        -:  159:
+        -:  160:        grid = new Image(range + 1, width + 1, height + 1, 2);
+        -:  161:        gridBlur = new Image(range + 1, width + 1, height + 1, 2);
+        -:  162:#else
+        -:  163:        #ifdef PIC_DEBUG
+        -:  164:        printf("Grid - Memory Mb: %3.2f\n",
+        -:  165:               float(width + 1)*float(height + 1)*float(range + 1) * 16.0f /
+        -:  166:               (1024.0f * 1024.0f));
+        -:  167:        #endif
+        -:  168:
+    #####:  169:        grid = new Image(range + 1, width + 1, height + 1, base->channels + 1);
+    %%%%%:  169-block  0
+    $$$$$:  169-block  1
+    #####:  170:        gridBlur = new Image(range + 1, width + 1, height + 1, base->channels + 1);
+    %%%%%:  170-block  0
+    %%%%%:  170-block  1
+    $$$$$:  170-block  2
+        -:  171:#endif
+        -:  172:    }
+        -:  173:
+    #####:  174:    grid->setZero();
+        -:  175:
+    #####:  176:    for(int j = 0; j < base->height; j++) {
+    %%%%%:  176-block  0
+    %%%%%:  176-block  1
+    %%%%%:  176-block  2
+    #####:  177:        int y = int(lround(float(j) * s_S));
+        -:  178:
+    #####:  179:        for(int i = 0; i < base->width; i++) {
+    %%%%%:  179-block  0
+    %%%%%:  179-block  1
+        -:  180:
+    #####:  181:            int ind = i * base->xstride + j * base->ystride;
+        -:  182:
+        -:  183:#ifdef PIC_BILATERAL_GRID_MULTI_PASS
+        -:  184:            float E = edge->data[ind + channel];
+        -:  185:#else
+    #####:  186:            float E = 0.0f;
+        -:  187:
+    #####:  188:            for(int k = 0; k < edge->channels; k++) {
+    %%%%%:  188-block  0
+    %%%%%:  188-block  1
+    #####:  189:                E += edge->data[ind + k];
+    %%%%%:  189-block  0
+        -:  190:            }
+        -:  191:
+        -:  192:#endif
+    #####:  193:            E *= mul_E;
+        -:  194:
+    #####:  195:            int x = int(lround(float(i) * s_S));
+    #####:  196:            int r = int(lround(E));
+        -:  197:
+    #####:  198:            int grdInd = x * grid->xstride + y * grid->ystride + r * grid->tstride;
+        -:  199:
+        -:  200:#ifdef PIC_BILATERAL_GRID_MULTI_PASS
+        -:  201:            grid->data[grdInd + 0] += base->data[ind + channels];
+        -:  202:            grid->data[grdInd + 1] += 1.0f;
+        -:  203:#else
+        -:  204:
+    #####:  205:            for(int k = 0; k < base->channels; k++) {
+    %%%%%:  205-block  0
+    %%%%%:  205-block  1
+    #####:  206:                grid->data[grdInd + k] += base->data[ind + k];
+    %%%%%:  206-block  0
+        -:  207:            }
+        -:  208:
+    #####:  209:            grid->data[grdInd + base->channels] += 1.0f;	//Counter
+    %%%%%:  209-block  0
+        -:  210:#endif
+        -:  211:        }
+        -:  212:    }
+    #####:  213:    return grid;
+    %%%%%:  213-block  0
+        -:  214:}
+        -:  215:
+    #####:  216:PIC_INLINE void FilterBilateral2DG::Slice(Image *out, Image *base, Image *edge,
+        -:  217:                               int channels)
+        -:  218:{
+    #####:  219:    float widthf = float(grid->width);
+    #####:  220:    float heightf = float(grid->height);
+    #####:  221:    float rangef = float(grid->frames);
+        -:  222:
+        -:  223:#ifdef PIC_BILATERAL_GRID_MULTI_PASS
+        -:  224:    float vOut[2];
+        -:  225:#else
+    #####:  226:    float *vOut = new float [out->channels + 1];
+    %%%%%:  226-block  0
+    %%%%%:  226-block  1
+        -:  227:#endif
+        -:  228:
+    #####:  229:    for(int j = 0; j < out->height; j++) {
+    %%%%%:  229-block  0
+    %%%%%:  229-block  1
+    %%%%%:  229-block  2
+    #####:  230:        for(int i = 0; i < out->width; i++) {
+    %%%%%:  230-block  0
+    #####:  231:            int ind = i * out->xstride + j * out->ystride;
+        -:  232:
+    #####:  233:            float x = float(i) * s_S;
+    #####:  234:            float y = float(j) * s_S;
+        -:  235:
+        -:  236:#ifdef PIC_BILATERAL_GRID_MULTI_PASS
+        -:  237:            float E = edge->data[ind + channels];
+        -:  238:#else
+    #####:  239:            float E = Arrayf::sum(&edge->data[ind], out->channels);
+    %%%%%:  239-block  0
+        -:  240:
+        -:  241:#endif
+    #####:  242:            E *= mul_E;
+        -:  243:
+        -:  244:            //Trilinear filtering
+    #####:  245:            isb.SampleImage(gridBlur, x / widthf, y / heightf, E / rangef, vOut);
+    %%%%%:  245-block  0
+        -:  246:
+        -:  247:#ifdef PIC_BILATERAL_GRID_MULTI_PASS
+        -:  248:
+        -:  249:            if(vOut[1] > 0.0f) {
+        -:  250:                out->data[ind + channels] = vOut[0] / vOut[1];
+        -:  251:            } else {
+        -:  252:                out->data[ind + channels] = 0.0f;
+        -:  253:            }
+        -:  254:
+        -:  255:#else
+    #####:  256:            if(vOut[out->channels] > 0.0f) {
+    #####:  257:                for(int k = 0; k < out->channels; k++) {
+    %%%%%:  257-block  0
+    #####:  258:                    out->data[ind + k] = vOut[k] / vOut[out->channels];
+    %%%%%:  258-block  0
+        -:  259:                }
+        -:  260:            } else {
+    #####:  261:                Arrayf::assign(0.0f, &out->data[ind], out->channels);
+    %%%%%:  261-block  0
+    %%%%%:  261-block  1
+        -:  262:            }
+        -:  263:
+        -:  264:#endif
+        -:  265:        }
+        -:  266:    }
+    #####:  267:}
+        -:  268:
+    #####:  269:PIC_INLINE Image *FilterBilateral2DG::Process(ImageVec imgIn, Image *imgOut)
+        -:  270:{
+    #####:  271:    if(!checkInput(imgIn)) {
+    %%%%%:  271-block  0
+        -:  272:        return imgOut;
+        -:  273:    }
+        -:  274:
+    #####:  275:    imgOut = setupAux(imgIn, imgOut);
+    %%%%%:  275-block  0
+    %%%%%:  275-block  1
+    $$$$$:  275-block  2
+        -:  276:
+    #####:  277:    if(imgOut == NULL) {
+    %%%%%:  277-block  0
+        -:  278:        return imgOut;
+        -:  279:    }
+        -:  280:
+    #####:  281:    Image *base, *edge;
+        -:  282:
+    #####:  283:    base = imgIn[0];
+    %%%%%:  283-block  0
+        -:  284:
+    #####:  285:    int ind;
+    #####:  286:    float *baseMaxmaxVal = base->getMaxVal(NULL, NULL);
+    %%%%%:  286-block  0
+    #####:  287:    float maxVal = Arrayf::getMax(baseMaxmaxVal, base->channels, ind);
+    #####:  288:    delete[] baseMaxmaxVal;
+    %%%%%:  288-block  0
+    %%%%%:  288-block  1
+        -:  289:
+    #####:  290:    if(imgIn.size() == 2) {
+    %%%%%:  290-block  0
+    #####:  291:        edge = imgIn[1];
+    %%%%%:  291-block  0
+        -:  292:
+    #####:  293:        float *edgeMaxVal = edge->getMaxVal(NULL, NULL);
+    %%%%%:  293-block  0
+        -:  294:
+    #####:  295:        maxVal = MAX(maxVal, Arrayf::getMax(edgeMaxVal, edge->channels, ind));
+    %%%%%:  295-block  0
+    %%%%%:  295-block  1
+        -:  296:
+    #####:  297:        delete[] edgeMaxVal;
+    %%%%%:  297-block  0
+    %%%%%:  297-block  1
+        -:  298:
+    #####:  299:        *edge /= maxVal;
+    %%%%%:  299-block  0
+        -:  300:    } else {
+    #####:  301:        edge = imgIn[0];
+    %%%%%:  301-block  0
+        -:  302:    }
+        -:  303:
+        -:  304:    //Range in [0,1]
+    #####:  305:    *base /= maxVal;
+    %%%%%:  305-block  0
+    #####:  306:    float tmpSigma_r = sigma_r;
+    #####:  307:    sigma_r /= maxVal;
+        -:  308:
+        -:  309:    //Grid's Initialization
+    #####:  310:    s_S = 1.0f / sigma_s;	//Spatial Sampling rate
+    #####:  311:    s_R = 1.0f / sigma_r; //Range Sampling rate
+        -:  312:
+        -:  313:#ifdef PIC_BILATERAL_GRID_MULTI_PASS
+        -:  314:    int n = imgIn[0]->channels;
+        -:  315:    mul_E = s_R;
+        -:  316:#else
+    #####:  317:    int n = 1;
+    #####:  318:    mul_E = s_R / float(imgIn[0]->channels);
+        -:  319:#endif
+        -:  320:
+    #####:  321:    for(int i = 0; i < n; i++) {
+    %%%%%:  321-block  0
+        -:  322:        //splat
+    #####:  323:        Splat(base, edge, i);
+    %%%%%:  323-block  0
+        -:  324:
+        -:  325:        //blur
+    #####:  326:        fltG->Process(Single(grid), gridBlur);
+        -:  327:
+        -:  328:        //slice
+    #####:  329:        Slice(imgOut, base, edge, i);
+    %%%%%:  329-block  0
+        -:  330:    }
+        -:  331:
+    #####:  332:    *imgOut *= maxVal;
+    %%%%%:  332-block  0
+    #####:  333:    sigma_r = tmpSigma_r;
+        -:  334:
+    #####:  335:    return imgOut;
+        -:  336:}
+        -:  337:
+        -:  338:} // end namespace pic
+        -:  339:
+        -:  340:#endif /* PIC_FILTERING_FILTER_BILATERAL_2DG_HPP */
+        -:  341:

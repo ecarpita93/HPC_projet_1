@@ -1,0 +1,284 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/algorithms/hdr_merger.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_ALGORITHMS_HDR_MERGER_HPP
+        -:   19:#define PIC_ALGORITHMS_HDR_MERGER_HPP
+        -:   20:
+        -:   21:#include <vector>
+        -:   22:#include <string>
+        -:   23:
+        -:   24:#include "../base.hpp"
+        -:   25:#include "../util/vec.hpp"
+        -:   26:#include "../algorithms.hpp"
+        -:   27:#include "../algorithms/camera_response_function.hpp"
+        -:   28:#include "../features_matching/ward_alignment.hpp"
+        -:   29:#include "../filtering/filter_assemble_hdr.hpp"
+        -:   30:
+        -:   31:namespace pic {
+        -:   32:
+        -:   33:enum HDRAlign{HA_NONE, HA_MTB, HA_FEATURES};
+        -:   34:
+        -:   35:class HDRMerger
+        -:   36:{
+        -:   37:protected:
+        -:   38:    CameraResponseFunction *crf;
+        -:   39:    FilterAssembleHDR merger;
+        -:   40:    HDRAlign hdra;
+        -:   41:
+        -:   42:    CRF_WEIGHT weight;
+        -:   43:    HDR_REC_DOMAIN domain;
+        -:   44:
+        -:   45:    std::vector<std::string> file_name_vec;
+        -:   46:    std::vector<float> exposure_time_vec;
+        -:   47:
+        -:   48:    /**
+        -:   49:     * @brief incrementalAlignment
+        -:   50:     * @param stack
+        -:   51:     * @param s_vec
+        -:   52:     */
+    #####:   53:    void incrementalAlignment(ImageVec &stack, std::vector<Vec2i> &s_vec)
+        -:   54:    {
+    #####:   55:        int n = int(stack.size());
+    %%%%%:   55-block  0
+        -:   56:
+    #####:   57:        for(int i = 0; i < (n - 1); i++) {
+    %%%%%:   57-block  0
+    %%%%%:   57-block  1
+    #####:   58:            Vec2i s_i = WardAlignment::execute(stack[i + 1], stack[i]);
+    %%%%%:   58-block  0
+    #####:   59:            s_vec.push_back(s_i);
+        -:   60:        }
+        -:   61:
+    #####:   62:        int n2 = int(s_vec.size());
+    %%%%%:   62-block  0
+    #####:   63:        for(int i = 0; i < (n2 - 1); i++) {
+    %%%%%:   63-block  0
+    %%%%%:   63-block  1
+    #####:   64:            Vec2i n_i = s_vec[i];
+    %%%%%:   64-block  0
+        -:   65:
+    #####:   66:            for(int j = (i + 1); j < n2; j++) {
+    %%%%%:   66-block  0
+    %%%%%:   66-block  1
+    #####:   67:                n_i += s_vec[j];
+    %%%%%:   67-block  0
+    %%%%%:   67-block  1
+        -:   68:            }
+        -:   69:
+    #####:   70:            s_vec[i] = n_i;
+    %%%%%:   70-block  0
+    %%%%%:   70-block  1
+        -:   71:        }
+    #####:   72:    }
+        -:   73:
+        -:   74:public:
+        -:   75:
+        -:   76:    /**
+        -:   77:     * @brief HDRMerger
+        -:   78:     */
+        1:   79:    HDRMerger()
+        1:   80:    {
+        1:   81:        domain = HRD_LOG;
+        1:   82:        weight = CW_DEB97;
+        1:   83:        hdra = HA_NONE;
+        -:   84:
+        1:   85:        crf = NULL;
+        -:   86:    }
+        -:   87:
+        1:   88:    ~HDRMerger()
+        1:   89:    {
+        1:   89-block  0
+        1:   90:        release();
+        1:   91:    }
+        -:   92:
+        -:   93:    /**
+        -:   94:     * @brief release
+        -:   95:     */
+        1:   96:    void release()
+        1:   96-block  0
+        -:   97:    {
+        -:   98:    }
+        -:   99:
+        -:  100:    /**
+        -:  101:     * @brief update
+        -:  102:     * @param weight
+        -:  103:     * @param domain
+        -:  104:     * @param crf
+        -:  105:     */
+        -:  106:    void update(CRF_WEIGHT weight, HDR_REC_DOMAIN domain,
+        -:  107:                HDRAlign hdra,
+        -:  108:                CameraResponseFunction *crf = NULL)
+        -:  109:    {
+        -:  110:        this->hdra = hdra;
+        -:  111:        this->weight = weight;
+        -:  112:        this->domain = domain;
+        -:  113:        this->crf = crf;
+        -:  114:    }
+        -:  115:
+        -:  116:    /**
+        -:  117:     * @brief addFile
+        -:  118:     * @param file_name
+        -:  119:     * @param exposure_time
+        -:  120:     */
+        7:  121:    void addFile(std::string file_name, float exposure_time = -1.0f)
+        -:  122:    {
+        7:  123:        file_name_vec.push_back(file_name);
+        7:  123-block  0
+        7:  124:        exposure_time_vec.push_back(exposure_time);
+        7:  124-block  0
+        7:  125:    }
+        7:  125-block  0
+        -:  126:
+        -:  127:    /**
+        -:  128:     * @brief execute
+        -:  129:     * @param imgOut
+        -:  130:     * @return
+        -:  131:     */
+        1:  132:    Image *execute(Image *imgOut = NULL)
+        -:  133:    {
+        2:  134:        ImageVec stack;
+        1:  134-block  0
+        1:  134-block  1
+        -:  135:
+        1:  136:        bool bValid = true;
+        1:  137:        int n = int(file_name_vec.size());
+        1:  137-block  0
+        -:  138:
+        8:  139:        for(int i = 0; i < n; i++) {
+        1:  139-block  0
+        8:  139-block  1
+        7:  140:            Image *img = new Image();
+        7:  140-block  0
+    $$$$$:  140-block  1
+       14:  141:            img->Read(file_name_vec[i], LT_NOR);
+        7:  141-block  0
+        7:  141-block  1
+    $$$$$:  141-block  2
+    $$$$$:  141-block  3
+        7:  142:            stack.push_back(img);
+        7:  142-block  0
+       14:  143:            bValid = bValid && img->isValid();
+        7:  143-block  0
+        7:  143-block  1
+        7:  143-block  2
+        -:  144:        }
+        -:  145:
+        1:  146:        if(!bValid) {
+        1:  146-block  0
+        -:  147:            return imgOut;
+        -:  148:        }
+        -:  149:
+        2:  150:        ImageVec stack_aligned;
+        1:  150-block  0
+        1:  150-block  1
+    $$$$$:  150-block  2
+        1:  151:        ImageVec stack_aligned_track;
+        1:  151-block  0
+    $$$$$:  151-block  1
+        -:  152:
+        -:  153:        //align images
+       1*:  154:        if(hdra != HA_NONE && (n > 1)) {
+        1:  154-block  0
+    %%%%%:  154-block  1
+        -:  155:
+    #####:  156:            ImaveVecSortByExposureTime(stack);
+    %%%%%:  156-block  0
+        -:  157:
+    #####:  158:            if(hdra == HA_MTB) {
+    #####:  159:                std::vector<Vec2i> shifts;
+    %%%%%:  159-block  0
+    %%%%%:  159-block  1
+    $$$$$:  159-block  2
+    #####:  160:                incrementalAlignment(stack, shifts);
+    %%%%%:  160-block  0
+        -:  161:
+    #####:  162:                stack_aligned.push_back(stack[n - 1]);
+    %%%%%:  162-block  0
+        -:  163:
+    #####:  164:                for(int i = 0; i < int(shifts.size()); i++) {
+    %%%%%:  164-block  0
+    %%%%%:  164-block  1
+    #####:  165:                    auto s_i = shifts[i];
+    %%%%%:  165-block  0
+    #####:  166:                    if(s_i[0] == 0 && s_i[1] == 0) {
+    %%%%%:  166-block  0
+    %%%%%:  166-block  1
+    #####:  167:                        stack_aligned.push_back(stack[i]);
+    %%%%%:  167-block  0
+        -:  168:                    } else {
+    #####:  169:                        auto tmp_i = WardAlignment::shiftImage(stack[i], shifts[i], NULL);
+    %%%%%:  169-block  0
+    #####:  170:                        stack_aligned.push_back(tmp_i);
+    %%%%%:  170-block  0
+    #####:  171:                        stack_aligned_track.push_back(tmp_i);
+    %%%%%:  171-block  0
+        -:  172:                    }
+        -:  173:                }
+        -:  174:            }
+        -:  175:        }
+        -:  176:
+        -:  177:        //compute CRF
+        1:  178:        if(crf == NULL) {
+        1:  178-block  0
+        1:  179:            crf = new CameraResponseFunction();
+        1:  179-block  0
+        1:  179-block  1
+        2:  180:            crf->DebevecMalik(stack, weight, 256, 20.0f);
+        1:  180-block  0
+        1:  180-block  1
+        1:  180-block  2
+    $$$$$:  180-block  3
+        -:  181:        }
+        -:  182:
+        -:  183:        //merge all exposure images
+        1:  184:        merger.update(crf, weight, domain);
+        1:  184-block  0
+        -:  185:
+        1:  186:        if(hdra != HA_NONE) {
+        1:  186-block  0
+    #####:  187:            imgOut = merger.Process(stack_aligned, imgOut);
+    %%%%%:  187-block  0
+    %%%%%:  187-block  1
+    %%%%%:  187-block  2
+    %%%%%:  187-block  3
+    $$$$$:  187-block  4
+        -:  188:        } else {
+        2:  189:            imgOut = merger.Process(stack, imgOut);
+        1:  189-block  0
+        1:  189-block  1
+        1:  189-block  2
+        1:  189-block  3
+    $$$$$:  189-block  4
+    $$$$$:  189-block  5
+        -:  190:        }
+        -:  191:
+        1:  192:        stdVectorClear(stack);
+        1:  192-block  0
+        1:  193:        stdVectorClear(stack_aligned_track);
+        -:  194:
+        1:  195:        return imgOut;
+        -:  196:    }
+        -:  197:};
+        -:  198:
+        -:  199:} // end namespace pic
+        -:  200:
+        -:  201:#endif /* PIC_ALGORITHMS_WEIGHT_FUNCTION_HPP */
+        -:  202:

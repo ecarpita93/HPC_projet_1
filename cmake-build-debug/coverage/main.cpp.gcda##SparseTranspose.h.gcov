@@ -1,0 +1,102 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/externals/Eigen/src/SparseCore/SparseTranspose.h
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:// This file is part of Eigen, a lightweight C++ template library
+        -:    2:// for linear algebra.
+        -:    3://
+        -:    4:// Copyright (C) 2008-2015 Gael Guennebaud <gael.guennebaud@inria.fr>
+        -:    5://
+        -:    6:// This Source Code Form is subject to the terms of the Mozilla
+        -:    7:// Public License v. 2.0. If a copy of the MPL was not distributed
+        -:    8:// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:    9:
+        -:   10:#ifndef EIGEN_SPARSETRANSPOSE_H
+        -:   11:#define EIGEN_SPARSETRANSPOSE_H
+        -:   12:
+        -:   13:namespace Eigen { 
+        -:   14:
+        -:   15:namespace internal {
+        -:   16:  template<typename MatrixType,int CompressedAccess=int(MatrixType::Flags&CompressedAccessBit)>
+        -:   17:  class SparseTransposeImpl
+        -:   18:    : public SparseMatrixBase<Transpose<MatrixType> >
+        -:   19:  {};
+        -:   20:  
+        -:   21:  template<typename MatrixType>
+    #####:   22:  class SparseTransposeImpl<MatrixType,CompressedAccessBit>
+        -:   23:    : public SparseCompressedBase<Transpose<MatrixType> >
+        -:   24:  {
+        -:   25:    typedef SparseCompressedBase<Transpose<MatrixType> > Base;
+        -:   26:  public:
+        -:   27:    using Base::derived;
+        -:   28:    typedef typename Base::Scalar Scalar;
+        -:   29:    typedef typename Base::StorageIndex StorageIndex;
+        -:   30:
+        -:   31:    inline Index nonZeros() const { return derived().nestedExpression().nonZeros(); }
+        -:   32:    
+        -:   33:    inline const Scalar* valuePtr() const { return derived().nestedExpression().valuePtr(); }
+        -:   34:    inline const StorageIndex* innerIndexPtr() const { return derived().nestedExpression().innerIndexPtr(); }
+        -:   35:    inline const StorageIndex* outerIndexPtr() const { return derived().nestedExpression().outerIndexPtr(); }
+        -:   36:    inline const StorageIndex* innerNonZeroPtr() const { return derived().nestedExpression().innerNonZeroPtr(); }
+        -:   37:
+        -:   38:    inline Scalar* valuePtr() { return derived().nestedExpression().valuePtr(); }
+        -:   39:    inline StorageIndex* innerIndexPtr() { return derived().nestedExpression().innerIndexPtr(); }
+        -:   40:    inline StorageIndex* outerIndexPtr() { return derived().nestedExpression().outerIndexPtr(); }
+        -:   41:    inline StorageIndex* innerNonZeroPtr() { return derived().nestedExpression().innerNonZeroPtr(); }
+        -:   42:  };
+        -:   43:}
+        -:   44:  
+    #####:   45:template<typename MatrixType> class TransposeImpl<MatrixType,Sparse>
+    %%%%%:   45-block  0
+    %%%%%:   45-block  1
+        -:   46:  : public internal::SparseTransposeImpl<MatrixType>
+        -:   47:{
+        -:   48:  protected:
+        -:   49:    typedef internal::SparseTransposeImpl<MatrixType> Base;
+        -:   50:};
+        -:   51:
+        -:   52:namespace internal {
+        -:   53:  
+        -:   54:template<typename ArgType>
+    #####:   55:struct unary_evaluator<Transpose<ArgType>, IteratorBased>
+        -:   56:  : public evaluator_base<Transpose<ArgType> >
+        -:   57:{
+        -:   58:    typedef typename evaluator<ArgType>::InnerIterator        EvalIterator;
+        -:   59:  public:
+        -:   60:    typedef Transpose<ArgType> XprType;
+        -:   61:    
+        -:   62:    inline Index nonZerosEstimate() const {
+        -:   63:      return m_argImpl.nonZerosEstimate();
+        -:   64:    }
+        -:   65:
+        -:   66:    class InnerIterator : public EvalIterator
+        -:   67:    {
+        -:   68:    public:
+    #####:   69:      EIGEN_STRONG_INLINE InnerIterator(const unary_evaluator& unaryOp, Index outer)
+    #####:   70:        : EvalIterator(unaryOp.m_argImpl,outer)
+    %%%%%:   70-block  0
+    #####:   71:      {}
+        -:   72:      
+        -:   73:      Index row() const { return EvalIterator::col(); }
+        -:   74:      Index col() const { return EvalIterator::row(); }
+        -:   75:    };
+        -:   76:    
+        -:   77:    enum {
+        -:   78:      CoeffReadCost = evaluator<ArgType>::CoeffReadCost,
+        -:   79:      Flags = XprType::Flags
+        -:   80:    };
+        -:   81:    
+    #####:   82:    explicit unary_evaluator(const XprType& op) :m_argImpl(op.nestedExpression()) {}
+    %%%%%:   82-block  0
+    %%%%%:   82-block  1
+    %%%%%:   82-block  2
+        -:   83:
+        -:   84:  protected:
+        -:   85:    evaluator<ArgType> m_argImpl;
+        -:   86:};
+        -:   87:
+        -:   88:} // end namespace internal
+        -:   89:
+        -:   90:} // end namespace Eigen
+        -:   91:
+        -:   92:#endif // EIGEN_SPARSETRANSPOSE_H

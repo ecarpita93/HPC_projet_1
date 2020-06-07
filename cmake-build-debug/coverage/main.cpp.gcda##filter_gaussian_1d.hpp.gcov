@@ -1,0 +1,157 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/filtering/filter_gaussian_1d.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_FILTERING_FILTER_GAUSSIAN_1D_HPP
+        -:   19:#define PIC_FILTERING_FILTER_GAUSSIAN_1D_HPP
+        -:   20:
+        -:   21:#include "../filtering/filter_conv_1d.hpp"
+        -:   22:#include "../util/precomputed_gaussian.hpp"
+        -:   23:
+        -:   24:namespace pic {
+        -:   25:
+        -:   26:/**
+        -:   27: * @brief The FilterGaussian1D class
+        -:   28: */
+        -:   29:class FilterGaussian1D: public FilterConv1D
+        -:   30:{
+        -:   31:protected:
+        -:   32:    float               sigma;
+        -:   33:    PrecomputedGaussian *pg;
+        -:   34:    bool                bPgOwned;
+        -:   35:
+        -:   36:public:
+        -:   37:    /**
+        -:   38:     * @brief FilterGaussian1D
+        -:   39:     */
+        -:   40:    FilterGaussian1D();
+        -:   41:
+        -:   42:    /**
+        -:   43:     * @brief FilterGaussian1D
+        -:   44:     * @param sigma
+        -:   45:     * @param direction
+        -:   46:     */
+        -:   47:    FilterGaussian1D(float sigma, int direction);
+        -:   48:
+        -:   49:    /**
+        -:   50:     * @brief FilterGaussian1D
+        -:   51:     * @param pg
+        -:   52:     * @param direction
+        -:   53:     */
+        -:   54:    FilterGaussian1D(PrecomputedGaussian *pg, int direction);
+        -:   55:
+        -:   56:    ~FilterGaussian1D();
+        -:   57:
+        -:   58:    /**
+        -:   59:     * @brief update
+        -:   60:     * @param sigma
+        -:   61:     * @param direction
+        -:   62:     */
+        -:   63:    void update(float sigma, int direction = 0)
+        -:   64:    {
+        -:   65:        if(this->sigma != sigma) {
+        -:   66:            this->sigma = sigma;
+        -:   67:
+        -:   68:            if(pg != NULL) {
+        -:   69:                delete pg;
+        -:   70:            }
+        -:   71:
+        -:   72:            pg = new PrecomputedGaussian(sigma);
+        -:   73:        }
+        -:   74:
+        -:   75:        bPgOwned = true;
+        -:   76:        FilterConv1D::update(pg->coeff, pg->kernelSize, direction);
+        -:   77:    }
+        -:   78:
+        -:   79:    /**
+        -:   80:     * @brief execute
+        -:   81:     * @param imgIn
+        -:   82:     * @param imgOut
+        -:   83:     * @param sigma
+        -:   84:     * @param direction
+        -:   85:     * @return
+        -:   86:     */
+        -:   87:    static Image *execute(Image *imgIn, Image *imgOut, float sigma,
+        -:   88:                             int direction)
+        -:   89:    {
+        -:   90:        FilterGaussian1D filter(sigma, direction);
+        -:   91:        return filter.Process(Single(imgIn), imgOut);
+        -:   92:    }
+        -:   93:};
+        -:   94:
+        -:   95:PIC_INLINE FilterGaussian1D::FilterGaussian1D()
+        -:   96:{
+        -:   97:    sigma = 1.0f;
+        -:   98:    pg = new PrecomputedGaussian(sigma);
+        -:   99:
+        -:  100:    bPgOwned = true;
+        -:  101:    FilterConv1D::update(pg->coeff, pg->kernelSize, 0);
+        -:  102:}
+        -:  103:
+    #####:  104:PIC_INLINE FilterGaussian1D::FilterGaussian1D(float sigma, int direction = 0)
+    %%%%%:  104-block  0
+    $$$$$:  104-block  1
+        -:  105:{
+    #####:  106:    this->sigma = sigma;
+    #####:  107:    pg = new PrecomputedGaussian(sigma);
+    %%%%%:  107-block  0
+    %%%%%:  107-block  1
+    $$$$$:  107-block  2
+        -:  108:
+    #####:  109:    bPgOwned = true;
+    #####:  110:    FilterConv1D::update(pg->coeff, pg->kernelSize, direction);
+    %%%%%:  110-block  0
+    #####:  111:}
+    %%%%%:  111-block  0
+        -:  112:
+        -:  113:PIC_INLINE FilterGaussian1D::FilterGaussian1D(PrecomputedGaussian *pg, int direction = 0)
+        -:  114:{
+        -:  115:    if(pg == NULL) {
+        -:  116:        #ifdef PICE_DEBUG
+        -:  117:            printf("Error no precomputed gaussian values.\n");
+        -:  118:        #endif
+        -:  119:        return;
+        -:  120:    }
+        -:  121:
+        -:  122:    bPgOwned = false;
+        -:  123:
+        -:  124:    FilterConv1D::update(pg->coeff, pg->kernelSize, direction);
+        -:  125:}
+        -:  126:
+    #####:  127:PIC_INLINE FilterGaussian1D::~FilterGaussian1D()
+    %%%%%:  127-block  0
+        -:  128:{
+    #####:  129:    release();
+    %%%%%:  129-block  0
+        -:  130:
+    #####:  131:    if(pg != NULL && bPgOwned) {
+    %%%%%:  131-block  0
+    %%%%%:  131-block  1
+    #####:  132:        delete pg;
+    %%%%%:  132-block  0
+    %%%%%:  132-block  1
+    #####:  133:        pg = NULL;
+        -:  134:    }
+    #####:  135:}
+        -:  136:
+        -:  137:} // end namespace pic
+        -:  138:
+        -:  139:#endif /* PIC_FILTERING_FILTER_GAUSSIAN_1D_HPP */
+        -:  140:

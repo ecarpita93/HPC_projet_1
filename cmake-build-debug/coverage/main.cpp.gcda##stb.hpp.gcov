@@ -1,0 +1,101 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/io/stb.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_IO_STB_HPP
+        -:   19:#define PIC_IO_STB_HPP
+        -:   20:
+        -:   21:#include <stdio.h>
+        -:   22:#include <string>
+        -:   23:
+        -:   24:#include "../base.hpp"
+        -:   25:
+        -:   26:
+        -:   27:#ifndef PIC_DISABLE_STB
+        -:   28:    #define PIC_STB
+        -:   29:
+        -:   30:    #define STBIWDEF inline
+        -:   31:    #define STB_IMAGE_STATIC
+        -:   32:    #define STB_IMAGE_WRITE_STATIC
+        -:   33:    #define STB_IMAGE_WRITE_IMPLEMENTATION
+        -:   34:    #define STB_IMAGE_IMPLEMENTATION
+        -:   35:
+        -:   36:#ifndef PIC_DISABLE_STB_LOCAL
+        -:   37:    #include "../../stb/stb_image_write.h"
+        -:   38:    #include "../../stb/stb_image.h"
+        -:   39:#else
+        -:   40:    #include <stb/stb_image_write.h>
+        -:   41:    #include <stb/stb_image.h>
+        -:   42:#endif
+        -:   43:
+        -:   44:#endif
+        -:   45:
+        -:   46:
+        -:   47:namespace pic {
+        -:   48:
+        -:   49:/**
+        -:   50: * @brief ReadSTB
+        -:   51: * @param nameFile
+        -:   52: * @param width
+        -:   53: * @param height
+        -:   54: * @param channels
+        -:   55: * @return
+        -:   56: */
+        7:   57:PIC_INLINE unsigned char *ReadSTB(std::string nameFile, int &width,
+        -:   58:                          int &height, int &channels)
+        -:   59:{
+        7:   60:    unsigned char *data = NULL;
+        -:   61:    
+        -:   62:#ifndef PIC_DISABLE_STB
+        7:   63:    int w, h, c;
+        7:   64:    stbi_info(nameFile.c_str(), &w, &h, &c);
+        7:   64-block  0
+        7:   65:    data = stbi_load(nameFile.c_str(), &width, &height, &channels, c);
+        -:   66:#endif
+        -:   67:    
+        7:   68:    return data;
+        -:   69:}
+        -:   70:
+        -:   71:/**
+        -:   72: * @brief WriteSTB
+        -:   73: * @param nameFile
+        -:   74: * @param data
+        -:   75: * @param width
+        -:   76: * @param height
+        -:   77: * @param channels
+        -:   78: * @return
+        -:   79: */
+        1:   80:PIC_INLINE bool WriteSTB(std::string nameFile, unsigned char *data, int width, int height,
+        -:   81:                int channels = 3)
+        -:   82:{
+        1:   83:    int tmp = 0;
+        -:   84:
+        -:   85:    #ifndef PIC_DISABLE_STB
+        1:   86:        tmp = stbi_write_png(nameFile.c_str(), width, height, channels, (void*) data, 0);
+        -:   87:    #endif
+        -:   88:    
+        1:   89:    return (tmp == 1);
+        1:   89-block  0
+        -:   90:}
+        -:   91:
+        -:   92:} // end namespace pic
+        -:   93:
+        -:   94:#endif /* PIC_IO_STB_HPP */
+        -:   95:

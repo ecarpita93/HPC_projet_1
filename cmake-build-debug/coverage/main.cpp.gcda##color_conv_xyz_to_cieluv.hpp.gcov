@@ -1,0 +1,60 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/colors/color_conv_xyz_to_cieluv.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_COLORS_COLOR_CONV_XYZ_TO_CIELUV_HPP
+        -:   19:#define PIC_COLORS_COLOR_CONV_XYZ_TO_CIELUV_HPP
+        -:   20:
+        -:   21:#include "../colors/color_conv.hpp"
+        -:   22:
+        -:   23:namespace pic {
+        -:   24:
+        -:   25:class ColorConvXYZtoCIELUV: public ColorConv
+        -:   26:{
+        -:   27:protected:
+        -:   28:
+        -:   29:    float		white_point[3];
+        -:   30:
+        -:   31:public:
+        -:   32:
+        -:   33:    ColorConvXYZtoCIELUV()
+        -:   34:    {
+        -:   35:        white_point[0] = 1.0f;
+        -:   36:        white_point[1] = 1.0f;
+        -:   37:        white_point[2] = 1.0f;
+        -:   38:    }
+        -:   39:
+        -:   40:    //from XYZ to CIE LUV
+    #####:   41:    void direct(float *colIn, float *colOut)
+        -:   42:    {
+        -:   43:
+    #####:   44:    }
+        -:   45:
+        -:   46:    //from CIE LUV to XYZ
+    #####:   47:    void inverse(float *colIn, float *colOut)
+        -:   48:    {
+        -:   49:
+    #####:   50:    }
+        -:   51:};
+        -:   52:
+        -:   53:} // end namespace pic
+        -:   54:
+        -:   55:#endif /* PIC_COLORS_COLOR_SPACE_CIELUV_HPP */
+        -:   56:

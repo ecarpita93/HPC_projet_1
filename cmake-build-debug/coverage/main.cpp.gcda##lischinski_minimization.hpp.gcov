@@ -1,0 +1,268 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/algorithms/lischinski_minimization.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_ALGORITHMS_LISCHINSKI_MINIMIZATION_HPP
+        -:   19:#define PIC_ALGORITHMS_LISCHINSKI_MINIMIZATION_HPP
+        -:   20:
+        -:   21:#ifndef PIC_DISABLE_EIGEN
+        -:   22:
+        -:   23:#ifndef PIC_EIGEN_NOT_BUNDLED
+        -:   24:    #include "../externals/Eigen/Sparse"
+        -:   25:    #include "../externals/Eigen/src/SparseCore/SparseMatrix.h"
+        -:   26:#else
+        -:   27:    #include <Eigen/Sparse>
+        -:   28:    #include <Eigen/src/SparseCore/SparseMatrix.h>
+        -:   29:#endif
+        -:   30:
+        -:   31:#endif
+        -:   32:
+        -:   33:#include "../base.hpp"
+        -:   34:#include "../image.hpp"
+        -:   35:
+        -:   36:namespace pic {
+        -:   37:/**
+        -:   38:*
+        -:   39:*	param[0] --> alpha
+        -:   40:*	param[1] --> lambda
+        -:   41:*
+        -:   42:**/
+        -:   43:
+        -:   44:/**
+        -:   45: * @brief LischinskiFunction
+        -:   46: * @param Lcur
+        -:   47: * @param Lref
+        -:   48: * @param param
+        -:   49: * @param LISCHINSKI_EPSILON
+        -:   50: * @return
+        -:   51: */
+    #####:   52:inline float LischinskiFunction(float Lcur, float Lref, float param[2],
+        -:   53:                                float LISCHINSKI_EPSILON = 0.0001f)
+        -:   54:{
+    #####:   55:    return -param[1] / (powf(fabsf(Lcur - Lref), param[0]) + LISCHINSKI_EPSILON);
+        -:   56:}
+        -:   57:
+        -:   58:/**
+        -:   59: * @brief LischinskiFunctionGauss
+        -:   60: * @param Lcur
+        -:   61: * @param Lref
+        -:   62: * @param param
+        -:   63: * @return
+        -:   64: */
+        -:   65:inline float LischinskiFunctionGauss(float Lcur, float Lref, float param[2])
+        -:   66:{
+        -:   67:    return expf(-powf(Lcur - Lref, 2.0f) * 10.0f);
+        -:   68:}
+        -:   69:
+        -:   70:/**
+        -:   71: * @brief LischinskiMinimization
+        -:   72: * @param L
+        -:   73: * @param g
+        -:   74: * @param omega
+        -:   75: * @param omega_global
+        -:   76: * @param gOut
+        -:   77: * @param alpha
+        -:   78: * @param lambda
+        -:   79: * @param LISCHINSKI_EPSILON
+        -:   80: * @return
+        -:   81: */
+    #####:   82:PIC_INLINE Image *LischinskiMinimization(Image *L,
+        -:   83:                              Image *g,
+        -:   84:                              Image *omega = NULL,
+        -:   85:                              float omega_global = 1.0f,
+        -:   86:                              Image *gOut = NULL,
+        -:   87:                              float alpha = 1.0f,
+        -:   88:                              float lambda = 0.4f,
+        -:   89:                              float LISCHINSKI_EPSILON = 1e-4f)
+        -:   90:{
+    #####:   91:    if(L == NULL || g == NULL) {
+    %%%%%:   91-block  0
+        -:   92:        return gOut;
+        -:   93:    }
+        -:   94:
+        -:   95:#ifndef PIC_DISABLE_EIGEN
+    #####:   96:    bool bOmega = (omega == NULL);
+        -:   97:
+    #####:   98:    int width = L->width;
+    #####:   99:    int height = L->height;
+    #####:  100:    int tot = height * width;
+        -:  101:
+    #####:  102:    float param[2];
+    #####:  103:    param[0] = alpha;
+    #####:  104:    param[1] = lambda;
+        -:  105:
+    #####:  106:    Eigen::VectorXd b, x;
+    %%%%%:  106-block  0
+    %%%%%:  106-block  1
+    %%%%%:  106-block  2
+    $$$$$:  106-block  3
+    #####:  107:    b = Eigen::VectorXd::Zero(tot);
+    %%%%%:  107-block  0
+    $$$$$:  107-block  1
+        -:  108:
+        -:  109:    #ifdef PIC_DEBUG
+        -:  110:        printf("Init matrix...");
+        -:  111:    #endif
+        -:  112:
+    #####:  113:    std::vector< Eigen::Triplet< double > > tL;
+    %%%%%:  113-block  0
+    %%%%%:  113-block  1
+    $$$$$:  113-block  2
+        -:  114:
+    #####:  115:    for(int i = 0; i < height; i++) {
+    %%%%%:  115-block  0
+    %%%%%:  115-block  1
+    %%%%%:  115-block  2
+    #####:  116:        int tmpInd = i * width;
+        -:  117:
+    #####:  118:        for(int j = 0; j < width; j++) {
+    %%%%%:  118-block  0
+    %%%%%:  118-block  1
+        -:  119:
+    #####:  120:            float sum = 0.0f;
+    #####:  121:            float tmp;
+    #####:  122:            int indJ;
+    #####:  123:            int indI = tmpInd + j;
+    #####:  124:            float Lref = L->data[indI];
+        -:  125:
+    #####:  126:            float omega_val;
+    #####:  127:            if(bOmega) {
+    %%%%%:  127-block  0
+        -:  128:                omega_val = omega_global;
+        -:  129:            } else {
+    #####:  130:                omega_val = omega->data[indI];
+    %%%%%:  130-block  0
+        -:  131:            }
+        -:  132:
+    #####:  133:            b[indI] = omega_val * g->data[indI];
+    %%%%%:  133-block  0
+        -:  134:
+    #####:  135:            if((i - 1) >= 0) {
+    #####:  136:                indJ = indI - width;
+    #####:  137:                tmp = LischinskiFunction(L->data[indJ], Lref, param, LISCHINSKI_EPSILON);
+    #####:  138:                tL.push_back(Eigen::Triplet< double > (indI, indJ, tmp));
+    %%%%%:  138-block  0
+    #####:  139:                sum += tmp;
+    %%%%%:  139-block  0
+        -:  140:            }
+        -:  141:
+    #####:  142:            if((i + 1) < height) {
+    %%%%%:  142-block  0
+    #####:  143:                indJ = indI + width;
+    #####:  144:                tmp = LischinskiFunction(L->data[indJ], Lref, param, LISCHINSKI_EPSILON);
+    #####:  145:                tL.push_back(Eigen::Triplet< double > (indI, indJ, tmp));
+    %%%%%:  145-block  0
+    #####:  146:                sum += tmp;
+    %%%%%:  146-block  0
+        -:  147:            }
+        -:  148:
+    #####:  149:            if((j - 1) >= 0) {
+    %%%%%:  149-block  0
+    #####:  150:                indJ = indI - 1;
+    #####:  151:                tmp = LischinskiFunction(L->data[indJ], Lref, param, LISCHINSKI_EPSILON);
+    #####:  152:                tL.push_back(Eigen::Triplet< double > (indI, indJ, tmp));
+    %%%%%:  152-block  0
+    #####:  153:                sum += tmp;
+    %%%%%:  153-block  0
+        -:  154:            }
+        -:  155:
+    #####:  156:            if((j + 1) < width) {
+    %%%%%:  156-block  0
+    #####:  157:                indJ = indI + 1;
+    #####:  158:                tmp = LischinskiFunction(L->data[indJ], Lref, param, LISCHINSKI_EPSILON);
+    #####:  159:                tL.push_back(Eigen::Triplet< double > (indI, indJ, tmp));
+    %%%%%:  159-block  0
+    #####:  160:                sum += tmp;
+    %%%%%:  160-block  0
+        -:  161:            }
+        -:  162:
+    #####:  163:            tL.push_back(Eigen::Triplet< double > (indI, indI, omega_val - sum));
+    %%%%%:  163-block  0
+    %%%%%:  163-block  1
+    $$$$$:  163-block  2
+        -:  164:        }
+        -:  165:    }
+        -:  166:
+        -:  167:    #ifdef PIC_DEBUG
+        -:  168:        printf("Ok\n");
+        -:  169:    #endif
+        -:  170:
+    #####:  171:    Eigen::SparseMatrix<double> A = Eigen::SparseMatrix<double>(tot, tot);
+    %%%%%:  171-block  0
+    #####:  172:    A.setFromTriplets(tL.begin(), tL.end());
+    %%%%%:  172-block  0
+    $$$$$:  172-block  1
+        -:  173:
+    #####:  174:    Eigen::SimplicialCholesky<Eigen::SparseMatrix<double> > solver(A);
+    %%%%%:  174-block  0
+    #####:  175:    x = solver.solve(b);
+    %%%%%:  175-block  0
+    $$$$$:  175-block  1
+        -:  176:
+    #####:  177:    if(solver.info() != Eigen::Success) {
+    %%%%%:  177-block  0
+    %%%%%:  177-block  1
+        -:  178:        #ifdef PIC_DEBUG
+        -:  179:            printf("SOLVER FAILED!\n");
+        -:  180:        #endif
+        -:  181:        return NULL;
+        -:  182:    }
+        -:  183:
+        -:  184:    #ifdef PIC_DEBUG
+        -:  185:        printf("SOLVER SUCCESS!\n");
+        -:  186:    #endif
+        -:  187:
+    #####:  188:    if(gOut == NULL) {
+    %%%%%:  188-block  0
+    #####:  189:        gOut = g->allocateSimilarOne();
+    %%%%%:  189-block  0
+        -:  190:    } else {
+    #####:  191:        if(!gOut->isSimilarType(g)) {
+    %%%%%:  191-block  0
+    #####:  192:            gOut = g->allocateSimilarOne();
+    %%%%%:  192-block  0
+        -:  193:        }
+        -:  194:    }
+        -:  195:
+    #####:  196:    for(int i = 0; i < height; i++) {
+    %%%%%:  196-block  0
+    %%%%%:  196-block  1
+    %%%%%:  196-block  2
+    #####:  197:        int counter = i * width;
+        -:  198:
+    #####:  199:        for(int j = 0; j < width; j++) {
+    %%%%%:  199-block  0
+    %%%%%:  199-block  1
+    #####:  200:            (*gOut)(j, i)[0] = float(x(counter + j));
+    %%%%%:  200-block  0
+    %%%%%:  200-block  1
+        -:  201:        }
+        -:  202:    }
+        -:  203:
+        -:  204:    return gOut;
+        -:  205:#else
+        -:  206:    return gOut;
+        -:  207:#endif
+        -:  208:}
+        -:  209:
+        -:  210:} // end namespace pic
+        -:  211:
+        -:  212:#endif /* PIC_ALGORITHMS_LISCHINSKI_MINIMIZATION_HPP */
+        -:  213:

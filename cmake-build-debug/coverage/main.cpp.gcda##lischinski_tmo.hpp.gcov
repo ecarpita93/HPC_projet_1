@@ -1,0 +1,214 @@
+        -:    0:Source:/home/edd993/CLionProjects/hdr_generator/include/tone_mapping/lischinski_tmo.hpp
+        -:    0:Graph:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcno
+        -:    0:Data:/home/edd993/CLionProjects/hdr_generator/cmake-build-debug/CMakeFiles/hdr_generator.dir/main.cpp.gcda
+        -:    0:Runs:1
+        -:    1:/*
+        -:    2:
+        -:    3:PICCANTE
+        -:    4:The hottest HDR imaging library!
+        -:    5:http://vcg.isti.cnr.it/piccante
+        -:    6:
+        -:    7:Copyright (C) 2014
+        -:    8:Visual Computing Laboratory - ISTI CNR
+        -:    9:http://vcg.isti.cnr.it
+        -:   10:First author: Francesco Banterle
+        -:   11:
+        -:   12:This Source Code Form is subject to the terms of the Mozilla Public
+        -:   13:License, v. 2.0. If a copy of the MPL was not distributed with this
+        -:   14:file, You can obtain one at http://mozilla.org/MPL/2.0/.
+        -:   15:
+        -:   16:*/
+        -:   17:
+        -:   18:#ifndef PIC_TONE_MAPPING_LISCHINSKI_TMO_HPP
+        -:   19:#define PIC_TONE_MAPPING_LISCHINSKI_TMO_HPP
+        -:   20:
+        -:   21:#include "../base.hpp"
+        -:   22:#include "../util/math.hpp"
+        -:   23:#include "../algorithms/lischinski_minimization.hpp"
+        -:   24:#include "../tone_mapping/reinhard_tmo.hpp"
+        -:   25:#include "../tone_mapping/tone_mapping_operator.hpp"
+        -:   26:
+        -:   27:namespace pic {
+        -:   28:
+        -:   29:class LischinskiTMO: public ToneMappingOperator
+        -:   30:{
+        -:   31:protected:
+        -:   32:    FilterLuminance flt_lum;
+        -:   33:
+        -:   34:    float alpha, whitePoint;
+        -:   35:
+        -:   36:    /**
+        -:   37:     * @brief ProcessAux
+        -:   38:     * @param imgIn
+        -:   39:     * @param imgOut
+        -:   40:     * @return
+        -:   41:     */
+    #####:   42:    Image *ProcessAux(ImageVec imgIn, Image *imgOut)
+        -:   43:    {
+    #####:   44:        updateImage(imgIn[0]);
+    %%%%%:   44-block  0
+        -:   45:
+        -:   46:        //extract luminance
+    #####:   47:        images[0] = flt_lum.Process(imgIn, images[0]);
+    %%%%%:   47-block  0
+        -:   48:
+    #####:   49:        float minL, maxL, Lav;
+        -:   50:
+    #####:   51:        images[0]->getMinVal(NULL, &minL);
+    %%%%%:   51-block  0
+    #####:   52:        images[0]->getMaxVal(NULL, &maxL);
+    #####:   53:        images[0]->getLogMeanVal(NULL, &Lav);
+        -:   54:
+    #####:   55:        float minL_log = log2fPlusEpsilon(minL);
+    #####:   56:        float maxL_log = log2fPlusEpsilon(maxL);
+        -:   57:
+    #####:   58:        int Z = int(ceilf(maxL_log - minL_log));
+        -:   59:
+    #####:   60:        if(Z <= 0) {
+        -:   61:            return imgOut;
+        -:   62:        }
+        -:   63:
+    #####:   64:        if(alpha <= 0.0f) {
+    %%%%%:   64-block  0
+    #####:   65:            alpha = ReinhardTMO::estimateAlpha(minL, maxL, Lav);
+    %%%%%:   65-block  0
+        -:   66:        }
+        -:   67:
+    #####:   68:        if(whitePoint <= 0.0f) {
+    %%%%%:   68-block  0
+    #####:   69:            whitePoint = ReinhardTMO::estimateWhitePoint(minL, maxL);
+    %%%%%:   69-block  0
+        -:   70:        }
+        -:   71:
+    #####:   72:        float whitePoint_sq = whitePoint * whitePoint;
+        -:   73:
+        -:   74:        //choose the representative Rz for each zone
+    #####:   75:        std::vector<float> *zones = new std::vector<float>[Z];
+    %%%%%:   75-block  0
+    %%%%%:   75-block  1
+    %%%%%:   75-block  2
+    #####:   76:        float *fstop = new float[Z];
+    %%%%%:   76-block  0
+    #####:   77:        float *Rz = new float[Z];
+        -:   78:
+    #####:   79:        Array<float>::assign(0.0f, Rz, Z);
+    %%%%%:   79-block  0
+    #####:   80:        Array<float>::assign(0.0f, fstop, Z);
+    %%%%%:   80-block  0
+        -:   81:
+    #####:   82:        for(int i = 0; i < images[0]->size(); i++) {
+    %%%%%:   82-block  0
+    #####:   83:            float L = images[0]->data[i];
+    %%%%%:   83-block  0
+    #####:   84:            float L_log = log2fPlusEpsilon(L);
+    %%%%%:   84-block  0
+        -:   85:
+    #####:   86:            int zone = CLAMP(int(ceilf(L_log - minL_log)), Z);
+    %%%%%:   86-block  0
+    %%%%%:   86-block  1
+    %%%%%:   86-block  2
+    #####:   87:            zones[zone].push_back(L);
+    %%%%%:   87-block  0
+        -:   88:        }
+        -:   89:
+    #####:   90:        for(int i = 0; i < Z; i++) {
+    %%%%%:   90-block  0
+    %%%%%:   90-block  1
+    #####:   91:            if(!zones[i].empty()) {
+    %%%%%:   91-block  0
+    #####:   92:                std::sort(zones[i].begin(), zones[i].end());
+    %%%%%:   92-block  0
+    #####:   93:                Rz[i] = zones[i][zones[i].size() >> 1];
+        -:   94:
+    #####:   95:                if(Rz[i] > 0.0f) {
+    #####:   96:                    float Rz_s = Rz[i] * alpha / Lav; //photographic operator
+    #####:   97:                    float f = (Rz_s * (1.0f + Rz_s / whitePoint_sq) ) / (1.0f + Rz_s);
+    #####:   98:                    fstop[i] = log2fPlusEpsilon(f / Rz[i]);
+    %%%%%:   98-block  0
+        -:   99:                }
+        -:  100:            }
+        -:  101:        }
+        -:  102:
+        -:  103:        //create the fstop map
+    #####:  104:        images[0]->applyFunction(log2fPlusEpsilon);
+    %%%%%:  104-block  0
+        -:  105:
+    #####:  106:        if(images[1] == NULL) {
+    #####:  107:            images[1] = images[0]->allocateSimilarOne();
+    %%%%%:  107-block  0
+        -:  108:        }
+        -:  109:
+    #####:  110:        for(int i = 0; i < images[0]->size(); i++) {
+    %%%%%:  110-block  0
+    %%%%%:  110-block  1
+    #####:  111:            float L_log = images[0]->data[i];
+    %%%%%:  111-block  0
+    #####:  112:            int zone = CLAMP(int(ceilf(L_log - minL_log)), Z);
+    %%%%%:  112-block  0
+    %%%%%:  112-block  1
+    %%%%%:  112-block  2
+    #####:  113:            images[1]->data[i] = fstop[zone];
+    %%%%%:  113-block  0
+        -:  114:        }
+        -:  115:
+        -:  116:        //run Lischinski minimization
+    #####:  117:        images[2] = LischinskiMinimization(images[0], images[1], NULL, 0.007f, images[2]);
+    %%%%%:  117-block  0
+        -:  118:
+    #####:  119:        images[2]->applyFunction(pow2f);
+        -:  120:
+    #####:  121:        *imgOut = *imgIn[0];
+    #####:  122:        *imgOut *= images[2];
+        -:  123:
+    #####:  124:        delete[] zones;
+    %%%%%:  124-block  0
+    %%%%%:  124-block  1
+    #####:  125:        delete[] Rz;
+    #####:  126:        delete[] fstop;
+        -:  127:
+    #####:  128:        return imgOut;
+        -:  129:    }
+        -:  130:
+        -:  131:public:
+        -:  132:
+        -:  133:    /**
+        -:  134:     * @brief LischinskiTMO
+        -:  135:     * @param alpha
+        -:  136:     * @param whitePoint
+        -:  137:     */
+        -:  138:    LischinskiTMO(float alpha = 0.15f, float whitePoint = 1e6f)
+        -:  139:    {
+        -:  140:        images.push_back(NULL);
+        -:  141:        images.push_back(NULL);
+        -:  142:        images.push_back(NULL);
+        -:  143:        update(alpha, whitePoint);
+        -:  144:    }
+        -:  145:
+        -:  146:    /**
+        -:  147:     * @brief update
+        -:  148:     * @param alpha
+        -:  149:     * @param whitePoint
+        -:  150:     */
+        -:  151:    void update(float alpha = 0.15f, float whitePoint = 1e6f)
+        -:  152:    {
+        -:  153:        this->alpha = alpha;
+        -:  154:        this->whitePoint = whitePoint;
+        -:  155:    }
+        -:  156:
+        -:  157:    /**
+        -:  158:     * @brief execute
+        -:  159:     * @param imgIn
+        -:  160:     * @param imgOut
+        -:  161:     * @return
+        -:  162:     */
+        -:  163:    static Image *execute(Image *imgIn, Image *imgOut)
+        -:  164:    {
+        -:  165:        LischinskiTMO ltmo(0.15f, 1e6f);
+        -:  166:        return ltmo.Process(Single(imgIn), imgOut);
+        -:  167:    }
+        -:  168:};
+        -:  169:
+        -:  170:} // end namespace pic
+        -:  171:
+        -:  172:#endif /* PIC_TONE_MAPPING_LISCHINSKI_TMO_HPP */
+        -:  173:
