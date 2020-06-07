@@ -1,7 +1,9 @@
 /*
 
 Edoardo Carpita
-HPC projet 1 - travail d'amelioration sur la librarie PICCANTE
+HPC projet 1 - travail d'amelioration sur la librarie PICCANTE v0.5 stable
+
+ Note: l'ancienne version de la librarie originaire Eigen du projet est encore disponible dans les sources sous include/external/Eigen(old)
 
 */
 
